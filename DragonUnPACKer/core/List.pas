@@ -1,6 +1,6 @@
 unit List;
 
-// $Id: List.pas,v 1.2 2004-05-16 15:55:31 elbereth Exp $
+// $Id: List.pas,v 1.3 2004-07-17 19:30:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/List.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -21,7 +21,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ExtCtrls, StdCtrls, ComCtrls, jpeg, spec_DUHT, StrUtils, declFSE, prg_ver,
-  lib_language, class_duht, classFSE, VirtualTrees, lib_Utils, Registry;
+  lib_language, class_duht, classFSE, VirtualTrees, lib_binUtils, lib_utils, Registry;
 
 const MAX_DUHT = 256;
 

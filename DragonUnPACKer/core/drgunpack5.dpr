@@ -1,6 +1,6 @@
 program drgunpack5;
 
-// $Id: drgunpack5.dpr,v 1.2 2004-05-16 09:31:53 elbereth Exp $
+// $Id: drgunpack5.dpr,v 1.3 2004-07-17 19:25:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/drgunpack5.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -42,6 +42,7 @@ uses
   declFSE in 'declFSE.pas',
   HashTrie in 'HashTrie.pas',
   lib_bincopy in '..\common\lib_bincopy.pas',
+  lib_binUtils in '..\common\lib_binUtils.pas',
   lib_crc in '..\common\lib_crc.pas',
   lib_language in '..\common\lib_language.pas',
   lib_look in 'lib_look.pas',

@@ -90,7 +90,7 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=H:\Programmation\Compiled\drgunpacker\currentdev\data\drivers
+OutputDir=C:\Developpement\dup-dev-5.1-compiled\data\drivers
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
@@ -101,7 +101,7 @@ DebugSourceDirs=
 UsePackages=0
 [Parameters]
 RunParams=
-HostApplication=H:\Programmation\Compiled\drgunpacker\currentdev\drgunpack5.exe
+HostApplication=C:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
 Launcher=
 UseLauncher=0
 DebugCWD=H:\Programmation\Compiled\drgunpacker\currentdev
@@ -115,7 +115,7 @@ AutoIncBuild=1
 MajorVer=2
 MinorVer=0
 Release=0
-Build=662
+Build=671
 Debug=0
 PreRelease=0
 Special=0
@@ -126,9 +126,9 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Dragon Software
 FileDescription=Main Driver plugin for Dragon UnPACKer 5
-FileVersion=2.0.0.662
+FileVersion=2.0.0.671
 InternalName=drv_default
-LegalCopyright=(c)2002-2004 Alexandre Devilliers
+LegalCopyright=(c)2002-2005 Alexandre Devilliers
 LegalTrademarks=
 OriginalFilename=drv_default.d5d
 ProductName=Dragon UnPACKer 5
@@ -139,4 +139,4 @@ Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlOutputDirectorry]
 Count=1
-Item0=H:\Programmation\Compiled\drgunpacker\currentdev\utils
+Item0=C:\Developpement\dup-dev-5.1-compiled\data\drivers

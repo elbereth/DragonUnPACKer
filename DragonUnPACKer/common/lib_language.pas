@@ -1,6 +1,6 @@
 unit lib_language;
 
-// $Id: lib_language.pas,v 1.3.2.2 2004-10-10 09:17:47 elbereth Exp $
+// $Id: lib_language.pas,v 1.3.2.3 2005-03-26 06:50:21 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_language.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -451,6 +451,8 @@ begin
     res := 'A Propos..'
   else if sch = 'OPT202' then
     res := 'Configurer'
+  else if sch = 'OPT203' then
+    res := 'Drivers:'
   else if sch = 'OPT210' then
     res := 'Informations'
   else if sch = 'OPT220' then
@@ -1053,6 +1055,10 @@ begin
     res := '- Echec!'
   else if sch = 'LOG513' then
     res := '- Erreur!'
+  else if sch = 'LOGC01' then
+    res := 'Libération de %p plugins...'
+  else if sch = 'LOGC02' then
+    res := 'Recherche des plugins...'
 
   else if sch = 'ERR000' then
     res := 'Erreur'
@@ -1100,6 +1106,12 @@ begin
     res := 'Le Plugin HyperRipper n''a pas pu etre chargé (mauvaise version de l''interface ou ce n''est pas un plugin DUP5).'
   else if sch = 'ERRH02' then
     res := 'Le Plugin HyperRipper n''a pas pu etre chargé (des fonctions importantes sont manquantes).'
+  else if sch = 'ERRH03' then
+    res := 'Attention: Ce plugin ne peut pas rechercher après 2Go de données (après cette limite il ne trouvera rien).'
+  else if sch = 'ERRH04' then
+    res := 'HyperRipper plugin ID #%i inconnu'
+  else if sch = 'ERRH05' then
+    res := 'Le plugin "%p" ne peut pas rechercher de données après la limite des 2Go.'
   else if sch = 'ERREMP' then
     res := 'Le fichier est vide.'
   else if sch = 'ERRIO' then

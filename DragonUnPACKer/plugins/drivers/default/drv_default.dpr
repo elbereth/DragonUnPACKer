@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.6 2004-06-12 08:46:48 elbereth Exp $
+// $Id: drv_default.dpr,v 1.7 2004-06-12 08:57:23 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -130,6 +130,7 @@ type FSE = ^element;
     13211        Fixed SCGL always opening files (even for WestWood TLK files).
     13220  50024 Added support for Painkiller .PAK files
     13340        Added support for Hitman: Contracts .TEX files
+    13341        Added support for Hitman: Contracts .PRM files
     13440        Added support for CyberBykes .BIN files
         TODO --> Added Warrior Kings Battles BCP
 
@@ -1055,8 +1056,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 13440;
   DUP_VERSION = 50024;
-  CVS_REVISION = '$Revision: 1.6 $';
-  CVS_DATE = '$Date: 2004-06-12 08:46:48 $';
+  CVS_REVISION = '$Revision: 1.7 $';
+  CVS_DATE = '$Date: 2004-06-12 08:57:23 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1126,8 +1127,8 @@ begin
   GetDriverInfo.Name := 'Main Driver';
   GetDriverInfo.Author := 'Dragon UnPACKer project team';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 66 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 55;
+  GetDriverInfo.Comment := 'This driver support 67 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.NumFormats := 56;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -1236,8 +1237,10 @@ begin
   GetDriverInfo.Formats[53].Name := 'Empires: Dawn of the Modern World (*.SSA)';
   GetDriverInfo.Formats[54].Extensions := '*.STUFF';
   GetDriverInfo.Formats[54].Name := 'Eve Online (*.STUFF)';
-  GetDriverInfo.Formats[55].Extensions := '*.TEX';
-  GetDriverInfo.Formats[55].Name := 'Hitman: Contracts (*.TEX)';
+  GetDriverInfo.Formats[55].Extensions := '*.TEX;*.PRM';
+  GetDriverInfo.Formats[55].Name := 'Hitman: Contracts (*.TEX;*.PRM)';
+  GetDriverInfo.Formats[56].Extensions := '*.BIN';
+  GetDriverInfo.Formats[56].Name := 'CyberBykes: Shadow Racer VR (*.BIN)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
 //  GetDriverInfo.Formats[50].Name := 'Heath: The Unchosen Path (*.PAXX.NRM)'
 //  GetDriverInfo.Formats[41].Extensions := '*.h4r';

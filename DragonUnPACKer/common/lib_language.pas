@@ -1,6 +1,6 @@
 unit lib_language;
 
-// $Id: lib_language.pas,v 1.3.2.3 2005-03-26 06:50:21 elbereth Exp $
+// $Id: lib_language.pas,v 1.3.2.4 2005-03-27 10:04:36 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_language.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -489,6 +489,20 @@ begin
     res := 'Plugins HyperRipper:'
   else if sch = 'OPT710' then
     res := 'Informations'
+  else if sch = 'OPT800' then
+    res := 'Journal d''exécution'
+  else if sch = 'OPT810' then
+    res := 'Options du journal d''exécution'
+  else if sch = 'OPT840' then
+    res := 'Niveau de détail'
+  else if sch = 'OPT841' then
+    res := 'Sélectionnez le niveau de détail pour le journal d''exécution:'
+  else if sch = 'OPT850' then
+    res := 'Bas - Aucune information supplémentaire'
+  else if sch = 'OPT851' then
+    res := 'Moyen - Affichage de plus d''informations'
+  else if sch = 'OPT852' then
+    res := 'Haut - Affichage du maximum d''informations'
   else if sch = 'OPEN00' then
     res := 'Ouvrir un fichier...'
   else if sch = 'XTRCAP' then
@@ -1028,7 +1042,7 @@ begin
   else if sch = 'LOG103' then
     res := 'Démarrage de HyperRipper...'
   else if sch = 'LOG104' then
-    res := 'File not found (or is locked by another program)...'
+    res := 'Fichier introuvable (ou bloqué par un autre programme/utilisateur)...'
   else if sch = 'LOG200' then
     res := 'Fermeture fichier actuel...'
   else if sch = 'LOG300' then
@@ -1055,10 +1069,24 @@ begin
     res := '- Echec!'
   else if sch = 'LOG513' then
     res := '- Erreur!'
+  else if sch = 'LOG514' then
+    res := 'Erreur!'
   else if sch = 'LOGC01' then
     res := 'Libération de %p plugins...'
   else if sch = 'LOGC02' then
     res := 'Recherche des plugins...'
+  else if sch = 'LOGC10' then
+    res := 'Convertion de "%a" vers "%b"...'
+  else if sch = 'LOGC11' then
+    res := 'Méthode rapide!'
+  else if sch = 'LOGC12' then
+    res := 'Méthode lente (plugins obsolètes)!'
+  else if sch = 'LOGC13' then
+    res := 'Convertion vers "%b"...'
+  else if sch = 'LOGC14' then
+    res := 'Convertion de multiples entrées vers "%b"...'
+  else if sch = 'LOGC15' then
+    res := 'Convertion...'
 
   else if sch = 'ERR000' then
     res := 'Erreur'

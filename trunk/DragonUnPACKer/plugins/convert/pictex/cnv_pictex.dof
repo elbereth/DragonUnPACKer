@@ -115,9 +115,9 @@ AutoIncBuild=1
 MajorVer=1
 MinorVer=0
 Release=7
-Build=98
+Build=99
 Debug=0
-PreRelease=1
+PreRelease=0
 Special=0
 Private=0
 DLL=1
@@ -126,7 +126,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=DUP5 - Picture/Textures Convert Plugin
-FileVersion=1.0.7.98
+FileVersion=1.0.7.99
 InternalName=cnv_pictex
 LegalCopyright=(c)2003-2004 Alexandre "Elbereth" Devilliers
 LegalTrademarks=
@@ -138,6 +138,7 @@ Comments=Convert between file formats in DUP5
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlOutputDirectorry]
-Count=2
+Count=3
 Item0=H:\Programmation\Compiled\drgunpacker\current\data\convert
-Item1=H:\Programmation\Compiled\drgunpacker\current\utils
+Item1=H:\Programmation\Compiled\drgunpacker\current
+Item2=H:\Programmation\Compiled\drgunpacker\current\utils

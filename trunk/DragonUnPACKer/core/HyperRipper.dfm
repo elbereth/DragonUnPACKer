@@ -4717,7 +4717,7 @@ object frmHyperRipper: TfrmHyperRipper
         ParentFont = False
         Transparent = True
       end
-      object lblHRVersion: TJvxLabel
+      object lblHRVersion: TJvLabel
         Left = 352
         Top = 112
         Width = 41
@@ -4730,6 +4730,14 @@ object frmHyperRipper: TfrmHyperRipper
         Font.Name = 'MS Sans Serif'
         Font.Style = [fsBold]
         ParentFont = False
+        ShadowSize = 1
+        ShadowPos = spRightBottom
+        AutoOpenURL = False
+        HotTrackFont.Charset = DEFAULT_CHARSET
+        HotTrackFont.Color = clWindowText
+        HotTrackFont.Height = -11
+        HotTrackFont.Name = 'MS Sans Serif'
+        HotTrackFont.Style = []
       end
       object Panel3: TPanel
         Left = 16

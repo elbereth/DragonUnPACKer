@@ -1,6 +1,6 @@
 object dup5Main: Tdup5Main
-  Left = 221
-  Top = 351
+  Left = 198
+  Top = 535
   HelpContext = 1
   AlphaBlendValue = 128
   AutoScroll = False
@@ -5149,7 +5149,12 @@ object dup5Main: Tdup5Main
   end
   object mainMenu: TJvMainMenu
     Images = imgLook
-    ShowCheckMarks = False
+    ImageMargin.Left = 0
+    ImageMargin.Top = 0
+    ImageMargin.Right = 0
+    ImageMargin.Bottom = 0
+    ImageSize.Height = 0
+    ImageSize.Width = 0
     Left = 520
     Top = 40
     object menuFichier: TMenuItem
@@ -5268,7 +5273,12 @@ object dup5Main: Tdup5Main
   object Popup_Contents: TJvPopupMenu
     AutoPopup = False
     Images = imgPopup2
-    ShowCheckMarks = False
+    ImageMargin.Left = 0
+    ImageMargin.Top = 0
+    ImageMargin.Right = 0
+    ImageMargin.Bottom = 0
+    ImageSize.Height = 0
+    ImageSize.Width = 0
     Left = 552
     Top = 40
     object Popup_Extrairevers: TMenuItem
@@ -5314,7 +5324,12 @@ object dup5Main: Tdup5Main
   end
   object Popup_Index: TJvPopupMenu
     Images = imgPopup1
-    ShowCheckMarks = False
+    ImageMargin.Left = 0
+    ImageMargin.Top = 0
+    ImageMargin.Right = 0
+    ImageMargin.Bottom = 0
+    ImageSize.Height = 0
+    ImageSize.Width = 0
     Left = 584
     Top = 40
     object menuIndex_ExtractAll: TMenuItem

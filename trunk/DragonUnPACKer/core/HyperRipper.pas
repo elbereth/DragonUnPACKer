@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.2 2004-05-16 15:57:01 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.3 2004-07-17 19:29:03 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -22,7 +22,8 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, declFSE, lib_language, Registry,
   ExtCtrls, classHyperRipper, lib_utils, classFSE, spec_HRF,
-  DateUtils, Spin, JvComponent, JvCtrls, JvExControls, JvLabel;
+  DateUtils, Spin, JvComponent, JvCtrls, JvExControls, JvLabel,
+  translation;
 
 type PFormatListElem = ^FormatsListElemEx;
      SearchItem = record
@@ -314,6 +315,8 @@ var Reg: TRegistry;
     x: integer;
     itemx : TListItem;
 begin
+
+  translateHyperRipper;
 
   SortMode := true;
   SortType := 0;

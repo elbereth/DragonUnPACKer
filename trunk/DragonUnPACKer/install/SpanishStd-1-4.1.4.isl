@@ -5,7 +5,7 @@
 ; Setup adds the periods automatically (appending a period would result in
 ; two periods being displayed).
 ;
-; $Id: SpanishStd-1-4.1.4.isl,v 1.1.1.1 2004-05-08 10:25:52 elbereth Exp $
+; $Id: SpanishStd-1-4.1.4.isl,v 1.2 2004-05-08 14:26:37 elbereth Exp $
 ;
 ; Versión 2: Traducida al Español por Germán Giraldo G. - Colombia
 ; e-mail: tripleg@tutopia.com
@@ -19,6 +19,7 @@
 [LangOptions]
 LanguageName=Spanish - Traditional Sort
 LanguageID=$040a
+LanguageCodePage=0
 ; Si el lenguaje al cual está traduciendo requiere un tipo de letra o
 ; tamaño, quite el comentario de alguna de las siguientes entradas y cámbielas según el caso.
 ;DialogFontName=
@@ -137,7 +138,8 @@ UserInfoNameRequired=Debe de introducir un nombre.
 ; *** "Select Destination Location" wizard page
 WizardSelectDir=Seleccione la Carpeta Destino
 SelectDirDesc=¿Dónde debe instalarse [name]?
-SelectDirLabel2=El programa instalará [name] en la siguiente carpeta.%n%nPara continuar, haga clic en Siguiente. Si desea seleccionar una carpeta distinta, haga clic en Examinar.
+SelectDirLabel3=El programa instalará [name] en la siguiente carpeta.
+SelectDirBrowseLabel=Para continuar, haga clic en Siguiente. Si desea seleccionar una carpeta distinta, haga clic en Examinar.
 DiskSpaceMBLabel=Se requieren al menos [mb] MB de espacio libre en el disco.
 ToUNCPathname=No se puede instalar en un directorio UNC. Si está tratando de instalar en una red, necesitará mapear una unidad de la red.
 InvalidPath=Debe introducir una ruta completa con la letra de unidad; por ejemplo:%n%nC:\APP%n%no una ruta UNC de la siguiente forma:%n%n\\servidor\compartido
@@ -174,7 +176,8 @@ SelectTasksLabel2=Seleccione las tareas adicionales que usted desea que se reali
 ; *** "Select Start Menu Folder" wizard page
 WizardSelectProgramGroup=Selección de la carpeta del Menú de Inicio
 SelectStartMenuFolderDesc=¿Dónde deben ubicarse los iconos de programa?
-SelectStartMenuFolderLabel2=El programa de instalación creará los iconos de programa en la siguiente carpeta del Menú de Inicio.%n%nPara continuar, haga clic en Siguiente. Si desea seleccionar una carpeta distinta, haga clic en Examinar.
+SelectStartMenuFolderLabel3=El programa de instalación creará los iconos de programa en la siguiente carpeta del Menú de Inicio.
+SelectStartMenuFolderBrowseLabel=Para continuar, haga clic en Siguiente. Si desea seleccionar una carpeta distinta, haga clic en Examinar.
 NoIconsCheck=&No crear ningún icono
 MustEnterGroupName=Debe introducir un nombre de carpeta.
 GroupNameTooLong=El nombre de la carpeta o su ruta es demasiado largo.
@@ -300,3 +303,15 @@ SharedFileNameLabel=Nombre de archivo:
 SharedFileLocationLabel=Localización:
 WizardUninstalling=Estado de la Desinstalación
 StatusUninstalling=Desinstalando %1...
+
+[CustomMessages]
+
+NameAndVersion=%1 version %2
+AdditionalIcons=Iconos suplementarias :
+CreateDesktopIcon=Poner un icono sobre el desktop
+CreateQuickLaunchIcon=Poner un icono en la bara de lanzamiento rapido
+ProgramOnTheWeb=Pagina web de %1
+UninstallProgram=Desinstalacion de %1
+LaunchProgram=Ejecutar %1
+AssocFileExtension=&Asociar %1 con la extension de fichero %2
+AssocingFileExtension=Asociando %1 con la extension de fichero %2...

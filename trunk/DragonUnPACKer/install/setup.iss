@@ -1,4 +1,4 @@
-; $Id: setup.iss,v 1.1.1.1 2004-05-08 10:25:52 elbereth Exp $
+; $Id: setup.iss,v 1.2 2004-05-08 14:26:38 elbereth Exp $
 ; $Source: /home/elbzone/backup/cvs/DragonUnPACKer/install/setup.iss,v $
 ;
 ; The contents of this file are subject to the Mozilla Public License
@@ -18,14 +18,14 @@
 Compression=lzma/max
 SolidCompression=yes
 AppName=Dragon UnPACKer 5
-AppVerName=Dragon UnPACKer v5.0.0.127 Release Candidate 3
+AppVerName=Dragon UnPACKer v5.0.0.129 Release Candidate 4
 AppPublisher=Elbereth Zone
 AppPublisherURL=http://www.elberethzone.net
 AppSupportURL=http://www.dragonunpacker.com
 AppUpdatesURL=http://www.dragonunpacker.com
 DefaultDirName={pf}\Dragon UnPACKer 5
 DefaultGroupName=Dragon UnPACKer 5
-OutputBaseFilename=dup500rc3-setup
+OutputBaseFilename=dup500rc4-setup
 AppMutex=DragonUnPACKer5
 AppId=DragonUnPACKer5
 DisableStartupPrompt=yes
@@ -34,13 +34,14 @@ UninstallDisplayIcon={app}\dunpacker5.exe
 WizardImageBackColor=$FFFFFF
 WizardImageFile=dup5-instimage.bmp
 WizardSmallImageFile=dup5-inst55x55.bmp
+VersionInfoVersion=5.0.0.129
 ; uncomment the following line if you want your installation to run on NT 3.51 too.
 MinVersion=4.10,4
 
 [Languages]
-Name: "en"; MessagesFile: "compiler:Default.isl"; InfoBeforeFile: "H:\Programmation\CVS\drgunpacker\install\setup-info-english.rtf"
-Name: "sp"; MessagesFile: "SpanishStd-1-4.1.4.isl"; InfoBeforeFile: "H:\Programmation\CVS\drgunpacker\install\setup-info-spanish.rtf"
-Name: "fr"; MessagesFile: "French-12-4.1.4.isl"; InfoBeforeFile: "H:\Programmation\CVS\drgunpacker\install\setup-info-french.rtf"
+Name: "en"; MessagesFile: "compiler:Default.isl"; InfoBeforeFile: "H:\Programmation\CVS\DragonUnPACKer\DragonUnPACKer\install\setup-info-english.rtf"
+Name: "sp"; MessagesFile: "SpanishStd-1-4.1.4.isl"; InfoBeforeFile: "H:\Programmation\CVS\DragonUnPACKer\DragonUnPACKer\install\setup-info-spanish.rtf"
+Name: "fr"; MessagesFile: "compiler:languages\French.isl"; InfoBeforeFile: "H:\Programmation\CVS\DragonUnPACKer\DragonUnPACKer\install\setup-info-french.rtf"
 
 [Tasks]
 Name: "desktopicon"; Languages: en; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; MinVersion: 4,4

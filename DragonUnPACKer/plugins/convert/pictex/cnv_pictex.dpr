@@ -1,6 +1,6 @@
 library cnv_pictex;
 
-// $Id: cnv_pictex.dpr,v 1.2 2004-05-20 16:50:35 elbereth Exp $
+// $Id: cnv_pictex.dpr,v 1.3 2004-07-15 16:41:48 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/cnv_pictex.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -27,7 +27,10 @@ uses
   class_Images in 'class_Images.pas',
   Convert in 'Convert.pas' {frmConvert},
   lib_version in '..\..\..\common\lib_version.pas',
-  spec_DPAL in '..\..\..\common\spec_DPAL.pas';
+  spec_HMC in '..\..\..\common\spec_HMC.pas',
+  spec_DDS in '..\..\..\common\spec_DDS.pas',
+  spec_DPAL in '..\..\..\common\spec_DPAL.pas',
+  lib_BinUtils in '..\..\..\common\lib_BinUtils.pas';
 
 {$E d5c}
 
@@ -53,16 +56,6 @@ type ConvertListElem = record
      TLanguageCallback = function (lngid: ShortString): ShortString;
 //     EBadType = class(Exception);
 
-     HMC_TEX_Entry = packed record
-       Size: cardinal;
-       Type1: array[0..3] of char;
-       Type2: array[0..3] of char;
-       Unknown1: Cardinal;
-       Unknown2: word;
-       Height: word;
-       Unknown: array[1..4] of Cardinal;
-     end;
-
 var Percent: TPercentCallback;
     DLNGStr: TLanguageCallback;
     CurPath: ShortString;
@@ -70,7 +63,7 @@ var Percent: TPercentCallback;
     AHandle: THandle;
     AOwner: TComponent;
 
-const DRIVER_VERSION = 10610;
+const DRIVER_VERSION = 10710;
 const DUP_VERSION = 50040;
 
 { * Version History:
@@ -83,6 +76,8 @@ const DUP_VERSION = 50040;
   *                       Added palette management in config box
   * v1.0.5 Beta  (10510): Fixed some bugs in palette creator (author/name)
   * v1.0.6 Beta  (10610): Added Hitman: Contracts RGBA support
+  * v1.0.7 Beta  (10710): Using class_Images from Glacier TEX Editor v3.1
+  *                       (improved a lot...)
   * }
 
 function DUCIVersion: Byte; stdcall;
@@ -122,7 +117,11 @@ begin
   end
   else if (fmt = 'POD3') and (uppercase(extractfileext(nam)) = '.TEX') then
     result := true
-  else if (fmt = 'HMCTEX') and (uppercase(extractfileext(nam)) = '.RGBA') then
+  else if ((fmt = 'HMCTEX') or (fmt = 'GTEX')) and
+          ((uppercase(extractfileext(nam)) = '.RGBA')
+       or  (uppercase(extractfileext(nam)) = '.PALN')
+       or  (uppercase(extractfileext(nam)) = '.DXT1')
+       or  (uppercase(extractfileext(nam)) = '.DXT3')) then
     result := true
   else if (fmt = 'ART') then
     result := true;
@@ -219,15 +218,36 @@ begin
     result.List[3].Ext := 'TGA';
     result.List[3].ID := 'TGA24';
   end
-  else if (fmt = 'HMCTEX') and (uppercase(extractfileext(nam)) = '.RGBA') then
+  else if ((fmt = 'HMCTEX') or (fmt = 'GTEX')) then
   begin
-    result.NumFormats := 2;
-    result.List[1].Display := 'TGA - Targa (24bpp)';
-    result.List[1].Ext := 'TGA';
-    result.List[1].ID := 'TGA24';
-    result.List[2].Display := 'TGA - Targa (32bpp)';
-    result.List[2].Ext := 'TGA';
-    result.List[2].ID := 'TGA32';
+    if (uppercase(extractfileext(nam)) = '.RGBA') then
+    begin
+      result.NumFormats := 1;
+      result.List[1].Display := 'TGA - Targa (32bpp)';
+      result.List[1].Ext := 'TGA';
+      result.List[1].ID := 'TGA32';
+    end
+    else if (uppercase(extractfileext(nam)) = '.DXT1') then
+    begin
+      result.NumFormats := 1;
+      result.List[1].Display := 'DDS - Microsoft DirectDraw Surface (DXT1)';
+      result.List[1].Ext := 'DDS';
+      result.List[1].ID := 'DDSDXT1';
+    end
+    else if (uppercase(extractfileext(nam)) = '.DXT3') then
+    begin
+      result.NumFormats := 1;
+      result.List[1].Display := 'DDS - Microsoft DirectDraw Surface (DXT3)';
+      result.List[1].Ext := 'DDS';
+      result.List[1].ID := 'DDSDXT3';
+    end
+    else if (uppercase(extractfileext(nam)) = '.PALN') then
+    begin
+      result.NumFormats := 1;
+      result.List[1].Display := 'TGA - Targa (32bpp)';
+      result.List[1].Ext := 'TGA';
+      result.List[1].ID := 'TGA32';
+    end;
   end
   else if (fmt = 'ART') then
   begin
@@ -624,43 +644,35 @@ begin
 
 end;
 
-function Get0(src: integer): string;
-var tchar: Char;
-    res: string;
-begin
-
-  repeat
-    FileRead(src,tchar,1);
-    res := res + tchar;
-  until tchar = chr(0);
-
-  Get0 := res;
-
-end;
-
-function ConvertHMC_TEX_ABGR(src, dst, cnv: String): integer;
-var Img: TSaveImage32;
-    hSRC: integer;
-    W,H,fsize,x,y: cardinal;
+function ConvertHMC_TEX_RGBA(src, dst: String): integer;
+var x, y, W, H, fsize: integer;
+    img: TSaveImage32;
     HDR: HMC_TEX_Entry;
     Buffer: PByteArray;
+    texFile: TFileStream;
 begin
 
   result := 0;
 
-  img := TSaveImage32.Create;
+  texFile := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
   try
-    hSRC := FileOpen(src,fmOpenRead or fmShareDenyWrite);
+
+    texFile.Read(HDR,SizeOf(HMC_Tex_Entry));
+    Get0stm(texFile);
+
+    if (HDR.Type1 <> 'ABGR') or (HDR.Type2 <> 'ABGR') then
+      raise Exception.Create('Not an RGBA texture!');
+
+    texFile.Read(fsize,4);
+    W := HDR.Width;
+    H := HDR.Height;
+
+    img := TSaveImage32.Create;
     try
-      FileRead(hSRC,HDR,SizeOf(HDR));
-      Get0(hSRC);
-      FileRead(hSRC,fsize,4);
-      W := HDR.Height;
-      H := (fsize div 4) div W;
       img.SetSize(W,H);
       GetMem(Buffer,W*H*4);
       try
-        FileRead(hSRC,Buffer^,H*W*4);
+        texFile.Read(Buffer^,H*W*4);
         for y := 0 to H-1 do
           for x := 0 to W-1 do
           begin
@@ -672,18 +684,129 @@ begin
       finally
         FreeMem(Buffer);
       end;
-      if cnv = 'TGA24' then
-        img.SaveToTGA24(dst)
-      else if cnv = 'TGA32' then
-        img.SaveToTGA32(dst);
+      img.SaveToTGA32(dst);
     finally
-      FileClose(hSRC);
+      img.Free;
     end;
   finally
-    img.Free;
+    texFile.free;
   end;
 
-//  ShowMessage(IntToStr(MillisecondsBetween(Now,StartTime)));
+end;
+
+function ConvertHMC_TEX_DXT(src, dst: string; dxtchar: char): integer;
+var HDR: HMC_TEX_Entry;
+    DDS: DDSHeader;
+    outFile, texFile: TFileStream;
+    fsize: cardinal;
+    x: integer;
+begin
+
+  result := 0;
+
+  texFile := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
+  try
+
+    texFile.Read(HDR,SizeOf(HMC_Tex_Entry));
+    Get0stm(texFile);
+
+    if (HDR.Type1 <> (dxtchar+'TXD')) or (HDR.Type2 <> (dxtchar+'TXD')) then
+      raise Exception.Create('Not an DXT'+dxtchar+' texture!');
+
+    outFile := TFileStream.Create(dst,fmCreate);
+    try
+      texFile.Read(fsize,4);
+      FillChar(DDS,SizeOf(DDSHeader),0);
+      DDS.ID[0] := 'D';
+      DDS.ID[1] := 'D';
+      DDS.ID[2] := 'S';
+      DDS.ID[3] := ' ';
+      DDS.SurfaceDesc.dwSize := 124;
+      DDS.SurfaceDesc.dwFlags := DDSD_CAPS or DDSD_HEIGHT or DDSD_WIDTH or DDSD_PIXELFORMAT or DDSD_LINEARSIZE;
+      if HDR.NumMipMap > 1 then
+        DDS.SurfaceDesc.dwFlags := DDS.SurfaceDesc.dwFlags or DDSD_MIPMAPCOUNT;
+      DDS.SurfaceDesc.dwHeight := HDR.Height;
+      DDS.SurfaceDesc.dwWidth := HDR.Width;
+      DDS.SurfaceDesc.dwPitchOrLinearSize := fsize;
+      DDS.SurfaceDesc.dwMipMapCount := HDR.NumMipMap;
+      DDS.SurfaceDesc.ddpfPixelFormat.dwSize := 32;
+      DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_FOURCC;
+      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'D';
+      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[1] := 'X';
+      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[2] := 'T';
+      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := dxtchar;
+      DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDSCAPS_TEXTURE;
+      if HDR.NumMipMap > 1 then
+        DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDS.SurfaceDesc.ddsCaps.dwCaps1 or DDSCAPS_COMPLEX or DDSCAPS_MIPMAP;
+      outFile.Write(DDS,SizeOf(DDSHeader));
+      outFile.CopyFrom(texFile,fsize);
+      for x := 2 to HDR.NumMipMap do
+      begin
+        texFile.Read(fsize,4);
+        outFile.CopyFrom(texFile,fsize);
+      end;
+    finally
+      outFile.Free;
+    end;
+  finally
+    texFile.Free;
+  end;
+
+end;
+
+function ConvertHMC_TEX_PALN(src, dst: string): integer;
+var x, y, W, H, fsize: integer;
+    img8: TSaveImage;
+    HDR: HMC_TEX_Entry;
+    Buffer: PByteArray;
+    texFile: TFileStream;
+begin
+
+  result := 0;
+
+  texFile := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
+  try
+
+    texFile.Read(HDR,SizeOf(HMC_Tex_Entry));
+    Get0stm(texFile);
+    texFile.Read(fsize,4);
+
+    if (HDR.Type1 <> 'NLAP') or (HDR.Type2 <> 'NLAP') then
+      raise Exception.Create('Not an PALN texture!');
+
+    img8 := TSaveImage.Create;
+    GetMem(Buffer,fsize);
+    try
+      texFile.Read(Buffer^,fsize);
+      texFile.Read(fsize,4);
+
+      img8.SetSizePal(HDR.Width, HDR.Height,fsize,true);
+
+      W := HDR.Width;
+      H := HDR.Height;
+
+      for y := 0 to H-1 do
+        for x := 0 to W-1 do
+          img8.Pixels[x][y] := Buffer[(y*W)+x];
+
+      texFile.Read(Buffer^,fsize*4);
+
+      for y := 0 to fsize-1 do
+      begin
+        img8.Palette[y].R := Buffer[(y*4)];
+        img8.Palette[y].G := Buffer[(y*4)+1];
+        img8.Palette[y].B := Buffer[(y*4)+2];
+        img8.Palette[y].A := Buffer[(y*4)+3];
+      end;
+
+      img8.SaveToTGA32(dst);
+    finally
+      FreeMem(Buffer);
+      img8.free;
+    end;
+  finally
+    texFile.Free;
+  end;
 
 end;
 
@@ -847,9 +970,21 @@ begin
   begin
     result := ConvertPOD3TEX(src,dst,cnv);
   end
-  else if (fmt = 'HMCTEX') and (uppercase(extractfileext(nam)) = '.RGBA') then
+  else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.RGBA') then
   begin
-    result := ConvertHMC_TEX_ABGR(src,dst,cnv);
+    result := ConvertHMC_TEX_RGBA(src,dst);
+  end
+  else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.PALN') then
+  begin
+    result := ConvertHMC_TEX_PALN(src,dst);
+  end
+  else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.DXT1') then
+  begin
+    result := ConvertHMC_TEX_DXT(src,dst,'1');
+  end
+  else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.DXT3') then
+  begin
+    result := ConvertHMC_TEX_DXT(src,dst,'3');
   end
   else if (fmt = 'ART') then
   begin

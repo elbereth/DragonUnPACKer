@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.1.1.1 2004-05-08 10:25:50 elbereth Exp $
+// $Id: Options.pas,v 1.2 2004-07-17 19:52:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -148,7 +148,7 @@ implementation
 
 {$R *.dfm}
 
-uses lib_language, translation,spec_DULK,lib_Utils;
+uses lib_language, translation,spec_DULK,lib_binUtils,lib_Utils;
 
 var lngFiles: array[1..100] of String;
     numLngFiles: byte;

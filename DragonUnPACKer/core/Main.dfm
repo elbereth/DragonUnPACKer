@@ -4,7 +4,7 @@ object dup5Main: Tdup5Main
   HelpContext = 1
   AlphaBlendValue = 128
   AutoScroll = False
-  Caption = 'Dragon UnPACKer v5.0.0'
+  Caption = 'Dragon UnPACKer v5.1.1'
   ClientHeight = 349
   ClientWidth = 667
   Color = clBtnFace
@@ -299,6 +299,18 @@ object dup5Main: Tdup5Main
       ReadOnly = True
       ScrollBars = ssVertical
       TabOrder = 1
+    end
+    object richLog: TJvRichEdit
+      Left = 0
+      Top = 0
+      Width = 667
+      Height = 82
+      Align = alClient
+      HideScrollBars = False
+      ReadOnly = True
+      ScrollBars = ssVertical
+      TabOrder = 2
+      Zoom = 100
     end
   end
   object OpenDialog: TOpenDialog

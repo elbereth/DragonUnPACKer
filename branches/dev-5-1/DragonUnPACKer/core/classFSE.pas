@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.3.2.2 2004-08-21 10:53:59 elbereth Exp $
+// $Id: classFSE.pas,v 1.3.2.3 2004-08-22 19:36:26 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -29,7 +29,7 @@ interface
 
 uses auxFSE, Classes, Comctrls, Controls, DateUtils, Dialogs, Forms,
      lib_binCopy, lib_binutils, lib_language, lib_utils, Main, prg_ver, Registry,
-     spec_HRF, strutils, Windows, SysUtils, Error;
+     spec_HRF, strutils, Windows, SysUtils, Error,JvJCLUtils;
 
 { Record declaration }
 
@@ -609,6 +609,8 @@ begin
   begin
 
     SmartOpen := GetRegistryBool('StartUp','SmartOpen',True);
+    if SmartOpen then
+      dup5Main.writeLog(DLNGStr('LOG400'));
 
     x := 1 ;
     NumCanOpen := 0;
@@ -621,6 +623,7 @@ begin
       try
         if Drivers[x].CanOpen(pchar(pth),SmartOpen) then
         begin
+          dup5Main.writeLog(ReplaceStr(DLNGStr('LOG500'),'%d',Drivers[x].Info.Name));
           Inc(NumCanOpen);
           CanOpen[NumCanOpen] := x;
         end;
@@ -660,6 +663,8 @@ begin
         CurrentFileSize := FileSeek(i,0,2);
         FileClose(i);
 
+        dup5Main.writeLog(ReplaceStr(DLNGStr('LOG501'),'%d',Drivers[CurrentDriver].Info.Name));
+
         StartTime := Now;
         try
           if (Drivers[CurrentDriver].DUDIVersion = 1) then
@@ -687,8 +692,12 @@ begin
         end;
         LoadTimeOpen := MilliSecondsBetween(Now, StartTime);
 
+        dup5Main.appendLog(inttostr(LoadTimeOpen)+'ms');
+
         if NumElems > 0 then
         begin
+
+          dup5Main.appendLog(DLNGStr('LOG511'));
 
           SetTitle(DLNGstr('TLD002'));
           StartTime := Now;
@@ -701,6 +710,8 @@ begin
 
           DispNumElems := 0;
           y := 0;
+
+          dup5Main.writeLog(ReplaceStr(DLNGStr('LOG502'),'%x',inttostr(NumElems)));
 
           try
             for y := 1 to NumElems do
@@ -744,6 +755,9 @@ begin
           end;
 
           LoadTimeRetrieve := MilliSecondsBetween(Now, StartTime);
+
+          dup5Main.appendLog(inttostr(LoadTimeRetrieve)+'ms');
+
           SetTitle(DLNGstr('TLD003'));
           StartTime := Now;
 
@@ -752,6 +766,8 @@ begin
           InternalExtract := DrvInfo.ExtractInternal;
           CurrentFile := DrvInfo.FileHandle;
 
+          dup5Main.writeLog(DLNGStr('LOG503'));
+
           if Sch <> '' then
             ParseDirs(Sch, DataBloc, ExtractFileName(pth))
           else
@@ -759,17 +775,22 @@ begin
 
           LoadTimeParse := MilliSecondsBetween(Now, StartTime);
 
+          dup5Main.appendLog(inttostr(LoadTimeParse)+'ms');
+
           CurrentFileName := pth;
 
           SetTitle(pth);
 
           res := true;
 
+          dup5Main.writeLog(ReplaceStr(ReplaceStr(DLNGStr('LOG504'),'%p',Drivers[CurrentDriver].Info.Name),'%f',DriverID));
+
           break;
 
         end
         else if NumElems = 0 then
         begin
+          dup5Main.appendLog(DLNGStr('LOG512'));
           inc(ErrNum);
           DrvInfo := Drivers[CurrentDriver].GetDriver;
           Drivers[CurrentDriver].CloseFile;
@@ -781,6 +802,7 @@ begin
         end
         else
         begin
+          dup5Main.appendLog(DLNGStr('LOG513'));
           inc(ErrNum);
           case NumElems of
             -4: begin
@@ -812,6 +834,7 @@ begin
             else
               ErrStr := ErrList.Strings[x];
         end;
+        dup5Main.writeLog(ErrStr);
         MessageDlg(ErrStr,mtInformation,[mbOk],0);
         RestoreTitle;
       end;

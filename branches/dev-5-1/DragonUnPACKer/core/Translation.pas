@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.3.2.1 2004-08-21 14:58:43 elbereth Exp $
+// $Id: Translation.pas,v 1.3.2.2 2004-08-22 19:36:26 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,7 +18,6 @@ unit Translation;
 
 interface
 procedure TranslateAbout();
-//procedure TranslateDirSelect();
 procedure TranslateError();
 procedure TranslateHyperRipper();
 procedure TranslateInfos();
@@ -72,6 +71,10 @@ begin
     menuIndex_Infos.Caption := DLNGStr('POP2S3');
     menuIndex_Expand.Caption := DLNGStr('POP2S4');
     menuIndex_Collapse.Caption := DLNGStr('POP2S5');
+
+    menuLog_Show.Caption := DLNGstr('POP3S1');
+    menuLog_Hide.Caption := DLNGstr('POP3S2');
+    menuLog_Clear.Caption := DLNGstr('POP3S3');
 
     lstContent.Header.Columns.Items[0].Text := DLNGStr('LSTCP1');
     lstContent.Header.Columns.Items[1].Text := DLNGStr('LSTCP2');
@@ -263,6 +266,9 @@ begin
 
     chkUseHyperRipper.Caption := DLNGStr('OPT125');
     chkUseHyperRipper.Font.Name := GetFont();
+
+    chkLog.Caption := DLNGStr('OPT126');
+    chkLog.Font.Name := GetFont();
 
     cmdCnvAbout.Caption := DLNGStr('OPT201');
     cmdCnvAbout.Font.Name := GetFont();

@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.3 2004-07-17 19:32:09 elbereth Exp $
+// $Id: Main.pas,v 1.3.2.1 2004-08-22 19:36:26 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -28,7 +28,6 @@ uses
 
 type
   Tdup5Main = class(TForm)
-    Status: TStatusBar;
     Splitter: TSplitter;
     ctrlBar: TControlBar;
     Percent: TProgressBar;
@@ -96,6 +95,15 @@ type
     lstIndex2: TVirtualStringTree;
     PanelStatusEx: TPanel;
     TimerParam: TTimer;
+    SplitterBottom: TSplitter;
+    Popup_Log: TJvPopupMenu;
+    menuLog_Hide: TMenuItem;
+    menuLog_Show: TMenuItem;
+    panBottom: TPanel;
+    Status: TStatusBar;
+    memLog: TMemo;
+    N3: TMenuItem;
+    menuLog_Clear: TMenuItem;
     procedure FormResize(Sender: TObject);
     procedure menuFichier_QuitterClick(Sender: TObject);
     procedure menuAbout_AboutClick(Sender: TObject);
@@ -185,12 +193,20 @@ type
     procedure lstIndex2ContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
     procedure TimerParamTimer(Sender: TObject);
+    procedure menuLog_ShowClick(Sender: TObject);
+    procedure menuLog_HideClick(Sender: TObject);
+    procedure Popup_LogPopup(Sender: TObject);
+    procedure menuLog_ClearClick(Sender: TObject);
   private
     AlreadyDragging: boolean;
+    bottomHeight: integer;
     procedure Open_Hub(src: String);
     procedure setRichEditLineStyle(R: TJvRichEdit; Line: Integer;
       Style: TFontStyles);
   public
+    procedure writeLog(text: string);
+    procedure appendLog(text: string);
+    procedure separatorLog();
     { Déclarations publiques }
   end;
 
@@ -239,6 +255,9 @@ begin
     Reg.Free;
   end;
 
+  separatorLog;
+  writeLog(ReplaceStr(DLNGStr('LOG101'),'%f',src));
+
   if FSE.LoadFile(src, res) then
   begin
     Caption := 'Dragon UnPACKer v' + CurVersion + ' ' + CurEdit+ ' - '+src;
@@ -251,11 +270,13 @@ begin
   else
   begin
 
+    writeLog(DLNGStr('LOG102'));
+
     if res then
     begin
+      writeLog(DLNGStr('LOG103'));
       frmHyperRipper.Show;
       frmHyperRipper.txtSource.Text := src;
-
     end;
 
   end;
@@ -833,6 +854,10 @@ begin
       Reg.WriteInteger('Main_H',Height);
       Reg.WriteInteger('Main_W',Width);
       Reg.WriteInteger('Main_S',lstIndex2.Width);
+      if memLog.Visible then
+        Reg.WriteInteger('Main_B',panBottom.Height)
+      else
+        Reg.WriteInteger('Main_B',bottomHeight);
       Reg.WriteInteger('lstContent_0',lstContent.Header.Columns.Items[0].Width);
       Reg.WriteInteger('lstContent_1',lstContent.Header.Columns.Items[1].Width);
       Reg.WriteInteger('lstContent_2',lstContent.Header.Columns.Items[2].Width);
@@ -849,9 +874,6 @@ begin
 
   FSE.FreeDrivers;
   FSE.Free;
-{  FSE.FreeList;
-  FSE.FreeDrivers;
-  FSE.Free;}
 
   Icons.close;
   Icons.Free;
@@ -889,6 +911,12 @@ var Reg: TRegistry;
 begin
 
   Caption := 'Dragon UnPACKer v' + CurVersion + ' ' + CurEdit;
+
+  if CurEdit = '' then
+    dup5Main.writeLog('Dragon UnPACKer v' + CurVersion + ' (Build ' + IntToStr(CurBuild) +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')')
+  else
+    dup5Main.writeLog('Dragon UnPACKer v' + CurVersion + ' ' + CurEdit + ' (Build ' + IntToStr(CurBuild)  +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')');
+
   menuEdit.Visible := false;
   menuTools.Visible := false;
 
@@ -915,6 +943,12 @@ begin
         LoadInternalLanguage
       else
         LoadLanguage(ExtractFilePath(Application.ExeName)+'data\'+clng);
+
+      if Reg.ValueExists('ShowLog') then
+      begin
+        memLog.visible := Reg.ReadBool('ShowLog');
+        splitterBottom.Visible := memLog.Visible;
+      end;
 
       if Reg.ValueExists('Look') then
         clook := Reg.ReadString('Look')
@@ -963,6 +997,18 @@ begin
         tmpi := Reg.ReadInteger('Main_S');
         if tmpi > 20 then
           lstIndex2.Width := tmpi;
+      end;
+      if Reg.ValueExists('Main_B') then
+      begin
+        tmpi := Reg.ReadInteger('Main_B');
+        if tmpi > 100 then
+          bottomHeight := tmpi
+        else
+          bottomHeight := 100;
+        if memLog.Visible then
+          panBottom.Height := bottomHeight
+        else
+          panBottom.Height := status.Height;
       end;
       if Reg.ValueExists('lstContent_0') then
       begin
@@ -1023,16 +1069,20 @@ begin
   if clook <> 'default.dulk' then
     LoadLook(clook);
 
-//  ActionManager.Images := imgIndex;
+  dup5Main.writeLog(DLNGStr('LOG001'));
 
-//  XPMenu.Active := true;
+  dup5Main.writeLog(DLNGStr('LOG002'));
 
   FSE := FSEInit;
   FSE.SetProgressBar(PercentCB);
   FSE.SetLanguage(LanguageCB);
   FSE.SetPath(ExtractFilePath(Application.ExeName)+'data\drivers\');
-  FSE.SetOwner(frmConfig); 
+  FSE.SetOwner(frmConfig);
   FSE.LoadDrivers(ExtractFilePath(Application.ExeName)+'data\drivers\');
+
+  dup5Main.appendLog(ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(FSe.NumDrivers)));
+
+  dup5Main.writeLog(DLNGStr('LOG003'));
 
   CPlug := CPlugInit;
   CPlug.SetPercent(PercentCB);
@@ -1041,12 +1091,18 @@ begin
   CPlug.SetOwner(self);
   CPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\convert\');
 
+  dup5Main.appendLog(ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(CPlug.NumPlugins)));
+
+  dup5Main.writeLog(DLNGStr('LOG004'));
+
   HPlug := HPlugInit;
   HPlug.SetPercent(PercentCB);
   HPlug.SetLanguage(LanguageCB);
   HPlug.SetPath(ExtractFilePath(Application.ExeName)+'data\HyperRipper\');
   HPlug.SetOwner(frmHyperRipper);
   HPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\HyperRipper\');
+
+  dup5Main.appendLog(ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(HPlug.NumPlugins)));
 
   Icons := TIconsFromExt.Create;
   Icons.init(imgContents);
@@ -1707,17 +1763,13 @@ end;
 procedure Tdup5Main.closeCurrent;
 begin
 
+  writeLog(DLNGStr('LOG200'));
+
   dup5Main.menuFichier_Fermer.Enabled := False;
   dup5Main.Bouton_Fermer.Enabled := False;
   dup5Main.menuEdit.Visible := False;
   dup5Main.menuTools.Visible := False;
   dup5Main.Caption := 'Dragon UnPACKer v'+CurVersion+' '+CurEdit;
-
-  if CurFile > 0 then
-  begin
-    FileClose(CurFile);
-    CurFile := 0;
-  end;
 
   dup5Main.Status.Panels.Items[0].Text := '0 '+DLNGStr('STAT10');
   dup5Main.Status.Panels.Items[1].Text := '0 '+DLNGStr('STAT20');
@@ -1728,6 +1780,14 @@ begin
   dup5Main.lstContent.clear;
 //  dup5Main.lstIndex.Items.Clear;
   dup5Main.lstIndex2.Clear;
+
+  if CurFile > 0 then
+  begin
+    FileClose(CurFile);
+    CurFile := 0;
+  end;
+
+  appendLog(DLNGStr('LOG510'));
 
 end;
 
@@ -2097,8 +2157,10 @@ var disp: string;
 begin
 
   disp := GetNodePath2(Node);
+  writelog(ReplaceStr(DLNGStr('LOG300'),'%d',disp));
   FSE.BrowseDir(disp);
   CurrentDir := disp;
+  appendLog(ReplaceStr(DLNGStr('LOG301'),'%e',inttostr(lstContent.TotalCount)));
 
 end;
 
@@ -2210,6 +2272,87 @@ begin
     RecentFiles_Add(ParamStr(1));
     Open_HUB(ParamStr(1));
   end;
+
+end;
+
+procedure Tdup5Main.menuLog_ShowClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      Reg.WriteBool('ShowLog',true);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
+  
+  memLog.Visible := true;
+  SplitterBottom.Visible := true;
+  panBottom.Height := bottomHeight;
+
+end;
+
+procedure Tdup5Main.menuLog_HideClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      Reg.WriteBool('ShowLog',false);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
+
+  memLog.Visible := false;
+  SplitterBottom.Visible := false;
+  bottomHeight := panBottom.Height;
+  panBottom.Height := status.Height;
+
+end;
+
+procedure Tdup5Main.Popup_LogPopup(Sender: TObject);
+begin
+
+  menuLog_Show.Visible := not(memLog.Visible);
+  menuLog_Hide.Visible := memLog.Visible;
+
+end;
+
+procedure Tdup5Main.writeLog(text: string);
+begin
+
+  memLog.Lines.Add(DateTimeToStr(now)+' : '+text)
+
+end;
+
+procedure Tdup5Main.appendLog(text: string);
+begin
+
+  memLog.Lines.Strings[memLog.Lines.Count-1] := memLog.Lines.Strings[memLog.Lines.Count-1]+' '+text;
+
+end;
+
+procedure Tdup5Main.separatorLog;
+begin
+
+  writelog(StringOfchar('-',80));
+
+end;
+
+procedure Tdup5Main.menuLog_ClearClick(Sender: TObject);
+begin
+
+  memLog.Clear;
 
 end;
 

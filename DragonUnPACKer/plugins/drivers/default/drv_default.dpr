@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.5 2004-05-22 14:12:23 elbereth Exp $
+// $Id: drv_default.dpr,v 1.6 2004-06-12 08:46:48 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -32,6 +32,8 @@ uses
 {$R *.RES}
 
 {$Include datetime.inc}
+
+type EBadFormat = class(Exception);
 
 type FSE = ^element;
      element = record
@@ -128,6 +130,7 @@ type FSE = ^element;
     13211        Fixed SCGL always opening files (even for WestWood TLK files).
     13220  50024 Added support for Painkiller .PAK files
     13340        Added support for Hitman: Contracts .TEX files
+    13440        Added support for CyberBykes .BIN files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -275,6 +278,12 @@ type BIGHeader = packed record
        Size: array[0..3] of byte;   // Inverse Integer
      end;
      // Get0 filename
+
+type BIN_Entry = packed record
+       Filename: array[0..15] of char;
+       Offset: cardinal;
+       Size: cardinal;
+     end;
 
 type BKF_Entry = packed record
        Filename: array[0..35] of char;
@@ -1044,10 +1053,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 13341;
+  DRIVER_VERSION = 13440;
   DUP_VERSION = 50024;
-  CVS_REVISION = '$Revision: 1.5 $';
-  CVS_DATE = '$Date: 2004-05-22 14:12:23 $';
+  CVS_REVISION = '$Revision: 1.6 $';
+  CVS_DATE = '$Date: 2004-06-12 08:46:48 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1985,6 +1994,78 @@ begin
       DrvInfo.FileHandle := FHandle;
       DrvInfo.ExtractInternal := True;
 
+    end;
+  end
+  else
+    Result := -2;
+
+end;
+
+function ReadCyberBykesBIN(src: string): Integer;
+var ENT: BIN_Entry;
+    disp: string;
+    NumE, x, preval: integer;
+    curOffset: int64;
+    TotFSize: longword;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    TotFSize := FileSeek(Fhandle,0,2);
+    FileSeek(FHandle,0,0);
+    FileRead(FHandle,NumE,4);
+
+    if (((NumE*4)+4) > TotFSize) or (NumE < 0) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'CBIN';
+      ErrInfo.Games := 'CyberBykes, Shadow Racer VR';
+    end
+    else
+    begin
+
+      try
+
+        for x:= 1 to NumE do
+        begin
+          Per := ROund(((x / NumE)*100));
+          SetPercent(Per);
+          FileRead(FHandle,ENT,SizeOf(BIN_Entry));
+          CurOffset := FileSeek(FHandle,0,1);
+          FileSeek(FHandle,ENT.Offset,0);
+          FileRead(FHandle,preval,4);
+          FileSeek(FHandle,curOffset,0);
+          disp := Strip0(ENT.Filename);
+          FSE_Add(disp,ENT.Offset+4,ENT.Size-4,preval,0);
+        end;
+
+        Result := NumE;
+
+        DrvInfo.ID := 'CBIN';
+        DrvInfo.Sch := '';
+        DrvInfo.FileHandle := FHandle;
+        DrvInfo.ExtractInternal := False;
+
+      except
+        on E:EBadFormat do
+        begin
+          FileClose(Fhandle);
+          FSE_Free;
+          FHandle := 0;
+          Result := -3;
+          ErrInfo.Format := 'CBIN';
+          ErrInfo.Games := 'CyberBykes, Shadow Racer VR';
+        end;
+        on E:Exception do
+        begin
+          raise e;
+        end;
+      end;
     end;
   end
   else
@@ -7425,6 +7506,8 @@ begin
       ReadFormat := ReadDune3BAG(fil)
     else if ext = 'BAR' then
       ReadFormat := ReadAgeOfMythologyBAR(fil)
+    else if ext = 'BIN' then
+      ReadFormat := ReadCyberBykesBIN(fil)
     else if ext = 'BKF' then
       ReadFormat := ReadMotoRacerBKF(fil)
     else if ext = 'BOX' then
@@ -7803,7 +7886,7 @@ begin
   ext := UpperCase(ext);
 
   if Deeper then
-    IsFormat := IsFormatSMART(fil) or (ext = 'POD') or (ext = 'PAK') or (ext = 'TLK') or (ext = 'SDT') or (ext = 'RFH') or (ext = 'MTF') or (ext = 'BKF') or (ext = 'DAT') or (ext = 'PBO') or (ext = 'AWF') or (ext = 'SND') or (ext = 'ART') or (ext = 'SNI') or (ext = 'DIR') or (ext = 'IMG') or (ext = 'BAR') or (ext = 'BAG') or (ext = 'SQH') or (ext = 'GL') or (ext = 'RFA') or (ext = 'ADF') or (ext = 'RES') or (ext = 'XRS') or (ext = 'STUFF')
+    IsFormat := IsFormatSMART(fil) or (ext = 'POD') or (ext = 'PAK') or (ext = 'TLK') or (ext = 'SDT') or (ext = 'RFH') or (ext = 'MTF') or (ext = 'BKF') or (ext = 'DAT') or (ext = 'PBO') or (ext = 'AWF') or (ext = 'SND') or (ext = 'ART') or (ext = 'SNI') or (ext = 'DIR') or (ext = 'IMG') or (ext = 'BAR') or (ext = 'BAG') or (ext = 'SQH') or (ext = 'GL') or (ext = 'RFA') or (ext = 'ADF') or (ext = 'RES') or (ext = 'XRS') or (ext = 'STUFF') or (ext = 'BIN')
   else
     if ext = 'PAK' then
       IsFormat := True
@@ -7822,6 +7905,8 @@ begin
     else if ext = 'BAR' then
       IsFormat := True
     else if ext = 'BIG' then
+      IsFormat := True
+    else if ext = 'BIN' then
       IsFormat := True
     else if ext = 'BOX' then
       IsFormat := True

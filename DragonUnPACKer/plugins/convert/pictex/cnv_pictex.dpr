@@ -1,6 +1,6 @@
 library cnv_pictex;
 
-// $Id: cnv_pictex.dpr,v 1.5.2.1 2004-10-03 17:13:35 elbereth Exp $
+// $Id: cnv_pictex.dpr,v 1.5.2.2 2005-03-27 10:13:30 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/cnv_pictex.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -63,8 +63,8 @@ var Percent: TPercentCallback;
     AHandle: THandle;
     AOwner: TComponent;
 
-const DRIVER_VERSION = 20010;
-const DUP_VERSION = 51140;
+const DRIVER_VERSION = 20110;
+const DUP_VERSION = 51240;
 
 { * Version History:
   * v1.0.0 Alpha (10000): First version (never distributed)
@@ -80,6 +80,7 @@ const DUP_VERSION = 51140;
   *                       (improved a lot...)
   * v1.0.7       (10740): Removed beta status for 5.0.0 release
   * v2.0.0 Beta  (20010): Updated to DUCI v3 (Streams support)
+  * v2.0.1 Beta  (20110): Fixed some bugs
   * }
 
 function DUCIVersion: Byte; stdcall;
@@ -425,55 +426,61 @@ function ConvertWAD343Stream(src, dst: TStream; cnv: String): integer;
 var Img: TSaveImage;
     W,H,x,y: integer;
     HDR: WAD2MipMap;
-    Buffer: PByteArray;
+    //Buffer: PByteArray;
+    Buffer: array of byte;
     cOffset: int64;
 begin
 
   result := 0;
 
-  img := TSaveImage.Create;
+  cOffset := src.Seek(0,SoFromCurrent);
+  src.ReadBuffer(HDR.FileName,16);
+  src.ReadBuffer(HDR.Width,4);
+  src.ReadBuffer(HDR.Height,4);
+  src.ReadBuffer(HDR.Q1Offset,4);
+  src.ReadBuffer(HDR.Q2Offset,4);
+  src.ReadBuffer(HDR.Q4Offset,4);
+  src.ReadBuffer(HDR.Q8Offset,4);
+
+  W := HDR.Width;
+  H := HDR.Height;
+
+  img := TSaveImage.Create(W,H);
   try
-    cOffset := src.Seek(0,SoFromCurrent);
-    src.ReadBuffer(HDR.FileName,16);
-    src.ReadBuffer(HDR.Width,4);
-    src.ReadBuffer(HDR.Height,4);
-    src.ReadBuffer(HDR.Q1Offset,4);
-    src.ReadBuffer(HDR.Q2Offset,4);
-    src.ReadBuffer(HDR.Q4Offset,4);
-    src.ReadBuffer(HDR.Q8Offset,4);
-    src.Seek(cOffset + HDR.Q1Offset,soFromBeginning);
-    W := HDR.Width;
-    H := HDR.Height;
-    img.SetSize(W,H);
     if (cnv = 'M8') or (cnv = 'WAL') then
       img.SetMipMaps(3);
-    GetMem(Buffer,W*H);
+    //GetMem(Buffer,W*H);
+    if ((H*W) < 768) then
+      SetLength(Buffer,768)
+    else
+      SetLength(Buffer,H*W);
     try
       src.Seek(cOffset + HDR.Q1Offset,soFromBeginning);
-      src.ReadBuffer(Buffer^,H*W);
+      //src.ReadBuffer(Buffer^,H*W);
+      src.ReadBuffer(Buffer[0],H*W);
       for y := 0 to H-1 do
         for x := 0 to W-1 do
           img.Pixels[x][y] := Buffer[(y*W)+x];
       if (cnv = 'M8') or (cnv = 'WAL') then
       begin
         src.Seek(cOffset + HDR.Q2Offset,soFromBeginning);
-        src.ReadBuffer(Buffer^,(H div 2)*(W div 2));
+        src.ReadBuffer(Buffer[0],(H div 2)*(W div 2));
         for y := 0 to (H div 2)-1 do
           for x := 0 to (W div 2)-1 do
             img.MipMaps[0][x][y] := Buffer[(y*W)+x];
         src.Seek(cOffset + HDR.Q4Offset,soFromBeginning);
-        src.ReadBuffer(Buffer^,(H div 4)*(W div 4));
+        src.ReadBuffer(Buffer[0],(H div 4)*(W div 4));
         for y := 0 to (H div 4)-1 do
           for x := 0 to (W div 4)-1 do
             img.MipMaps[1][x][y] := Buffer[(y*W)+x];
         src.Seek(cOffset + HDR.Q8Offset,soFromBeginning);
-        src.ReadBuffer(Buffer^,(H div 8)*(W div 8));
+        src.ReadBuffer(Buffer[0],(H div 8)*(W div 8));
         for y := 0 to (H div 8)-1 do
           for x := 0 to (W div 8)-1 do
             img.MipMaps[2][x][y] := Buffer[(y*W)+x];
       end;
-      src.Seek(-770,soFromEnd);   // won't work is source stream is not a single asset
-      src.ReadBuffer(Buffer^,768);
+      src.Seek(-770,soFromEnd);   // won't work if source stream is not a single asset
+      src.ReadBuffer(Buffer[0],768);
       for x := 0 to 255 do
       begin
         img.Palette[x].R := Buffer[x*3];
@@ -481,7 +488,8 @@ begin
         img.Palette[x].B := Buffer[(x*3)+2];
       end;
     finally
-      FreeMem(Buffer);
+//      FreeMem(Buffer);
+      SetLength(Buffer,0);
     end;
     if cnv = 'BMP' then
       img.SaveToBMPStream(dst)
@@ -1178,7 +1186,7 @@ procedure AboutBox; stdcall;
 begin
 
   MessageBoxA(AHandle, PChar('Picture/Textures Convert Plugin v'+getVersion(DRIVER_VERSION)+#10+
-                          '(c)Copyright 2002-2004 Alexandre "Elbereth" Devilliers'+#10+#10+
+                          '(c)Copyright 2002-2005 Alexandre "Elbereth" Devilliers'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+#10+
                           DLNGStr('CNV010')
                           )

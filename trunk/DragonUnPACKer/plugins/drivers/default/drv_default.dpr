@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.8 2004-07-15 17:22:49 elbereth Exp $
+// $Id: drv_default.dpr,v 1.9 2004-07-17 19:13:21 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -133,10 +133,15 @@ type FSE = ^element;
     13341        Added support for Hitman: Contracts .PRM files
     13440        Added support for CyberBykes .BIN files
                  Enhanced support for Glacier Engine .TEX files (previously Hitman: Contracts)
+    13441  50040 Found the meaning of 8 bytes in the DWFBEntry structure.
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
   HPI Extraction when compression = 0 don't use HPIRead (no decryption of data)
+
+  Known bugs/problems:
+  Dungeon Keeper 2 DWFB files (.WAD) have compressed entries sometimes.
+  (Those are not decompressed.. unknown compression used, maybe hauffman)
 
   Coded but disabled:
   Game                        Ext.   Description
@@ -676,8 +681,11 @@ type DWFBHeader = packed record
        NameOffset: integer;
        NameSize: integer;
        Offset: integer;
-       Size: integer;
-       Filler: array[0..19] of byte;
+       Size: integer;        // Compressed size in bytes
+       CompMethod: integer;  // Compression method: 0 = None
+                             //                     4 = Unknown compression method
+       UncompSize: integer;  // Decompressed size in bytes
+       Filler: array[0..11] of byte;
      end;
 
 type SDTIndex = packed record
@@ -1055,10 +1063,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 13440;
-  DUP_VERSION = 50024;
-  CVS_REVISION = '$Revision: 1.8 $';
-  CVS_DATE = '$Date: 2004-07-15 17:22:49 $';
+  DRIVER_VERSION = 13441;
+  DUP_VERSION = 50040;
+  CVS_REVISION = '$Revision: 1.9 $';
+  CVS_DATE = '$Date: 2004-07-17 19:13:21 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -2367,13 +2375,13 @@ begin
 
       Per := ROund(((x / NumE)*100));
       SetPercent(Per);
-      FileSeek(Fhandle, 88 + (x - 1) * 40, 0);
+      FileSeek(Fhandle, SizeOf(DWFBHeader) + (x - 1) * SizeOf(DWFBEntry), 0);
       FileRead(Fhandle, ENT, 40);
 
       FileSeek(FHandle, ENT.NameOffset,0);
       disp := Get32v(FHandle,ENT.NameSize);
 
-      FSE_Add(Strip0(disp),ENT.Offset,ENT.Size,0,0);
+      FSE_Add(Strip0(disp),ENT.Offset,ENT.Size,ENT.CompMethod,ENT.UncompSize);
 
     end;
 

@@ -5,7 +5,7 @@ object dup5Main: Tdup5Main
   AlphaBlendValue = 128
   AutoScroll = False
   Caption = 'Dragon UnPACKer v5.1.2'
-  ClientHeight = 349
+  ClientHeight = 311
   ClientWidth = 667
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -69,13 +69,13 @@ object dup5Main: Tdup5Main
   object Splitter: TSplitter
     Left = 113
     Top = 30
-    Height = 215
+    Height = 177
     HelpContext = 2
     MinSize = 20
   end
   object SplitterBottom: TSplitter
     Left = 0
-    Top = 245
+    Top = 207
     Width = 667
     Height = 3
     Cursor = crVSplit
@@ -159,7 +159,7 @@ object dup5Main: Tdup5Main
     Left = 116
     Top = 30
     Width = 551
-    Height = 215
+    Height = 177
     HelpContext = 11
     Align = alClient
     DragMode = dmAutomatic
@@ -173,7 +173,6 @@ object dup5Main: Tdup5Main
     Header.Options = [hoColumnResize, hoShowSortGlyphs, hoVisible]
     HintAnimation = hatNone
     Images = imgContents
-    ParentBackground = False
     PopupMenu = Popup_Contents
     TabOrder = 1
     TreeOptions.AutoOptions = [toAutoDropExpand, toAutoScroll, toAutoSort, toAutoTristateTracking, toAutoDeleteMovedNodes]
@@ -215,7 +214,7 @@ object dup5Main: Tdup5Main
     Left = 0
     Top = 30
     Width = 113
-    Height = 215
+    Height = 177
     HelpContext = 12
     Align = alLeft
     Header.AutoSizeIndex = 0
@@ -227,7 +226,6 @@ object dup5Main: Tdup5Main
     Header.MainColumn = -1
     Header.Options = [hoColumnResize, hoDrag]
     Images = imgIndex
-    ParentBackground = False
     PopupMenu = Popup_Index
     TabOrder = 2
     TreeOptions.PaintOptions = [toHideSelection, toShowButtons, toShowDropmark, toShowRoot, toShowTreeLines, toThemeAware, toUseBlendedImages]
@@ -251,7 +249,7 @@ object dup5Main: Tdup5Main
   end
   object panBottom: TPanel
     Left = 0
-    Top = 248
+    Top = 210
     Width = 667
     Height = 101
     Align = alBottom
@@ -300,7 +298,7 @@ object dup5Main: Tdup5Main
       ReadOnly = True
       ScrollBars = ssVertical
       TabOrder = 1
-      Zoom = 100
+      WordWrap = False
     end
   end
   object OpenDialog: TOpenDialog

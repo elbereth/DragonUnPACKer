@@ -1,4 +1,4 @@
-; $Id: setup.iss,v 1.3 2004-07-18 09:06:59 elbereth Exp $
+; $Id: setup.iss,v 1.2 2004-05-08 14:26:38 elbereth Exp $
 ; $Source: /home/elbzone/backup/cvs/DragonUnPACKer/install/setup.iss,v $
 ;
 ; The contents of this file are subject to the Mozilla Public License
@@ -18,14 +18,14 @@
 Compression=lzma/max
 SolidCompression=yes
 AppName=Dragon UnPACKer 5
-AppVerName=Dragon UnPACKer v5.0.0 (build 134/stable)
+AppVerName=Dragon UnPACKer v5.0.0.129 Release Candidate 4
 AppPublisher=Elbereth Zone
 AppPublisherURL=http://www.elberethzone.net
-AppSupportURL=http://sourceforge.net/projects/dragonunpacker/
+AppSupportURL=http://www.dragonunpacker.com
 AppUpdatesURL=http://www.dragonunpacker.com
 DefaultDirName={pf}\Dragon UnPACKer 5
 DefaultGroupName=Dragon UnPACKer 5
-OutputBaseFilename=dup500-setup
+OutputBaseFilename=dup500rc4-setup
 AppMutex=DragonUnPACKer5
 AppId=DragonUnPACKer5
 DisableStartupPrompt=yes
@@ -34,7 +34,7 @@ UninstallDisplayIcon={app}\dunpacker5.exe
 WizardImageBackColor=$FFFFFF
 WizardImageFile=dup5-instimage.bmp
 WizardSmallImageFile=dup5-inst55x55.bmp
-VersionInfoVersion=5.0.0.134
+VersionInfoVersion=5.0.0.129
 ; uncomment the following line if you want your installation to run on NT 3.51 too.
 MinVersion=4.10,4
 
@@ -72,16 +72,8 @@ Filename: "{app}\DrgUnPack5.url"; Section: "InternetShortcut"; Key: "URL"; Strin
 
 [Icons]
 Name: "{group}\Dragon UnPACKer 5"; Filename: "{app}\DrgUnPack5.exe"
-Name: "{group}\Read me"; Languages: en sp; Filename: "{app}\readme.txt"
-Name: "{group}\Lisez moi"; Languages: fr; Filename: "{app}\lisezmoi.txt"
-Name: "{group}\What's new"; Languages: en sp; Filename: "{app}\whatsnew.txt"
-Name: "{group}\Historique des versions"; Languages: fr; Filename: "{app}\historique.txt"
-Name: "{group}\Dragon UnPACKer 5 on the Web"; Languages: en; Filename: "{app}\DrgUnPack5.url"
-Name: "{group}\Dragon UnPACKer 5 sur le Web"; Languages: fr; Filename: "{app}\DrgUnPack5.url"
-Name: "{group}\Dragon UnPACKer 5 sobre la Red"; Languages: sp; Filename: "{app}\DrgUnPack5.url"
-Name: "{group}\Duppi (Package installer & Internet update)"; Languages: en; Filename: "{app}\utils\Duppi.exe"
-Name: "{group}\Duppi (Installation de package et mise à jour via Internet)"; Languages: fr; Filename: "{app}\utils\Duppi.exe"
-Name: "{group}\Duppi (Instalador de packages y puesto al dia por Internet)"; Languages: sp; Filename: "{app}\utils\Duppi.exe"
+Name: "{group}\Dragon UnPACKer 5 on the Web"; Filename: "{app}\DrgUnPack5.url"
+Name: "{group}\Duppi (Package installer & Internet update)"; Filename: "{app}\utils\Duppi.exe"
 Name: "{userdesktop}\Dragon UnPACKer 5"; Filename: "{app}\DrgUnPack5.exe"; MinVersion: 4,4; Tasks: desktopicon
 Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Dragon UnPACKer 5"; Filename: "{app}\DrgUnPack5.exe"; MinVersion: 4,4; Tasks: quicklaunchicon
 Name: "{group}\Uninstall"; Filename: "{uninstallexe}"

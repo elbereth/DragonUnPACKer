@@ -28,7 +28,7 @@ object frmSplash: TfrmSplash
     Width = 450
     Height = 300
   end
-  object Label1: TLabel
+  object lblLoading: TLabel
     Left = 224
     Top = 190
     Width = 169

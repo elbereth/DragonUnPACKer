@@ -50,9 +50,9 @@ type FormatsListElem = record
        NumFormats : Integer;
        FormatsList : array[1..1000] of FormatsListElemEx;
      end;
-     FoundInfo = record
-       Offset: integer;
-       Size: integer;
+     FoundInfo64 = record
+       Offset: int64;
+       Size: int64;
        Ext: ShortString;
        GenType: integer;
      end;
@@ -435,10 +435,13 @@ var Percent: TPercentCallback;
   *       fear. :)
   * 50144 Fixed bug #1024855 (introduced by JVCL 2.10 -> 3.00 migration)
   *       Tweaked the posBuf function to be able to start checking from an specified offset of the buffer (should speed up RIFF/JFIF/GIF search)
+  * 50240 Now using DUHI v3
+  *       Added support for very big files
+  *       Fixed bug #1118661 (Very big files failure)
   * }
 
-const DRIVER_VERSION = 50144;
-      HR_VERSION = 50042;
+const DRIVER_VERSION = 50240;
+      HR_VERSION = 50043;
 
 function BigToLittle2(src: array of byte): word;
 begin
@@ -573,7 +576,7 @@ end;
 
 function DUHIVersion: Byte; stdcall;
 begin
-  Result := 2;
+  Result := 3;
 end;
 
 function GetVersionInfo(): VersionInfo; stdcall;
@@ -798,7 +801,7 @@ begin
 
 end;
 
-function SearchFile(format: integer; handle: integer; offset: integer): FoundInfo; stdcall;
+function SearchFile64(format: integer; handle: integer; offset: int64): FoundInfo64; stdcall;
 var buf1, buf2: array[1..4] of char;
     buf3: array[1..3] of char;
     tByte, tByte2: byte;
@@ -806,7 +809,7 @@ var buf1, buf2: array[1..4] of char;
     tInteger, x, y: integer;
     tChars: array[0..7] of char;
     tBytes4, tBytes4a: array[0..3] of byte;
-    size, offset2, COffset, CSize: integer;
+    size, size2, offset2, COffset, CSize: int64;
     BMPH: BMPHeader;
     EMFH: EnhancedMetaHeader;
     F669H: F669Header;
@@ -885,7 +888,8 @@ begin
             if (VOCH.ID = 'Creative Voice File') and (VOCH.EOF = 26) then
             begin
               Size := VOCH.BlockOffset;
-              COffset := Offset + VOCH.BlockOffset;
+              COffset := VOCH.BlockOffset;
+              COffset := COffset + Offset;
               while (true) do
               begin
                 FileSeek(handle,COffset,0);
@@ -927,8 +931,9 @@ begin
                     good := false;
                     break;
                   end;
-                  inc(size,8);
-                  inc(size,BigToLittle4(MIDC.Size));
+                  size := size + 8;
+                  size2 := BigToLittle4(MIDC.Size);
+                  size := size + size2;
                   FileSeek(handle,offset+size,0);
                 end;
                 if good then
@@ -942,7 +947,8 @@ begin
             end;
           end;
     1003..1004: begin
-            totSize := FileSeek(handle,0,2);
+            COffset := 0;
+            totSize := FileSeek(handle,COffset,2);
             FileSeek(handle,offset,0);
             FileRead(handle,F669H,SizeOf(F669Header));
             if ((F669H.ID = 'if') or (F669H.ID = 'JN'))
@@ -1011,7 +1017,8 @@ begin
           end;
     1006: begin
             MPEGa := getMPEGOptions;
-            totSize := FileSeek(handle,0,2);
+            COffset := 0;
+            totSize := FileSeek(handle,COffset,2);
             FileSeek(handle,offset,0);
             Size := 0;
             MP3FrameLen := 0;
@@ -1287,7 +1294,8 @@ begin
             Dec(offset,44);
             if Offset >= 0 then
             begin
-              totSize := FileSeek(handle,0,2);
+              COffset := 0;
+              totSize := FileSeek(handle,COffset,2);
               FileSeek(handle,offset,0);
               FileRead(handle,S3MH,SizeOf(S3MHeader));
 
@@ -1343,7 +1351,8 @@ begin
             end;
           end;
     1008: begin
-            totSize := FileSeek(handle,0,2);
+            COffset := 0;
+            totSize := FileSeek(handle,COffset,2);
             FileSeek(handle,offset,0);
             FileRead(handle,ITH,SizeOf(ITHeader));
             Size := 192 + ITH.OrdNum + ITH.InsNum * 4;
@@ -1392,7 +1401,8 @@ begin
                   inc(Size,OGGPageLen+sizeof(OggH)+OggH.NumPageSegments);
                   if ((OggH.BitFlags and 4) = 4) then
                     break;
-                  FileSeek(handle,OGGPageLen,1);
+                  cOffset := OGGPageLen;
+                  FileSeek(handle,cOffset,1);
                   mustBeStart := false;
                 end
                 else
@@ -1429,7 +1439,8 @@ begin
             if (Offset-4)>=0 then
             begin
               Dec(Offset,4);
-              totSize := FileSeek(handle,0,2);
+              cOffset := 0;
+              totSize := FileSeek(handle,cOffset,2);
               FileSeek(handle,offset+Size,0);
               FileRead(handle,tBytes4,4);
               FileRead(handle,buf1,4);
@@ -1462,7 +1473,8 @@ begin
             end;
           end;
     2003: begin
-            totSize := FileSeek(handle,0,2);
+            cOffset := 0;
+            totSize := FileSeek(handle,cOffset,2);
             Dec(offset,4);
             if (offset >= 0) then
             begin
@@ -1616,7 +1628,8 @@ begin
             end;
           end;
     3006: begin
-            totSize := FileSeek(handle,0,2);
+            cOffset := 0;
+            totSize := FileSeek(handle,cOffset,2);
             FileSeek(handle,offset,0);
             FileRead(handle,Buf1,4);
             if (Buf1 = #255+#216+#255+#224) then
@@ -1735,7 +1748,7 @@ end;
 exports
   DUHIVersion,
   SearchBuffer,
-  SearchFile,
+  SearchFile64,
   GetSearchFormats,
   GetVersionInfo,
   InitPlugin,

@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.3 2004-07-17 19:22:53 elbereth Exp $
+// $Id: classFSE.pas,v 1.3.2.8 2005-03-27 07:12:58 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -29,7 +29,8 @@ interface
 
 uses auxFSE, Classes, Comctrls, Controls, DateUtils, Dialogs, Forms,
      lib_binCopy, lib_binutils, lib_language, lib_utils, Main, prg_ver, Registry,
-     spec_HRF, strutils, Windows, SysUtils;
+     spec_HRF, strutils, Windows, SysUtils, Error,JvJCLUtils, Graphics,
+     commonTypes;
 
 { Record declaration }
 
@@ -92,6 +93,7 @@ type
   //                Current class supports : 1 = Version 1
   //                                         2 = Version 2
   //                                         3 = Version 3
+  //                                         4 = Version 4
   //                Each version has different exported functions/procedure
   //                and/or same function/procedure with different export
   //                parameters.
@@ -110,7 +112,7 @@ type
   //               >0 = Number of entries in file
   TOpenFormat = function(src: ShortString; Percent: TPercentCallback; Deeper: boolean): Integer; stdcall;
   // TOpenFormat2 : Called to open a file.
-  // (DUDI v2/v3)   src is the full path to the file
+  // (DUDI v2->v4)  src is the full path to the file
   //                Deeper indicates to the driver if it have to dig into file
   //                format if it doesn't recognize it by the extension.
   //     Returns : <0 = If anything was wrong
@@ -123,6 +125,9 @@ type
   TGetCurrentDriverInfo = function(): CurrentDriverInfo; stdcall;
   TIsFormat = function(src: ShortString; deeper: Boolean): Boolean; stdcall;
   TExtractFile = function(outputfile: ShortString; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: Boolean): boolean; stdcall;
+  // TExtractFileToStream : Called to extract a file into a stream object
+  // (DUDI v4)
+  TExtractFileToStream = function(outstream: TStream; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: Boolean): boolean; stdcall;
   TGetError = function(): ErrorInfo; stdcall;
   TShowBox = procedure(hwnd: integer; lngstr: TLanguageCallback); stdcall;
   TShowBox2 = procedure(hwnd: integer); stdcall;
@@ -143,6 +148,7 @@ type driver = record
    GetDriver : TGetCurrentDriverInfo;
    CanOpen : TIsFormat;
    ExtractFile : TExtractFile;
+   ExtractFileToStream : TExtractFileToStream;
    GetError : TGetError;
    ShowAboutBox : TShowBox;
    ShowAboutBox2 : TShowBox2;
@@ -155,6 +161,7 @@ type driver = record
    DUDIVersion : Byte;
    InitPlugin : TInitPlugin;
    InitPlugin3 : TInitPlugin3;
+   Priority : Integer;         // 5.1 : Prioritization of drivers
  end;
 
  pvirtualTreeData = ^virtualTreeData;
@@ -193,6 +200,7 @@ type TDrivers = class
     function GetFileSize(): Int64;
 //    procedure ExtractFile(entrynam: string; outfile: string; silent: boolean);
     procedure ExtractFile(entry: FSE; outfile: string; silent: boolean);
+    procedure ExtractFileToStream(entry: FSE; outstream: TStream; fallbacktempfile: string; silent: boolean);
     procedure ExtractDir(cdir: string; outpath: string);
     function IsListEmpty: Boolean;
     function GetListSize: Integer;
@@ -209,7 +217,7 @@ type TDrivers = class
     procedure SetProgressBar(a: TPercentCallback);
     procedure LoadDrivers(pth: String);
     procedure FreeDrivers;
-    function LoadFile(pth: String; Silent: boolean): boolean;
+    function LoadFile(pth: String; Silent: boolean): TDriverLoadResult;
     procedure LoadHyperRipper(fil: String; filHandle: integer; loadTime: integer; subdirs: boolean);
     function CloseFile(): boolean;
     function Search(searchst: string; CaseSensible: Boolean; cdir: string; sdir: boolean): integer;
@@ -222,6 +230,8 @@ type TDrivers = class
     procedure SetPath(a: string);
     procedure SetLanguage(l: TLanguageCallback);
     procedure SetOwner(AOwner: TComponent);
+    procedure setDriverPriority(index, priority: integer);
+    procedure sortDriversByPriority;
   private
     HRipInfo: DriverInfo;
     listData: array of virtualTreeData;
@@ -249,6 +259,7 @@ type TDrivers = class
     procedure FreeList_Aux(a: FSE);
     function ParseFileTypes(names: string; ext: string): string;
     procedure ExtractFile_Alt(outfile,entrynam: string; offset: int64; size: int64; datax: integer; datay: integer; silent: boolean);
+    procedure ExtractFileToStream_Alt(outstream: TStream; entrynam: string; offset: int64; size: int64; datax: integer; datay: integer; silent: boolean);
     function CalculateNumberOfFiles(cdir: string): Integer;
     function GetRegistryBool(key: string; value: string; default: boolean = false): boolean;
     function SearchAll(searchst: string; CaseSensible: Boolean): integer;
@@ -256,6 +267,8 @@ type TDrivers = class
     procedure saveHRF_v1(srcfil, filename: string; srcsize: int64; prgver: integer);
     procedure saveHRF_v2(srcfil, filename: string; srcsize: int64; prgver: integer; info: boolean; title,author, url: string);
     procedure saveHRF_v3(srcfil, filename: string; srcsize: int64; prgver: integer; prgid: byte; info: boolean; title,author, url: string);
+    function getDriverPriority(drivername: string): integer;
+    procedure quickSortDrivers(lowerPos, upperPos: integer);
   protected
 end;
 
@@ -429,17 +442,21 @@ begin
   begin
     repeat
       if IsConsole then
-        write(sr.name+ ' ');
+        write(sr.name+ ' ')
+      else
+        dup5Main.writeLog(' + '+sr.Name+' :');
       Handle := LoadLibrary(PChar(pth + sr.name));
       if Handle <> 0 then
       begin
         if IsConsole then
           write('Loaded... ');
           @DUDIVer := GetProcAddress(Handle, 'DUDIVersion');
-        if (@DUDIVer <> Nil) and ((DUDIVer = 1) or (DUDIVer = 2) or (DUDIVer = 3)) then
+        if (@DUDIVer <> Nil) and ((DUDIVer = 1) or (DUDIVer = 2) or (DUDIVer = 3) or (DUDIVer = 4)) then
         begin
           if IsConsole then
-            write('IsDUDI... ');
+            write('IsDUDI... ')
+          else
+            dup5Main.appendLog('DUDI v'+inttostr(DUDIVer)+' -');
           Inc(NumDrivers);
 
           Drivers[NumDrivers].DUDIVersion := DUDIVer;
@@ -470,10 +487,18 @@ begin
             @Drivers[NumDrivers].ShowConfigBox3 := GetProcAddress(Handle, 'ConfigBox');
             @Drivers[NumDrivers].InitPlugin3 := GetProcAddress(Handle, 'InitPlugin');
             @Drivers[NumDrivers].OpenFile2 := GetProcAddress(Handle, 'ReadFormat');
+          end
+          else if (DUDIVer = 4) then
+          begin
+            @Drivers[NumDrivers].ShowAboutBox3 := GetProcAddress(Handle, 'AboutBox');
+            @Drivers[NumDrivers].ShowConfigBox3 := GetProcAddress(Handle, 'ConfigBox');
+            @Drivers[NumDrivers].InitPlugin3 := GetProcAddress(Handle, 'InitPlugin');
+            @Drivers[NumDrivers].OpenFile2 := GetProcAddress(Handle, 'ReadFormat');
+            @Drivers[NumDrivers].ExtractFileToStream := GetProcAddress(Handle, 'ExtractFileToStream');
           end;
 
           if ((DUDIVer = 1) and (@Drivers[NumDrivers].OpenFile = Nil))
-          or (((DUDIVer = 2) or (DUDIVer = 3)) and (@Drivers[NumDrivers].OpenFile2 = Nil))
+          or (((DUDIVer = 2) or (DUDIVer = 3) or (DUDIVer = 4)) and (@Drivers[NumDrivers].OpenFile2 = Nil))
           or (@Drivers[NumDrivers].CloseFile = Nil)
           or (@Drivers[NumDrivers].GetEntry = Nil)
           or (@Drivers[NumDrivers].GetInfo = Nil)
@@ -482,13 +507,18 @@ begin
           or (@Drivers[NumDrivers].CanOpen = Nil)
           or (@Drivers[NumDrivers].GetError = Nil)
           or ((DUDIVer = 2) and (@Drivers[NumDrivers].InitPlugin = Nil))
-          or ((DUDIVer = 3) and (@Drivers[NumDrivers].InitPlugin3 = Nil))
+          or (((DUDIVer = 3) or (DUDIVer = 4)) and (@Drivers[NumDrivers].InitPlugin3 = Nil))
+          or ((DUDIVer = 4) and (@Drivers[NumDrivers].ExtractFileToStream = Nil))
           then
           begin
             if IsConsole then
               writeln('Malformed!')
             else
-              MessageDlg(DLNGstr('ERRD02')+#10+sr.Name,mtWarning,[mbOk],0);
+            begin
+              dup5Main.appendLog(DLNGstr('ERRD02'));
+              dup5Main.colorLog(clRed);
+              //MessageDlg(DLNGstr('ERRD02')+#10+sr.Name,mtWarning,[mbOk],0);
+            end;
             dec(NumDrivers);
             FreeLibrary(handle);
           end
@@ -501,7 +531,7 @@ begin
               begin
                 Drivers[NumDrivers].InitPlugin(Percent,Language,dup5pth);
               end
-              else if (DUDIVer = 3) then
+              else if (DUDIVer = 3) or (DUDIVer = 4) then
               begin
                 Drivers[NumDrivers].InitPlugin3(Percent,Language,dup5pth,Application.Handle,CurAOwner);
               end;
@@ -511,6 +541,8 @@ begin
               Drivers[NumDrivers].Info.Version := Drivers[NumDrivers].Info.Version;
               Drivers[NumDrivers].IsAboutBox := not(@Drivers[NumDrivers].ShowAboutBox = nil) or not(@Drivers[NumDrivers].ShowAboutBox2 = nil) or not(@Drivers[NumDrivers].ShowAboutBox3 = nil);
               Drivers[NumDrivers].IsConfigBox := not(@Drivers[NumDrivers].ShowConfigBox = nil) or not(@Drivers[NumDrivers].ShowConfigBox2 = nil) or not(@Drivers[NumDrivers].ShowConfigBox3 = nil);
+              Drivers[NumDrivers].Priority := getDriverPriority(ExtractFileName(sr.Name));
+              dup5Main.appendLog(Drivers[NumDrivers].Info.Name+' v'+Drivers[NumDrivers].Info.Version)
             except
               on E:Exception do
               begin
@@ -524,12 +556,18 @@ begin
           if IsConsole then
             writeln('Bad DUDI')
           else
-            MessageDlg(DLNGstr('ERRD01')+#10+sr.Name,mtWarning,[mbOk],0);
+          begin
+            dup5Main.appendLog(DLNGstr('ERRD01'));
+            dup5Main.colorLog(clRed);
+          end;
           FreeLibrary(handle);
         end;
       end
 
     until FindNext(sr) <> 0;
+
+    if NumDrivers > 1 then
+      quickSortDrivers(1,NumDrivers);
 
   end
   else
@@ -578,46 +616,75 @@ begin
 
 end;
 
-function TDrivers.LoadFile(pth: String; Silent: boolean): boolean;
+function TDrivers.LoadFile(pth: String; Silent: boolean): TDriverLoadResult;
 var x,y,i: integer;
     Test: FormatEntry;
     DrvInfo: CurrentDriverInfo;
-    res,SmartOpen: boolean;
+    SmartOpen: boolean;
+    res : TDriverLoadResult;
     ErrInfo: ErrorInfo;
     StartTime: TDateTime;
     CanOpen: array[1..200] of Integer;
     NumCanOpen: Integer;
     ErrList: TStringList;
     ErrStr: String;
-    ErrNum: integer;
+    ErrNum, hTest: integer;
+    zero64: int64;
 begin
 
   SaveTitle;
   SetTitle(ReplaceValue('%f',DLNGstr('TLD001'),ExtractFilename(pth)));
-  result := false;
+  result := dlError;
 
   if (FileExists(pth)) then
   begin
 
+    hTest := FileOpen(pth,fmOpenRead);
+
+    if hTest = -1 then
+    begin
+      result := dlFileNotFound;
+      MessageDlg(ReplaceValue('%f',DLNGstr('ERRIO'),pth),mtWarning,[mbOk],0);
+      restoreTitle;
+      exit;
+    end;
+
+    FileClose(hTest);
+
     SmartOpen := GetRegistryBool('StartUp','SmartOpen',True);
+    if SmartOpen then
+      dup5Main.writeLog(DLNGStr('LOG400'));
 
     x := 1 ;
     NumCanOpen := 0;
     ErrNum := 0;
     ErrList := TStringList.Create;
-    res := false;
+    res := dlError;
 
     while (x <= NumDrivers) do
     begin
       try
         if Drivers[x].CanOpen(pchar(pth),SmartOpen) then
         begin
+          dup5Main.writeLog(ReplaceStr(DLNGStr('LOG500'),'%d',Drivers[x].Info.Name));
           Inc(NumCanOpen);
           CanOpen[NumCanOpen] := x;
         end;
       except
         on E:EFOpenError do MessageDlg(ReplaceValue('%f',DLNGstr('ERRIO'),pth),mtWarning,[mbOk],0);
-        on Ex:Exception do MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),ex.message),mtWarning,[mbOk],0);
+        on Ex:Exception do
+        begin  // New error dialog box
+          frmError.PrepareError;
+          frmError.details.Add(DLNGStr('ERRCAL'));
+          frmError.details.Add('if Drivers['+inttostr(x)+'].CanOpen('''+pth+''','+booltostr(SmartOpen,true)+') then');
+          frmError.details.Add('');
+          frmError.details.Add('Drivers['+inttostr(x)+'].Filename='+Drivers[x].FileName);
+          frmError.details.Add('Drivers['+inttostr(x)+'].Info.Name='+Drivers[x].Info.Name);
+          frmError.details.Add('Drivers['+inttostr(x)+'].Info.Author='+Drivers[x].Info.Author);
+          frmError.details.Add('Drivers['+inttostr(x)+'].Info.Version='+Drivers[x].Info.Version);
+          frmError.details.Add('Drivers['+inttostr(x)+'].Info.Comment='+Drivers[x].Info.Comment);
+          frmError.FillTxtError(Ex,'classFSE.pas','LoadFile:'+Drivers[x].FileName+'.CanOpen');
+        end;
       end;
       Inc(x);
     end;
@@ -627,6 +694,7 @@ begin
       if not(silent) then
         MessageDlg(DLNGstr('ERRUNK'),mtInformation,[mbOk],0);
       RestoreTitle;
+      res := dlCouldNotLoad;
     end
     else
     begin
@@ -636,27 +704,45 @@ begin
         CurrentDriver := CanOpen[x];
 
         i := FileOpen(pth,fmOpenRead or fmShareDenyNone);
-        CurrentFileSize := FileSeek(i,0,2);
+        zero64 := 0;
+        CurrentFileSize := FileSeek(i,zero64,2);
         FileClose(i);
+
+        dup5Main.writeLog(ReplaceStr(DLNGStr('LOG501'),'%d',Drivers[CurrentDriver].Info.Name));
 
         StartTime := Now;
         try
           if (Drivers[CurrentDriver].DUDIVersion = 1) then
             NumElems := Drivers[CurrentDriver].OpenFile(pchar(pth),Percent,SmartOpen)
-          else if (Drivers[CurrentDriver].DUDIVersion = 2) or (Drivers[CurrentDriver].DUDIVersion = 3) then
+          else if (Drivers[CurrentDriver].DUDIVersion = 2) or (Drivers[CurrentDriver].DUDIVersion = 3) or (Drivers[CurrentDriver].DUDIVersion = 4) then
             NumElems := Drivers[CurrentDriver].OpenFile2(pchar(pth),SmartOpen);
         except
           on Ex:Exception do
-          begin
-            MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),ex.message),mtWarning,[mbOk],0);
-//            MessageDlg(ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),mtWarning,[mbOk],0);
+          begin  // New error dialog box
+            frmError.PrepareError;
+            frmError.details.Add(DLNGStr('ERRCAL'));
+            if Drivers[CurrentDriver].DUDIVersion = 1 then
+              frmError.details.Add('NumElems := Drivers['+inttostr(CurrentDriver)+'].OpenFile('''+pth+''',Percent,'+booltostr(SmartOpen,true)+')')
+            else if (Drivers[CurrentDriver].DUDIVersion = 2) or (Drivers[CurrentDriver].DUDIVersion = 3) or (Drivers[CurrentDriver].DUDIVersion = 4) then
+              frmError.details.Add('NumElems := Drivers['+inttostr(CurrentDriver)+'].OpenFile2('''+pth+''','+booltostr(SmartOpen,true)+')');
+            frmError.details.Add('');
+            frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
+            frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Name='+Drivers[CurrentDriver].Info.Name);
+            frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Author='+Drivers[CurrentDriver].Info.Author);
+            frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Version='+Drivers[CurrentDriver].Info.Version);
+            frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Comment='+Drivers[CurrentDriver].Info.Comment);
+            frmError.FillTxtError(Ex,'classFSE.pas','LoadFile:'+Drivers[CurrentDriver].FileName+'.OpenFile');
             NumElems := -999
           end;
         end;
         LoadTimeOpen := MilliSecondsBetween(Now, StartTime);
 
+        dup5Main.appendLog(inttostr(LoadTimeOpen)+'ms');
+
         if NumElems > 0 then
         begin
+
+          dup5Main.appendLog(' - '+DLNGStr('LOG511'));
 
           SetTitle(DLNGstr('TLD002'));
           StartTime := Now;
@@ -670,29 +756,60 @@ begin
           DispNumElems := 0;
           y := 0;
 
+          dup5Main.writeLog(ReplaceStr(DLNGStr('LOG502'),'%x',inttostr(NumElems)));
+
           try
             for y := 1 to NumElems do
             begin
               Test := Drivers[CurrentDriver].GetEntry();
-//            ShowMessage(Test.FileName+#10+inttostr(Test.Offset)+#10+inttostr(Test.Size));
               if (Test.Offset >= 0) and (Test.Size > 0) then
               begin
                 Inc(DispNumElems);
-//              Percent(Round((y/NumElems)*100));
                 DataBlocAdd(Test.FileName,Test.Offset,Test.Size,Test.DataX,Test.DataY);
               end;
             end;
           except
             on Ex:Exception do
-            begin
-              MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),ex.message),mtWarning,[mbOk],0);
-//            MessageDlg(ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),mtWarning,[mbOk],0);
+            begin  // New error dialog box
+              dup5Main.writeLog(ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].FileName));
+              dup5Main.colorLog(clRed);
+              dup5Main.writeLog(Ex.Message +' @ TDrivers.LoadFile:'+Drivers[CurrentDriver].FileName+'.GetEntry');
+              dup5Main.colorLog(clRed);
+              dup5Main.writeLog(ReplaceValue('%a',DLNGstr('ERRDR1'),Drivers[CurrentDriver].Info.Author));
+              dup5Main.colorLog(clRed);
+
+              frmError.PrepareError;
+              frmError.details.Add(DLNGStr('ERRCAL'));
+
+              frmError.details.Add('for y := 1 to '+inttostr(NumElems)+' do');
+              frmError.details.Add('begin');
+              frmError.details.Add('  Test := Drivers['+inttostr(CurrentDriver)+'].GetEntry();');
+              frmError.details.Add('  if ('+inttostr(Test.Offset)+' >= 0) and ('+inttostr(Test.Size)+' > 0) then');
+              frmError.details.Add('  begin');
+              frmError.details.Add('    Inc(DispNumElems);');
+              frmError.details.Add('    DataBlocAdd('''+Test.FileName+''','+inttostr(Test.Offset)+','+inttostr(Test.Size)+','+inttostr(Test.DataX)+','+inttostr(Test.DataY)+');');
+              frmError.details.Add('  end;');
+              frmError.details.Add('end;');
+
+              frmError.details.Add('');
+              frmError.details.Add('y='+inttostr(y));
+              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
+              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Name='+Drivers[CurrentDriver].Info.Name);
+              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Author='+Drivers[CurrentDriver].Info.Author);
+              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Version='+Drivers[CurrentDriver].Info.Version);
+              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Comment='+Drivers[CurrentDriver].Info.Comment);
+              frmError.FillTxtError(Ex,'TDrivers','LoadFile:'+Drivers[CurrentDriver].FileName+'.GetEntry');
+
               NumElems := y-1;
+//            MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),ex.message),mtWarning,[mbOk],0);
+//            MessageDlg(ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),mtWarning,[mbOk],0);
             end;
           end;
 
           LoadTimeRetrieve := MilliSecondsBetween(Now, StartTime);
-      //ShowMessage('Retrieve: OK');
+
+          dup5Main.appendLog(inttostr(LoadTimeRetrieve)+'ms');
+
           SetTitle(DLNGstr('TLD003'));
           StartTime := Now;
 
@@ -701,6 +818,8 @@ begin
           InternalExtract := DrvInfo.ExtractInternal;
           CurrentFile := DrvInfo.FileHandle;
 
+          dup5Main.writeLog(DLNGStr('LOG503'));
+
           if Sch <> '' then
             ParseDirs(Sch, DataBloc, ExtractFileName(pth))
           else
@@ -708,17 +827,22 @@ begin
 
           LoadTimeParse := MilliSecondsBetween(Now, StartTime);
 
+          dup5Main.appendLog(inttostr(LoadTimeParse)+'ms');
+
           CurrentFileName := pth;
 
           SetTitle(pth);
 
-          res := true;
+          res := dlOK;
+
+          dup5Main.writeLog(ReplaceStr(ReplaceStr(DLNGStr('LOG504'),'%p',Drivers[CurrentDriver].Info.Name),'%f',DriverID));
 
           break;
 
         end
         else if NumElems = 0 then
         begin
+          dup5Main.appendLog(' - '+DLNGStr('LOG512'));
           inc(ErrNum);
           DrvInfo := Drivers[CurrentDriver].GetDriver;
           Drivers[CurrentDriver].CloseFile;
@@ -730,6 +854,7 @@ begin
         end
         else
         begin
+          dup5Main.appendLog(' - '+DLNGStr('LOG513'));
           inc(ErrNum);
           case NumElems of
             -4: begin
@@ -749,7 +874,7 @@ begin
 
       if (ErrNum = NumCanOpen) then
       begin
-        res := false;
+        res := dlCouldNotLoad;
         if (ErrList.Count = 0) then
           ErrStr := DLNGstr('ERRUNK')
         else
@@ -761,6 +886,7 @@ begin
             else
               ErrStr := ErrList.Strings[x];
         end;
+        dup5Main.writeLog(ErrStr);
         MessageDlg(ErrStr,mtInformation,[mbOk],0);
         RestoreTitle;
       end;
@@ -773,6 +899,7 @@ begin
   end
   else
   begin
+    result := dlFileNotFound;
     MessageDlg(ReplaceValue('%f',DLNGstr('ERRIO'),pth),mtWarning,[mbOk],0);
     RestoreTitle;
   end;
@@ -791,8 +918,16 @@ begin
       try
         CloseFile := Drivers[CurrentDriver].CloseFile;
       except
-        MessageDlg(ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].FileName),Drivers[CurrentDriver].Info.Author),mtWarning,[mbOk],0);
-        CloseFile := false;
+        on E:Exception do
+        begin
+          dup5Main.writeLog(ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].FileName));
+          dup5Main.colorLog(clRed);
+          dup5Main.writeLog(E.Message +' @ TDrivers.CloseFile');
+          dup5Main.colorLog(clRed);
+          dup5Main.writeLog(ReplaceValue('%a',DLNGstr('ERRDR1'),Drivers[CurrentDriver].Info.Author));
+          dup5Main.colorLog(clRed);
+          CloseFile := false;
+        end;
       end;
   end;
 
@@ -1221,6 +1356,7 @@ end;
 procedure TDrivers.ExtractFile_Alt(outfile, entrynam: string; offset, size: int64;
   datax, datay: integer; silent: boolean);
 var dst: integer;
+    tmpStm: THandleStream;
 begin
 
  try
@@ -1229,21 +1365,104 @@ begin
     if @Drivers[CurrentDriver].ExtractFile <> Nil then
     begin
       Drivers[CurrentDriver].ExtractFile(outfile,entrynam,offset,size,datax,datay,silent);
+      dup5Main.appendLog(DLNGStr('LOG510'));
     end
     else
-      ShowMessage('Missing ExtractFile() function in driver.');
+    begin
+      dup5Main.appendLog(DLNGStr('LOG512'));
+      dup5Main.colorLog(clRed);
+      dup5Main.writeLog(ReplaceStr('%f',DLNGStr('ERR900'),'ExtractFile()'));
+      dup5Main.colorLog(clRed);
+    end;
   end
   else
   begin
     dst := FileCreate(outfile, (fmOpenWrite or fmShareDenyWrite));
     if dst > 0 then
     begin
-      BinCopy(CurrentFile,dst,Offset,Size,0,16384,silent);
+      tmpStm := THandleStream.Create(dst);
+//      BinCopy(CurrentFile,dst,Offset,Size,0,16384,silent);
+      BinCopyToStream(CurrentFile,tmpStm,Offset,Size,0,16384,silent,percent);
+      tmpStm.Free;
       FileClose(dst);
+      dup5Main.appendLog(DLNGStr('LOG510'));
     end;
   end;
  except
-  on E: Exception do MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].FileName),Drivers[CurrentDriver].Info.Author),E.Message),mtWarning,[mbOk],0);
+  on E: Exception do
+  begin  // New error dialog box
+    dup5Main.writeLog(ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].FileName));
+    dup5Main.colorLog(clRed);
+    dup5Main.writeLog(E.Message +' @ TDrivers.ExtractFile_Alt:'+Drivers[CurrentDriver].FileName);
+    dup5Main.colorLog(clRed);
+    dup5Main.writeLog(ReplaceValue('%a',DLNGstr('ERRDR1'),Drivers[CurrentDriver].Info.Author));
+    dup5Main.colorLog(clRed);
+
+    frmError.PrepareError;
+    frmError.details.Add(ReplaceStr('%f',DLNGStr('ERREXT'),Drivers[CurrentDriver].FileName));
+    frmError.details.Add('');
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Name='+Drivers[CurrentDriver].Info.Name);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Author='+Drivers[CurrentDriver].Info.Author);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Version='+Drivers[CurrentDriver].Info.Version);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Comment='+Drivers[CurrentDriver].Info.Comment);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].GetDriver.ExtractInternal='+booltostr(Drivers[CurrentDriver].GetDriver.ExtractInternal,true));
+    frmError.details.Add('outfile='+outfile);
+    frmError.details.Add('CurrentFile='+inttostr(CurrentFile));
+    frmError.details.Add('Offset='+inttostr(Offset));
+    frmError.details.Add('Size='+inttostr(Size));
+    frmError.FillTxtError(E,'TDrivers','ExtractFile_Alt:'+Drivers[CurrentDriver].FileName);
+  end;
+//   MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].FileName),Drivers[CurrentDriver].Info.Author),E.Message),mtWarning,[mbOk],0);
+ end;
+
+end;
+
+procedure TDrivers.ExtractFileToStream_Alt(outstream: TStream; entrynam: string; offset, size: int64;
+  datax, datay: integer; silent: boolean);
+begin
+
+ try
+  if (CurrentDriver <> -1) and Drivers[CurrentDriver].GetDriver.ExtractInternal then
+  begin
+    if @Drivers[CurrentDriver].ExtractFileToStream <> Nil then
+    begin
+      Drivers[CurrentDriver].ExtractFileToStream(outstream,entrynam,offset,size,datax,datay,silent);
+      dup5Main.appendLog(DLNGStr('LOG510'));
+    end
+    else
+    begin
+      dup5Main.appendLog(DLNGStr('LOG512'));
+      dup5Main.colorLog(clRed);
+      dup5Main.writeLog(ReplaceStr('%f',DLNGStr('ERR900'),'ExtractFileToStream()'));
+      dup5Main.colorLog(clRed);
+    end;
+  end
+  else
+  begin
+    BinCopyToStream(CurrentFile,outstream,Offset,Size,0,16384,silent,percent);
+    dup5Main.appendLog(DLNGStr('LOG510'));
+  end;
+ except
+  on E: Exception do
+  begin  // New error dialog box
+    dup5Main.appendLog(DLNGStr('LOG513'));
+    dup5Main.colorLog(clRed);
+    frmError.PrepareError;
+    frmError.details.Add(ReplaceStr('%f',DLNGStr('ERRSTM'),Drivers[CurrentDriver].FileName));
+    frmError.details.Add('');
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Name='+Drivers[CurrentDriver].Info.Name);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Author='+Drivers[CurrentDriver].Info.Author);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Version='+Drivers[CurrentDriver].Info.Version);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Comment='+Drivers[CurrentDriver].Info.Comment);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].GetDriver.ExtractInternal='+booltostr(Drivers[CurrentDriver].GetDriver.ExtractInternal,true));
+    frmError.details.Add('CurrentFile='+inttostr(CurrentFile));
+    frmError.details.Add('Offset='+inttostr(Offset));
+    frmError.details.Add('Size='+inttostr(Size));
+    frmError.FillTxtError(E,'classFSE.pas','ExtractFile_Alt:'+Drivers[CurrentDriver].FileName);
+  end;
+//   MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].FileName),Drivers[CurrentDriver].Info.Author),E.Message),mtWarning,[mbOk],0);
  end;
 
 end;
@@ -1315,6 +1534,7 @@ end;
 
 procedure TDrivers.LoadHyperRipper(fil: String; filHandle: integer; loadTime: integer; subdirs: boolean);
 var starttime: TDateTime;
+    zero64: int64;
 begin
 
   if (subdirs) then
@@ -1331,7 +1551,8 @@ begin
   LoadTimeParse := MilliSecondsBetween(Now, StartTime);
   CurrentDriver := -1;
   CurrentFile := filHandle;
-  CurrentFileSize := FileSeek(filHandle,0,2);
+  zero64 := 0;
+  CurrentFileSize := FileSeek(filHandle,zero64,2);
   dup5Main.Caption := 'Dragon UnPACKer v' + CurVersion + ' ' + CurEdit+ ' - '+fil;
 //  Dup5main.TDup5FileClose.Enabled := True;
   Dup5Main.menuFichier_Fermer.Enabled := True;
@@ -1871,8 +2092,8 @@ begin
     // Run the second version of the ShowAboutBox function
     Drivers[drvnum].ShowAboutBox2(hwnd);
   end
-  // If driver at drvnum index has DUDI version 3
-  else if (Drivers[drvnum].DUDIVersion = 3) then
+  // If driver at drvnum index has DUDI version 3 or 4
+  else if (Drivers[drvnum].DUDIVersion = 3) or (Drivers[drvnum].DUDIVersion = 4) then
   begin
     // Run the third version of the ShowAboutBox function
     Drivers[drvnum].ShowAboutBox3;
@@ -1900,8 +2121,8 @@ begin
     // Run the second version of the ShowConfigBox function
     Drivers[drvnum].ShowConfigBox2(hwnd);
   end
-  // If driver at drvnum index has DUDI version 3
-  else if (Drivers[drvnum].DUDIVersion = 3) then
+  // If driver at drvnum index has DUDI version 3 or 4
+  else if (Drivers[drvnum].DUDIVersion = 3) or (Drivers[drvnum].DUDIVersion = 4) then
   begin
     // Run the third version of the ShowConfigBox function
     Drivers[drvnum].ShowConfigBox3;
@@ -1927,6 +2148,126 @@ procedure TDrivers.SetOwner(AOwner: TComponent);
 begin
 
   CurAOwner := AOwner;
+
+end;
+
+function TDrivers.getDriverPriority(drivername: string): integer;
+var Reg: TRegistry;
+begin
+
+  Result := 0;
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Plugins\'+drivername,True) then
+    begin
+      if Reg.ValueExists('Priority') then
+        Result := Reg.ReadInteger('Priority')
+      else
+        Reg.WriteInteger('Priority',0);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
+
+end;
+
+procedure TDrivers.setDriverPriority(index, priority: integer);
+var Reg: TRegistry;
+begin
+
+  if (index > 0) and (index <= NumDrivers) then
+  begin
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Plugins\'+Drivers[index].FileName,True) then
+      begin
+        Reg.WriteInteger('Priority',priority);
+        Drivers[index].Priority := priority;
+        Reg.CloseKey;
+      end;
+    Finally
+      Reg.Free;
+    end;
+  end;
+
+end;
+
+procedure TDrivers.quickSortDrivers(lowerPos, upperPos: integer);
+var temp: driver;
+    i, middlePos, pivotValue : integer;
+Begin
+   { check that the lower position is less than the upper position }
+   if lowerPos < upperPos then begin
+      { Select a pivot value }
+      pivotValue := Drivers[lowerPos].Priority;
+      { default to the middle position to the lower position }
+      middlePos := lowerPos;
+      { partition the array about the pivot value }
+      for i := lowerPos+1 to upperPos do begin
+         if Drivers[i].Priority > pivotValue then begin
+            { bump up the middle position }
+            inc(middlePos);
+            { swap this element to the "lower" part of the array }
+            temp := Drivers[middlePos];
+            Drivers[middlePos] := Drivers[i];
+            drivers[i] := temp;
+         end; { if }
+      end; { for }
+      { place the pivot value in the middle to finish the partitioning }
+      temp := Drivers[lowerPos];
+      Drivers[lowerPos] := Drivers[middlePos];
+      Drivers[middlePos] := temp;
+      { Finally, recursively call QuickSort on the two parititioned halves.}
+      quickSortDrivers(lowerPos, middlePos-1);
+      quickSortDrivers(middlePos+1, upperPos);
+   { else
+      the lower position has reached or exceeded the upper position,
+      so we're done.  This case terminates the tail-end recursion. }
+   end;  { if }
+End;  { Procedure QuickSort }
+
+procedure TDrivers.sortDriversByPriority;
+begin
+
+  quickSortDrivers(1,NumDrivers);
+
+end;
+
+procedure TDrivers.ExtractFileToStream(entry: FSE; outstream: TStream; fallbacktempfile: string; silent: boolean);
+var Save_Cursor:TCursor;
+    tmpStm: TFileStream;
+begin
+
+  SetStatus('E');
+  Save_Cursor := Screen.Cursor;
+  SaveTitle;
+  SetTitle(DLNGStr('XTRCAP'));
+  SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entry^.name));
+  ShowPanelEx;
+  Screen.Cursor := crHourGlass;    { Affiche le curseur en forme de sablier }
+  try
+    if (CurrentDriver <> -1) and Drivers[CurrentDriver].GetDriver.ExtractInternal and (Drivers[CurrentDriver].DUDIVersion < 4) then
+    begin
+      ExtractFile_Alt(fallbacktempfile,entry^.Name,entry^.Offset,entry^.Size,entry^.DataX,entry^.DataY,silent);
+      tmpStm := TFileStream.Create(fallbacktempfile,fmOpenRead or fmShareDenyWrite);
+      try
+        outstream.CopyFrom(tmpStm,tmpStm.Size);
+      finally
+        tmpStm.Free;
+      end;
+    end
+    else
+      ExtractFileToStream_Alt(outstream,entry^.Name,entry^.Offset,entry^.Size,entry^.DataX,entry^.DataY,silent);
+  finally
+    Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
+    SetStatus('-');
+    RestoreTitle;
+    HidePanelEx;
+  end;
 
 end;
 

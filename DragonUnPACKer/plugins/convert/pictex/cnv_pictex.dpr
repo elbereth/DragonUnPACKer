@@ -1,6 +1,6 @@
 library cnv_pictex;
 
-// $Id: cnv_pictex.dpr,v 1.5 2004-07-17 19:10:16 elbereth Exp $
+// $Id: cnv_pictex.dpr,v 1.5.2.2 2005-03-27 10:13:30 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/cnv_pictex.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -63,8 +63,8 @@ var Percent: TPercentCallback;
     AHandle: THandle;
     AOwner: TComponent;
 
-const DRIVER_VERSION = 10740;
-const DUP_VERSION = 50040;
+const DRIVER_VERSION = 20110;
+const DUP_VERSION = 51240;
 
 { * Version History:
   * v1.0.0 Alpha (10000): First version (never distributed)
@@ -79,11 +79,13 @@ const DUP_VERSION = 50040;
   * v1.0.7 Beta  (10710): Using class_Images from Glacier TEX Editor v3.1
   *                       (improved a lot...)
   * v1.0.7       (10740): Removed beta status for 5.0.0 release
+  * v2.0.0 Beta  (20010): Updated to DUCI v3 (Streams support)
+  * v2.0.1 Beta  (20110): Fixed some bugs
   * }
 
 function DUCIVersion: Byte; stdcall;
 begin
-  Result := 2;
+  Result := 3;
 end;
 
 function VersionInfo(): ConvertInfo;
@@ -295,6 +297,41 @@ begin
 
 end;
 
+function ConvertARTStream(src, dst: TStream; pal: string; w, h: integer; cnv: String): integer;
+var Img: TSaveImage;
+    x,y: integer;
+    Buffer: PByteArray;
+begin
+
+  result := 0;
+
+  img := TSaveImage.Create;
+  try
+    img.LoadPAL(pal);
+    GetMem(Buffer,W*H);
+    try
+      img.SetSize(W,H);
+      src.ReadBuffer(Buffer^,W*H);
+      for y := 0 to H-1 do
+        for x := 0 to W-1 do
+          img.Pixels[x][y] := Buffer[x*H+y];
+      if cnv = 'BMP' then
+        img.SaveToBMPStream(dst)
+//      else if cnv = 'PCX' then
+//        img.SaveToPCX(dst)
+      else if cnv = 'TGA8' then
+        img.SaveToTGA8Stream(dst)
+      else if cnv = 'TGA24' then
+        img.SaveToTGA24Stream(dst);
+    finally
+      FreeMem(Buffer);
+    end;
+  finally
+    img.Free;
+  end;
+
+end;
+
 function ConvertART(src, dst, pal: string; w, h: integer; cnv: String): integer;
 var Img: TSaveImage;
     hSRC,x,y: integer;
@@ -332,9 +369,9 @@ begin
 
 end;
 
-function ConvertWAD242(src, dst, pal, cnv: String): integer;
+function ConvertWAD242Stream(src, dst: TStream; pal, cnv: String): integer;
 var Img: TSaveImage;
-    hSRC,W,H,x,y: integer;
+    W,H,x,y: integer;
     Buffer: PByteArray;
 begin
 
@@ -343,31 +380,125 @@ begin
   img := TSaveImage.Create;
   try
     img.LoadPAL(pal);
-    hSRC := FileOpen(src,fmOpenRead or fmShareDenyWrite);
+    src.ReadBuffer(W,4);
+    src.ReadBuffer(H,4);
+    img.SetSize(W,H);
+    GetMem(Buffer,W*H);
     try
-      FileRead(hSRC,W,4);
-      FileRead(hSRC,H,4);
-      img.SetSize(W,H);
-      GetMem(Buffer,W*H);
-      try
-        FileRead(hSRC,Buffer^,W*H);
-        for y := 0 to H-1 do
-          for x := 0 to W-1 do
-            img.Pixels[x][y] := Buffer[y*W+x];
-      finally
-        FreeMem(Buffer);
-      end;
-      if cnv = 'BMP' then
-        img.SaveToBMP(dst)
+      src.ReadBuffer(Buffer^,W*H);
+      for y := 0 to H-1 do
+        for x := 0 to W-1 do
+          img.Pixels[x][y] := Buffer[y*W+x];
+    finally
+      FreeMem(Buffer);
+    end;
+    if cnv = 'BMP' then
+      img.SaveToBMPStream(dst)
 //      else if cnv = 'PCX' then
 //        img.SaveToPCX(dst)
-      else if cnv = 'TGA8' then
-        img.SaveToTGA8(dst)
-      else if cnv = 'TGA24' then
-        img.SaveToTGA24(dst);
+    else if cnv = 'TGA8' then
+      img.SaveToTGA8Stream(dst)
+    else if cnv = 'TGA24' then
+      img.SaveToTGA24Stream(dst);
+  finally
+    img.Free;
+  end;
+
+end;
+
+function ConvertWAD242(src, dst, pal, cnv: String): integer;
+var src_stm, dst_stm: TFileStream;
+begin
+
+  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
+  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
+
+  try
+    result := ConvertWAD242Stream(src_stm, dst_stm, pal, cnv);
+  finally
+    src_stm.Free;
+    dst_stm.Free;
+  end;
+
+end;
+
+function ConvertWAD343Stream(src, dst: TStream; cnv: String): integer;
+var Img: TSaveImage;
+    W,H,x,y: integer;
+    HDR: WAD2MipMap;
+    //Buffer: PByteArray;
+    Buffer: array of byte;
+    cOffset: int64;
+begin
+
+  result := 0;
+
+  cOffset := src.Seek(0,SoFromCurrent);
+  src.ReadBuffer(HDR.FileName,16);
+  src.ReadBuffer(HDR.Width,4);
+  src.ReadBuffer(HDR.Height,4);
+  src.ReadBuffer(HDR.Q1Offset,4);
+  src.ReadBuffer(HDR.Q2Offset,4);
+  src.ReadBuffer(HDR.Q4Offset,4);
+  src.ReadBuffer(HDR.Q8Offset,4);
+
+  W := HDR.Width;
+  H := HDR.Height;
+
+  img := TSaveImage.Create(W,H);
+  try
+    if (cnv = 'M8') or (cnv = 'WAL') then
+      img.SetMipMaps(3);
+    //GetMem(Buffer,W*H);
+    if ((H*W) < 768) then
+      SetLength(Buffer,768)
+    else
+      SetLength(Buffer,H*W);
+    try
+      src.Seek(cOffset + HDR.Q1Offset,soFromBeginning);
+      //src.ReadBuffer(Buffer^,H*W);
+      src.ReadBuffer(Buffer[0],H*W);
+      for y := 0 to H-1 do
+        for x := 0 to W-1 do
+          img.Pixels[x][y] := Buffer[(y*W)+x];
+      if (cnv = 'M8') or (cnv = 'WAL') then
+      begin
+        src.Seek(cOffset + HDR.Q2Offset,soFromBeginning);
+        src.ReadBuffer(Buffer[0],(H div 2)*(W div 2));
+        for y := 0 to (H div 2)-1 do
+          for x := 0 to (W div 2)-1 do
+            img.MipMaps[0][x][y] := Buffer[(y*W)+x];
+        src.Seek(cOffset + HDR.Q4Offset,soFromBeginning);
+        src.ReadBuffer(Buffer[0],(H div 4)*(W div 4));
+        for y := 0 to (H div 4)-1 do
+          for x := 0 to (W div 4)-1 do
+            img.MipMaps[1][x][y] := Buffer[(y*W)+x];
+        src.Seek(cOffset + HDR.Q8Offset,soFromBeginning);
+        src.ReadBuffer(Buffer[0],(H div 8)*(W div 8));
+        for y := 0 to (H div 8)-1 do
+          for x := 0 to (W div 8)-1 do
+            img.MipMaps[2][x][y] := Buffer[(y*W)+x];
+      end;
+      src.Seek(-770,soFromEnd);   // won't work if source stream is not a single asset
+      src.ReadBuffer(Buffer[0],768);
+      for x := 0 to 255 do
+      begin
+        img.Palette[x].R := Buffer[x*3];
+        img.Palette[x].G := Buffer[(x*3)+1];
+        img.Palette[x].B := Buffer[(x*3)+2];
+      end;
     finally
-      FileClose(hSRC);
+//      FreeMem(Buffer);
+      SetLength(Buffer,0);
     end;
+    if cnv = 'BMP' then
+      img.SaveToBMPStream(dst)
+//      else if cnv = 'PCX' then
+//        img.SaveToPCX(dst)
+    else if cnv = 'TGA8' then
+      img.SaveToTGA8Stream(dst)
+    else if cnv = 'TGA24' then
+      img.SaveToTGA24Stream(dst);
   finally
     img.Free;
   end;
@@ -375,168 +506,175 @@ begin
 end;
 
 function ConvertWAD343(src, dst, cnv: String): integer;
+var src_stm, dst_stm: TFileStream;
+begin
+
+  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
+  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
+
+  try
+    result := ConvertWAD343Stream(src_stm, dst_stm, cnv);
+  finally
+    src_stm.Free;
+    dst_stm.Free;
+  end;
+
+end;
+
+function ConvertWAD244Stream(src, dst: TStream; pal, cnv: String): integer;
 var Img: TSaveImage;
-    hSRC,W,H,x,y: integer;
+    W,H,x,y: integer;
     HDR: WAD2MipMap;
     Buffer: PByteArray;
-//    StartTime: TDateTime;
+    cOffset: int64;
 begin
 
   result := 0;
-//  StartTime := Now;
 
   img := TSaveImage.Create;
   try
-//    img.LoadPAL(pal);
-    hSRC := FileOpen(src,fmOpenRead or fmShareDenyWrite);
+    img.LoadPAL(pal);
+    cOffset := src.Seek(0,SoFromCurrent);
+    src.ReadBuffer(HDR.FileName,16);
+    src.ReadBuffer(HDR.Width,4);
+    src.ReadBuffer(HDR.Height,4);
+    src.ReadBuffer(HDR.Q1Offset,4);
+    src.ReadBuffer(HDR.Q2Offset,4);
+    src.ReadBuffer(HDR.Q4Offset,4);
+    src.ReadBuffer(HDR.Q8Offset,4);
+    src.ReadBuffer(HDR.Q1Offset,0);
+    W := HDR.Width;
+    H := HDR.Height;
+    img.SetSize(W,H);
+    if (cnv = 'M8') or (cnv = 'WAL') then
+      img.SetMipMaps(3);
+    GetMem(Buffer,W*H);
     try
-      FileRead(hSRC,HDR.FileName,16);
-      FileRead(hSRC,HDR.Width,4);
-      FileRead(hSRC,HDR.Height,4);
-      FileRead(hSRC,HDR.Q1Offset,4);
-      FileRead(hSRC,HDR.Q2Offset,4);
-      FileRead(hSRC,HDR.Q4Offset,4);
-      FileRead(hSRC,HDR.Q8Offset,4);
-      FileSeek(hSRC,HDR.Q1Offset,0);
-      W := HDR.Width;
-      H := HDR.Height;
-      img.SetSize(W,H);
+      src.Seek(cOffset + HDR.Q1Offset,soFromBeginning);
+      src.ReadBuffer(Buffer^,H*W);
+      for y := 0 to H-1 do
+        for x := 0 to W-1 do
+          img.Pixels[x][y] := Buffer[(y*W)+x];
       if (cnv = 'M8') or (cnv = 'WAL') then
-        img.SetMipMaps(3);
-      GetMem(Buffer,W*H);
-      try
-        FileSeek(hSRC,HDR.Q1Offset,0);
-        FileRead(hSRC,Buffer^,H*W);
-        for y := 0 to H-1 do
-          for x := 0 to W-1 do
-            img.Pixels[x][y] := Buffer[(y*W)+x];
-        if (cnv = 'M8') or (cnv = 'WAL') then
-        begin
-          FileSeek(hSRC,HDR.Q2Offset,0);
-          FileRead(hSRC,Buffer^,(H div 2)*(W div 2));
-          for y := 0 to (H div 2)-1 do
-            for x := 0 to (W div 2)-1 do
-              img.MipMaps[0][x][y] := Buffer[(y*W)+x];
-          FileSeek(hSRC,HDR.Q4Offset,0);
-          FileRead(hSRC,Buffer^,(H div 2)*(W div 2));
-          for y := 0 to (H div 4)-1 do
-            for x := 0 to (W div 4)-1 do
-              img.MipMaps[1][x][y] := Buffer[(y*W)+x];
-          FileSeek(hSRC,HDR.Q8Offset,0);
-          FileRead(hSRC,Buffer^,(H div 2)*(W div 2));
-          for y := 0 to (H div 8)-1 do
-            for x := 0 to (W div 8)-1 do
-              img.MipMaps[2][x][y] := Buffer[(y*W)+x];
-        end;
-        FileSeek(hSRC,-770,2);
-        FileRead(hSRC,Buffer^,768);
-        for x := 0 to 255 do
-        begin
-          img.Palette[x].R := Buffer[x*3];
-          img.Palette[x].G := Buffer[(x*3)+1];
-          img.Palette[x].B := Buffer[(x*3)+2];
-        end;
-      finally
-        FreeMem(Buffer);
+      begin
+        src.Seek(cOffset + HDR.Q2Offset,soFromBeginning);
+        src.ReadBuffer(Buffer^,(H div 2)*(W div 2));
+        for y := 0 to (H div 2)-1 do
+          for x := 0 to (W div 2)-1 do
+            img.MipMaps[0][x][y] := Buffer[(y*W)+x];
+        src.Seek(cOffset + HDR.Q4Offset,soFromBeginning);
+        src.ReadBuffer(Buffer^,(H div 4)*(W div 4));
+        for y := 0 to (H div 4)-1 do
+          for x := 0 to (W div 4)-1 do
+            img.MipMaps[1][x][y] := Buffer[(y*W)+x];
+        src.Seek(cOffset + HDR.Q8Offset,soFromBeginning);
+        src.ReadBuffer(Buffer^,(H div 8)*(W div 8));
+        for y := 0 to (H div 8)-1 do
+          for x := 0 to (W div 8)-1 do
+            img.MipMaps[2][x][y] := Buffer[(y*W)+x];
       end;
-      if cnv = 'BMP' then
-        img.SaveToBMP(dst)
+    finally
+      FreeMem(Buffer);
+    end;
+    if cnv = 'BMP' then
+      img.SaveToBMPStream(dst)
 //      else if cnv = 'PCX' then
 //        img.SaveToPCX(dst)
       else if cnv = 'TGA8' then
-        img.SaveToTGA8(dst)
+        img.SaveToTGA8Stream(dst)
       else if cnv = 'TGA24' then
-        img.SaveToTGA24(dst);
-    finally
-      FileClose(hSRC);
-    end;
+        img.SaveToTGA24Stream(dst);
   finally
     img.Free;
   end;
-
-//  ShowMessage(IntToStr(MillisecondsBetween(Now,StartTime)));
 
 end;
 
 function ConvertWAD244(src, dst, pal, cnv: String): integer;
+var src_stm, dst_stm: TFileStream;
+begin
+
+  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
+  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
+
+  try
+    result := ConvertWAD244Stream(src_stm, dst_stm, pal, cnv);
+  finally
+    src_stm.Free;
+    dst_stm.Free;
+  end;
+
+end;
+
+function ConvertWAD245Stream(src, dst: TStream; pal, cnv: String): integer;
 var Img: TSaveImage;
-    hSRC,W,H,x,y: integer;
-    HDR: WAD2MipMap;
+    W,H,x,y: integer;
     Buffer: PByteArray;
-//    StartTime: TDateTime;
 begin
 
   result := 0;
-//  StartTime := Now;
 
   img := TSaveImage.Create;
   try
     img.LoadPAL(pal);
-    hSRC := FileOpen(src,fmOpenRead or fmShareDenyWrite);
+    case src.Seek(0,soFromEnd) of
+      16384: begin
+               W := 128;
+               H := 128;
+             end;
+      64000: begin
+               W := 200;
+               H := 320;
+             end;
+      else
+        W := 0;
+        H := 0;
+    end;
+    src.Seek(0, soFromBeginning);
+    img.SetSize(W,H);
+    GetMem(Buffer,W*H);
     try
-      FileRead(hSRC,HDR.FileName,16);
-      FileRead(hSRC,HDR.Width,4);
-      FileRead(hSRC,HDR.Height,4);
-      FileRead(hSRC,HDR.Q1Offset,4);
-      FileRead(hSRC,HDR.Q2Offset,4);
-      FileRead(hSRC,HDR.Q4Offset,4);
-      FileRead(hSRC,HDR.Q8Offset,4);
-      FileSeek(hSRC,HDR.Q1Offset,0);
-      W := HDR.Width;
-      H := HDR.Height;
-      img.SetSize(W,H);
-      if (cnv = 'M8') or (cnv = 'WAL') then
-        img.SetMipMaps(3);
-      GetMem(Buffer,W*H);
-      try
-        FileSeek(hSRC,HDR.Q1Offset,0);
-        FileRead(hSRC,Buffer^,H*W);
-        for y := 0 to H-1 do
-          for x := 0 to W-1 do
-            img.Pixels[x][y] := Buffer[(y*W)+x];
-        if (cnv = 'M8') or (cnv = 'WAL') then
-        begin
-          FileSeek(hSRC,HDR.Q2Offset,0);
-          FileRead(hSRC,Buffer^,(H div 2)*(W div 2));
-          for y := 0 to (H div 2)-1 do
-            for x := 0 to (W div 2)-1 do
-              img.MipMaps[0][x][y] := Buffer[(y*W)+x];
-          FileSeek(hSRC,HDR.Q4Offset,0);
-          FileRead(hSRC,Buffer^,(H div 2)*(W div 2));
-          for y := 0 to (H div 4)-1 do
-            for x := 0 to (W div 4)-1 do
-              img.MipMaps[1][x][y] := Buffer[(y*W)+x];
-          FileSeek(hSRC,HDR.Q8Offset,0);
-          FileRead(hSRC,Buffer^,(H div 2)*(W div 2));
-          for y := 0 to (H div 8)-1 do
-            for x := 0 to (W div 8)-1 do
-              img.MipMaps[2][x][y] := Buffer[(y*W)+x];
-        end;
-      finally
-        FreeMem(Buffer);
-      end;
-      if cnv = 'BMP' then
-        img.SaveToBMP(dst)
+      src.ReadBuffer(Buffer^,H*W);
+      for y := 0 to H-1 do
+        for x := 0 to W-1 do
+          img.Pixels[x][y] := Buffer[(y*W)+x];
+    finally
+      FreeMem(Buffer);
+    end;
+    if cnv = 'BMP' then
+      img.SaveToBMPStream(dst)
 //      else if cnv = 'PCX' then
 //        img.SaveToPCX(dst)
-      else if cnv = 'TGA8' then
-        img.SaveToTGA8(dst)
-      else if cnv = 'TGA24' then
-        img.SaveToTGA24(dst);
-    finally
-      FileClose(hSRC);
-    end;
+    else if cnv = 'TGA8' then
+      img.SaveToTGA8Stream(dst)
+    else if cnv = 'TGA24' then
+      img.SaveToTGA24Stream(dst);
   finally
     img.Free;
   end;
 
-//  ShowMessage(IntToStr(MillisecondsBetween(Now,StartTime)));
-
 end;
 
 function ConvertWAD245(src, dst, pal, cnv: String): integer;
+var src_stm, dst_stm: TFileStream;
+begin
+
+  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
+  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
+
+  try
+    result := ConvertWAD245Stream(src_stm, dst_stm, pal, cnv);
+  finally
+    src_stm.Free;
+    dst_stm.Free;
+  end;
+
+end;
+
+function ConvertPOD3TEXStream(src, dst: TStream; cnv: String): integer;
 var Img: TSaveImage;
-    hSRC,W,H,x,y: integer;
+    W,H,x,y: integer;
+    HDR: POD3TEXHeader;
     Buffer: PByteArray;
 begin
 
@@ -544,44 +682,34 @@ begin
 
   img := TSaveImage.Create;
   try
-    img.LoadPAL(pal);
-    hSRC := FileOpen(src,fmOpenRead or fmShareDenyWrite);
+    src.ReadBuffer(HDR,SizeOf(HDR));
+    W := HDR.Width;
+    H := HDR.Height;
+    img.SetSize(W,H);
+    GetMem(Buffer,W*H);
     try
-      case FileSeek(hSRC,0,2) of
-        16384: begin
-                 W := 128;
-                 H := 128;
-               end;
-        64000: begin
-                 W := 200;
-                 H := 320;
-               end;
-        else
-          W := 0;
-          H := 0;
+      src.ReadBuffer(Buffer^,768);
+      for x := 0 to 255 do
+      begin
+        img.Palette[x].R := Buffer[x*3];
+        img.Palette[x].G := Buffer[(x*3)+1];
+        img.Palette[x].B := Buffer[(x*3)+2];
       end;
-      FileSeek(hSRC,0,0);
-      img.SetSize(W,H);
-      GetMem(Buffer,W*H);
-      try
-        FileRead(hSRC,Buffer^,H*W);
-        for y := 0 to H-1 do
-          for x := 0 to W-1 do
-            img.Pixels[x][y] := Buffer[(y*W)+x];
-      finally
-        FreeMem(Buffer);
-      end;
-      if cnv = 'BMP' then
-        img.SaveToBMP(dst)
+      src.ReadBuffer(Buffer^,H*W);
+      for y := 0 to H-1 do
+        for x := 0 to W-1 do
+          img.Pixels[x][y] := Buffer[(y*W)+x];
+    finally
+      FreeMem(Buffer);
+    end;
+    if cnv = 'BMP' then
+      img.SaveToBMPStream(dst)
 //      else if cnv = 'PCX' then
 //        img.SaveToPCX(dst)
-      else if cnv = 'TGA8' then
-        img.SaveToTGA8(dst)
-      else if cnv = 'TGA24' then
-        img.SaveToTGA24(dst);
-    finally
-      FileClose(hSRC);
-    end;
+    else if cnv = 'TGA8' then
+      img.SaveToTGA8Stream(dst)
+    else if cnv = 'TGA24' then
+      img.SaveToTGA24Stream(dst);
   finally
     img.Free;
   end;
@@ -589,222 +717,205 @@ begin
 end;
 
 function ConvertPOD3TEX(src, dst, cnv: String): integer;
-var Img: TSaveImage;
-    hSRC,W,H,x,y: integer;
-    HDR: POD3TEXHeader;
-    Buffer: PByteArray;
-//    StartTime: TDateTime;
+var src_stm, dst_stm: TFileStream;
 begin
 
-  result := 0;
-//  StartTime := Now;
+  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
+  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
 
-  img := TSaveImage.Create;
   try
-//    img.LoadPAL(pal);
-    hSRC := FileOpen(src,fmOpenRead or fmShareDenyWrite);
-    try
-      FileRead(hSRC,HDR,SizeOf(HDR));
-      W := HDR.Width;
-      H := HDR.Height;
-      img.SetSize(W,H);
-      GetMem(Buffer,W*H);
-      try
-        FileRead(hSRC,Buffer^,768);
-        for x := 0 to 255 do
-        begin
-          img.Palette[x].R := Buffer[x*3];
-          img.Palette[x].G := Buffer[(x*3)+1];
-          img.Palette[x].B := Buffer[(x*3)+2];
-        end;
-        FileRead(hSRC,Buffer^,H*W);
-        for y := 0 to H-1 do
-          for x := 0 to W-1 do
-            img.Pixels[x][y] := Buffer[(y*W)+x];
-      finally
-        FreeMem(Buffer);
-      end;
-      if cnv = 'BMP' then
-        img.SaveToBMP(dst)
-//      else if cnv = 'PCX' then
-//        img.SaveToPCX(dst)
-      else if cnv = 'TGA8' then
-        img.SaveToTGA8(dst)
-      else if cnv = 'TGA24' then
-        img.SaveToTGA24(dst);
-    finally
-      FileClose(hSRC);
-    end;
+    result := ConvertPOD3TEXStream(src_stm, dst_stm, cnv);
   finally
-    img.Free;
+    src_stm.Free;
+    dst_stm.Free;
   end;
-
-//  ShowMessage(IntToStr(MillisecondsBetween(Now,StartTime)));
 
 end;
 
-function ConvertHMC_TEX_RGBA(src, dst: String): integer;
+function ConvertHMC_TEX_RGBAStream(texFile, dst: TStream): integer;
 var x, y, W, H, fsize: integer;
     img: TSaveImage32;
     HDR: HMC_TEX_Entry;
     Buffer: PByteArray;
-    texFile: TFileStream;
 begin
 
   result := 0;
 
-  texFile := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
+  texFile.Read(HDR,SizeOf(HMC_Tex_Entry));
+  Get0stm(texFile);
+
+  if (HDR.Type1 <> 'ABGR') or (HDR.Type2 <> 'ABGR') then
+    raise Exception.Create('Not an RGBA texture!');
+
+  texFile.Read(fsize,4);
+  W := HDR.Width;
+  H := HDR.Height;
+
+  img := TSaveImage32.Create;
   try
-
-    texFile.Read(HDR,SizeOf(HMC_Tex_Entry));
-    Get0stm(texFile);
-
-    if (HDR.Type1 <> 'ABGR') or (HDR.Type2 <> 'ABGR') then
-      raise Exception.Create('Not an RGBA texture!');
-
-    texFile.Read(fsize,4);
-    W := HDR.Width;
-    H := HDR.Height;
-
-    img := TSaveImage32.Create;
+    img.SetSize(W,H);
+    GetMem(Buffer,W*H*4);
     try
-      img.SetSize(W,H);
-      GetMem(Buffer,W*H*4);
-      try
-        texFile.Read(Buffer^,H*W*4);
-        for y := 0 to H-1 do
-          for x := 0 to W-1 do
-          begin
-            img.Pixels[x][y].R := Buffer[(y*W*4)+x*4];
-            img.Pixels[x][y].G := Buffer[(y*W*4)+x*4+1];
-            img.Pixels[x][y].B := Buffer[(y*W*4)+x*4+2];
-            img.Pixels[x][y].A := Buffer[(y*W*4)+x*4+3];
-          end;
-      finally
-        FreeMem(Buffer);
-      end;
-      img.SaveToTGA32(dst);
+      texFile.Read(Buffer^,H*W*4);
+      for y := 0 to H-1 do
+        for x := 0 to W-1 do
+        begin
+          img.Pixels[x][y].R := Buffer[(y*W*4)+x*4];
+          img.Pixels[x][y].G := Buffer[(y*W*4)+x*4+1];
+          img.Pixels[x][y].B := Buffer[(y*W*4)+x*4+2];
+          img.Pixels[x][y].A := Buffer[(y*W*4)+x*4+3];
+        end;
     finally
-      img.Free;
+      FreeMem(Buffer);
     end;
+    img.SaveToTGA32Stream(dst);
   finally
-    texFile.free;
+    img.Free;
   end;
 
 end;
 
-function ConvertHMC_TEX_DXT(src, dst: string; dxtchar: char): integer;
+function ConvertHMC_TEX_RGBA(src, dst: String): integer;
+var src_stm, dst_stm: TFileStream;
+begin
+
+  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
+  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
+
+  try
+    result := ConvertHMC_TEX_RGBAStream(src_stm, dst_stm);
+  finally
+    src_stm.Free;
+    dst_stm.Free;
+  end;
+
+end;
+
+function ConvertHMC_TEX_DXTStream(texFile, outFile: TStream; dxtchar: char): integer;
 var HDR: HMC_TEX_Entry;
     DDS: DDSHeader;
-    outFile, texFile: TFileStream;
     fsize: cardinal;
     x: integer;
 begin
 
   result := 0;
 
-  texFile := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
+  texFile.Read(HDR,SizeOf(HMC_Tex_Entry));
+  Get0stm(texFile);
+
+  if (HDR.Type1 <> (dxtchar+'TXD')) or (HDR.Type2 <> (dxtchar+'TXD')) then
+    raise Exception.Create('Not an DXT'+dxtchar+' texture!');
+
+  texFile.Read(fsize,4);
+  FillChar(DDS,SizeOf(DDSHeader),0);
+  DDS.ID[0] := 'D';
+  DDS.ID[1] := 'D';
+  DDS.ID[2] := 'S';
+  DDS.ID[3] := ' ';
+  DDS.SurfaceDesc.dwSize := 124;
+  DDS.SurfaceDesc.dwFlags := DDSD_CAPS or DDSD_HEIGHT or DDSD_WIDTH or DDSD_PIXELFORMAT or DDSD_LINEARSIZE;
+  if HDR.NumMipMap > 1 then
+    DDS.SurfaceDesc.dwFlags := DDS.SurfaceDesc.dwFlags or DDSD_MIPMAPCOUNT;
+  DDS.SurfaceDesc.dwHeight := HDR.Height;
+  DDS.SurfaceDesc.dwWidth := HDR.Width;
+  DDS.SurfaceDesc.dwPitchOrLinearSize := fsize;
+  DDS.SurfaceDesc.dwMipMapCount := HDR.NumMipMap;
+  DDS.SurfaceDesc.ddpfPixelFormat.dwSize := 32;
+  DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_FOURCC;
+  DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'D';
+  DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[1] := 'X';
+  DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[2] := 'T';
+  DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := dxtchar;
+  DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDSCAPS_TEXTURE;
+  if HDR.NumMipMap > 1 then
+    DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDS.SurfaceDesc.ddsCaps.dwCaps1 or DDSCAPS_COMPLEX or DDSCAPS_MIPMAP;
+  outFile.Write(DDS,SizeOf(DDSHeader));
+  outFile.CopyFrom(texFile,fsize);
+  for x := 2 to HDR.NumMipMap do
+  begin
+    texFile.Read(fsize,4);
+    outFile.CopyFrom(texFile,fsize);
+  end;
+
+end;
+
+function ConvertHMC_TEX_DXT(src, dst: string; dxtchar: char): integer;
+var src_stm, dst_stm: TFileStream;
+begin
+
+  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
+  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
+
   try
-
-    texFile.Read(HDR,SizeOf(HMC_Tex_Entry));
-    Get0stm(texFile);
-
-    if (HDR.Type1 <> (dxtchar+'TXD')) or (HDR.Type2 <> (dxtchar+'TXD')) then
-      raise Exception.Create('Not an DXT'+dxtchar+' texture!');
-
-    outFile := TFileStream.Create(dst,fmCreate);
-    try
-      texFile.Read(fsize,4);
-      FillChar(DDS,SizeOf(DDSHeader),0);
-      DDS.ID[0] := 'D';
-      DDS.ID[1] := 'D';
-      DDS.ID[2] := 'S';
-      DDS.ID[3] := ' ';
-      DDS.SurfaceDesc.dwSize := 124;
-      DDS.SurfaceDesc.dwFlags := DDSD_CAPS or DDSD_HEIGHT or DDSD_WIDTH or DDSD_PIXELFORMAT or DDSD_LINEARSIZE;
-      if HDR.NumMipMap > 1 then
-        DDS.SurfaceDesc.dwFlags := DDS.SurfaceDesc.dwFlags or DDSD_MIPMAPCOUNT;
-      DDS.SurfaceDesc.dwHeight := HDR.Height;
-      DDS.SurfaceDesc.dwWidth := HDR.Width;
-      DDS.SurfaceDesc.dwPitchOrLinearSize := fsize;
-      DDS.SurfaceDesc.dwMipMapCount := HDR.NumMipMap;
-      DDS.SurfaceDesc.ddpfPixelFormat.dwSize := 32;
-      DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_FOURCC;
-      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'D';
-      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[1] := 'X';
-      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[2] := 'T';
-      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := dxtchar;
-      DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDSCAPS_TEXTURE;
-      if HDR.NumMipMap > 1 then
-        DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDS.SurfaceDesc.ddsCaps.dwCaps1 or DDSCAPS_COMPLEX or DDSCAPS_MIPMAP;
-      outFile.Write(DDS,SizeOf(DDSHeader));
-      outFile.CopyFrom(texFile,fsize);
-      for x := 2 to HDR.NumMipMap do
-      begin
-        texFile.Read(fsize,4);
-        outFile.CopyFrom(texFile,fsize);
-      end;
-    finally
-      outFile.Free;
-    end;
+    result := ConvertHMC_TEX_DXTStream(src_stm, dst_stm, dxtchar);
   finally
-    texFile.Free;
+    src_stm.Free;
+    dst_stm.Free;
+  end;
+
+end;
+
+function ConvertHMC_TEX_PALNStream(texFile, dst: TStream): integer;
+var x, y, W, H, fsize: integer;
+    img8: TSaveImage;
+    HDR: HMC_TEX_Entry;
+    Buffer: PByteArray;
+begin
+
+  result := 0;
+
+  texFile.Read(HDR,SizeOf(HMC_Tex_Entry));
+  Get0stm(texFile);
+  texFile.Read(fsize,4);
+
+  if (HDR.Type1 <> 'NLAP') or (HDR.Type2 <> 'NLAP') then
+    raise Exception.Create('Not an PALN texture!');
+
+  img8 := TSaveImage.Create;
+  GetMem(Buffer,fsize);
+  try
+    texFile.Read(Buffer^,fsize);
+    texFile.Read(fsize,4);
+
+    img8.SetSizePal(HDR.Width, HDR.Height,fsize,true);
+
+    W := HDR.Width;
+    H := HDR.Height;
+
+    for y := 0 to H-1 do
+      for x := 0 to W-1 do
+        img8.Pixels[x][y] := Buffer[(y*W)+x];
+
+    texFile.Read(Buffer^,fsize*4);
+
+    for y := 0 to fsize-1 do
+    begin
+      img8.Palette[y].R := Buffer[(y*4)];
+      img8.Palette[y].G := Buffer[(y*4)+1];
+      img8.Palette[y].B := Buffer[(y*4)+2];
+      img8.Palette[y].A := Buffer[(y*4)+3];
+    end;
+
+    img8.SaveToTGA32Stream(dst);
+  finally
+    FreeMem(Buffer);
+    img8.free;
   end;
 
 end;
 
 function ConvertHMC_TEX_PALN(src, dst: string): integer;
-var x, y, W, H, fsize: integer;
-    img8: TSaveImage;
-    HDR: HMC_TEX_Entry;
-    Buffer: PByteArray;
-    texFile: TFileStream;
+var src_stm, dst_stm: TFileStream;
 begin
 
-  result := 0;
+  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
+  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
 
-  texFile := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
   try
-
-    texFile.Read(HDR,SizeOf(HMC_Tex_Entry));
-    Get0stm(texFile);
-    texFile.Read(fsize,4);
-
-    if (HDR.Type1 <> 'NLAP') or (HDR.Type2 <> 'NLAP') then
-      raise Exception.Create('Not an PALN texture!');
-
-    img8 := TSaveImage.Create;
-    GetMem(Buffer,fsize);
-    try
-      texFile.Read(Buffer^,fsize);
-      texFile.Read(fsize,4);
-
-      img8.SetSizePal(HDR.Width, HDR.Height,fsize,true);
-
-      W := HDR.Width;
-      H := HDR.Height;
-
-      for y := 0 to H-1 do
-        for x := 0 to W-1 do
-          img8.Pixels[x][y] := Buffer[(y*W)+x];
-
-      texFile.Read(Buffer^,fsize*4);
-
-      for y := 0 to fsize-1 do
-      begin
-        img8.Palette[y].R := Buffer[(y*4)];
-        img8.Palette[y].G := Buffer[(y*4)+1];
-        img8.Palette[y].B := Buffer[(y*4)+2];
-        img8.Palette[y].A := Buffer[(y*4)+3];
-      end;
-
-      img8.SaveToTGA32(dst);
-    finally
-      FreeMem(Buffer);
-      img8.free;
-    end;
+    result := ConvertHMC_TEX_PALNStream(src_stm, dst_stm);
   finally
-    texFile.Free;
+    src_stm.Free;
+    dst_stm.Free;
   end;
 
 end;
@@ -922,6 +1033,72 @@ begin
 
 end;
 
+function ConvertStream(src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer; stdcall;
+var Size: int64;
+begin
+
+  result := 0;
+
+  if (fmt = 'WAD2') or (fmt = 'WAD3') then
+  begin
+    case DataX of
+      66: begin
+            if not(Silent) or (palfil = '') then
+              palfil := SelectPal;
+            result := ConvertWAD242Stream(src,dst,palfil,cnv);
+          end;
+      67: result := ConvertWAD343Stream(src,dst,cnv);
+      68: begin
+            Size := src.Size;
+            if ((fmt = 'WAD2') and (Uppercase(LeftStr(nam,8))='CONCHARS') and (Size = 16384)) then
+            begin
+              if not(Silent) or (palfil = '') then
+                palfil := SelectPal;
+              result := ConvertWAD245Stream(src,dst,palfil,cnv);
+            end
+            else
+            begin
+              if not(Silent) or (palfil = '') then
+                palfil := SelectPal;
+              result := ConvertWAD244Stream(src,dst,palfil,cnv);
+            end;
+          end;
+      69: begin
+            if not(Silent) or (palfil = '') then
+              palfil := SelectPal;
+            result := ConvertWAD245Stream(src,dst,palfil,cnv);
+          end;
+    end;
+  end
+  else if (fmt = 'POD3') and (uppercase(extractfileext(nam)) = '.TEX') then
+  begin
+    result := ConvertPOD3TEXStream(src,dst,cnv);
+  end
+  else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.RGBA') then
+  begin
+    result := ConvertHMC_TEX_RGBAStream(src,dst);
+  end
+  else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.PALN') then
+  begin
+    result := ConvertHMC_TEX_PALNStream(src,dst);
+  end
+  else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.DXT1') then
+  begin
+    result := ConvertHMC_TEX_DXTStream(src,dst,'1');
+  end
+  else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.DXT3') then
+  begin
+    result := ConvertHMC_TEX_DXTStream(src,dst,'3');
+  end
+  else if (fmt = 'ART') then
+  begin
+    if not(Silent) or (palfil = '') then
+      palfil := SelectPal;
+    result := ConvertARTStream(src,dst,palfil,DataX,DataY,cnv);
+  end;
+
+end;
+
 function Convert(src, dst, nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer; stdcall;
 var Size: int64;
     hTMP: integer;
@@ -992,7 +1169,6 @@ begin
     result := ConvertART(src,dst,palfil,DataX,DataY,cnv);
   end;
 
-
 end;
 
 procedure InitPlugin(per: TPercentCallback; lngid: TLanguageCallback; DUP5Path: ShortString; AppHandle: THandle; AppOwner: TComponent); stdcall;
@@ -1010,7 +1186,7 @@ procedure AboutBox; stdcall;
 begin
 
   MessageBoxA(AHandle, PChar('Picture/Textures Convert Plugin v'+getVersion(DRIVER_VERSION)+#10+
-                          '(c)Copyright 2002-2004 Alexandre "Elbereth" Devilliers'+#10+#10+
+                          '(c)Copyright 2002-2005 Alexandre "Elbereth" Devilliers'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+#10+
                           DLNGStr('CNV010')
                           )
@@ -1097,6 +1273,7 @@ end;
 exports
   DUCIVersion,
   Convert,
+  ConvertStream,
   GetFileConvert,
   IsFileCompatible,
   VersionInfo,

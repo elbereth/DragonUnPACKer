@@ -1,6 +1,6 @@
 object frmHyperRipper: TfrmHyperRipper
   Left = 230
-  Top = 540
+  Top = 377
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'HyperRipper'
@@ -4731,7 +4731,6 @@ object frmHyperRipper: TfrmHyperRipper
         Font.Style = [fsBold]
         ParentFont = False
         ShadowSize = 1
-        ShadowPos = spRightBottom
         AutoOpenURL = False
         HotTrackFont.Charset = DEFAULT_CHARSET
         HotTrackFont.Color = clWindowText

@@ -1,6 +1,6 @@
 program drgunpack5;
 
-// $Id: drgunpack5.dpr,v 1.3 2004-07-17 19:25:31 elbereth Exp $
+// $Id: drgunpack5.dpr,v 1.3.2.1 2004-10-10 09:17:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/drgunpack5.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -54,7 +54,8 @@ uses
   spec_DUHT in '..\common\spec_DUHT.pas',
   spec_DULK in '..\common\spec_DULK.pas',
   Translation in 'Translation.pas',
-  spec_HRF in '..\common\spec_HRF.pas';
+  spec_HRF in '..\common\spec_HRF.pas',
+  commonTypes in '..\common\commonTypes.pas';
 
 {$R *.res}
 

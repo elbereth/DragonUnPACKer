@@ -1,6 +1,6 @@
 object frmError: TfrmError
-  Left = 161
-  Top = 338
+  Left = 348
+  Top = 580
   BorderIcons = [biSystemMenu]
   BorderStyle = bsSingle
   Caption = 'Erreur'
@@ -171,7 +171,7 @@ object frmError: TfrmError
     Font.Color = clWindowText
     Font.Height = -11
     Font.Name = 'MS Sans Serif'
-    Font.Style = [fsItalic]
+    Font.Style = []
     ParentFont = False
     Transparent = True
   end
@@ -181,14 +181,14 @@ object frmError: TfrmError
     Width = 201
     Height = 13
     AutoSize = False
-    Caption = 'Send bug report to:'
+    Caption = 'Submit bug reports to:'
   end
   object lblEmailReport: TLabel
     Left = 136
     Top = 260
-    Width = 141
+    Width = 193
     Height = 13
-    Caption = 'dup5.bug-report@drgsoft.com'
+    Caption = 'Dragon UnPACKer SourceForge Tracker'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clHotLight
     Font.Height = -11

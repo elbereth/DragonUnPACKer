@@ -5151,7 +5151,7 @@ object dup5Main: Tdup5Main
     Images = imgLook
     ImageMargin.Left = 0
     ImageMargin.Top = 0
-    ImageMargin.Right = 0
+    ImageMargin.Right = 5
     ImageMargin.Bottom = 0
     ImageSize.Height = 0
     ImageSize.Width = 0

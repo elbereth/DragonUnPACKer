@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.3.2.2 2004-09-26 15:45:56 elbereth Exp $
+// $Id: Main.pas,v 1.3.2.3 2004-09-26 15:50:19 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License

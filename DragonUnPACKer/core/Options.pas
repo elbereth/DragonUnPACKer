@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.2.2.3 2004-08-21 14:58:43 elbereth Exp $
+// $Id: Options.pas,v 1.2.2.4 2004-08-22 19:36:26 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -124,6 +124,7 @@ type
     txtDUHI: TStaticText;
     txtHIntVer: TStaticText;
     trkAssocIcon: TTrackBar;
+    chkLog: TCheckBox;
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cmdOkClick(Sender: TObject);
@@ -156,6 +157,7 @@ type
       Change: TItemChange);
     procedure lstHR2Change(Sender: TObject; Item: TListItem;
       Change: TItemChange);
+    procedure chkLogClick(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -403,6 +405,10 @@ begin
         ChkSmartOpen.Checked := Reg.ReadBool('SmartOpen')
       else
         ChkSmartOpen.Checked := true;
+      if Reg.ValueExists('ShowLog') then
+        ChkLog.Checked := Reg.ReadBool('ShowLog')
+      else
+        ChkLog.Checked := true;
       // Remove obsolete key
       if Reg.ValueExists('XPStyle') then
         Reg.DeleteKey('XPStyle');
@@ -423,21 +429,14 @@ begin
   Loading := True;
 
   CONVList;
-//  if CPlug.NumPlugins > 0 then
-//    frmConfig.lstConvertClick(Self);
   DRVList;
-//  if FSE.NumDrivers > 0 then
-//    frmConfig.lstDriversClick(Self);
   HRIPList;
-//  if HPlug.NumPlugins > 0 then
-//    frmConfig.lstHyperRipperClick(Self);
   LOOKList;
   frmConfig.lstLookClick(Self);
   TYPEList;
 
   Loading := False;
 
-//  frmConfig.lstConfig.ItemIndex := TabSelect;
   treeConfig.Items.Item[TabSelect].Selected := True;
   treeConfig.FullExpand;
   frmConfig.treeConfigChange(Self, frmConfig.treeConfig.Selected);
@@ -874,6 +873,29 @@ begin
     txtHIntVer.Caption := inttostr(HPlug.Plugins[lstHR2.ItemIndex+1].Version.Version);
 //    trkPriority.Position := FSE.Drivers[lstDrivers2.ItemIndex+1].Priority;
   end;
+
+end;
+
+procedure TfrmConfig.chkLogClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(chkLog.Checked) then
+    dup5Main.menuLog_HideClick(self)
+  else
+    dup5Main.menuLog_ShowClick(self);
+
+{  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      Reg.WriteBool('ShowLog',chkLog.Checked);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;}
 
 end;
 

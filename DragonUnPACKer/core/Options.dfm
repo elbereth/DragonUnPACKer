@@ -1,6 +1,6 @@
 object frmConfig: TfrmConfig
-  Left = 200
-  Top = 213
+  Left = 199
+  Top = 241
   BorderStyle = bsToolWindow
   Caption = 'Configuration'
   ClientHeight = 295
@@ -16,6 +16,330 @@ object frmConfig: TfrmConfig
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
+  object tabLook: TPanel
+    Left = 144
+    Top = 8
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 2
+    object strLookList: TLabel
+      Left = 0
+      Top = 0
+      Width = 425
+      Height = 13
+      AutoSize = False
+      Caption = 'Fichiers de Look:'
+    end
+    object lstLook: TListBox
+      Left = 0
+      Top = 16
+      Width = 441
+      Height = 121
+      ItemHeight = 13
+      TabOrder = 0
+      OnClick = lstLookClick
+      OnKeyDown = FormKeyDown
+    end
+    object grpLookInfo: TGroupBox
+      Left = 0
+      Top = 144
+      Width = 441
+      Height = 137
+      Caption = 'Information'
+      TabOrder = 1
+      object strLookName: TLabel
+        Left = 8
+        Top = 16
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'Nom:'
+      end
+      object strLookAuthor: TLabel
+        Left = 8
+        Top = 32
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'Auteur:'
+      end
+      object strLookEmail: TLabel
+        Left = 8
+        Top = 48
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'E-mail:'
+      end
+      object lblLookName: TLabel
+        Left = 64
+        Top = 16
+        Width = 369
+        Height = 13
+        AutoSize = False
+      end
+      object lblLookAuthor: TLabel
+        Left = 64
+        Top = 32
+        Width = 369
+        Height = 13
+        AutoSize = False
+      end
+      object lblLookEmail: TLabel
+        Left = 64
+        Top = 48
+        Width = 369
+        Height = 13
+        AutoSize = False
+      end
+      object strLookComment: TLabel
+        Left = 8
+        Top = 64
+        Width = 57
+        Height = 13
+        AutoSize = False
+        Caption = 'Comment:'
+      end
+      object Panel2: TPanel
+        Left = 64
+        Top = 64
+        Width = 369
+        Height = 65
+        BevelOuter = bvLowered
+        TabOrder = 0
+        object lblLookComment: TLabel
+          Left = 1
+          Top = 1
+          Width = 3
+          Height = 13
+        end
+      end
+    end
+  end
+  object tabPlugins: TPanel
+    Left = 144
+    Top = 8
+    Width = 441
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 3
+    Visible = False
+    object strDriversList: TLabel
+      Left = 0
+      Top = 0
+      Width = 241
+      Height = 13
+      AutoSize = False
+      Caption = 'Drivers:'
+    end
+    object cmdDrvSetup: TButton
+      Left = 366
+      Top = 0
+      Width = 75
+      Height = 17
+      Caption = 'Setup'
+      Enabled = False
+      TabOrder = 0
+      OnClick = cmdDrvSetupClick
+      OnKeyDown = FormKeyDown
+    end
+    object grpDrvInfo: TGroupBox
+      Left = 0
+      Top = 144
+      Width = 305
+      Height = 137
+      Caption = 'Driver Info'
+      TabOrder = 1
+      object strDrvInfoAuthor: TLabel
+        Left = 8
+        Top = 32
+        Width = 65
+        Height = 13
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Author:'
+      end
+      object lblDrvInfoAuthor: TLabel
+        Left = 80
+        Top = 32
+        Width = 217
+        Height = 13
+        AutoSize = False
+      end
+      object strDrvInfoVersion: TLabel
+        Left = 8
+        Top = 16
+        Width = 65
+        Height = 13
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Version:'
+      end
+      object lblDrvInfoVersion: TLabel
+        Left = 80
+        Top = 16
+        Width = 217
+        Height = 13
+        AutoSize = False
+      end
+      object strDrvInfoComments: TLabel
+        Left = 8
+        Top = 48
+        Width = 65
+        Height = 13
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Comments:'
+      end
+      object Panel1: TPanel
+        Left = 80
+        Top = 48
+        Width = 217
+        Height = 81
+        BevelInner = bvLowered
+        BevelOuter = bvNone
+        TabOrder = 0
+        object lblDrvInfoComments: TLabel
+          Left = 1
+          Top = 1
+          Width = 215
+          Height = 79
+          AutoSize = False
+          WordWrap = True
+        end
+      end
+    end
+    object cmdDrvAbout: TButton
+      Left = 288
+      Top = 0
+      Width = 75
+      Height = 17
+      Caption = 'About'
+      Enabled = False
+      TabOrder = 2
+      OnClick = cmdDrvAboutClick
+      OnKeyDown = FormKeyDown
+    end
+    object lstDrivers2: TListView
+      Left = 0
+      Top = 24
+      Width = 441
+      Height = 113
+      Columns = <
+        item
+          Caption = 'P'
+          Width = 30
+        end
+        item
+          Caption = 'Plugin name'
+          Width = 220
+        end
+        item
+          Caption = 'Version'
+          Width = 105
+        end
+        item
+          Caption = 'Filename'
+          Width = 65
+        end>
+      ColumnClick = False
+      HideSelection = False
+      ReadOnly = True
+      RowSelect = True
+      TabOrder = 3
+      ViewStyle = vsReport
+      OnChange = lstDrivers2Change
+      OnKeyDown = FormKeyDown
+    end
+    object grpAdvInfo: TGroupBox
+      Left = 312
+      Top = 144
+      Width = 129
+      Height = 137
+      Caption = 'Advanced Info'
+      TabOrder = 4
+      object lblDUDI: TLabel
+        Left = 8
+        Top = 18
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'DUDI :'
+      end
+      object lblIntVer: TLabel
+        Left = 8
+        Top = 37
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'Int.Ver. :'
+      end
+      object lblPriority: TLabel
+        Left = 8
+        Top = 61
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'Priority :'
+      end
+      object txtDUDI: TStaticText
+        Left = 64
+        Top = 16
+        Width = 58
+        Height = 17
+        Alignment = taCenter
+        AutoSize = False
+        BorderStyle = sbsSingle
+        Caption = '-'
+        TabOrder = 0
+      end
+      object txtIntVer: TStaticText
+        Left = 64
+        Top = 35
+        Width = 58
+        Height = 17
+        Alignment = taCenter
+        AutoSize = False
+        BorderStyle = sbsSingle
+        Caption = '-'
+        TabOrder = 1
+      end
+      object trkPriority: TTrackBar
+        Left = 8
+        Top = 75
+        Width = 113
+        Height = 33
+        Max = 200
+        PageSize = 10
+        Frequency = 10
+        TabOrder = 2
+        TickMarks = tmTopLeft
+        OnChange = trkPriorityChange
+      end
+      object txtPriority: TStaticText
+        Left = 64
+        Top = 59
+        Width = 58
+        Height = 17
+        Alignment = taCenter
+        AutoSize = False
+        BorderStyle = sbsSingle
+        Caption = '-'
+        TabOrder = 3
+      end
+      object butRefresh: TButton
+        Left = 16
+        Top = 112
+        Width = 97
+        Height = 17
+        Caption = 'Refresh List'
+        TabOrder = 4
+        OnClick = butRefreshClick
+        OnKeyDown = FormKeyDown
+      end
+    end
+  end
   object tabHyperRipper: TPanel
     Left = 144
     Top = 8
@@ -610,329 +934,14 @@ object frmConfig: TfrmConfig
         WordWrap = True
         OnClick = chkUseHyperRipperClick
       end
-    end
-  end
-  object tabLook: TPanel
-    Left = 144
-    Top = 8
-    Width = 449
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 2
-    object strLookList: TLabel
-      Left = 0
-      Top = 0
-      Width = 425
-      Height = 13
-      AutoSize = False
-      Caption = 'Fichiers de Look:'
-    end
-    object lstLook: TListBox
-      Left = 0
-      Top = 16
-      Width = 441
-      Height = 121
-      ItemHeight = 13
-      TabOrder = 0
-      OnClick = lstLookClick
-      OnKeyDown = FormKeyDown
-    end
-    object grpLookInfo: TGroupBox
-      Left = 0
-      Top = 144
-      Width = 441
-      Height = 137
-      Caption = 'Information'
-      TabOrder = 1
-      object strLookName: TLabel
+      object chkLog: TCheckBox
         Left = 8
-        Top = 16
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'Nom:'
-      end
-      object strLookAuthor: TLabel
-        Left = 8
-        Top = 32
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'Auteur:'
-      end
-      object strLookEmail: TLabel
-        Left = 8
-        Top = 48
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'E-mail:'
-      end
-      object lblLookName: TLabel
-        Left = 64
-        Top = 16
-        Width = 369
-        Height = 13
-        AutoSize = False
-      end
-      object lblLookAuthor: TLabel
-        Left = 64
-        Top = 32
-        Width = 369
-        Height = 13
-        AutoSize = False
-      end
-      object lblLookEmail: TLabel
-        Left = 64
-        Top = 48
-        Width = 369
-        Height = 13
-        AutoSize = False
-      end
-      object strLookComment: TLabel
-        Left = 8
-        Top = 64
-        Width = 57
-        Height = 13
-        AutoSize = False
-        Caption = 'Comment:'
-      end
-      object Panel2: TPanel
-        Left = 64
-        Top = 64
-        Width = 369
-        Height = 65
-        BevelOuter = bvLowered
-        TabOrder = 0
-        object lblLookComment: TLabel
-          Left = 1
-          Top = 1
-          Width = 3
-          Height = 13
-        end
-      end
-    end
-  end
-  object tabPlugins: TPanel
-    Left = 144
-    Top = 8
-    Width = 441
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 3
-    Visible = False
-    object strDriversList: TLabel
-      Left = 0
-      Top = 0
-      Width = 241
-      Height = 13
-      AutoSize = False
-      Caption = 'Drivers:'
-    end
-    object cmdDrvSetup: TButton
-      Left = 366
-      Top = 0
-      Width = 75
-      Height = 17
-      Caption = 'Setup'
-      Enabled = False
-      TabOrder = 0
-      OnClick = cmdDrvSetupClick
-      OnKeyDown = FormKeyDown
-    end
-    object grpDrvInfo: TGroupBox
-      Left = 0
-      Top = 144
-      Width = 305
-      Height = 137
-      Caption = 'Driver Info'
-      TabOrder = 1
-      object strDrvInfoAuthor: TLabel
-        Left = 8
-        Top = 32
-        Width = 65
-        Height = 13
-        Alignment = taRightJustify
-        AutoSize = False
-        Caption = 'Author:'
-      end
-      object lblDrvInfoAuthor: TLabel
-        Left = 80
-        Top = 32
-        Width = 217
-        Height = 13
-        AutoSize = False
-      end
-      object strDrvInfoVersion: TLabel
-        Left = 8
-        Top = 16
-        Width = 65
-        Height = 13
-        Alignment = taRightJustify
-        AutoSize = False
-        Caption = 'Version:'
-      end
-      object lblDrvInfoVersion: TLabel
-        Left = 80
-        Top = 16
-        Width = 217
-        Height = 13
-        AutoSize = False
-      end
-      object strDrvInfoComments: TLabel
-        Left = 8
-        Top = 48
-        Width = 65
-        Height = 13
-        Alignment = taRightJustify
-        AutoSize = False
-        Caption = 'Comments:'
-      end
-      object Panel1: TPanel
-        Left = 80
-        Top = 48
-        Width = 217
-        Height = 81
-        BevelInner = bvLowered
-        BevelOuter = bvNone
-        TabOrder = 0
-        object lblDrvInfoComments: TLabel
-          Left = 1
-          Top = 1
-          Width = 215
-          Height = 79
-          AutoSize = False
-          WordWrap = True
-        end
-      end
-    end
-    object cmdDrvAbout: TButton
-      Left = 288
-      Top = 0
-      Width = 75
-      Height = 17
-      Caption = 'About'
-      Enabled = False
-      TabOrder = 2
-      OnClick = cmdDrvAboutClick
-      OnKeyDown = FormKeyDown
-    end
-    object lstDrivers2: TListView
-      Left = 0
-      Top = 24
-      Width = 441
-      Height = 113
-      Columns = <
-        item
-          Caption = 'P'
-          Width = 30
-        end
-        item
-          Caption = 'Plugin name'
-          Width = 220
-        end
-        item
-          Caption = 'Version'
-          Width = 105
-        end
-        item
-          Caption = 'Filename'
-          Width = 65
-        end>
-      ColumnClick = False
-      HideSelection = False
-      ReadOnly = True
-      RowSelect = True
-      TabOrder = 3
-      ViewStyle = vsReport
-      OnChange = lstDrivers2Change
-      OnKeyDown = FormKeyDown
-    end
-    object grpAdvInfo: TGroupBox
-      Left = 312
-      Top = 144
-      Width = 129
-      Height = 137
-      Caption = 'Advanced Info'
-      TabOrder = 4
-      object lblDUDI: TLabel
-        Left = 8
-        Top = 18
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'DUDI :'
-      end
-      object lblIntVer: TLabel
-        Left = 8
-        Top = 37
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'Int.Ver. :'
-      end
-      object lblPriority: TLabel
-        Left = 8
-        Top = 61
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'Priority :'
-      end
-      object txtDUDI: TStaticText
-        Left = 64
-        Top = 16
-        Width = 58
+        Top = 96
+        Width = 425
         Height = 17
-        Alignment = taCenter
-        AutoSize = False
-        BorderStyle = sbsSingle
-        Caption = '-'
-        TabOrder = 0
-      end
-      object txtIntVer: TStaticText
-        Left = 64
-        Top = 35
-        Width = 58
-        Height = 17
-        Alignment = taCenter
-        AutoSize = False
-        BorderStyle = sbsSingle
-        Caption = '-'
-        TabOrder = 1
-      end
-      object trkPriority: TTrackBar
-        Left = 8
-        Top = 75
-        Width = 113
-        Height = 33
-        Max = 200
-        PageSize = 10
-        Frequency = 10
-        TabOrder = 2
-        TickMarks = tmTopLeft
-        OnChange = trkPriorityChange
-      end
-      object txtPriority: TStaticText
-        Left = 64
-        Top = 59
-        Width = 58
-        Height = 17
-        Alignment = taCenter
-        AutoSize = False
-        BorderStyle = sbsSingle
-        Caption = '-'
-        TabOrder = 3
-      end
-      object butRefresh: TButton
-        Left = 16
-        Top = 112
-        Width = 97
-        Height = 17
-        Caption = 'Refresh List'
-        TabOrder = 4
-        OnClick = butRefreshClick
-        OnKeyDown = FormKeyDown
+        Caption = 'Afficher le journal d'#39'ex'#233'cution'
+        TabOrder = 5
+        OnClick = chkLogClick
       end
     end
   end

@@ -114,8 +114,8 @@ IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=1
 MinorVer=0
-Release=6
-Build=88
+Release=7
+Build=96
 Debug=0
 PreRelease=1
 Special=0
@@ -126,11 +126,18 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=DUP5 - Picture/Textures Convert Plugin
-FileVersion=1.0.6.88
+FileVersion=1.0.7.96
 InternalName=cnv_pictex
-LegalCopyright=(c)2003-2004 Alexandre Devilliers
+LegalCopyright=(c)2003-2004 Alexandre "Elbereth" Devilliers
 LegalTrademarks=
 OriginalFilename=cnv_pictex.d5c
 ProductName=Dragon UnPACKer 5
 ProductVersion=5.0.0
 Comments=Convert between file formats in DUP5
+[HistoryLists\hlUnitAliases]
+Count=1
+Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlOutputDirectorry]
+Count=2
+Item0=H:\Programmation\Compiled\drgunpacker\current\data\convert
+Item1=H:\Programmation\Compiled\drgunpacker\current\utils

@@ -1,6 +1,6 @@
 unit prg_ver;
 
-// $Id: prg_ver.pas,v 1.2 2004-05-08 13:43:50 elbereth Exp $
+// $Id: prg_ver.pas,v 1.3 2004-05-16 15:50:12 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/prg_ver.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,13 +18,54 @@ unit prg_ver;
 
 interface
 
+uses SysUtils, Windows, Forms, lib_utils, StrUtils;
+
+function curBuild:integer;
+
 const
   CurVersion: String = '5.0.0';
 //  CurEdit: String = 'GiantsHell.com Edition';
-  CurEdit: String = 'RC4';
-  CurBuild: Integer = 129;
+  CurEdit: String = 'RC5';
   CurURL: String = 'http://www.dragonunpacker.com';
 
 implementation
+
+function LectureVersion:string;
+var
+    S        : string;
+    Taille  : DWord;
+    Buffer  : PChar;
+    VersionPC : PChar;
+    VersionL    : DWord;
+
+begin
+
+    Result:='';
+    {--- on demande la taille des informations sur l'application ---}
+    S := Application.ExeName;
+    Taille := GetFileVersionInfoSize(PChar(S), Taille);
+    if Taille>0
+    then try
+    {--- Réservation en mémoire d'une zone de la taille voulue ---}
+    Buffer := AllocMem(Taille);
+    {--- Copie dans le buffer des informations ---}
+    GetFileVersionInfo(PChar(S), 0, Taille, Buffer);
+    {--- Recherche de l'information de version ---}
+    if VerQueryValue(Buffer, PChar('\StringFileInfo\040C04E4\FileVersion'), Pointer(VersionPC), VersionL)
+        then Result:=VersionPC;
+    finally
+    FreeMem(Buffer, Taille);
+    end;
+
+end;
+
+function curBuild:integer;
+var lv : string;
+begin
+
+  lv := lectureVersion;
+  result := strtoint(rightstr(lv, length(lv) - posrev('.',lv)));
+
+end;
 
 end.

@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.1.1.1 2004-05-08 10:26:53 elbereth Exp $
+// $Id: drv_default.dpr,v 1.2 2004-05-09 21:39:54 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,7 +18,7 @@ library drv_default;
 //
 
 uses
-//  Dialogs,
+  Dialogs,
   Zlib,
   Classes,
   StrUtils,
@@ -126,6 +126,7 @@ type FSE = ^element;
     13120        Added support for Nocturne .POD files
                  Fixed the .POD extension running .007 open routine (which obviously won't work)
     13211        Fixed SCGL always opening files (even for WestWood TLK files).
+    13240  50024 Added support for Painkiller .PAK files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -139,174 +140,6 @@ type FSE = ^element;
 
   //////////////////////////////////////////////////////////////////////////// }
 
-const DRIVER_VERSION = 13211;
-      DUP_VERSION = 50023;
-
-      BUFFER_SIZE = 4096;
-
-var DataBloc: FSE;
-    OffsetList: TInts;
-    FHandle: Integer = 0;
-    CurFormat: Integer = 0;
-    DrvInfo: CurrentDriverInfo;
-    TotFSize: Integer = 0;
-    ErrInfo: ErrorInfo;
-    SetPercent: TPercentCallback;
-    Per: Byte = 0;
-    OldPer: byte = 0;
-    DNISize : Integer;
-    NumFSE: Integer;
-    HPIKey: Integer;
-
-
-function revstr(str: string): string;
-var res: string;
-    x: integer;
-begin
-
-  res := '';
-
-  for x := 1 to length(str) do
-    res := str[x]+res;
-
-  revstr := res;
-
-end;
-
-function DUDIVersion: Byte; stdcall;
-begin
-  DUDIVersion := 1;
-end;
-
-function GetNumVersion: Integer; stdcall;
-begin
-
-  GetNumVersion := DRIVER_VERSION;
-
-end;
-
-function GetDriverInfo: DriverInfo; stdcall;
-begin
-
-  GetDriverInfo.Name := 'Elbereth''s Main Driver';
-  GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
-  GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 65 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 54;
-  GetDriverInfo.Formats[1].Extensions := '*.pak';
-  GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)';
-  GetDriverInfo.Formats[2].Extensions := '*.bun';
-  GetDriverInfo.Formats[2].Name := 'Monkey Island 3 (*.BUN)';
-  GetDriverInfo.Formats[3].Extensions := '*.grp;*.art';
-  GetDriverInfo.Formats[3].Name := 'Duke Nukem 3D (*.GRP;*.ART)|Shadow Warrior (*.GRP;*.ART)';
-  GetDriverInfo.Formats[4].Extensions := '*.pff';
-  GetDriverInfo.Formats[4].Name := 'Comanche 4 (*.PFF)|Delta Force (*.PFF)|Delta Force 2 (*.PFF)|Delta Force: Land Warrior (*.PFF)|F33 Lightning 3';
-  GetDriverInfo.Formats[5].Extensions := '*.rez';
-  GetDriverInfo.Formats[5].Name := 'Alien vs Predator 2 (*.REZ)|No One Lives Forever (*.REZ)|No One Lives Forever 2 (*.REZ)|Sanity Aiken''s Artifact (*.REZ)|Shogo: Mobile Armor Division (*.REZ)|Purge (*.REZ)|Tron 2.0 (*.REZ)';
-  GetDriverInfo.Formats[6].Extensions := '*.drs';
-  GetDriverInfo.Formats[6].Name := 'Age of Empires 2: Age of Kings (*.DRS)';
-  GetDriverInfo.Formats[7].Extensions := '*.ffl';
-  GetDriverInfo.Formats[7].Name := 'Alien vs Predator (*.FFL)';
-  GetDriverInfo.Formats[8].Extensions := '*.gob';
-  GetDriverInfo.Formats[8].Name := 'Dark Forces (*.GOB)|Indiana Jones 3D (*.GOB)|Jedi Knight: Dark Forces 2 (*.GOB)';
-  GetDriverInfo.Formats[9].Extensions := '*.hog;*.mn3';
-  GetDriverInfo.Formats[9].Name := 'Descent (*.HOG)|Descent 2 (*.HOG)|Descent 3 (*.HOG;*.MN3)';
-  GetDriverInfo.Formats[10].Extensions := '*.pak;*.tlk';
-  GetDriverInfo.Formats[10].Name := 'Hands of Fate (*.PAK;*.TLK)|Lands of Lore (*.PAK;*.TLK)';
-  GetDriverInfo.Formats[11].Extensions := '*.wad;*.sdt';
-  GetDriverInfo.Formats[11].Name := 'Dungeon Keeper 2 (*.WAD;*.SDT)|Theme Park World (*.WAD;*.SDT)';
-  GetDriverInfo.Formats[12].Extensions := '*.vp';
-  GetDriverInfo.Formats[12].Name := 'Conflict: Freespace (*.VP)|Freespace 2 (*.VP)';
-  GetDriverInfo.Formats[13].Extensions := '*.zfs';
-  GetDriverInfo.Formats[13].Name := 'Interstate ''76 (*.ZFS)|Interstate ''82 (*.ZFS)';
-  GetDriverInfo.Formats[14].Extensions := '*.pod';
-  GetDriverInfo.Formats[14].Name := 'Terminal Velocity (*.POD)|BloodRayne (*.POD)|Nocturne (*.POD)';
-  GetDriverInfo.Formats[15].Extensions := '*.hrf';
-  GetDriverInfo.Formats[15].Name := 'Dragon UnPACKer HyperRipper (*.HRF)';
-  GetDriverInfo.Formats[16].Extensions := '*.far';
-  GetDriverInfo.Formats[16].Name := 'The Sims (*.FAR)';
-  GetDriverInfo.Formats[17].Extensions := '*.sad';
-  GetDriverInfo.Formats[17].Name := 'Black & White (*.SAD)';
-  GetDriverInfo.Formats[18].Extensions := '*.x13';
-  GetDriverInfo.Formats[18].Name := 'Hooligans (*.X13)';
-  GetDriverInfo.Formats[19].Extensions := '*.slf';
-  GetDriverInfo.Formats[19].Name := 'Jagged Alliance 2 (*.SLF)';
-  GetDriverInfo.Formats[20].Extensions := '*.bag;*.rfh';
-  GetDriverInfo.Formats[20].Name := 'Emperor: Battle for Dune (*.BAG;*.RFH)';
-  GetDriverInfo.Formats[21].Extensions := '*.mtf';
-  GetDriverInfo.Formats[21].Name := 'Darkstone (*.MTF)';
-  GetDriverInfo.Formats[22].Extensions := '*.syn';
-  GetDriverInfo.Formats[22].Name := 'Breakneck (*.SYN)|Excessive Speed (*.SYN)|N.I.C.E.2 (*.SYN)';
-  GetDriverInfo.Formats[23].Extensions := '*.res';
-  GetDriverInfo.Formats[23].Name := 'Electranoid (*.RES)|Evil Islands (*.RES)|Fuzzy''s World of Miniature Space Golf (*.RES)|Laser Light (*.RES)|Rage of Mages 2 (*.RES)|Xatax (*.RES)';
-  GetDriverInfo.Formats[24].Extensions := '*.dta';
-  GetDriverInfo.Formats[24].Name := 'Hidden & Dangerous (*.DTA)';
-  GetDriverInfo.Formats[25].Extensions := '*.box';
-  GetDriverInfo.Formats[25].Name := 'Lemmings Revolution (*.BOX)';
-  GetDriverInfo.Formats[26].Extensions := '*.hal';
-  GetDriverInfo.Formats[26].Name := 'Mortyr (*.HAL)';
-  GetDriverInfo.Formats[27].Extensions := '*.bkf';
-  GetDriverInfo.Formats[27].Name := 'Moto Racer (*.BKF)';
-  GetDriverInfo.Formats[28].Extensions := '*.dat';
-  GetDriverInfo.Formats[28].Name := 'Nascar Racing (*.DAT)|Gunlok (*.DAT)';
-  GetDriverInfo.Formats[29].Extensions := '*.pbo';
-  GetDriverInfo.Formats[29].Name := 'Operation Flashpoint (*.PBO)';
-  GetDriverInfo.Formats[30].Extensions := '*.awf';
-  GetDriverInfo.Formats[30].Name := 'Qui veut gagner des millions (*.AWF)|Who wants to be a millionaire (*.AWF)';
-  GetDriverInfo.Formats[31].Extensions := '*.pkr';
-  GetDriverInfo.Formats[31].Name := 'Tony Hawk Pro Skater 2 (*.PKR)';
-  GetDriverInfo.Formats[32].Extensions := '*.xcr';
-  GetDriverInfo.Formats[32].Name := 'Warlords Battlecry (*.XCR)|Warlords Battlecry 2 (*.XCR)';
-  GetDriverInfo.Formats[33].Extensions := '*.snd';
-  GetDriverInfo.Formats[33].Name := 'Heroes of Might & Magic 3 (*.SND)';
-  GetDriverInfo.Formats[34].Extensions := '*.art';
-  GetDriverInfo.Formats[34].Name := 'Blood (*.ART)';
-  GetDriverInfo.Formats[35].Extensions := '*.pak;*.wad';
-  GetDriverInfo.Formats[35].Name := 'Quake (*.PAK;*.WAD)|Quake 2 (*.PAK;*.WAD)|Half-Life (*.PAK;*.WAD)|Heretic 2 (*.PAK;*.WAD)';
-  GetDriverInfo.Formats[36].Extensions := '*.sni';
-  GetDriverInfo.Formats[36].Name := 'MDK (*.SNI)';
-  GetDriverInfo.Formats[37].Extensions := '*.wad';
-  GetDriverInfo.Formats[37].Name := 'Gunman Chronicle (*.WAD)';
-  GetDriverInfo.Formats[38].Extensions := '*.hpi;*.ufo';
-  GetDriverInfo.Formats[38].Name := 'Total Annihilation (*.HPI;*.UFO)';
-  GetDriverInfo.Formats[39].Extensions := '*.ccx';
-  GetDriverInfo.Formats[39].Name := 'Total Annihilation: Counter-Strike (*.CCX)';
-  GetDriverInfo.Formats[40].Extensions := '*.dni';
-  GetDriverInfo.Formats[40].Name := 'realMyst 3D (*.DNI)';
-  GetDriverInfo.Formats[41].Extensions := '*.vol';
-  GetDriverInfo.Formats[41].Name := 'Earth Siege 2 (*.VOL)|Starsiege: Tribes (*.VOL)';
-  GetDriverInfo.Formats[42].Extensions := '*.rfa';
-  GetDriverInfo.Formats[42].Name := 'Battlefield 1942 (*.RFA)';
-  GetDriverInfo.Formats[43].Extensions := '*.sin';
-  GetDriverInfo.Formats[43].Name := 'Sin (*.SIN)';
-  GetDriverInfo.Formats[44].Extensions := '*.img;*.adf';
-  GetDriverInfo.Formats[44].Name := 'GTA3/Grand Theft Auto 3 (*.ADF;*.IMG)';
-  GetDriverInfo.Formats[45].Extensions := '*.bar';
-  GetDriverInfo.Formats[45].Name := 'Age of Mythology (*.BAR)';
-  GetDriverInfo.Formats[46].Extensions := '*.sak';
-  GetDriverInfo.Formats[46].Name := 'Postal (*.SAK)';
-  GetDriverInfo.Formats[47].Extensions := '*.007';
-  GetDriverInfo.Formats[47].Name := 'James Bond 007: NightFire (*.007)';
-  GetDriverInfo.Formats[48].Extensions := '*.CPR';
-  GetDriverInfo.Formats[48].Name := 'Port Royale (*.CPR)|Patrician II (*.CPR)';
-  GetDriverInfo.Formats[49].Extensions := '*.SQH';
-  GetDriverInfo.Formats[49].Name := 'Harbinger (*.SQH)';
-  GetDriverInfo.Formats[50].Extensions := '*.XRS';
-  GetDriverInfo.Formats[50].Name := 'Dig It! (*.XRS)';
-  GetDriverInfo.Formats[51].Extensions := '*.BIG';
-  GetDriverInfo.Formats[51].Name := 'Command & Conquer: Generals (*.BIG)|Command & Conquer: Generals - Zero Hour (*.BIG)';
-  GetDriverInfo.Formats[52].Extensions := '*.PCK';
-  GetDriverInfo.Formats[52].Name := 'Commandos 3 (*.PCK)';
-  GetDriverInfo.Formats[53].Extensions := '*.SSA';
-  GetDriverInfo.Formats[53].Name := 'Empires: Dawn of the Modern World (*.SSA)';
-  GetDriverInfo.Formats[54].Extensions := '*.STUFF';
-  GetDriverInfo.Formats[54].Name := 'Eve Online (*.STUFF)';
-//  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
-//  GetDriverInfo.Formats[50].Name := 'Heath: The Unchosen Path (*.PAXX.NRM)'
-//  GetDriverInfo.Formats[41].Extensions := '*.h4r';
-//  GetDriverInfo.Formats[41].Name := 'Heroes of Might & Magic 4 (*.H4R)';
-
-end;
 
 type N007Header = packed record
        Magic: Integer;   // Always 1 ?
@@ -546,6 +379,11 @@ type PACKHeader = packed record
 type PAKEntry = packed record
         Offset: longword;
         FileName: array[1..8] of Char;
+     end;
+
+type PKPAKHeader = packed record
+        ID: byte;
+        Offset: longword;
      end;
 
 type MFHeader = packed record
@@ -1182,6 +1020,12 @@ type SYN_Header = packed record
      end;
 
 const
+  DRIVER_VERSION = 13240;
+  DUP_VERSION = 50024;
+  CVS_REVISION = '$Revision: 1.2 $';
+  CVS_DATE = '$Date: 2004-05-09 21:39:54 $';
+  BUFFER_SIZE = 4096;
+
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
   REZID : String = #13+#10+'RezMgr Version 1 Copyright (C) 1995 MONOLITH INC.           '+#13+#10+'LithTech Resource File                                      '+#13+#10+#26;
   REZIDOld : String = #13+#10+'RezMgr Version 1 Copyright (C) 1995 MONOLITH INC.           '+#13+#10+'                                                            '+#13+#10+#26;
@@ -1193,6 +1037,181 @@ const
   FARID : String = 'FAR!';
   SLFID : array[0..11] of char = #255+#255+#0+#2+#1+#0+#0+#0+#0+#0+#0+#0;
 
+  PKDECKEY : array[0..4] of integer = (-2, -1, 0, 1 ,2);
+
+var DataBloc: FSE;
+    OffsetList: TInts;
+    FHandle: Integer = 0;
+    CurFormat: Integer = 0;
+    DrvInfo: CurrentDriverInfo;
+    TotFSize: Integer = 0;
+    ErrInfo: ErrorInfo;
+    SetPercent: TPercentCallback;
+    Per: Byte = 0;
+    OldPer: byte = 0;
+    DNISize : Integer;
+    NumFSE: Integer;
+    HPIKey: Integer;
+
+// This function reverse a string
+//  Ex: "abcd" becomes "dcba"
+function revstr(str: string): string;
+var res: string;
+    x: integer;
+begin
+
+  res := '';
+
+  for x := 1 to length(str) do
+    res := str[x]+res;
+
+  revstr := res;
+
+end;
+
+// Identifies the DLL as a Driver plugin
+// Exported
+function DUDIVersion: Byte; stdcall;
+begin
+  DUDIVersion := 1;
+end;
+
+// Returns Driver plugin version
+// Exported
+function GetNumVersion: Integer; stdcall;
+begin
+
+  GetNumVersion := DRIVER_VERSION;
+
+end;
+
+// Returns information about the driver (mainly supported files list)
+// Exported
+function GetDriverInfo: DriverInfo; stdcall;
+begin
+
+  GetDriverInfo.Name := 'Main Driver';
+  GetDriverInfo.Author := 'Dragon UnPACKer project team';
+  GetDriverInfo.Version := getVersion(DRIVER_VERSION);
+  GetDriverInfo.Comment := 'This driver support 66 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.NumFormats := 54;
+  GetDriverInfo.Formats[1].Extensions := '*.pak';
+  GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
+  GetDriverInfo.Formats[2].Extensions := '*.bun';
+  GetDriverInfo.Formats[2].Name := 'Monkey Island 3 (*.BUN)';
+  GetDriverInfo.Formats[3].Extensions := '*.grp;*.art';
+  GetDriverInfo.Formats[3].Name := 'Duke Nukem 3D (*.GRP;*.ART)|Shadow Warrior (*.GRP;*.ART)';
+  GetDriverInfo.Formats[4].Extensions := '*.pff';
+  GetDriverInfo.Formats[4].Name := 'Comanche 4 (*.PFF)|Delta Force (*.PFF)|Delta Force 2 (*.PFF)|Delta Force: Land Warrior (*.PFF)|F33 Lightning 3';
+  GetDriverInfo.Formats[5].Extensions := '*.rez';
+  GetDriverInfo.Formats[5].Name := 'Alien vs Predator 2 (*.REZ)|No One Lives Forever (*.REZ)|No One Lives Forever 2 (*.REZ)|Sanity Aiken''s Artifact (*.REZ)|Shogo: Mobile Armor Division (*.REZ)|Purge (*.REZ)|Tron 2.0 (*.REZ)';
+  GetDriverInfo.Formats[6].Extensions := '*.drs';
+  GetDriverInfo.Formats[6].Name := 'Age of Empires 2: Age of Kings (*.DRS)';
+  GetDriverInfo.Formats[7].Extensions := '*.ffl';
+  GetDriverInfo.Formats[7].Name := 'Alien vs Predator (*.FFL)';
+  GetDriverInfo.Formats[8].Extensions := '*.gob';
+  GetDriverInfo.Formats[8].Name := 'Dark Forces (*.GOB)|Indiana Jones 3D (*.GOB)|Jedi Knight: Dark Forces 2 (*.GOB)';
+  GetDriverInfo.Formats[9].Extensions := '*.hog;*.mn3';
+  GetDriverInfo.Formats[9].Name := 'Descent (*.HOG)|Descent 2 (*.HOG)|Descent 3 (*.HOG;*.MN3)';
+  GetDriverInfo.Formats[10].Extensions := '*.pak;*.tlk';
+  GetDriverInfo.Formats[10].Name := 'Hands of Fate (*.PAK;*.TLK)|Lands of Lore (*.PAK;*.TLK)';
+  GetDriverInfo.Formats[11].Extensions := '*.wad;*.sdt';
+  GetDriverInfo.Formats[11].Name := 'Dungeon Keeper 2 (*.WAD;*.SDT)|Theme Park World (*.WAD;*.SDT)';
+  GetDriverInfo.Formats[12].Extensions := '*.vp';
+  GetDriverInfo.Formats[12].Name := 'Conflict: Freespace (*.VP)|Freespace 2 (*.VP)';
+  GetDriverInfo.Formats[13].Extensions := '*.zfs';
+  GetDriverInfo.Formats[13].Name := 'Interstate ''76 (*.ZFS)|Interstate ''82 (*.ZFS)';
+  GetDriverInfo.Formats[14].Extensions := '*.pod';
+  GetDriverInfo.Formats[14].Name := 'Terminal Velocity (*.POD)|BloodRayne (*.POD)|Nocturne (*.POD)';
+  GetDriverInfo.Formats[15].Extensions := '*.hrf';
+  GetDriverInfo.Formats[15].Name := 'Dragon UnPACKer HyperRipper (*.HRF)';
+  GetDriverInfo.Formats[16].Extensions := '*.far';
+  GetDriverInfo.Formats[16].Name := 'The Sims (*.FAR)';
+  GetDriverInfo.Formats[17].Extensions := '*.sad';
+  GetDriverInfo.Formats[17].Name := 'Black & White (*.SAD)';
+  GetDriverInfo.Formats[18].Extensions := '*.x13';
+  GetDriverInfo.Formats[18].Name := 'Hooligans (*.X13)';
+  GetDriverInfo.Formats[19].Extensions := '*.slf';
+  GetDriverInfo.Formats[19].Name := 'Jagged Alliance 2 (*.SLF)';
+  GetDriverInfo.Formats[20].Extensions := '*.bag;*.rfh';
+  GetDriverInfo.Formats[20].Name := 'Emperor: Battle for Dune (*.BAG;*.RFH)';
+  GetDriverInfo.Formats[21].Extensions := '*.mtf';
+  GetDriverInfo.Formats[21].Name := 'Darkstone (*.MTF)';
+  GetDriverInfo.Formats[22].Extensions := '*.syn';
+  GetDriverInfo.Formats[22].Name := 'Breakneck (*.SYN)|Excessive Speed (*.SYN)|N.I.C.E.2 (*.SYN)';
+  GetDriverInfo.Formats[23].Extensions := '*.res';
+  GetDriverInfo.Formats[23].Name := 'Electranoid (*.RES)|Evil Islands (*.RES)|Fuzzy''s World of Miniature Space Golf (*.RES)|Laser Light (*.RES)|Rage of Mages 2 (*.RES)|Xatax (*.RES)';
+  GetDriverInfo.Formats[24].Extensions := '*.dta';
+  GetDriverInfo.Formats[24].Name := 'Hidden & Dangerous (*.DTA)';
+  GetDriverInfo.Formats[25].Extensions := '*.box';
+  GetDriverInfo.Formats[25].Name := 'Lemmings Revolution (*.BOX)';
+  GetDriverInfo.Formats[26].Extensions := '*.hal';
+  GetDriverInfo.Formats[26].Name := 'Mortyr (*.HAL)';
+  GetDriverInfo.Formats[27].Extensions := '*.bkf';
+  GetDriverInfo.Formats[27].Name := 'Moto Racer (*.BKF)';
+  GetDriverInfo.Formats[28].Extensions := '*.dat';
+  GetDriverInfo.Formats[28].Name := 'Nascar Racing (*.DAT)|Gunlok (*.DAT)';
+  GetDriverInfo.Formats[29].Extensions := '*.pbo';
+  GetDriverInfo.Formats[29].Name := 'Operation Flashpoint (*.PBO)';
+  GetDriverInfo.Formats[30].Extensions := '*.awf';
+  GetDriverInfo.Formats[30].Name := 'Qui veut gagner des millions (*.AWF)|Who wants to be a millionaire (*.AWF)';
+  GetDriverInfo.Formats[31].Extensions := '*.pkr';
+  GetDriverInfo.Formats[31].Name := 'Tony Hawk Pro Skater 2 (*.PKR)';
+  GetDriverInfo.Formats[32].Extensions := '*.xcr';
+  GetDriverInfo.Formats[32].Name := 'Warlords Battlecry (*.XCR)|Warlords Battlecry 2 (*.XCR)';
+  GetDriverInfo.Formats[33].Extensions := '*.snd';
+  GetDriverInfo.Formats[33].Name := 'Heroes of Might & Magic 3 (*.SND)';
+  GetDriverInfo.Formats[34].Extensions := '*.art';
+  GetDriverInfo.Formats[34].Name := 'Blood (*.ART)';
+  GetDriverInfo.Formats[35].Extensions := '*.pak;*.wad';
+  GetDriverInfo.Formats[35].Name := 'Quake (*.PAK;*.WAD)|Quake 2 (*.PAK;*.WAD)|Half-Life (*.PAK;*.WAD)|Heretic 2 (*.PAK;*.WAD)';
+  GetDriverInfo.Formats[36].Extensions := '*.sni';
+  GetDriverInfo.Formats[36].Name := 'MDK (*.SNI)';
+  GetDriverInfo.Formats[37].Extensions := '*.wad';
+  GetDriverInfo.Formats[37].Name := 'Gunman Chronicle (*.WAD)';
+  GetDriverInfo.Formats[38].Extensions := '*.hpi;*.ufo';
+  GetDriverInfo.Formats[38].Name := 'Total Annihilation (*.HPI;*.UFO)';
+  GetDriverInfo.Formats[39].Extensions := '*.ccx';
+  GetDriverInfo.Formats[39].Name := 'Total Annihilation: Counter-Strike (*.CCX)';
+  GetDriverInfo.Formats[40].Extensions := '*.dni';
+  GetDriverInfo.Formats[40].Name := 'realMyst 3D (*.DNI)';
+  GetDriverInfo.Formats[41].Extensions := '*.vol';
+  GetDriverInfo.Formats[41].Name := 'Earth Siege 2 (*.VOL)|Starsiege: Tribes (*.VOL)';
+  GetDriverInfo.Formats[42].Extensions := '*.rfa';
+  GetDriverInfo.Formats[42].Name := 'Battlefield 1942 (*.RFA)';
+  GetDriverInfo.Formats[43].Extensions := '*.sin';
+  GetDriverInfo.Formats[43].Name := 'Sin (*.SIN)';
+  GetDriverInfo.Formats[44].Extensions := '*.img;*.adf';
+  GetDriverInfo.Formats[44].Name := 'GTA3/Grand Theft Auto 3 (*.ADF;*.IMG)';
+  GetDriverInfo.Formats[45].Extensions := '*.bar';
+  GetDriverInfo.Formats[45].Name := 'Age of Mythology (*.BAR)';
+  GetDriverInfo.Formats[46].Extensions := '*.sak';
+  GetDriverInfo.Formats[46].Name := 'Postal (*.SAK)';
+  GetDriverInfo.Formats[47].Extensions := '*.007';
+  GetDriverInfo.Formats[47].Name := 'James Bond 007: NightFire (*.007)';
+  GetDriverInfo.Formats[48].Extensions := '*.CPR';
+  GetDriverInfo.Formats[48].Name := 'Port Royale (*.CPR)|Patrician II (*.CPR)';
+  GetDriverInfo.Formats[49].Extensions := '*.SQH';
+  GetDriverInfo.Formats[49].Name := 'Harbinger (*.SQH)';
+  GetDriverInfo.Formats[50].Extensions := '*.XRS';
+  GetDriverInfo.Formats[50].Name := 'Dig It! (*.XRS)';
+  GetDriverInfo.Formats[51].Extensions := '*.BIG';
+  GetDriverInfo.Formats[51].Name := 'Command & Conquer: Generals (*.BIG)|Command & Conquer: Generals - Zero Hour (*.BIG)';
+  GetDriverInfo.Formats[52].Extensions := '*.PCK';
+  GetDriverInfo.Formats[52].Name := 'Commandos 3 (*.PCK)';
+  GetDriverInfo.Formats[53].Extensions := '*.SSA';
+  GetDriverInfo.Formats[53].Name := 'Empires: Dawn of the Modern World (*.SSA)';
+  GetDriverInfo.Formats[54].Extensions := '*.STUFF';
+  GetDriverInfo.Formats[54].Name := 'Eve Online (*.STUFF)';
+//  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
+//  GetDriverInfo.Formats[50].Name := 'Heath: The Unchosen Path (*.PAXX.NRM)'
+//  GetDriverInfo.Formats[41].Extensions := '*.h4r';
+//  GetDriverInfo.Formats[41].Name := 'Heroes of Might & Magic 4 (*.H4R)';
+
+end;
+
+// Used to keep only all caracters up to the first chr(0) encountered
+// Ex: 'this is a pchar in string'+chr(0) will return same without chr(0)
 function strip0(str : string): string;
 var pos0: integer;
 begin
@@ -5412,6 +5431,107 @@ begin
 
 end;
 
+function ReadPainKillerPAK(): Integer;
+var HDR: PKPAKHeader;
+    ENT: MFEntry;
+    FileName: string;
+    x,y,z, FileSize, FileOffset, UnkVal: integer;
+    nbfatentry, filenamesize, InitKey, numE, EmbedSize: integer;
+    HF: THandleStream;
+    FAT: TMemoryStream;
+    FileNameKey, FileNameCrypted: array of byte;
+    PreKey: array[0..15,0..15] of integer;
+begin
+
+  FileSeek(Fhandle, 0, 0);
+  FileRead(Fhandle, HDR, SizeOf(HDR));
+
+  if ((HDR.ID <> 0) and (HDR.ID <> 1)) or (HDR.Offset < TotFSize) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'PKPAK';
+    ErrInfo.Games := 'Painkiller';
+  end
+  else
+  begin
+
+    // Generating PreKey array
+
+    z := 0;
+
+    for x := 0 to 15 do
+      for y := 0 to 15 do
+      begin
+        PreKey[x,y] := PKDECKEY[z];
+        Inc(z);
+        if z = 5 then
+          z := 0;
+      end;
+
+    HF := THandleStream.Create(FHandle);
+    try
+
+      // Seek to index
+      HF.Seek(HDR.Offset,soFromBeginning);
+
+      // Read number of entries in index
+      HF.Read(NbFatEntry,4);
+
+      // Setting number of entries
+      NumE := NbFatEntry;
+
+      // Parse the index
+      for x := 1 to NbFatEntry do
+      begin
+        // Read filename size
+        HF.Read(FileNameSize,4);
+
+        // Allocating memory
+        SetLength(FileNameCrypted,FileNameSize);
+        SetLength(FileNameKey,FileNameSize);
+
+        // Reading crypted content
+        HF.Read(FileNameCrypted[0],FileNameSize);
+
+        // Calculating Initial Key
+        FileNameKey[0] := (FileNameSize * 2 + 1 + PreKey[(FileNameSize and $F0) shr 4,FileNameSize and $F] + x) and $FF;
+        // Calculating Full Key
+        for y := 1 to FileNameSize - 1 do
+          FileNameKey[y] := ((FileNameKey[y-1] + 2) and $FF);
+
+        // Decrypting filename
+        FileName := '';
+        for y := 0 to FileNameSize - 1 do
+          FileName := FileName + chr(FileNameCrypted[y] xor FileNameKey[y]);
+
+        // Reading offset and size of file
+        HF.Read(FileOffset,4);
+        HF.Read(FileSize,4);
+        HF.Read(EmbedSize,4);
+
+        if (FileOffset = 0) or (FileSize = 0) then
+          Dec(NumE)
+        else
+          FSE_Add(FileName,FileOffset,FileSize,EmbedSize,0);
+      end;
+
+    finally
+      HF.Free;
+    end;
+
+    Result := NbFatEntry;
+
+    DrvInfo.ID := 'PKPAK';
+    DrvInfo.Sch := '/';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := true;
+
+  end;
+
+end;
+
 function ReadPixelPaintersRES(): Integer;
 var ENT: PPRESIndex;
     NumFiles: word;
@@ -6639,8 +6759,9 @@ end;
 function ReadHubPAK(src: String): Integer;
 var ID: array[0..3] of char;
     ID21P4: array[0..20] of char;
-    res,Test1,FSize: integer;
+    res,Test1,testpko,FSize: integer;
     Test2: Word;
+    testpk: byte;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead);
@@ -6652,6 +6773,9 @@ begin
     FileSeek(FHandle,0,4);
     FileRead(FHandle,ID21P4,21);
     FileSeek(FHandle,0,0);
+    FileRead(Fhandle,testpk,1);
+    FileRead(Fhandle,testpko,4);
+    FileSeek(FHandle,0,0);
     FileRead(FHandle,Test2,2);
     FileRead(FHandle,Test1,4);
     if ID = 'PACK' then
@@ -6660,7 +6784,9 @@ begin
       res := ReadZanzarahPAK
     else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
       res := ReadSpellforcePAK
-    else if ((Test1 + Test2*12) <= FSize) then
+    else if ((testpk = 0) or (testpk = 1)) and (testpko <= FSize) and (testpko > 0) then
+      res := ReadPainKillerPAK
+    else if ((Test1 + Test2*12) <= FSize) and ((Test1 + Test2*12) > 0) then
     begin
       res := ReadStarCrusaderPAK(false);
       if (res < 0) then
@@ -8411,8 +8537,8 @@ end;
 procedure AboutBox(hwnd: Integer; DLNGstr: TLanguageCallBack); stdcall;
 begin
 
-  MessageBoxA(hwnd, PChar('Elbereth''s Main Driver v'+getVersion(DRIVER_VERSION)+#10+
-                          '(c)Copyright 2002-2003 Alexandre Devilliers'+#10+#10+
+  MessageBoxA(hwnd, PChar('Main Driver plugin v'+getVersion(DRIVER_VERSION)+#10+
+                          '(c)Copyright 2002-2004 Alexandre Devilliers'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
                           'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+#10+
                           'Limitations:'+#10+
@@ -8430,9 +8556,11 @@ begin
                           'Empires: Dawn of the Modern World SSA support is partial:'+#10+
                           'Some files are compressed by unknown method.'+#10+#10+
                           'Spellforce PAK and Eve Online STUFF support based on infos by:'+#10+
-                          'DaReverse'
+                          'DaReverse'+#10+#10+
+                          'Painkiller PAK support partially based on infos by:'+#10+
+                          'MrMouse'
                           )
-                        , 'About Elbereth''s Main Driver...', MB_OK);
+                        , 'About Main Driver plugin...', MB_OK);
 
 end;
 
@@ -8796,6 +8924,17 @@ begin
     if SSA.ID = 'PK01' then
     begin
       DecompressZlib(fil, Size, SSA.DecompSize);
+    end
+    else
+    begin
+      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
+    end;
+  end
+  else if DrvInfo.ID = 'PKPAK' then
+  begin
+    if DataX <> Size then
+    begin
+      DecompressZlib(fil, DataX, Size);
     end
     else
     begin

@@ -1,6 +1,6 @@
 unit Error;
 
-// $Id: Error.pas,v 1.1.1.1 2004-05-08 10:25:29 elbereth Exp $
+// $Id: Error.pas,v 1.1.1.1.2.1 2004-08-21 10:53:59 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Error.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -20,7 +20,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, DateUtils, declFSE,lib_utils, cxCPU40, Main,
+  Dialogs, StdCtrls, DateUtils, lib_utils, cxCPU40, Main,
   ExtCtrls, lib_language, translation, ShellApi;
 
 type
@@ -48,12 +48,16 @@ type
     procedure lblEmailReportClick(Sender: TObject);
     procedure butCopyClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    constructor Create(AOwner: TComponent); override;
+    destructor destroy; override;
   private
     Save_Cursor: TCursor;
     { Private declarations }
   public
     { Public declarations }
-    procedure FillTxtError(E: Exception; from: String);
+    details: TStrings;
+    procedure FillTxtError(E: Exception; from, subfrom: String);
+    procedure PrepareError();
   end;
 
 var
@@ -65,7 +69,7 @@ implementation
 
 { TfrmError }
 
-procedure TfrmError.FillTxtError(E: Exception; from: String);
+procedure TfrmError.FillTxtError(E: Exception; from, subfrom: String);
 var x: byte;
     OSInfo: TOSInfo;
     cxCPU: TcxCPU;
@@ -76,7 +80,7 @@ cmdDetails.Caption := DLNGStr('BUTDET')+' >>';
 
 txtError.Clear;
 
-lblFrom.Caption := from;
+lblFrom.Caption := from+' in '+subfrom;
 lblEx.Caption := e.ClassName;
 lblExMessage.Caption := e.Message;
 
@@ -84,14 +88,24 @@ frmError.Refresh;
 
 OSInfo := GetAllSystemInfo();
 
-txtError.Lines.Add('============= Error report =============');
+txtError.Lines.Add('____________ Error report ____________');
 txtError.Lines.Add('');
-txtError.Lines.Add('From: '+from);
+txtError.Lines.Add('From: '+from+' in '+subfrom);
 txtError.lines.add('Exception: '+e.ClassName);
 txtError.Lines.Add('Reporting: '+e.Message);
 txtError.lines.add('['+DateTimeToStr(now)+']');
 
 txtError.Lines.Add('');
+
+if details <> nil then
+begin
+  txtError.Lines.Add('____________ More Details ____________');
+  txtError.Lines.Add('');
+
+  txtError.Lines.AddStrings(details);
+
+  txtError.Lines.Add('');
+end;
 
 txtError.Lines.Add('__________ Computer status: __________');
 txtError.Lines.Add('');
@@ -105,7 +119,7 @@ end;
 txtError.Lines.Add('Memory: Free='+inttostr(OSInfo.MemAvailable div 1048576)+'MB / Total='+inttostr(OSInfo.MemTotal div 1048576)+'MB');
 txtError.Lines.Add('');
 
-txtError.Lines.Add('__________ Program status: __________');
+{ txtError.Lines.Add('__________ Program status: __________');
 txtError.Lines.Add('');
 txtError.Lines.Add('Loaded file: '+FSE.GetFileName+' ('+inttostr(FSE.GetFileSize)+' bytes)');
 txtError.Lines.Add('Detected type: '+FSE.DriverID);
@@ -131,12 +145,12 @@ txtError.Lines.Add('Loaded HyperRipper plugins:');
 for x := 1 to HPlug.NumPlugins do
   txtError.Lines.Add('['+inttostr(x)+'] '+HPlug.Plugins[x].FileName+' : '+HPlug.Plugins[x].Version.Name+' <'+HPlug.Plugins[x].Version.Author+'> ('+inttostr(HPlug.Plugins[x].Version.Version)+')');
 
-txtError.Lines.Add(' Total='+inttostr(Hplug.NumPlugins));
+txtError.Lines.Add(' Total='+inttostr(Hplug.NumPlugins)); }
 
 txtError.SelectAll;
 txtError.SelLength := 0;
 
-frmError.Show;
+frmError.ShowModal;
 
 end;
 
@@ -159,7 +173,7 @@ end;
 procedure TfrmError.cmdOkClick(Sender: TObject);
 begin
 
-frmError.Hide;
+frmError.ModalResult := mrOk;
 
 end;
 
@@ -168,7 +182,7 @@ begin
 
   lblEmailReport.Font.Style := [fsUnderline];
   Save_Cursor := Screen.Cursor;
-  Screen.Cursor := crHandPoint;    { Show hourglass cursor }
+  Screen.Cursor := crHandPoint;
 
 end;
 
@@ -176,7 +190,7 @@ procedure TfrmError.lblEmailReportMouseLeave(Sender: TObject);
 begin
 
   lblEmailReport.Font.Style := [];
-  Screen.Cursor := Save_Cursor;  { Always restore to normal }
+  Screen.Cursor := Save_Cursor;
 
 end;
 
@@ -191,7 +205,7 @@ end;
 procedure TfrmError.lblEmailReportClick(Sender: TObject);
 begin
 
-  ShellExecute(Application.Handle,'open',Pchar('mailto:'+lblEmailReport.caption),nil,nil, SW_SHOWNORMAL);
+  ShellExecute(Application.Handle,'open',Pchar('https://sourceforge.net/tracker/?func=add&group_id=108923&atid=652129'),nil,nil, SW_SHOWNORMAL);
 
 end;
 
@@ -209,6 +223,25 @@ begin
 
   translateError();
 
+end;
+
+procedure TfrmError.PrepareError;
+begin
+
+  details.Clear;
+
+end;
+
+constructor TfrmError.Create(AOwner: TComponent);
+begin
+  inherited create(AOwner);
+  details := TStringList.Create;
+end;
+
+destructor TfrmError.destroy;
+begin
+  if details <> nil then details.Free;
+  inherited;
 end;
 
 end.

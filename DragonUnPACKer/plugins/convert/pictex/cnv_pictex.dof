@@ -95,7 +95,7 @@ UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=
-Packages=vcl;rtl;vclx;indy;inet;xmlrtl;vclie;inetdbbde;inetdbxpress;dbrtl;dsnap;dsnapcon;vcldb;soaprtl;VclSmp;dbexpress;dbxcds;inetdb;bdertl;vcldbx;webdsnap;websnap;adortl;ibxpress;teeui;teedb;tee;dss;visualclx;visualdbclx;vclactnband;vclshlctrls;dclOfficeXP;DJCL70;JVCL200_R70;qrpt;VirtualTreesD7;IcsDel70
+Packages=vcl;rtl;vclx;indy;inet;xmlrtl;vclie;inetdbbde;inetdbxpress;dbrtl;dsnap;dsnapcon;vcldb;soaprtl;VclSmp;dbexpress;dbxcds;inetdb;bdertl;vcldbx;webdsnap;websnap;adortl;ibxpress;teeui;teedb;tee;dss;visualclx;visualdbclx;vclactnband;vclshlctrls;dclOfficeXP;DJcl;JVCL200_R70;qrpt;VirtualTreesD7;IcsDel70
 Conditionals=
 DebugSourceDirs=
 UsePackages=0
@@ -114,8 +114,8 @@ IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=1
 MinorVer=0
-Release=5
-Build=76
+Release=6
+Build=88
 Debug=0
 PreRelease=1
 Special=0
@@ -126,7 +126,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=DUP5 - Picture/Textures Convert Plugin
-FileVersion=1.0.5.76
+FileVersion=1.0.6.88
 InternalName=cnv_pictex
 LegalCopyright=(c)2003-2004 Alexandre Devilliers
 LegalTrademarks=
@@ -134,10 +134,3 @@ OriginalFilename=cnv_pictex.d5c
 ProductName=Dragon UnPACKer 5
 ProductVersion=5.0.0
 Comments=Convert between file formats in DUP5
-[HistoryLists\hlUnitAliases]
-Count=1
-Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlOutputDirectorry]
-Count=2
-Item0=H:\Programmation\Compiled\drgunpacker\current\utils\translation
-Item1=H:\Programmation\Compiled\drgunpacker\current\data\convert

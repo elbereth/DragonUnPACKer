@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.3.2.7 2004-10-10 09:17:47 elbereth Exp $
+// $Id: classFSE.pas,v 1.3.2.8 2005-03-27 07:12:58 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -629,6 +629,7 @@ var x,y,i: integer;
     ErrList: TStringList;
     ErrStr: String;
     ErrNum, hTest: integer;
+    zero64: int64;
 begin
 
   SaveTitle;
@@ -703,7 +704,8 @@ begin
         CurrentDriver := CanOpen[x];
 
         i := FileOpen(pth,fmOpenRead or fmShareDenyNone);
-        CurrentFileSize := FileSeek(i,0,2);
+        zero64 := 0;
+        CurrentFileSize := FileSeek(i,zero64,2);
         FileClose(i);
 
         dup5Main.writeLog(ReplaceStr(DLNGStr('LOG501'),'%d',Drivers[CurrentDriver].Info.Name));
@@ -1532,6 +1534,7 @@ end;
 
 procedure TDrivers.LoadHyperRipper(fil: String; filHandle: integer; loadTime: integer; subdirs: boolean);
 var starttime: TDateTime;
+    zero64: int64;
 begin
 
   if (subdirs) then
@@ -1548,7 +1551,8 @@ begin
   LoadTimeParse := MilliSecondsBetween(Now, StartTime);
   CurrentDriver := -1;
   CurrentFile := filHandle;
-  CurrentFileSize := FileSeek(filHandle,0,2);
+  zero64 := 0;
+  CurrentFileSize := FileSeek(filHandle,zero64,2);
   dup5Main.Caption := 'Dragon UnPACKer v' + CurVersion + ' ' + CurEdit+ ' - '+fil;
 //  Dup5main.TDup5FileClose.Enabled := True;
   Dup5Main.menuFichier_Fermer.Enabled := True;

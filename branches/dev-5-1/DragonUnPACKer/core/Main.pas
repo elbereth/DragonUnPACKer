@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.3.2.6 2004-10-10 09:17:47 elbereth Exp $
+// $Id: Main.pas,v 1.3.2.7 2005-03-27 07:19:10 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -199,6 +199,7 @@ type
     procedure Popup_LogPopup(Sender: TObject);
     procedure menuLog_ClearClick(Sender: TObject);
   private
+    verboseLevel: integer;
     AlreadyDragging: boolean;
     bottomHeight: integer;
     procedure Open_Hub(src: String);
@@ -207,11 +208,17 @@ type
     procedure setRichEditLineColor(R: TJvRichEdit; Line: Integer;
       Color: TColor);
   public
+    function getVerboseLevel(): integer;
     procedure writeLog(text: string);
+    procedure writeLogVerbose(minLevel: integer; text: string);
     procedure appendLog(text: string);
+    procedure appendLogVerbose(minLevel: integer; text: string);
     procedure styleLog(Style : TFontStyles);
+    procedure styleLogVerbose(minLevel: integer; Style : TFontStyles);
     procedure colorLog(Color : TColor);
+    procedure colorLogVerbose(minLevel: integer; Color : TColor);
     procedure separatorLog();
+    procedure separatorLogVerbose(minLevel: integer);
     { Déclarations publiques }
   end;
 
@@ -999,6 +1006,11 @@ begin
         splitterBottom.Visible := richLog.Visible;
       end;
 
+      if Reg.ValueExists('VerboseLevel') then
+        verboseLevel := Reg.ReadInteger('VerboseLevel')
+      else
+        verboseLevel := 0;
+
       if Reg.ValueExists('Look') then
         clook := Reg.ReadString('Look')
       else
@@ -1510,10 +1522,17 @@ begin
           appendLog('Converting...');
           CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].ConvertStream(tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
           appendLog('Done!');
-        finally
-          tmpStm.Free;
-          outStm.Free;
+        except
+          on E: Exception do
+          begin
+            appendLog('Error!');
+            writeLog('Unhandled exception: '+E.ClassName+' - '+E.Message);
+            colorLog(clRed);
+            styleLog([fsBold]);
+          end;
         end;
+        tmpStm.Free;
+        outStm.Free;
       end;
 
       if not(Silent) then
@@ -2434,8 +2453,13 @@ begin
 
 end;
 
+
+
 procedure Tdup5Main.writeLog(text: string);
 begin
+
+  if richLog.Lines.Count = 32760 then
+    richLog.Lines.Delete(0);
 
   richLog.Lines.Add(DateTimeToStr(now)+' : '+text);
   richLog.Perform(EM_LINESCROLL,0,1);
@@ -2474,6 +2498,53 @@ procedure Tdup5Main.colorLog(Color: TColor);
 begin
 
   setRichEditLineColor(richLog, richLog.Lines.Count, Color);
+
+end;
+
+function Tdup5Main.getVerboseLevel: integer;
+begin
+
+  result := verboseLevel;
+
+end;
+
+procedure Tdup5Main.styleLogVerbose(minLevel: integer; Style: TFontStyles);
+begin
+
+  if verboseLevel >= minLevel then
+    styleLog(Style);
+
+end;
+
+procedure Tdup5Main.appendLogVerbose(minLevel: integer; text: string);
+begin
+
+  if verboseLevel >= minLevel then
+    appendLog(text);
+
+end;
+
+procedure Tdup5Main.writeLogVerbose(minLevel: integer; text: string);
+begin
+
+  if verboseLevel >= minLevel then
+    writeLog(text);
+
+end;
+
+procedure Tdup5Main.separatorLogVerbose(minLevel: integer);
+begin
+
+  if verboseLevel >= minLevel then
+    separatorLog;
+
+end;
+
+procedure Tdup5Main.colorLogVerbose(minLevel: integer; Color: TColor);
+begin
+
+  if verboseLevel >= minLevel then
+    colorLog(Color);
 
 end;
 

@@ -133,12 +133,3 @@ LegalTrademarks=
 OriginalFilename=drv_default.d5d
 ProductName=Dragon UnPACKer 5
 ProductVersion=5.0.0
-[HistoryLists\hlUnitAliases]
-Count=1
-Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlOutputDirectorry]
-Count=4
-Item0=H:\Programmation\Compiled\drgunpacker\current
-Item1=H:\Programmation\Compiled\drgunpacker\current\data\drivers
-Item2=H:\Programmation\Compiled\drgunpacker\current\data\convert
-Item3=H:\Programmation\Compiled\drgunpacker\current\utils

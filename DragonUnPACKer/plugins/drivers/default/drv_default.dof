@@ -115,7 +115,7 @@ AutoIncBuild=1
 MajorVer=2
 MinorVer=0
 Release=0
-Build=659
+Build=662
 Debug=0
 PreRelease=0
 Special=0
@@ -126,7 +126,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Dragon Software
 FileDescription=Main Driver plugin for Dragon UnPACKer 5
-FileVersion=2.0.0.659
+FileVersion=2.0.0.662
 InternalName=drv_default
 LegalCopyright=(c)2002-2004 Alexandre Devilliers
 LegalTrademarks=
@@ -138,7 +138,5 @@ PrivateBuild=WIP
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlOutputDirectorry]
-Count=3
-Item0=H:\Programmation\Compiled\drgunpacker\currentdev\data\drivers
-Item1=H:\Programmation\Compiled\drgunpacker\current\data\drivers
-Item2=H:\Programmation\Compiled\drgunpacker\currentdev\utils
+Count=1
+Item0=H:\Programmation\Compiled\drgunpacker\currentdev\utils

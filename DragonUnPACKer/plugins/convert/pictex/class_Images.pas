@@ -1,6 +1,6 @@
 unit class_Images;
 
-// $Id: class_Images.pas,v 1.1.1.1 2004-05-08 10:26:52 elbereth Exp $
+// $Id: class_Images.pas,v 1.2 2004-05-20 16:49:33 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/class_Images.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -129,6 +129,20 @@ type TSaveImage = class
     MMHeight: array of integer;
     MMWidth: array of integer;
     Palette: array[0..255] of TCouleur;
+end;
+
+type TSaveImage32 = class
+    procedure SaveToTGA24(fil: String);
+    procedure SaveToTGA32(fil: String);
+    procedure SetSize(x, y: Integer);
+    function Height(): Integer;
+    function Weight(): Integer;
+  private
+    H: Integer;
+    W: Integer;
+  protected
+  public
+    Pixels: array of array of TCouleur;
 end;
 
 implementation
@@ -509,6 +523,142 @@ begin
 end;
 
 function TSaveImage.Weight: Integer;
+begin
+
+  result := W;
+
+end;
+
+{ TSaveImage32 }
+
+function TSaveImage32.Height: Integer;
+begin
+
+  Result := H;
+  
+end;
+
+procedure TSaveImage32.SaveToTGA24(fil: String);
+var HDR: TGAHeader;
+    x,y,tga,cpos: integer;
+    Buffer: PByteArray;
+begin
+
+  tga := FileCreate(fil,fmOpenWrite or fmShareDenyWrite);
+
+  try
+    HDR.IDFieldLength := 0;
+    HDR.ColorMapType := 0;
+    HDR.ImageType := 2;
+    HDR.CMOrigin := 0;
+    HDR.CMLength := 0;
+    HDR.CMSize := 0;
+    HDR.ImgXOrig := 0;
+    HDR.ImgYOrig := 0;
+    HDR.ImgWidth := W;
+    HDR.ImgHeight := H;
+    HDR.ImgPixelSize := 24;
+    HDR.ImgDesc := 0;
+
+    FileWrite(tga,HDR.IDFieldLength,1);
+    FileWrite(tga,HDR.ColorMapType,1);
+    FileWrite(tga,HDR.ImageType,1);
+    FileWrite(tga,HDR.CMOrigin,2);
+    FileWrite(tga,HDR.CMLength,2);
+    FileWrite(tga,HDR.CMSize,1);
+    FileWrite(tga,HDR.ImgXOrig,2);
+    FileWrite(tga,HDR.ImgYOrig,2);
+    FileWrite(tga,HDR.ImgWidth,2);
+    FileWrite(tga,HDR.ImgHeight,2);
+    FileWrite(tga,HDR.ImgPixelSize,1);
+    FileWrite(tga,HDR.ImgDesc,1);
+
+    GetMem(Buffer,H*W*3);
+    try
+    for y := H-1 downto 0 do
+      for x := 0 to W-1 do
+      begin
+        cpos := ((((H-1)-y)*W)+x);
+        Buffer[cpos*3] := Pixels[x][y].B;
+        Buffer[cpos*3+1] := Pixels[x][y].G;
+        Buffer[cpos*3+2] := Pixels[x][y].R;
+      end;
+      FileWrite(tga,Buffer^,H*W*3);
+    finally
+      FreeMem(Buffer);
+    end;
+  finally
+    FileClose(tga);
+  end;
+
+end;
+
+procedure TSaveImage32.SaveToTGA32(fil: String);
+var HDR: TGAHeader;
+    x,y,tga,cpos: integer;
+    Buffer: PByteArray;
+begin
+
+  tga := FileCreate(fil,fmOpenWrite or fmShareDenyWrite);
+
+  try
+    HDR.IDFieldLength := 0;
+    HDR.ColorMapType := 0;
+    HDR.ImageType := 2;
+    HDR.CMOrigin := 0;
+    HDR.CMLength := 0;
+    HDR.CMSize := 0;
+    HDR.ImgXOrig := 0;
+    HDR.ImgYOrig := 0;
+    HDR.ImgWidth := W;
+    HDR.ImgHeight := H;
+    HDR.ImgPixelSize := 32;
+    HDR.ImgDesc := 0;
+
+    FileWrite(tga,HDR.IDFieldLength,1);
+    FileWrite(tga,HDR.ColorMapType,1);
+    FileWrite(tga,HDR.ImageType,1);
+    FileWrite(tga,HDR.CMOrigin,2);
+    FileWrite(tga,HDR.CMLength,2);
+    FileWrite(tga,HDR.CMSize,1);
+    FileWrite(tga,HDR.ImgXOrig,2);
+    FileWrite(tga,HDR.ImgYOrig,2);
+    FileWrite(tga,HDR.ImgWidth,2);
+    FileWrite(tga,HDR.ImgHeight,2);
+    FileWrite(tga,HDR.ImgPixelSize,1);
+    FileWrite(tga,HDR.ImgDesc,1);
+
+    GetMem(Buffer,H*W*4);
+    try
+    for y := H-1 downto 0 do
+      for x := 0 to W-1 do
+      begin
+        cpos := ((((H-1)-y)*W)+x);
+        Buffer[cpos*4] := Pixels[x][y].B;
+        Buffer[cpos*4+1] := Pixels[x][y].G;
+        Buffer[cpos*4+2] := Pixels[x][y].R;
+        Buffer[cpos*4+3] := Pixels[x][y].A;
+      end;
+      FileWrite(tga,Buffer^,H*W*4);
+    finally
+      FreeMem(Buffer);
+    end;
+  finally
+    FileClose(tga);
+  end;
+
+end;
+
+procedure TSaveImage32.SetSize(x, y: Integer);
+begin
+
+  SetLength(Pixels,x,y);
+  W := X;
+  H := Y;
+
+end;
+
+function TSaveImage32.Weight: Integer;
 begin
 
   result := W;

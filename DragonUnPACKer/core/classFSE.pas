@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.3 2004-07-17 19:22:53 elbereth Exp $
+// $Id: classFSE.pas,v 1.3.2.1 2004-07-25 10:29:19 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -155,6 +155,7 @@ type driver = record
    DUDIVersion : Byte;
    InitPlugin : TInitPlugin;
    InitPlugin3 : TInitPlugin3;
+   Priority : Integer;         // 5.1 : Prioritization of drivers
  end;
 
  pvirtualTreeData = ^virtualTreeData;
@@ -222,6 +223,8 @@ type TDrivers = class
     procedure SetPath(a: string);
     procedure SetLanguage(l: TLanguageCallback);
     procedure SetOwner(AOwner: TComponent);
+    procedure setDriverPriority(index, priority: integer);
+    procedure sortDriversByPriority;
   private
     HRipInfo: DriverInfo;
     listData: array of virtualTreeData;
@@ -256,6 +259,8 @@ type TDrivers = class
     procedure saveHRF_v1(srcfil, filename: string; srcsize: int64; prgver: integer);
     procedure saveHRF_v2(srcfil, filename: string; srcsize: int64; prgver: integer; info: boolean; title,author, url: string);
     procedure saveHRF_v3(srcfil, filename: string; srcsize: int64; prgver: integer; prgid: byte; info: boolean; title,author, url: string);
+    function getDriverPriority(drivername: string): integer;
+    procedure quickSortDrivers(lowerPos, upperPos: integer);
   protected
 end;
 
@@ -511,6 +516,7 @@ begin
               Drivers[NumDrivers].Info.Version := Drivers[NumDrivers].Info.Version;
               Drivers[NumDrivers].IsAboutBox := not(@Drivers[NumDrivers].ShowAboutBox = nil) or not(@Drivers[NumDrivers].ShowAboutBox2 = nil) or not(@Drivers[NumDrivers].ShowAboutBox3 = nil);
               Drivers[NumDrivers].IsConfigBox := not(@Drivers[NumDrivers].ShowConfigBox = nil) or not(@Drivers[NumDrivers].ShowConfigBox2 = nil) or not(@Drivers[NumDrivers].ShowConfigBox3 = nil);
+              Drivers[NumDrivers].Priority := getDriverPriority(ExtractFileName(sr.Name));
             except
               on E:Exception do
               begin
@@ -530,6 +536,9 @@ begin
       end
 
     until FindNext(sr) <> 0;
+
+    if NumDrivers > 1 then
+      quickSortDrivers(1,NumDrivers);
 
   end
   else
@@ -1927,6 +1936,92 @@ procedure TDrivers.SetOwner(AOwner: TComponent);
 begin
 
   CurAOwner := AOwner;
+
+end;
+
+function TDrivers.getDriverPriority(drivername: string): integer;
+var Reg: TRegistry;
+begin
+
+  Result := 0;
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Plugins\'+drivername,True) then
+    begin
+      if Reg.ValueExists('Priority') then
+        Result := Reg.ReadInteger('Priority')
+      else
+        Reg.WriteInteger('Priority',0);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
+
+end;
+
+procedure TDrivers.setDriverPriority(index, priority: integer);
+var Reg: TRegistry;
+begin
+
+  if (index > 0) and (index <= NumDrivers) then
+  begin
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Plugins\'+Drivers[index].FileName,True) then
+      begin
+        Reg.WriteInteger('Priority',priority);
+        Drivers[index].Priority := priority;
+        Reg.CloseKey;
+      end;
+    Finally
+      Reg.Free;
+    end;
+  end;
+
+end;
+
+procedure TDrivers.quickSortDrivers(lowerPos, upperPos: integer);
+var temp: driver;
+    i, middlePos, pivotValue : integer;
+Begin
+   { check that the lower position is less than the upper position }
+   if lowerPos < upperPos then begin
+      { Select a pivot value }
+      pivotValue := Drivers[lowerPos].Priority;
+      { default to the middle position to the lower position }
+      middlePos := lowerPos;
+      { partition the array about the pivot value }
+      for i := lowerPos+1 to upperPos do begin
+         if Drivers[i].Priority > pivotValue then begin
+            { bump up the middle position }
+            inc(middlePos);
+            { swap this element to the "lower" part of the array }
+            temp := Drivers[middlePos];
+            Drivers[middlePos] := Drivers[i];
+            drivers[i] := temp;
+         end; { if }
+      end; { for }
+      { place the pivot value in the middle to finish the partitioning }
+      temp := Drivers[lowerPos];
+      Drivers[lowerPos] := Drivers[middlePos];
+      Drivers[middlePos] := temp;
+      { Finally, recursively call QuickSort on the two parititioned halves.}
+      quickSortDrivers(lowerPos, middlePos-1);
+      quickSortDrivers(middlePos+1, upperPos);
+   { else
+      the lower position has reached or exceeded the upper position,
+      so we're done.  This case terminates the tail-end recursion. }
+   end;  { if }
+End;  { Procedure QuickSort }
+
+procedure TDrivers.sortDriversByPriority;
+begin
+
+  quickSortDrivers(1,NumDrivers);
 
 end;
 

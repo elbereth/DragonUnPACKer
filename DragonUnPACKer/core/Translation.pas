@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.1.1.1 2004-05-08 10:25:50 elbereth Exp $
+// $Id: Translation.pas,v 1.2 2004-05-08 13:43:50 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -97,7 +97,8 @@ begin
 
     Caption := DLNGStr('MNU3S1') + ' Dragon UnPACKer 5';
     lblFreeware.Font.Name := getFont();
-    lblFreeware.caption := DLNGStr('ABT001');
+//    lblFreeware.caption := DLNGStr('ABT001');
+    lblFreeware.Caption := 'Open Source / Mozilla Public Licence 1.1';
 //  frmAbout.strContactMe.caption := DLNGStr('ABT002');
 //  frmAbout.strContactMe.Left := 16;
 //  frmAbout.lblContactMe.Left := frmAbout.strContactMe.Left+frmAbout.strContactMe.Width+5;

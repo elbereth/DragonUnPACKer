@@ -26,18 +26,18 @@
 # spread out over the entire source repository.
 
 # common librairies
-common			common
+DragonUnPACKer		DragonUnPACKer
 
 # core (drgunpack)
-core			core
+#core			DragonUnPACKer/core
 
 # install information
-install			install
+#install			DragonUnPACKer/install
 
 # plugins
-convert			plugins/convert
-drivers			plugins/drivers
-hyperripper		plugins/hyperripper
+#convert			DragonUnPACKer/plugins/convert
+#drivers			DragonUnPACKer/plugins/drivers
+#hyperripper		DragonUnPACKer/plugins/hyperripper
 
 # tools
-tools			tools
+#tools			DragonUnPACKer/tools

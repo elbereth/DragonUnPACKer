@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.7 2004-06-12 08:57:23 elbereth Exp $
+// $Id: drv_default.dpr,v 1.8 2004-07-15 17:22:49 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -132,6 +132,7 @@ type FSE = ^element;
     13340        Added support for Hitman: Contracts .TEX files
     13341        Added support for Hitman: Contracts .PRM files
     13440        Added support for CyberBykes .BIN files
+                 Enhanced support for Glacier Engine .TEX files (previously Hitman: Contracts)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1056,8 +1057,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 13440;
   DUP_VERSION = 50024;
-  CVS_REVISION = '$Revision: 1.7 $';
-  CVS_DATE = '$Date: 2004-06-12 08:57:23 $';
+  CVS_REVISION = '$Revision: 1.8 $';
+  CVS_DATE = '$Date: 2004-07-15 17:22:49 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1238,7 +1239,7 @@ begin
   GetDriverInfo.Formats[54].Extensions := '*.STUFF';
   GetDriverInfo.Formats[54].Name := 'Eve Online (*.STUFF)';
   GetDriverInfo.Formats[55].Extensions := '*.TEX;*.PRM';
-  GetDriverInfo.Formats[55].Name := 'Hitman: Contracts (*.TEX;*.PRM)';
+  GetDriverInfo.Formats[55].Name := 'Freedom Fighters (*.TEX;*.PRM)|Hitman 2: Silent Assassin (*.TEX;*.PRM)|Hitman: Contracts (*.TEX;*.PRM)';
   GetDriverInfo.Formats[56].Extensions := '*.BIN';
   GetDriverInfo.Formats[56].Name := 'CyberBykes: Shadow Racer VR (*.BIN)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -3745,7 +3746,7 @@ begin
       FHandle := 0;
       Result := -3;
       ErrInfo.Format := 'PRM';
-      ErrInfo.Games := 'Hitman: Contracts';
+      ErrInfo.Games := 'Freedom Fighters, Hitman 2: Silent Assassin, Hitman: Contracts, ...';
     end
     else
     begin
@@ -3787,9 +3788,10 @@ function ReadHitmanContractsTEX(src: string): Integer;
 var HDR: TEX_Header;
     ENT: TEX_Entry;
     NumE: cardinal;
-    x: integer;
+    x, y: integer;
     nam: string;
-    offsets: array[1..2048] of cardinal;
+    offsets: array of cardinal;
+    numOffsets: cardinal;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead);
@@ -3801,26 +3803,30 @@ begin
     FileSeek(Fhandle, 0, 0);
     FileRead(FHandle, HDR, Sizeof(TEX_Header));
 
-    if ((HDR.ID3 <> 3) or (HDR.ID4 <> 4) or (HDR.IndexOffset >= TotFSize) or (HDR.UnknownOffset >= TotFSize) or ((HDR.UnknownOffset-HDR.IndexOffset) <> $2000)) then
+    if ((HDR.ID3 <> 3) or (HDR.ID4 <> 4) or (HDR.IndexOffset >= TotFSize) or (HDR.UnknownOffset >= TotFSize) or (HDR.UnknownOffset >= totFSize) or ((HDR.UnknownOffset-HDR.IndexOffset) <> $2000)) then
     begin
       FileClose(Fhandle);
       FHandle := 0;
       Result := -3;
-      ErrInfo.Format := 'TEX';
-      ErrInfo.Games := 'Hitman: Contracts';
+      ErrInfo.Format := 'GTEX';
+      ErrInfo.Games := 'Hitman 2, Hitman: Contracts, Freedom Fighters, ...';
     end
     else
     begin
 
-      FileSeek(FHandle,HDR.IndexOffset+$80,0);
+      FileSeek(FHandle,HDR.IndexOffset,0);
+
+      setlength(Offsets,(HDR.UnknownOffset - HDR.IndexOffset) div 4);
 
       x := 0;
 
-      repeat
+      for y := 0 to high(Offsets) do
+      begin
         inc(x);
         FileRead(FHandle,Offsets[x],4);
-      until Offsets[x] = 0;
-      dec(x);
+        if (Offsets[x] = 0) then
+          dec(x);
+      end;
 
       NumE := x;
 
@@ -3837,7 +3843,7 @@ begin
 
       Result := NumE;
 
-      DrvInfo.ID := 'HMCTEX';
+      DrvInfo.ID := 'GTEX';
       DrvInfo.Sch := '\';
       DrvInfo.FileHandle := FHandle;
       DrvInfo.ExtractInternal := False;

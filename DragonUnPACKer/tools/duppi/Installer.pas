@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.3.2.2 2005-03-27 10:20:57 elbereth Exp $
+// $Id: Installer.pas,v 1.3.2.3 2005-03-27 10:42:27 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -165,7 +165,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 20341;
+  VERSION: Integer = 20342;
 
 implementation
 

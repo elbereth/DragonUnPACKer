@@ -1,6 +1,6 @@
 unit auxFSE;
 
-// $Id: auxFSE.pas,v 1.1.1.1 2004-05-08 10:25:12 elbereth Exp $
+// $Id: auxFSE.pas,v 1.2 2004-05-16 09:24:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/auxFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -121,10 +121,9 @@ var a: FSE;
     CurDir, CurDirCache, Parse, Before: String;
     Dupe: Boolean;
     Data, DataCache: TObject;
-    Root, Nod, NodAdd: TTreeNode;
     Root2, Nod2, NodAdd2: PVirtualNode;
     NodeData: pvirtualIndexData;
-    cache, newcache: TDirCache;
+    cache: TDirCache;
 //    StartTime: TDateTime;
 begin
 

@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.3.2.5 2004-10-03 21:28:30 elbereth Exp $
+// $Id: Main.pas,v 1.3.2.6 2004-10-10 09:17:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -25,7 +25,7 @@ uses
   DropSource, XPMan, DragDrop, DragDropFile, prg_ver, JvclVer,
   classIconsFromExt, DateUtils, JvMenus,  JvRichEdit,
   JvComponent, cxCpu40, JvBaseDlg, JvBrowseFolder, lib_binutils,
-  JvExStdCtrls;
+  JvExStdCtrls, commonTypes;
 
 type
   Tdup5Main = class(TForm)
@@ -244,6 +244,7 @@ var
 procedure Tdup5Main.Open_Hub(src: String);
 var Reg: TRegistry;
     res: boolean;
+    loadRes: TDriverLoadResult;
 begin
 
   Res := false;
@@ -263,7 +264,9 @@ begin
   separatorLog;
   writeLog(ReplaceStr(DLNGStr('LOG101'),'%f',src));
 
-  if FSE.LoadFile(src, res) then
+  loadRes := FSE.LoadFile(src, res);
+
+  if (loadRes = dlOk) then
   begin
     Caption := 'Dragon UnPACKer v' + CurVersion + ' ' + CurEdit+ ' - '+src;
     menuFichier_Fermer.Enabled := True;
@@ -275,9 +278,20 @@ begin
   else
   begin
 
-    writeLog(DLNGStr('LOG102'));
+    if loadRes = dlCouldNotLoad then
+      writeLog(DLNGStr('LOG102'))
+    else if loadRes = dlFileNotFound then
+    begin
+      appendLog(DLNGStr('LOG104'));
+      colorLog($000070FF);
+    end
+    else if loadRes = dlError then
+    begin
+      writeLog(DLNGStr('LOG513'));
+      colorLog(clRed);
+    end;
 
-    if res then
+    if res and (loadRes <> dlFileNotFound) then
     begin
       writeLog(DLNGStr('LOG103'));
       frmHyperRipper.Show;
@@ -928,6 +942,7 @@ begin
   if p>100 then
     p := 100;
   dup5Main.Percent.Position := p;
+  dup5Main.Refresh;
 
 end;
 

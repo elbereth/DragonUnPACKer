@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.3.2.2 2004-08-22 19:36:26 elbereth Exp $
+// $Id: Translation.pas,v 1.3.2.3 2004-10-10 09:17:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -231,7 +231,8 @@ begin
     treeConfig.Items.Item[3].Text := DLNGStr('OPT200');
     treeConfig.Items.Item[4].Text := 'HyperRipper';
     treeConfig.Items.Item[5].Text := DLNGStr('OPT300');
-    treeConfig.Items.Item[6].Text := DLNGStr('OPT400');
+    treeConfig.Items.Item[6].Text := DLNGStr('OPT800');
+    treeConfig.Items.Item[7].Text := DLNGStr('OPT400');
 
     grpLanguage.Caption := DLNGStr('OPT110');
     grpLanguage.Font.Name := GetFont();

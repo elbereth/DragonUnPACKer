@@ -1,6 +1,6 @@
 unit prg_ver;
 
-// $Id: prg_ver.pas,v 1.4.2.3 2004-10-03 21:28:30 elbereth Exp $
+// $Id: prg_ver.pas,v 1.4.2.4 2004-10-10 09:17:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/prg_ver.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -45,16 +45,19 @@ begin
     S := Application.ExeName;
     Taille := GetFileVersionInfoSize(PChar(S), Taille);
     if Taille>0
-    then try
-    {--- Réservation en mémoire d'une zone de la taille voulue ---}
-    Buffer := AllocMem(Taille);
-    {--- Copie dans le buffer des informations ---}
-    GetFileVersionInfo(PChar(S), 0, Taille, Buffer);
-    {--- Recherche de l'information de version ---}
-    if VerQueryValue(Buffer, PChar('\StringFileInfo\040C04E4\FileVersion'), Pointer(VersionPC), VersionL)
-        then Result:=VersionPC;
-    finally
-    FreeMem(Buffer, Taille);
+    then
+    begin
+      {--- Réservation en mémoire d'une zone de la taille voulue ---}
+      Buffer := AllocMem(Taille);
+      try
+        {--- Copie dans le buffer des informations ---}
+        GetFileVersionInfo(PChar(S), 0, Taille, Buffer);
+        {--- Recherche de l'information de version ---}
+        if VerQueryValue(Buffer, PChar('\StringFileInfo\040C04E4\FileVersion'), Pointer(VersionPC), VersionL)
+            then Result:=VersionPC;
+      finally
+        FreeMem(Buffer, Taille);
+      end;
     end;
 
 end;

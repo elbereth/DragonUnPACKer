@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.2.2.4 2004-08-22 19:36:26 elbereth Exp $
+// $Id: Options.pas,v 1.2.2.5 2004-10-10 09:17:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -699,6 +699,7 @@ begin
     4: tabHyperRipper.Visible := True;
     5: tabLook.Visible := True;
     6: tabAssoc.Visible := True;
+    7: tabAssoc.Visible := True;
   end;
 
 end;
@@ -877,25 +878,12 @@ begin
 end;
 
 procedure TfrmConfig.chkLogClick(Sender: TObject);
-var Reg: TRegistry;
 begin
 
   if not(chkLog.Checked) then
     dup5Main.menuLog_HideClick(self)
   else
     dup5Main.menuLog_ShowClick(self);
-
-{  Reg := TRegistry.Create;
-  Try
-    Reg.RootKey := HKEY_CURRENT_USER;
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
-    begin
-      Reg.WriteBool('ShowLog',chkLog.Checked);
-      Reg.CloseKey;
-    end;
-  Finally
-    Reg.Free;
-  end;}
 
 end;
 

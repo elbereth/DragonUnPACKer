@@ -1,6 +1,6 @@
 unit class_Images;
 
-// $Id: class_Images.pas,v 1.2 2004-05-20 16:49:33 elbereth Exp $
+// $Id: class_Images.pas,v 1.3 2004-07-15 16:40:18 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/class_Images.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -17,6 +17,13 @@ unit class_Images;
 // (elbereth@users.sourceforge.net, http://www.elberethzone.net).
 
 interface
+
+uses SysUtils, Dialogs, Graphics, Classes;
+
+const TGAORIGIN_BOTTOMLEFT = 0;
+      TGAORIGIN_BOTTOMRIGHT = 16;
+      TGAORIGIN_TOPLEFT = 32;
+      TGAORIGIN_TOPRIGHT = 48;
 
 type TCouleur = record
        R: byte;
@@ -63,6 +70,13 @@ type TCouleur = record
        ImgPixelSize: byte;
        ImgDesc: byte;
      end;
+     TGAFooter = packed record
+       ExtAreaOffset: cardinal;
+       DevDirOffset: cardinal;
+       Signature: array[0..15] of char;
+       ReservedChar: char;
+       BZSTerminator: byte;
+     end;
      PCXHeaderWindow = packed record
        XMin: word;
        YMin: word;
@@ -106,6 +120,15 @@ type TCouleur = record
        Unk2: Integer;
        MipMap: integer;
      end;
+  // Physical bitmap pixel
+  TColorRGB = packed record
+    r, g, b	: BYTE;
+  end;
+  PColorRGB = ^TColorRGB;
+  TRGBList = packed array[0..0] of TColorRGB;
+  PRGBList = ^TRGBList;
+
+type ESIBadFormat = class(Exception);
 
 type TSaveImage = class
     function LoadPAL(dpalfil: string): boolean;
@@ -113,14 +136,19 @@ type TSaveImage = class
     procedure SaveToPCX(fil: String);
     procedure SaveToTGA8(fil: String);
     procedure SaveToTGA24(fil: String);
+    procedure SaveToTGA32(fil: String);
+    procedure LoadFromTGA32(fil: String);
     procedure SetSize(x, y: Integer);
+    procedure SetSizePal(x, y, cmsize: Integer; cmalpha: boolean);
     procedure SetMipMaps(n: Integer);
     procedure GenerateMipMaps();
+    function AddColor(R,G,B,A: byte): byte;
     function Height(): Integer;
-    function Weight(): Integer;
+    function Width(): Integer;
   private
     H: Integer;
     W: Integer;
+    CurPalSize: integer;
   protected
   public
     Pixels: array of array of byte;
@@ -128,15 +156,20 @@ type TSaveImage = class
     NumMM: integer;
     MMHeight: array of integer;
     MMWidth: array of integer;
-    Palette: array[0..255] of TCouleur;
+    Palette: array of TCouleur;
+    PaletteSize: integer;
+    PaletteAlpha: boolean;
 end;
 
 type TSaveImage32 = class
+    procedure LoadFromTBitmap(src: TBitmap);
+    procedure LoadFromTGA32(fil: String);
     procedure SaveToTGA24(fil: String);
     procedure SaveToTGA32(fil: String);
     procedure SetSize(x, y: Integer);
+    function GetBitmap: TBitmap;
     function Height(): Integer;
-    function Weight(): Integer;
+    function Width(): Integer;
   private
     H: Integer;
     W: Integer;
@@ -147,9 +180,39 @@ end;
 
 implementation
 
-uses SysUtils, Dialogs;
-
 { TSaveImage }
+
+function TSaveImage.AddColor(R, G, B, A: byte): byte;
+var x: integer;
+begin
+
+  for x := 0 to CurPalSize-1 do
+  begin
+    if ((Palette[x].R = R)
+    and (Palette[x].G = G)
+    and (Palette[x].B = B)
+    and (Palette[x].A = A)) then
+    begin
+      result := x;
+      exit;
+    end;
+  end;
+
+  if CurPalSize = 256 then
+    raise ESIBadFormat.Create('More than 256 unique colors. (Unsupported)')
+  else
+  begin
+    Inc(CurPalSize);
+
+    Palette[CurPalSize-1].R := R;
+    Palette[CurPalSize-1].G := G;
+    Palette[CurPalSize-1].B := B;
+    Palette[CurPalSize-1].A := A;
+
+    result := CurPalSize - 1;
+  end;
+
+end;
 
 procedure TSaveImage.GenerateMipMaps;
 begin
@@ -162,6 +225,67 @@ function TSaveImage.Height: Integer;
 begin
 
   Result := H;
+
+end;
+
+procedure TSaveImage.LoadFromTGA32(fil: String);
+var HDR: TGAHeader;
+    x,y,tga,cpos: integer;
+    Buffer: PByteArray;
+begin
+
+  tga := FileOpen(fil,fmOpenRead);
+  try
+
+    FileSeek(tga,0,0);
+
+    FileRead(tga,HDR.IDFieldLength,1);
+    FileRead(tga,HDR.ColorMapType,1);
+    FileRead(tga,HDR.ImageType,1);
+    FileRead(tga,HDR.CMOrigin,2);
+    FileRead(tga,HDR.CMLength,2);
+    FileRead(tga,HDR.CMSize,1);
+    FileRead(tga,HDR.ImgXOrig,2);
+    FileRead(tga,HDR.ImgYOrig,2);
+    FileRead(tga,HDR.ImgWidth,2);
+    FileRead(tga,HDR.ImgHeight,2);
+    FileRead(tga,HDR.ImgPixelSize,1);
+    FileRead(tga,HDR.ImgDesc,1);
+
+    if (HDR.IDFieldLength <> 0)
+    or (HDR.ColorMapType <> 0)
+    or (HDR.ImageType <> 2)
+    or (HDR.ImgPixelSize <> 32) then
+    begin
+
+      raise ESIBadFormat.Create('Source file is not a Targa 32bpp (w/alpha channel) file');
+
+    end
+    else
+    begin
+
+      SetSizePal(HDR.ImgWidth, HDR.ImgHeight,256,true);
+      GetMem(Buffer,H*W*4);
+      FileRead(tga,Buffer^,H*W*4);
+      try
+      for y := H-1 downto 0 do
+        for x := 0 to W-1 do
+        begin
+          cpos := ((((H-1)-y)*W)+x);
+          Pixels[x][y] := AddColor(Buffer[cpos*4+2],Buffer[cpos*4+1],Buffer[cpos*4],Buffer[cpos*4+3]);
+        end;
+      finally
+        FreeMem(Buffer);
+      end;
+
+      SetLength(Palette,CurPalSize);
+      PaletteSize := CurPalSize;
+
+    end;
+
+  finally
+    FileClose(tga);
+  end;
 
 end;
 
@@ -214,27 +338,27 @@ begin
   try
     HDR.ID[0] := 'B';
     HDR.ID[1] := 'M';
-    HDR.Size := (W * H) + 1078;
+    if (W - ((W div 4)*4)) > 0 then
+      atend := 4 - (W - ((W div 4)*4))
+    else
+      atend := 0;
+    HDR.Size := ((W + atend) * H) + SizeOf(BMPHeader) + PaletteSize*4;
     HDR.Reserved1 := 0;
     HDR.Reserved2 := 0;
-    HDR.Offset := 1078;
+    HDR.Offset := SizeOf(BMPHeader) + PaletteSize*4;
     HDR.ID2 := 40;
     HDR.Width := W;
     HDR.height := H;
     HDR.Planes := 1;
     HDR.Bpp := 8;
     HDR.Compression := 0;
-    if (W - ((W div 4)*4)) > 0 then
-      atend := 4 - (W - ((W div 4)*4))
-    else
-      atend := 0;
 //    Showmessage(inttostr(w)+#10+inttostr(atend)+#10+inttostr(W+Atend));
 //    atend := 0;
     HDR.SizeImage := (W + atend) * H;
     HDR.XPPM := 0;
     HDR.YPPM := 0;
-    HDR.ColorsUsed := 256;
-    HDR.ColorsImportant := 256;
+    HDR.ColorsUsed := PaletteSize;
+    HDR.ColorsImportant := PaletteSize;
 
     FileWrite(bmp,HDR.ID,2);
     FileWrite(bmp,HDR.Size,4);
@@ -259,14 +383,14 @@ begin
 
     GetMem(Buffer,BufSize);
     try
-      for x := 0 to 255 do
+      for x := 0 to PaletteSize do
       begin
         Buffer[(x*4)] := Palette[x].B;
         Buffer[(x*4)+1] := Palette[x].G;
         Buffer[(x*4)+2] := Palette[x].R;
         Buffer[(x*4)+3] := Palette[x].A;
       end;
-      FileWrite(bmp,Buffer^,1024);
+      FileWrite(bmp,Buffer^,PaletteSize*4);
 
       for y := H-1 downto 0 do
       begin
@@ -360,11 +484,19 @@ begin
     tmpb := 12;
     FileWrite(pcx,tmpb,1);
 
-    for x := 0 to 255 do
+    for x := 0 to PaletteSize do
     begin
       FileWrite(pcx,Palette[x].R,1);
       FileWrite(pcx,Palette[x].G,1);
       FileWrite(pcx,Palette[x].B,1);
+    end;
+
+    tmpb := 0;
+    for x := PaletteSize+1 to 255 do
+    begin
+      FileWrite(pcx,tmpb,1);
+      FileWrite(pcx,tmpb,1);
+      FileWrite(pcx,tmpb,1);
     end;
 
   finally
@@ -428,9 +560,72 @@ begin
 
 end;
 
+procedure TSaveImage.SaveToTGA32(fil: String);
+var HDR: TGAHeader;
+    FTR: TGAFooter;
+    x,y,tga,cpos: integer;
+    Buffer: PByteArray;
+begin
+
+  tga := FileCreate(fil,fmOpenWrite or fmShareDenyWrite);
+
+  try
+    HDR.IDFieldLength := 0;
+    HDR.ColorMapType := 0;
+    HDR.ImageType := 2;
+    HDR.CMOrigin := 0;
+    HDR.CMLength := 0;
+    HDR.CMSize := 0;
+    HDR.ImgXOrig := 0;
+    HDR.ImgYOrig := 0;
+    HDR.ImgWidth := W;
+    HDR.ImgHeight := H;
+    HDR.ImgPixelSize := 32;
+    HDR.ImgDesc := 8;   // Fixed (Bit 3 set = useful Alpha channel data is present)
+
+    FileWrite(tga,HDR.IDFieldLength,1);
+    FileWrite(tga,HDR.ColorMapType,1);
+    FileWrite(tga,HDR.ImageType,1);
+    FileWrite(tga,HDR.CMOrigin,2);
+    FileWrite(tga,HDR.CMLength,2);
+    FileWrite(tga,HDR.CMSize,1);
+    FileWrite(tga,HDR.ImgXOrig,2);
+    FileWrite(tga,HDR.ImgYOrig,2);
+    FileWrite(tga,HDR.ImgWidth,2);
+    FileWrite(tga,HDR.ImgHeight,2);
+    FileWrite(tga,HDR.ImgPixelSize,1);
+    FileWrite(tga,HDR.ImgDesc,1);
+
+    GetMem(Buffer,H*W*4);
+    try
+    for y := H-1 downto 0 do
+      for x := 0 to W-1 do
+      begin
+        cpos := ((((H-1)-y)*W)+x);
+        Buffer[cpos*4] := Palette[Pixels[x][y]].B;
+        Buffer[cpos*4+1] := Palette[Pixels[x][y]].G;
+        Buffer[cpos*4+2] := Palette[Pixels[x][y]].R;
+        Buffer[cpos*4+3] := Palette[Pixels[x][y]].A;
+      end;
+      FileWrite(tga,Buffer^,H*W*4);
+    finally
+      FreeMem(Buffer);
+    end;
+
+    FillChar(FTR,sizeof(TGAFooter),0);
+    FTR.Signature := 'TRUEVISION-XFILE';
+    FTR.ReservedChar := '.';
+
+    FileWrite(tga,FTR,SizeOf(TGAFooter));
+  finally
+    FileClose(tga);
+  end;
+
+end;
+
 procedure TSaveImage.SaveToTGA8(fil: String);
 var HDR: TGAHeader;
-    x,y,tga,BufSize: integer;
+    x,y,tga,BufSize,wSize: integer;
     Buffer: PByteArray;
 begin
 
@@ -441,8 +636,11 @@ begin
     HDR.ColorMapType := 1;
     HDR.ImageType := 1;
     HDR.CMOrigin := 0;
-    HDR.CMLength := 256;
-    HDR.CMSize := 24;
+    HDR.CMLength := PaletteSize;
+    if PaletteAlpha then
+      HDR.CMSize := 32
+    else
+      HDR.CMSize := 24;
     HDR.ImgXOrig := 0;
     HDR.ImgYOrig := 0;
     HDR.ImgWidth := W;
@@ -470,13 +668,27 @@ begin
     GetMem(Buffer,BufSize);
     try
 
-      for x := 0 to 255 do
+      for x := 0 to PaletteSize do
       begin
-        Buffer[(x*3)] := Palette[x].B;
-        Buffer[(x*3)+1] := Palette[x].G;
-        Buffer[(x*3)+2] := Palette[x].R;
+        if PaletteAlpha then
+        begin
+          Buffer[(x*4)] := Palette[x].B;
+          Buffer[(x*4)+1] := Palette[x].G;
+          Buffer[(x*4)+2] := Palette[x].R;
+          Buffer[(x*4)+3] := Palette[x].A;
+        end
+        else
+        begin
+          Buffer[(x*3)] := Palette[x].B;
+          Buffer[(x*3)+1] := Palette[x].G;
+          Buffer[(x*3)+2] := Palette[x].R;
+        end;
       end;
-      FileWrite(tga,Buffer^,768);
+      if PaletteAlpha then
+        wsize := PaletteSize*4
+      else
+        wsize := PaletteSize*3;
+      FileWrite(tga,Buffer^,wsize);
 
       for y := H-1 downto 0 do
         for x := 0 to W-1 do
@@ -519,10 +731,26 @@ begin
   SetLength(Pixels,x,y);
   W := X;
   H := Y;
+  SetLength(Palette,256);
+  PaletteSize := 256;
+  PaletteAlpha := false;
 
 end;
 
-function TSaveImage.Weight: Integer;
+procedure TSaveImage.SetSizePal(x, y, cmsize: Integer; cmalpha: boolean);
+begin
+
+  SetLength(Pixels,x,y);
+  W := X;
+  H := Y;
+  SetLength(Palette,cmsize);
+  PaletteSize := cmsize;
+  PaletteAlpha := cmalpha;
+  CurPalSize := 0;
+
+end;
+
+function TSaveImage.Width: Integer;
 begin
 
   result := W;
@@ -531,11 +759,141 @@ end;
 
 { TSaveImage32 }
 
+function TSaveImage32.GetBitmap: TBitmap;
+var i, j: integer;
+    color: TColorRGB;
+    DestPixel : PColorRGB;
+begin
+
+  result := TBitmap.Create;
+  with result do
+  begin
+    pixelformat := pf24bit;
+    Height := H;
+    Width := W;
+    for i := 0 to H-1 do
+    begin
+      DestPixel := ScanLine[i];
+      for j := 0 to W-1 do
+      begin
+        color.r := pixels[j,i].B;
+        color.g := pixels[j,i].G;
+        color.b := pixels[j,i].R;
+        DestPixel^ := color;
+        inc(DestPixel);
+      end;
+    end;
+  end;
+
+end;
+
 function TSaveImage32.Height: Integer;
 begin
 
   Result := H;
-  
+
+end;
+
+procedure TSaveImage32.LoadFromTBitmap(src: TBitmap);
+var i, j: integer;
+    color: TColorRGB;
+    SrcPixel : PColorRGB;
+begin
+
+  SetSize(src.Width, src.Height);
+
+  with src do
+  begin
+    pixelformat := pf24bit;
+    for i := 0 to H-1 do
+    begin
+      SrcPixel := ScanLine[i];
+      for j := 0 to W-1 do
+      begin
+        color := SrcPixel^;
+        pixels[j,i].B := color.r;
+        pixels[j,i].G := color.g;
+        pixels[j,i].R := color.b;
+        inc(SrcPixel);
+      end;
+    end;
+  end;
+
+end;
+
+procedure TSaveImage32.LoadFromTGA32(fil: String);
+var HDR: TGAHeader;
+    x,y,tga,cpos,origtype: integer;
+    Buffer: PByteArray;
+begin
+
+  tga := FileOpen(fil,fmOpenRead);
+  try
+
+    FileSeek(tga,0,0);
+
+    FileRead(tga,HDR.IDFieldLength,1);
+    FileRead(tga,HDR.ColorMapType,1);
+    FileRead(tga,HDR.ImageType,1);
+    FileRead(tga,HDR.CMOrigin,2);
+    FileRead(tga,HDR.CMLength,2);
+    FileRead(tga,HDR.CMSize,1);
+    FileRead(tga,HDR.ImgXOrig,2);
+    FileRead(tga,HDR.ImgYOrig,2);
+    FileRead(tga,HDR.ImgWidth,2);
+    FileRead(tga,HDR.ImgHeight,2);
+    FileRead(tga,HDR.ImgPixelSize,1);
+    FileRead(tga,HDR.ImgDesc,1);
+
+    if (HDR.IDFieldLength <> 0)
+    or (HDR.ColorMapType <> 0)
+    or (HDR.ImageType <> 2)
+    or (HDR.ImgPixelSize <> 32) then
+    begin
+
+      raise ESIBadFormat.Create('Source file is not an uncompressed Targa 32bpp (w/alpha channel) file');
+
+    end
+    else
+    begin
+
+      if (HDR.ImgDesc AND 48) = TGAORIGIN_BOTTOMRIGHT then
+        origtype := 1
+      else if (HDR.ImgDesc AND 48) = TGAORIGIN_TOPLEFT then
+        origtype := 2
+      else if (HDR.ImgDesc AND 48) = TGAORIGIN_TOPRIGHT then
+        origtype := 3
+      else
+        origtype := 0;
+
+      SetSize(HDR.ImgWidth, HDR.ImgHeight);
+      GetMem(Buffer,H*W*4);
+      FileRead(tga,Buffer^,H*W*4);
+      try
+      for y := H-1 downto 0 do
+        for x := 0 to W-1 do
+        begin
+          case origtype of
+            0: cpos := ((((H-1)-y)*W)+x);
+            1: cpos := ((((H-1)-y)*W)+((W-1)-x));
+            2: cpos := ((y*W)+x);
+            3: cpos := ((y*W)+((W-1)-x));
+          end;
+          Pixels[x][y].B := Buffer[cpos*4];
+          Pixels[x][y].G := Buffer[cpos*4+1];
+          Pixels[x][y].R := Buffer[cpos*4+2];
+          Pixels[x][y].A := Buffer[cpos*4+3];
+        end;
+      finally
+        FreeMem(Buffer);
+      end;
+
+    end;
+
+  finally
+    FileClose(tga);
+  end;
+
 end;
 
 procedure TSaveImage32.SaveToTGA24(fil: String);
@@ -595,6 +953,7 @@ end;
 
 procedure TSaveImage32.SaveToTGA32(fil: String);
 var HDR: TGAHeader;
+    FTR: TGAFooter;
     x,y,tga,cpos: integer;
     Buffer: PByteArray;
 begin
@@ -602,6 +961,7 @@ begin
   tga := FileCreate(fil,fmOpenWrite or fmShareDenyWrite);
 
   try
+    FillChar(HDR,sizeof(TGAHeader),0);
     HDR.IDFieldLength := 0;
     HDR.ColorMapType := 0;
     HDR.ImageType := 2;
@@ -613,7 +973,7 @@ begin
     HDR.ImgWidth := W;
     HDR.ImgHeight := H;
     HDR.ImgPixelSize := 32;
-    HDR.ImgDesc := 0;
+    HDR.ImgDesc := 8;   // Fixed (Bit 3 set = useful Alpha channel data is present)
 
     FileWrite(tga,HDR.IDFieldLength,1);
     FileWrite(tga,HDR.ColorMapType,1);
@@ -643,6 +1003,13 @@ begin
     finally
       FreeMem(Buffer);
     end;
+
+    FillChar(FTR,sizeof(TGAFooter),0);
+    FTR.Signature := 'TRUEVISION-XFILE';
+    FTR.ReservedChar := '.';
+
+    FileWrite(tga,FTR,SizeOf(TGAFooter));
+
   finally
     FileClose(tga);
   end;
@@ -658,7 +1025,7 @@ begin
 
 end;
 
-function TSaveImage32.Weight: Integer;
+function TSaveImage32.Width: Integer;
 begin
 
   result := W;

@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.10 2004-07-21 21:36:03 elbereth Exp $
+// $Id: drv_default.dpr,v 1.10.2.1 2004-09-26 15:42:08 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -135,6 +135,7 @@ type FSE = ^element;
                  Enhanced support for Glacier Engine .TEX files (previously Hitman: Contracts)
     13441  50040 Found the meaning of 8 bytes in the DWFBEntry structure.
     13442        Incorporated the Westwood PAK MIX detection fix from Felix Riemann
+    20000  51140 Upgraded to new interface DUDI v4
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1064,10 +1065,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 13442;
-  DUP_VERSION = 50040;
-  CVS_REVISION = '$Revision: 1.10 $';
-  CVS_DATE = '$Date: 2004-07-21 21:36:03 $';
+  DRIVER_VERSION = 20011;
+  DUP_VERSION = 51140;
+  CVS_REVISION = '$Revision: 1.10.2.1 $';
+  CVS_DATE = '$Date: 2004-09-26 15:42:08 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1096,6 +1097,10 @@ var DataBloc: FSE;
     DNISize : Integer;
     NumFSE: Integer;
     HPIKey: Integer;
+    DLNGStr: TLanguageCallback;
+    CurPath: string;
+    AHandle : THandle;
+    AOwner : TComponent;
 
 // This function reverse a string
 //  Ex: "abcd" becomes "dcba"
@@ -1117,7 +1122,7 @@ end;
 // Exported
 function DUDIVersion: Byte; stdcall;
 begin
-  DUDIVersion := 1;
+  DUDIVersion := 4;
 end;
 
 // Returns Driver plugin version
@@ -7193,7 +7198,8 @@ begin
 
 end;
 }
-function ReadFormat(fil: ShortString; percent: TPercentCallback; Deeper: boolean): Integer; stdcall;
+//function ReadFormat(fil: ShortString; percent: TPercentCallback; Deeper: boolean): Integer; stdcall;
+function ReadFormat(fil: ShortString; Deeper: boolean): Integer; stdcall;
 var ext: string;
     ID4: array[0..3] of char;
     ID6: array[0..5] of char;
@@ -7208,7 +7214,6 @@ var ext: string;
     x: integer;
 begin
 
-  SetPercent := percent;
   SetPercent(0);
 
   ext := ExtractFileExt(fil);
@@ -8821,10 +8826,10 @@ begin
 
 end;
 
-procedure AboutBox(hwnd: Integer; DLNGstr: TLanguageCallBack); stdcall;
+procedure AboutBox; stdcall;
 begin
 
-  MessageBoxA(hwnd, PChar('Main Driver plugin v'+getVersion(DRIVER_VERSION)+#10+
+  MessageBoxA(AHandle, PChar('Main Driver plugin v'+getVersion(DRIVER_VERSION)+#10+
                           '(c)Copyright 2002-2004 Alexandre Devilliers'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
                           'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+#10+
@@ -9059,6 +9064,13 @@ end;
 
 end;
 
+function ExtractFileToStream(outputstream: TStream; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
+begin
+
+  // TODO
+
+end;
+
 function ExtractFile(outputfile: ShortString; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
 var fil: Integer;
     ENT: MTFCompress;
@@ -9239,9 +9251,21 @@ begin
 
 end;
 
+procedure InitPlugin(per: TPercentCallback; lngid: TLanguageCallback; DUP5Path: ShortString; AppHandle: THandle; AppOwner: TComponent); stdcall;
+begin
+
+  SetPercent := per;
+  DLNGStr := lngid;
+  CurPath := DUP5Path;
+  AHandle := AppHandle;
+  AOwner := AppOwner;
+
+end;
+
 exports
   DUDIVersion,
   ExtractFile,
+  ExtractFileToStream,
   ReadFormat,
   CloseFormat,
   GetEntry,
@@ -9250,6 +9274,7 @@ exports
   GetCurrentDriverInfo,
   GetErrorInfo,
   AboutBox,
+  InitPlugin,
   IsFormat;
 
 begin

@@ -1153,6 +1153,102 @@ object frmInstaller: TfrmInstaller
     Stretch = True
     Visible = False
   end
+  object stepInternet: TPanel
+    Left = 0
+    Top = 104
+    Width = 481
+    Height = 217
+    TabOrder = 6
+    Visible = False
+    object InfoLabel: TLabel
+      Left = 88
+      Top = 8
+      Width = 385
+      Height = 13
+      AutoSize = False
+      Caption = 'InfoLabel'
+    end
+    object strInternetComment: TLabel
+      Left = 8
+      Top = 184
+      Width = 65
+      Height = 13
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Comment:'
+    end
+    object butRefresh: TButton
+      Left = 8
+      Top = 8
+      Width = 75
+      Height = 25
+      Caption = 'Refresh'
+      TabOrder = 0
+      OnClick = butRefreshClick
+    end
+    object lstUpdates: TListView
+      Left = 8
+      Top = 40
+      Width = 465
+      Height = 137
+      Checkboxes = True
+      Columns = <
+        item
+          Caption = 'Title'
+          Width = 200
+        end
+        item
+          Caption = 'Your Version'
+          Width = 102
+        end
+        item
+          Caption = 'Available version'
+          Width = 102
+        end
+        item
+          Alignment = taRightJustify
+          Caption = 'Size'
+          Width = 40
+        end>
+      TabOrder = 1
+      ViewStyle = vsReport
+      OnClick = lstUpdatesClick
+      OnSelectItem = lstUpdatesSelectItem
+    end
+    object ProgressDL: TProgressBar
+      Left = 88
+      Top = 24
+      Width = 385
+      Height = 9
+      TabOrder = 2
+    end
+    object Panel1: TPanel
+      Left = 80
+      Top = 182
+      Width = 393
+      Height = 30
+      BevelOuter = bvLowered
+      Color = clWindow
+      TabOrder = 3
+      object lblInternetComment: TLabel
+        Left = 2
+        Top = 2
+        Width = 388
+        Height = 25
+        AutoSize = False
+        Caption = '-'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlue
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = []
+        ParentFont = False
+        ShowAccelChar = False
+        Transparent = True
+        WordWrap = True
+      end
+    end
+  end
   object stepInstall: TPanel
     Left = 0
     Top = 104
@@ -1411,7 +1507,7 @@ object frmInstaller: TfrmInstaller
       Width = 345
       Height = 25
       AutoSize = False
-      Caption = 'Note: Absolutly no data is sent to Dragon Software web site.'
+      Caption = 'Note: Absolutly no data is sent to the web site.'
       Color = clBtnFace
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clRed
@@ -1466,102 +1562,6 @@ object frmInstaller: TfrmInstaller
       Caption = 'Proxy Options'
       TabOrder = 4
       OnClick = butProxyClick
-    end
-  end
-  object stepInternet: TPanel
-    Left = 0
-    Top = 104
-    Width = 481
-    Height = 217
-    TabOrder = 6
-    Visible = False
-    object InfoLabel: TLabel
-      Left = 88
-      Top = 8
-      Width = 385
-      Height = 13
-      AutoSize = False
-      Caption = 'InfoLabel'
-    end
-    object strInternetComment: TLabel
-      Left = 8
-      Top = 184
-      Width = 65
-      Height = 13
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Comment:'
-    end
-    object butRefresh: TButton
-      Left = 8
-      Top = 8
-      Width = 75
-      Height = 25
-      Caption = 'Refresh'
-      TabOrder = 0
-      OnClick = butRefreshClick
-    end
-    object lstUpdates: TListView
-      Left = 8
-      Top = 40
-      Width = 465
-      Height = 137
-      Checkboxes = True
-      Columns = <
-        item
-          Caption = 'Title'
-          Width = 200
-        end
-        item
-          Caption = 'Your Version'
-          Width = 102
-        end
-        item
-          Caption = 'Available version'
-          Width = 102
-        end
-        item
-          Alignment = taRightJustify
-          Caption = 'Size'
-          Width = 40
-        end>
-      TabOrder = 1
-      ViewStyle = vsReport
-      OnClick = lstUpdatesClick
-      OnSelectItem = lstUpdatesSelectItem
-    end
-    object ProgressDL: TProgressBar
-      Left = 88
-      Top = 24
-      Width = 385
-      Height = 9
-      TabOrder = 2
-    end
-    object Panel1: TPanel
-      Left = 80
-      Top = 182
-      Width = 393
-      Height = 30
-      BevelOuter = bvLowered
-      Color = clWindow
-      TabOrder = 3
-      object lblInternetComment: TLabel
-        Left = 2
-        Top = 2
-        Width = 388
-        Height = 25
-        AutoSize = False
-        Caption = '-'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlue
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = []
-        ParentFont = False
-        ShowAccelChar = False
-        Transparent = True
-        WordWrap = True
-      end
     end
   end
   object cmdClose: TButton
@@ -1632,7 +1632,7 @@ object frmInstaller: TfrmInstaller
   object HttpCli1: THttpCli
     LocalAddr = '0.0.0.0'
     ProxyPort = '80'
-    Agent = 'Mozilla/3.0 (compatible)'
+    Agent = 'Duppi/2.0'
     Accept = 'image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, */*'
     NoCache = False
     ContentTypePost = 'application/x-www-form-urlencoded'

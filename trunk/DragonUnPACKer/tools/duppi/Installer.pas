@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.1.1.1 2004-05-08 10:27:05 elbereth Exp $
+// $Id: Installer.pas,v 1.2 2004-07-14 19:05:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -165,7 +165,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 20240;
+  VERSION: Integer = 20340;
 
 implementation
 
@@ -612,6 +612,8 @@ end;
 function TfrmInstaller.infosDUPP: boolean;
 begin
 
+  result := false;
+
   if (hDupp <> 0) and not(NFOLoaded) then
     case HDR.Version of
       1: result := infosDUPP_version1(hDupp);
@@ -835,9 +837,8 @@ Var updList: TStringList;
 begin
 
   butRefresh.Enabled := false;
-//  HttpCli1.URL := 'http://127.0.0.1/dup5.dus';
-  HttpCli1.URL := 'http://dus.dragonunpacker.com/dup5.dus';
-//  HttpCli1.URL := 'http://games.elbereth.priv/dup5.dus';
+//HttpCli1.URL := 'http://dus.dragonunpacker.com/dup5.dus';
+  HttpCli1.URL := 'http://www.elberethzone.net/dup5.dus';
   tmpFile := getTempFile('.dus');
   HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
   CurDL := DLNGstr('PII100');
@@ -848,7 +849,7 @@ begin
             InfoLabel.Caption := ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size));
         except
             on E: EHttpException do begin
-                InfoLabel.Caption := ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase);
+              InfoLabel.Caption := ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase);
             end
             else
                 raise;
@@ -1123,6 +1124,9 @@ begin
   frmProxy.txtProxyPass.Text := proxyPass;
   frmProxy.chkUserPass.Checked := proxyUserPass;
 
+  // Fix for bug #958619
+  frmProxy.Caption := DLNGstr('PI0038');
+
   frmProxy.ShowModal;
 
 end;
@@ -1216,6 +1220,7 @@ var
   ARegFunc : TRegFunc;
   aHandle  : THandle;
 begin
+ result := false;
  try
   aHandle := LoadLibrary(PChar(ocxPath));
   if aHandle <> 0 then
@@ -1223,7 +1228,7 @@ begin
     ARegFunc := GetProcAddress(aHandle,'DllRegisterServer');
     if Assigned(ARegFunc) then
     begin
-      ExecAndWait('regsvr32','/s "' + ocxPath+'"');
+      result := ExecAndWait('regsvr32','/s "' + ocxPath+'"');
     end;
     FreeLibrary(aHandle);
   end;

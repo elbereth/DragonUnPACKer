@@ -1,6 +1,6 @@
 unit List;
 
-// $Id: List.pas,v 1.1.1.1 2004-05-08 10:25:49 elbereth Exp $
+// $Id: List.pas,v 1.2 2004-05-16 15:55:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/List.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -591,7 +591,6 @@ end;
 function TfrmList.macroFooter(src, cdir: string; totSize: int64;
   totE: integer): string;
 var i: integer;
-    keyw: string;
 begin
 
   src := macroHeader(src,cdir);

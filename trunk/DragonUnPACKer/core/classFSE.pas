@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.2 2004-05-16 09:28:03 elbereth Exp $
+// $Id: classFSE.pas,v 1.3 2004-07-17 19:22:53 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -16,49 +16,106 @@ unit classFSE;
 // The Initial Developer of the Original Code is Alexandre Devilliers
 // (elbereth@users.sourceforge.net, http://www.elberethzone.net).
 
+// ----------------------------------------------------------------------------
+// Information
+// ----------------------------------------------------------------------------
+// This file contains the TDrivers class. This is truly the core of Dragon
+// UnPACKer as it is this class that loads driver plugins, parse results and
+// prepare everything for display (normal display, directory specific, search
+// results, etc..).
+// ----------------------------------------------------------------------------
+
 interface
 
-uses auxFSE, Main, Comctrls, Windows, SysUtils, Dialogs,lib_binCopy,lib_language,classes,Controls, Forms, Registry,DateUtils, lib_utils, spec_HRF, prg_ver, strutils;
+uses auxFSE, Classes, Comctrls, Controls, DateUtils, Dialogs, Forms,
+     lib_binCopy, lib_binutils, lib_language, lib_utils, Main, prg_ver, Registry,
+     spec_HRF, strutils, Windows, SysUtils;
+
+{ Record declaration }
 
 type
-  ExtensionsResult = record
-    Num: integer;
-    Lists: array[1..5] of String;
-  end;
-  FormatEntry = record
-    FileName: ShortString;
-    Offset, Size: Int64;
+
+  ExtensionsResult = record            // This record is used to store the list
+    Num: integer;                      // of all supported extensions (that
+    Lists: array[1..5] of String;      // Dragon UnPACKer can handle).
+  end;                                 // Fractionned as 255 chars max Strings.
+
+  FormatEntry = record                 // Data is retrieved from the driver
+    FileName: ShortString;             // using this structure (each item is
+    Offset, Size: Int64;               // returned using this struct).
     DataX, DataY: Integer;
   end;
-  CurrentDriverInfo = record
-    Sch : ShortString;
-    ID : ShortString;
-    FileHandle : Integer;
+
+  CurrentDriverInfo = record           // When a driver have opened a file
+    Sch : ShortString;                 // successfully a function is called to
+    ID : ShortString;                  // get more information. This structure
+    FileHandle : Integer;              // stores the result.
     ExtractInternal : Boolean;
   end;
-  FormatInfo = record
-    Extensions : ShortString;
+
+  FormatInfo = record                  // Used for the list of supported games
+    Extensions : ShortString;          // and extensions
     Name : ShortString;
   end;
-  DriverInfo = record
-    Name : ShortString;
-    Author : ShortString;
+
+  DriverInfo = record                  // This structure is returned when the
+    Name : ShortString;                // driver is queried for information.
+    Author : ShortString;              // Contains a list of supported games.
     Version : ShortString;
     Comment : ShortString;
     NumFormats : Byte;
     Formats : array[1..255] of FormatInfo;
   end;
-  ErrorInfo = record
-    Format : ShortString;
+
+  ErrorInfo = record                   // This is returned whenever there is
+    Format : ShortString;              // an error in a driver.
     Games : ShortString;
   end;
 
+{ External Function/Procedure declaration }
+
 type
+
+  { Callback functions (the driver can call those functions/procedure) }
+
+  // TPercentCallback : Used to set the current progress of the process
+  //                    p must be between 0 and 100.
   TPercentCallback = procedure(p: byte);
+  // TLanguageCallback : Used to retrieve language strings (translations)
+  //                     lngid is a 6 chars ID for a language string.
   TLanguageCallback = function (lngid: ShortString): ShortString;
+
+  { Driver plugin functions }
+
+  // TDUDIVersion : Returns the driver plugin DUDI (Dragon UnPACKer Driver
+  //                Interface) version.
+  //                Current class supports : 1 = Version 1
+  //                                         2 = Version 2
+  //                                         3 = Version 3
+  //                Each version has different exported functions/procedure
+  //                and/or same function/procedure with different export
+  //                parameters.
   TDUDIVersion = function(): Byte; stdcall;
+  // TCloseFormat : Called to (obviously) close current opened file.
+  //                Driver is also supposed to free any resource associated with
+  //                the opening of that file.
   TCloseFormat = function(): boolean; stdcall;
+  // TOpenFormat : Called to open a file.
+  // (DUDI v1)     src is the full path to the file
+  //               Percent is the callback function for progress indication
+  //               Deeper indicates to the driver if it have to dig into file
+  //               format if it doesn't recognize it by the extension.
+  //     Returns : <0 = If anything was wrong
+  //                0 = No entries found in file
+  //               >0 = Number of entries in file
   TOpenFormat = function(src: ShortString; Percent: TPercentCallback; Deeper: boolean): Integer; stdcall;
+  // TOpenFormat2 : Called to open a file.
+  // (DUDI v2/v3)   src is the full path to the file
+  //                Deeper indicates to the driver if it have to dig into file
+  //                format if it doesn't recognize it by the extension.
+  //     Returns : <0 = If anything was wrong
+  //                0 = No entries found in file
+  //               >0 = Number of entries in file
   TOpenFormat2 = function(src: ShortString; Deeper: boolean): Integer; stdcall;
   TGetEntry = function(): FormatEntry; stdcall;
   TGetDriverInfo = function(): DriverInfo; stdcall;
@@ -157,7 +214,6 @@ type TDrivers = class
     function CloseFile(): boolean;
     function Search(searchst: string; CaseSensible: Boolean; cdir: string; sdir: boolean): integer;
     function getListData(n: integer): virtualTreeData;
-    function getIndexData(n: integer): virtualIndexData;
     function getListNum(): integer;
     procedure PrepareHyperRipper(Info: DriverInfo);
     procedure saveHRF(srcfil, filename: string; srcsize: int64; prgver: integer; prgid: byte; version: byte; info: boolean;  title, author, url: string);
@@ -191,7 +247,6 @@ type TDrivers = class
     procedure DataBlocFree();
     procedure DataBlocFree_Aux(a: FSE);
     procedure FreeList_Aux(a: FSE);
-    function PosRev(substr: string; str: string): integer;
     function ParseFileTypes(names: string; ext: string): string;
     procedure ExtractFile_Alt(outfile,entrynam: string; offset: int64; size: int64; datax: integer; datay: integer; silent: boolean);
     function CalculateNumberOfFiles(cdir: string): Integer;
@@ -242,6 +297,8 @@ begin
 
 end;
 
+// FreeList_Aux : Auxiliary function that frees the data chain (chained records)
+//                by going through the data and freeing every item.
 procedure TDrivers.FreeList_Aux(a: FSE);
 begin
 
@@ -257,6 +314,7 @@ begin
 
 end;
 
+// FreeList : This frees all data allocated in the file list by the data chain
 procedure TDrivers.FreeList;
 begin
 
@@ -269,23 +327,25 @@ begin
 
 end;
 
+// GetListSize : Return the size of the data chain
+//     Returns : 0 if the file list is empty
+//               n if the file list has n elements
+//        NOTE : This does not actually return the true size of the chain but
+//               the size returned by the driver (after correction by TDriver) 
 function TDrivers.GetListSize: Integer;
-// GetListSize
-// Returns 0 if the file list is empty
-//         n if the file list has n elements
 begin
 
   if IsListEmpty then
-    GetListSize := 0
+    result := 0
   else
-    GetListSize := DispNumElems;
+    result := DispNumElems;
 
 end;
 
+// IsListEmpty : Indicate if current data chain is empty
+//     Returns : TRUE if file list is empty
+//               FALSE if not
 function TDrivers.IsListEmpty: Boolean;
-// IsListEmpty
-// Returns TRUE if file list is empty
-//         FALSE if not
 begin
 
   IsListEmpty := DataBloc = NIL;
@@ -328,7 +388,6 @@ end;
 procedure TDrivers.SetTreeView(a: TTreeView);
 begin
 
-//  TView := TTreeView.Create(Nil);
   TView := a;
 
 end;
@@ -480,41 +539,6 @@ begin
 
   if IsConsole then
     writeln('Finished!');
-
-end;
-
-
-function TDrivers.PosRev(substr, str: string): integer;
-var res,x : integer;
-begin
-
-  res := 0;
-  x := (length(str) - length(substr) + 1);
-
-  while (x >= 1) and (res = 0) do
-  begin
-
-    if copy(str,x, length(substr)) = substr then
-      res := x;
-
-    x := x - 1;
-
-  end;
-
-  posrev := res;
-
-end;
-
-function strip0(str : string): string;
-var pos0: integer;
-begin
-
-  pos0 := pos(chr(0),str);
-
-  if pos0 > 0 then
-    strip0 := copy(str, 1, pos0 - 1)
-  else
-    strip0 := str;
 
 end;
 
@@ -1742,6 +1766,13 @@ begin
 
 end;
 
+// BrowseDirToList : This function returns in a TList object the list of entries
+//                   in the "cdir" directory (with or without subdirectories)
+//                   from the currently opened file.
+//                      cdir : is the directory to parse
+//                   subdirs : should return subdirectories too ?
+//         Returns : TList with EntRec entries for each corresponding entry in
+//                   file.
 function TDrivers.BrowseDirToList(cdir: string; subdirs: boolean): TList;
 var a: FSE;
     TDir: string;
@@ -1749,41 +1780,61 @@ var a: FSE;
     EntRec: PEntList;
 begin
 
+  // If the right most char of cdir is the directory separator then remove it
   if rightstr(cdir,1) = sch then
     cdir := leftstr(cdir,length(cdir)-1);
 
+  // Spawning the result TList object
   Result := TList.Create;
 
+  // Convert cdir to uppercase (for comparison without case sensitivity)
   CDir := UpperCase(CDir);
 
+  // First entry in the pointer chain for currently opened file
   a := DataBloc;
 
+  // Loop while current pointer isn't NIL
   while a <> NIL do
   begin
 
+    // If the is no directory separation in currently opened file
+    // then TDir is empty (current directory of entry is empty)
     if sch = '' then
     begin
       TDir := '';
     end
+    // Else we will calculate the length of the directory we are searching for
+    // and return the TDir string containing directory to compare
     else
     begin
+      // If subdirs are to be returned
       if subdirs then
       begin
+        // If cdir is empty, then always returns a position of 0
         if cdir = '' then
           TDirPos := 0
+        // else search for the position of the first directory separator
+        // starting at the index of the size of the cdir string
         else
           TDirPos := posex(sch,a^.Name,Length(cdir));
       end
+      // Else if no subdirs then the position is last occurence of the directory
+      // separator
       else
         TDirPos := posrev(sch, a^.Name);
+      // Returns in TDir the directory we will compare with CDir
       if TDirPos >0 then
         TDir := Uppercase(Copy(a^.Name,1,TDirPos-1))
       else
         TDir := '';
     end;
 
+    // If TDir and CDir are identical (either entry is in same dir as the dir
+    // we need the entry list, or it is in a subdirectory of this dir)
     if TDir = CDir then
     begin
+      // Then we allocate new entry record, fill it with data and add it to the
+      // result list
       New(EntRec);
       EntRec^.FileName := a^.Name;
       EntRec^.Offset := a^.Offset;
@@ -1793,51 +1844,66 @@ begin
       Result.Add(EntRec);
     end;
 
+    // Check next entry in the chain
     a := a^.suiv;
 
   end;
 
 end;
 
-function TDrivers.getIndexData(n: integer): virtualIndexData;
-begin
-
-//  if (n < getListNum) and (n >= 0) then
-//     result := listData[n];
-
-end;
-
+// showAboutBox : show the about box of a driver plugin
+//                This function run the right exported ShowAboutBox
+//                function depending of the DUDI version of the driver.
+//                  hwnd : is the handle of the application
+//                drvnum : is the driver index number
 procedure TDrivers.showAboutBox(hwnd, drvnum: integer);
 begin
 
+  // If driver at drvnum index has DUDI version 1
   if (Drivers[drvnum].DUDIVersion = 1) then
   begin
+    // Run the first version of the ShowAboutBox function
     Drivers[drvnum].ShowAboutBox(hwnd,language);
   end
+  // If driver at drvnum index has DUDI version 2
   else if (Drivers[drvnum].DUDIVersion = 2) then
   begin
+    // Run the second version of the ShowAboutBox function
     Drivers[drvnum].ShowAboutBox2(hwnd);
   end
+  // If driver at drvnum index has DUDI version 3
   else if (Drivers[drvnum].DUDIVersion = 3) then
   begin
+    // Run the third version of the ShowAboutBox function
     Drivers[drvnum].ShowAboutBox3;
   end;
 
 end;
 
+// showConfigBox : show the config box of a driver plugin
+//                 This function run the right exported ShowConfigBox
+//                 function depending of the DUDI version of the driver.
+//                   hwnd : is the handle of the application
+//                 drvnum : is the driver index number
 procedure TDrivers.showConfigBox(hwnd, drvnum: integer);
 begin
 
+  // If driver at drvnum index has DUDI version 1
   if (Drivers[drvnum].DUDIVersion = 1) then
   begin
-    Drivers[drvnum].ShowConfigBox(Application.Handle,language);
+    // Run the first version of the ShowConfigBox function
+    Drivers[drvnum].ShowConfigBox(hwnd,language);
   end
+  // If driver at drvnum index has DUDI version 2
   else if (Drivers[drvnum].DUDIVersion = 2) then
   begin
-    Drivers[drvnum].ShowConfigBox2(Application.Handle);
+    // Run the second version of the ShowConfigBox function
+    Drivers[drvnum].ShowConfigBox2(hwnd);
   end
+  // If driver at drvnum index has DUDI version 3
   else if (Drivers[drvnum].DUDIVersion = 3) then
   begin
+    // Run the third version of the ShowConfigBox function
     Drivers[drvnum].ShowConfigBox3;
   end;
 

@@ -5376,7 +5376,7 @@ object dup5Main: Tdup5Main
     Enabled = False
     Interval = 100
     OnTimer = TimerParamTimer
-    Left = 200
-    Top = 72
+    Left = 520
+    Top = 168
   end
 end

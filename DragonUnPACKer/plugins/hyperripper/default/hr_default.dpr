@@ -3,7 +3,8 @@ library hr_default;
 uses
   Forms,
   Math,
-  JvJCLUtils,
+//  JvJCLUtils,
+  StrUtils,
   SysUtils,
   Registry,
   Windows,
@@ -432,10 +433,12 @@ var Percent: TPercentCallback;
   * 50143 Now using DUHI v2
   *       Option Panel is now child of main application (you can alt+tab without
   *       fear. :)
+  * 50144 Fixed bug #1024855 (introduced by JVCL 2.10 -> 3.00 migration)
+  *       Tweaked the posBuf function to be able to start checking from an specified offset of the buffer (should speed up RIFF/JFIF/GIF search)
   * }
 
-const DRIVER_VERSION = 50143;
-      HR_VERSION = 50041;
+const DRIVER_VERSION = 50144;
+      HR_VERSION = 50042;
 
 function BigToLittle2(src: array of byte): word;
 begin
@@ -702,7 +705,7 @@ begin
 
 end;
 
-function posBuf(st: String; buffer: PByteArray; bufSize: integer): integer;
+function posBuf(st: String; buffer: PByteArray; bufSize: integer; startpos: integer = 0): integer;
 var x, lenst: integer;
     memBuf: TMemoryStream;
     buf: array[1..24] of Char;
@@ -716,7 +719,7 @@ begin
   memBuf := TMemoryStream.create();
   try
     memBuf.Write(buffer^,bufSize);
-    for x := 0 to bufSize-1-lenst do
+    for x := startpos to bufSize-1-lenst do
     begin
       memBuf.Position := x;
       memBuf.ReadBuffer(buf,lenst);
@@ -740,7 +743,7 @@ begin
   case format of
     1000: begin
             result := posBuf('RIFF',buffer, bufSize);
-            if not(posBuf('WAVE',buffer,bufSize) = (result + 8)) then
+            if (result <> -1) and not(posBuf('WAVE',buffer,bufSize,result+8) = (result + 8)) then
               result := -1;
           end;
     1001: result := posBuf('Creative Voice File'+chr(26),buffer, bufSize);
@@ -755,7 +758,7 @@ begin
 
     2000: begin
             result := posBuf('RIFF',buffer, bufSize);
-            if not(posBuf('AVI ',buffer,bufSize) = (result + 8)) then
+            if (result <> -1) and not(posBuf('AVI ',buffer,bufSize,result+8) = (result + 8)) then
               result := -1;
           end;
     2001: result := posBuf('moov',buffer, bufSize);
@@ -780,12 +783,12 @@ begin
     3004: result := posBuf('GIF8',buffer, bufSize);
     3005: begin
             result := posBuf('FORM',buffer, bufSize);
-            if not(posBuf('ILBM',buffer,bufSize) = (result + 8)) then
+            if (result <> -1) and not(posBuf('ILBM',buffer,bufSize,result+8) = (result + 8)) then
               result := -1;
           end;
     3006: begin
             result := posBuf(#255+#216+#255+#224,buffer, bufSize);
-            if not(posBuf('JFIF'+chr(0),buffer,bufSize) = (result + 6)) then
+            if (result <> -1) and not(posBuf('JFIF'+chr(0),buffer,bufSize,result+6) = (result + 6)) then
               result := -1;
           end;
 

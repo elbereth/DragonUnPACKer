@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.10 2004-07-21 21:36:03 elbereth Exp $
+// $Id: drv_default.dpr,v 1.11 2004-10-05 22:11:40 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -135,6 +135,8 @@ type FSE = ^element;
                  Enhanced support for Glacier Engine .TEX files (previously Hitman: Contracts)
     13441  50040 Found the meaning of 8 bytes in the DWFBEntry structure.
     13442        Incorporated the Westwood PAK MIX detection fix from Felix Riemann
+    13540        Some research on Transport Giant JFL/IND files.
+                 Added support for Myst IV Revelation .M4B files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -179,6 +181,11 @@ type NRMHeader = packed record
        Size: integer;
      end;
      // Get32 Filename
+
+type M4BHeader = packed record
+       SigSize: cardinal;
+       SigName: array[0..10] of char;
+     end;
 
 type MDK1Header = packed record
        Magic: integer;
@@ -741,6 +748,15 @@ type I3DGOBHeader = packed record
        Name: array[0..127] of char;
      end;
 
+type JFLHeader = packed record
+       ID: array[0..3] of char;   // AP32
+       Version: cardinal;         // 18
+     end;
+     JFLINDHeader = packed record
+       ID: cardinal;              // 7
+       NumEntries: cardinal;
+     end;
+
 type WAD2Header = packed record
        ID: array[0..3] of char;
        DirNum: integer;
@@ -1064,10 +1080,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 13442;
+  DRIVER_VERSION = 13540;
   DUP_VERSION = 50040;
-  CVS_REVISION = '$Revision: 1.10 $';
-  CVS_DATE = '$Date: 2004-07-21 21:36:03 $';
+  CVS_REVISION = '$Revision: 1.11 $';
+  CVS_DATE = '$Date: 2004-10-05 22:11:40 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1138,7 +1154,7 @@ begin
   GetDriverInfo.Author := 'Dragon UnPACKer project team';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
   GetDriverInfo.Comment := 'This driver support 67 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 56;
+  GetDriverInfo.NumFormats := 57;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -1251,6 +1267,8 @@ begin
   GetDriverInfo.Formats[55].Name := 'Freedom Fighters (*.TEX;*.PRM)|Hitman 2: Silent Assassin (*.TEX;*.PRM)|Hitman: Contracts (*.TEX;*.PRM)';
   GetDriverInfo.Formats[56].Extensions := '*.BIN';
   GetDriverInfo.Formats[56].Name := 'CyberBykes: Shadow Racer VR (*.BIN)';
+  GetDriverInfo.Formats[57].Extensions := '*.M4B';
+  GetDriverInfo.Formats[57].Name := 'Myst IV: Revelation (*.M4B)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
 //  GetDriverInfo.Formats[50].Name := 'Heath: The Unchosen Path (*.PAXX.NRM)'
 //  GetDriverInfo.Formats[41].Extensions := '*.h4r';
@@ -1344,6 +1362,10 @@ var tchar: Pchar;
 begin
 
   FileRead(src,tint,4);
+  if tint > 255 then
+  begin
+    raise Exception.Create(inttostr(tint)+' octets! t''es fou ?!'+#10+inttostr(fileseek(FHandle,0,1))+#10+inttohex(fileseek(FHandle,0,1),8));
+  end;
   GetMem(tchar,tint);
   FillChar(tchar^,tint,0);
   FileRead(src,tchar^,tint);
@@ -5279,6 +5301,89 @@ begin
 
 end;
 
+function ReadMystIVRevelationM4B_Alt(dir: string): Integer;
+var tByt, x: Byte;
+    y, NumE, Size, Offset, tInt: cardinal;
+    disp: string;
+begin
+
+  result := 0;
+
+  FileRead(FHandle,tByt,1);
+
+  if tByt = 0 then
+  begin
+    FileRead(FHandle,NumE,4);
+    for y := 1 to NumE do
+    begin
+      disp := strip0(get32(FHandle));
+      FileRead(FHandle,Size,4);
+      FileRead(FHandle,Offset,4);
+      FSE_Add(dir + '\' + disp,offset,size,0,0);
+    end;
+    inc(result,NumE);
+  end
+  else
+  begin
+    for x := 1 to tByt do
+    begin
+      disp := Strip0(Get32(FHandle));
+      if length(dir) > 0 then
+        disp := dir + '\' + disp;
+      inc(result,ReadMystIVRevelationM4B_Alt(disp));
+    end;
+    FileRead(FHandle,tInt,4);
+    inc(tInt);
+    dec(tInt);
+  end;
+
+end;
+
+function ReadMystIVRevelationM4B(src: string): Integer;
+var HDR: M4BHeader;
+    x, tInt: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, SizeOf(HDR));
+
+    if (HDR.SigSize <> $B) and (strip0(HDR.SigName) <> 'UBI_BF_SIG') then
+    begin
+
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'M4B';
+      ErrInfo.Games := 'Myst IV: Revelation';
+
+    end
+    else
+    begin
+
+      FileRead(FHandle,tInt,4);  // Should be 1
+      FileRead(FHandle,tInt,4);  // Should be 0
+
+      Result := ReadMystIVRevelationM4B_Alt('');
+
+      DrvInfo.ID := 'M4B';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
 function ReadNascarDAT(): Integer;
 var ENT: NascarDAT_Entry;
     NumE,x : integer;
@@ -7293,6 +7398,15 @@ begin
         FileClose(FHandle);
         Result := ReadDuke3DGRP(fil);
       end
+      // Myst IV: Revelation .M4B file
+      else if (ID23[0] = #11) and (ID23[1] = #0) and (ID23[2] = #0) and (ID23[3] = #0)
+          and (ID23[4] = 'U') and (ID23[5] = 'B') and (ID23[6] = 'I') and (ID23[7] = '_')
+          and (ID23[8] = 'B') and (ID23[9] = 'F') and (ID23[10] = '_') and (ID23[11] = 'S')
+          and (ID23[12] = 'I') and (ID23[13] = 'G') and (ID23[14] = #0) then
+      begin
+        FileClose(Fhandle);
+        Result := ReadMystIVRevelationM4B(fil);
+      end
       else if (ID4[0] = #1) and (ID4[1] = #0) and (ID4[2] = #0) and (ID4[3] = #0)
            and (ID28[12] = 'R') and (ID28[13] = 'O') and (ID28[14] = 'O') and (ID28[15] = 'T') then
       begin
@@ -7574,6 +7688,8 @@ begin
       ReadFormat := ReadHyperRipperHRF(fil)
     else if ext = 'IMG' then
       ReadFormat := ReadGTA3IMGDIR(fil)
+    else if ext = 'M4B' then
+      Result := ReadMystIVRevelationM4B(fil)
     else if ext = 'MTF' then
       ReadFormat := ReadDarkstoneMTF(fil)
 {    else if ext = 'NRM' then
@@ -7784,6 +7900,12 @@ begin
 
     if ID4 = ('GOB'+#10) then
       Result := true
+    // Myst IV: Revelation .M4B file
+    else if (ID23[0] = #11) and (ID23[1] = #0) and (ID23[2] = #0) and (ID23[3] = #0)
+        and (ID23[4] = 'U') and (ID23[5] = 'B') and (ID23[6] = 'I') and (ID23[7] = '_')
+        and (ID23[8] = 'B') and (ID23[9] = 'F') and (ID23[10] = '_') and (ID23[11] = 'S')
+        and (ID23[12] = 'I') and (ID23[13] = 'G') and (ID23[14] = #0) then
+      Result := true
     // Hitman: Contracts .PRM file
     else if (ID4[0] = #30) and (ID4[1] = #7) and (ID4[2] = #0) and (ID4[3] = #0) then
       Result := true
@@ -7970,6 +8092,8 @@ begin
     else if ext = 'HRF' then
       IsFormat := True
     else if ext = 'IMG' then
+      IsFormat := True
+    else if ext = 'M4B' then
       IsFormat := True
     else if ext = 'MN3' then
       IsFormat := True

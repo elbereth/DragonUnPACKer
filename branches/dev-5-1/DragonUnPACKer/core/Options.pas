@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.2.2.2 2004-07-25 10:39:51 elbereth Exp $
+// $Id: Options.pas,v 1.2.2.3 2004-08-21 14:58:43 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -68,15 +68,14 @@ type
     cmdTypesAll: TButton;
     cmdTypesNone: TButton;
     GroupBox2: TGroupBox;
-    GroupBox3: TGroupBox;
-    Image1: TImage;
+    grpAssoc2: TGroupBox;
+    imgAssocIcon: TImage;
     Edit1: TEdit;
     lstTypes: TCheckListBox;
     ChkOneInstance: TCheckBox;
     ChkSmartOpen: TCheckBox;
     tabConvert: TPanel;
     strConvertList: TLabel;
-    lstConvert: TListBox;
     treeConfig: TTreeView;
     cmdCnvSetup: TButton;
     cmdCnvAbout: TButton;
@@ -90,7 +89,6 @@ type
     lblCnvInfoComments: TLabel;
     tabHyperRipper: TPanel;
     lblHR: TLabel;
-    lstHyperRipper: TListBox;
     cmdHRSetup: TButton;
     grpHRInfo: TGroupBox;
     strHRInfoAuthor: TLabel;
@@ -101,8 +99,6 @@ type
     Panel5: TPanel;
     lblHRInfoComments: TLabel;
     cmdHRAbout: TButton;
-    grpLookOpt: TGroupBox;
-    chkXPstyle: TCheckBox;
     chkRegistryIcons: TCheckBox;
     chkUseHyperRipper: TCheckBox;
     lstDrivers2: TListView;
@@ -115,6 +111,19 @@ type
     trkPriority: TTrackBar;
     txtPriority: TStaticText;
     butRefresh: TButton;
+    lstConvert2: TListView;
+    grpCnvAdvInfo: TGroupBox;
+    lblDUCI: TLabel;
+    lblCIntVer: TLabel;
+    txtDUCI: TStaticText;
+    txtCIntVer: TStaticText;
+    lstHR2: TListView;
+    grpHRAdvInfo: TGroupBox;
+    lblDUHI: TLabel;
+    lblHIntVer: TLabel;
+    txtDUHI: TStaticText;
+    txtHIntVer: TStaticText;
+    trkAssocIcon: TTrackBar;
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cmdOkClick(Sender: TObject);
@@ -126,11 +135,7 @@ type
     procedure lstTypesClickCheck(Sender: TObject);
     procedure ChkOneInstanceClick(Sender: TObject);
     procedure ChkSmartOpenClick(Sender: TObject);
-    procedure lstConvertClick(Sender: TObject);
     procedure cmdDrvAboutClick(Sender: TObject);
-    procedure lstHyperRipperClick(Sender: TObject);
-    procedure dup5MainTDup5EditExecute(Sender: TObject);
-    procedure chkXPstyleClick(Sender: TObject);
     procedure treeConfigChange(Sender: TObject; Node: TTreeNode);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -147,6 +152,10 @@ type
       Change: TItemChange);
     procedure trkPriorityChange(Sender: TObject);
     procedure butRefreshClick(Sender: TObject);
+    procedure lstConvert2Change(Sender: TObject; Item: TListItem;
+      Change: TItemChange);
+    procedure lstHR2Change(Sender: TObject; Item: TListItem;
+      Change: TItemChange);
   private
     { Déclarations privées }
   public
@@ -288,30 +297,42 @@ end;
 
 procedure CONVList();
 var x : integer;
+    itmx : TListItem;
 begin
 
-  frmConfig.lstConvert.Clear;
+  frmConfig.lstConvert2.Clear;
   for x := 1 to CPlug.NumPlugins do
-    frmConfig.lstConvert.Items.Add(CPlug.Plugins[x].Version.Name + ' v'+CPlug.Plugins[x].Version.Version + ' ('+ CPlug.Plugins[x].FileName+')');
+  begin
+    itmx := frmConfig.lstConvert2.Items.Add;
+    itmx.Caption := CPlug.Plugins[x].Version.Name;
+    itmx.SubItems.Add(CPlug.Plugins[x].Version.Version);
+    itmx.SubItems.Add(ChangeFileExt(CPlug.Plugins[x].FileName,''));
+  end;
 
   if CPlug.NumPlugins > 0 then
   begin
-    frmConfig.lstConvert.ItemIndex := 0;
+    frmConfig.lstConvert2.ItemIndex := 0;
   end;
 
 end;
 
 procedure HRIPList();
 var x : integer;
+    itmx : TListItem;
 begin
 
-  frmConfig.lstHyperRipper.Clear;
+  frmConfig.lstHR2.Clear;
   for x := 1 to HPlug.NumPlugins do
-    frmConfig.lstHyperRipper.Items.Add(HPlug.Plugins[x].Version.Name + ' v'+getPlugVersion(HPlug.Plugins[x].Version.Version) + ' ('+ HPlug.Plugins[x].FileName+')');
+  begin
+    itmx := frmConfig.lstHR2.Items.Add;
+    itmx.Caption := HPlug.Plugins[x].Version.Name;
+    itmx.SubItems.Add(GetPlugVersion(HPlug.Plugins[x].Version.Version));
+    itmx.SubItems.Add(ChangeFileExt(HPlug.Plugins[x].FileName,''));
+  end;
 
   if HPlug.NumPlugins > 0 then
   begin
-    frmConfig.lstHyperRipper.ItemIndex := 0;
+    frmConfig.lstHR2.ItemIndex := 0;
   end;
 
 end;
@@ -382,10 +403,9 @@ begin
         ChkSmartOpen.Checked := Reg.ReadBool('SmartOpen')
       else
         ChkSmartOpen.Checked := true;
+      // Remove obsolete key
       if Reg.ValueExists('XPStyle') then
-        ChkXPStyle.Checked := Reg.ReadBool('XPStyle')
-      else
-        ChkXPStyle.Checked := true;
+        Reg.DeleteKey('XPStyle');
       if Reg.ValueExists('RegistryIcons') then
         ChkRegistryIcons.Checked := Reg.ReadBool('RegistryIcons')
       else
@@ -403,14 +423,14 @@ begin
   Loading := True;
 
   CONVList;
-  if CPlug.NumPlugins > 0 then
-    frmConfig.lstConvertClick(Self);
+//  if CPlug.NumPlugins > 0 then
+//    frmConfig.lstConvertClick(Self);
   DRVList;
 //  if FSE.NumDrivers > 0 then
 //    frmConfig.lstDriversClick(Self);
   HRIPList;
-  if HPlug.NumPlugins > 0 then
-    frmConfig.lstHyperRipperClick(Self);
+//  if HPlug.NumPlugins > 0 then
+//    frmConfig.lstHyperRipperClick(Self);
   LOOKList;
   frmConfig.lstLookClick(Self);
   TYPEList;
@@ -651,64 +671,10 @@ begin
 
 end;
 
-procedure TfrmConfig.lstConvertClick(Sender: TObject);
-begin
-
-  lblCnvInfoAuthor.Caption := CPlug.Plugins[lstConvert.ItemIndex+1].Version.Author;
-  lblCnvInfoVersion.Caption := CPlug.Plugins[lstConvert.ItemIndex+1].Version.Version;
-  lblCnvInfoComments.Caption := CPlug.Plugins[lstConvert.ItemIndex+1].Version.Comment;
-
-  cmdCnvAbout.Enabled := CPlug.Plugins[lstConvert.ItemIndex+1].IsAboutBox;
-  cmdCnvSetup.Enabled := CPlug.Plugins[lstConvert.ItemIndex+1].IsConfigBox;
-
-end;
-
 procedure TfrmConfig.cmdDrvAboutClick(Sender: TObject);
 begin
 
   FSE.showAboutBox(Application.Handle,lstDrivers2.ItemIndex+1);
-
-end;
-
-procedure TfrmConfig.lstHyperRipperClick(Sender: TObject);
-begin
-
-  lblHRInfoAuthor.Caption := HPlug.Plugins[lstHyperRipper.ItemIndex+1].Version.Author;
-  lblHRInfoVersion.Caption := getPlugVersion(HPlug.Plugins[lstHyperRipper.ItemIndex+1].Version.Version);
-  lblHRInfoComments.Caption := HPlug.Plugins[lstHyperRipper.ItemIndex+1].Version.Comment;
-
-  cmdHRAbout.Enabled := HPlug.Plugins[lstHyperRipper.ItemIndex+1].IsAboutBox;
-  cmdHRSetup.Enabled := HPlug.Plugins[lstHyperRipper.ItemIndex+1].IsConfigBox;
-
-end;
-
-procedure TfrmConfig.dup5MainTDup5EditExecute(Sender: TObject);
-begin
-
-//
-
-end;
-
-procedure TfrmConfig.chkXPstyleClick(Sender: TObject);
-var Reg: TRegistry;
-begin
-
-  Reg := TRegistry.Create;
-  Try
-    Reg.RootKey := HKEY_CURRENT_USER;
-    if Not(Reg.KeyExists('\Software\Dragon Software\Dragon UnPACKer 5\StartUp')) then
-      Reg.CreateKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp');
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
-    begin
-      Reg.WriteBool('XPStyle',chkXPstyle.Checked);
-      Reg.CloseKey;
-    end;
-  Finally
-    Reg.Free;
-  end;
-
-//  dup5main.XPMenu.Active := chkXPstyle.Checked;
-  dup5main.Refresh;
 
 end;
 
@@ -775,28 +741,28 @@ end;
 procedure TfrmConfig.cmdCnvAboutClick(Sender: TObject);
 begin
 
-  CPlug.showAboutBox(Application.Handle,lstConvert.ItemIndex+1);
+  CPlug.showAboutBox(Application.Handle,lstConvert2.ItemIndex+1);
 
 end;
 
 procedure TfrmConfig.cmdCnvSetupClick(Sender: TObject);
 begin
 
-  CPlug.showConfigBox(Application.Handle,lstConvert.ItemIndex+1);
+  CPlug.showConfigBox(Application.Handle,lstConvert2.ItemIndex+1);
 
 end;
 
 procedure TfrmConfig.cmdHRAboutClick(Sender: TObject);
 begin
 
-  HPlug.showAboutBox(Application.Handle,lstHyperRipper.ItemIndex+1);
+  HPlug.showAboutBox(Application.Handle,lstHR2.ItemIndex+1);
 
 end;
 
 procedure TfrmConfig.cmdHRSetupClick(Sender: TObject);
 begin
 
-  HPlug.showConfigBox(Application.Handle,lstHyperRipper.ItemIndex+1);
+  HPlug.showConfigBox(Application.Handle,lstHR2.ItemIndex+1);
 
 end;
 
@@ -863,6 +829,51 @@ begin
 
   FSE.sortDriversByPriority;
   DRVlist;
+
+end;
+
+procedure TfrmConfig.lstConvert2Change(Sender: TObject; Item: TListItem;
+  Change: TItemChange);
+begin
+
+  if (Change = ctState)
+  and (lstConvert2.ItemIndex > -1) then
+  begin
+
+    lblCnvInfoAuthor.Caption := CPlug.Plugins[lstConvert2.ItemIndex+1].Version.Author;
+    lblCnvInfoVersion.Caption := CPlug.Plugins[lstConvert2.ItemIndex+1].Version.Version;
+    lblCnvInfoComments.Caption := CPlug.Plugins[lstConvert2.ItemIndex+1].Version.Comment;
+
+    cmdCnvAbout.Enabled := CPlug.Plugins[lstConvert2.ItemIndex+1].IsAboutBox;
+    cmdCnvSetup.Enabled := CPlug.Plugins[lstConvert2.ItemIndex+1].IsConfigBox;
+
+    txtDUCI.Caption := 'v'+inttostr(CPlug.Plugins[lstConvert2.ItemIndex+1].DUCIVersion);
+    txtCIntVer.Caption := inttostr(CPlug.Plugins[lstConvert2.ItemIndex+1].Version.VerID);
+
+//    trkPriority.Position := FSE.Drivers[lstDrivers2.ItemIndex+1].Priority;
+  end;
+
+end;
+
+procedure TfrmConfig.lstHR2Change(Sender: TObject; Item: TListItem;
+  Change: TItemChange);
+begin
+
+  if (Change = ctState)
+  and (lstHR2.ItemIndex > -1) then
+  begin
+
+    lblHRInfoAuthor.Caption := HPlug.Plugins[lstHR2.ItemIndex+1].Version.Author;
+    lblHRInfoVersion.Caption := GetplugVersion(HPlug.Plugins[lstHR2.ItemIndex+1].Version.Version);
+    lblHRInfoComments.Caption := HPlug.Plugins[lstHR2.ItemIndex+1].Version.Comment;
+
+    cmdHRAbout.Enabled := HPlug.Plugins[lstHR2.ItemIndex+1].IsAboutBox;
+    cmdHRSetup.Enabled := HPlug.Plugins[lstHR2.ItemIndex+1].IsConfigBox;
+
+    txtDUHI.Caption := 'v'+inttostr(HPlug.Plugins[lstHR2.ItemIndex+1].DUHIVersion);
+    txtHIntVer.Caption := inttostr(HPlug.Plugins[lstHR2.ItemIndex+1].Version.Version);
+//    trkPriority.Position := FSE.Drivers[lstDrivers2.ItemIndex+1].Priority;
+  end;
 
 end;
 

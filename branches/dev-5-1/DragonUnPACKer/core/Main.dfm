@@ -1,6 +1,6 @@
 object dup5Main: Tdup5Main
-  Left = 198
-  Top = 535
+  Left = 341
+  Top = 537
   HelpContext = 1
   AlphaBlendValue = 128
   AutoScroll = False

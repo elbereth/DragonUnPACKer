@@ -1,6 +1,6 @@
 unit classHyperRipper;
 
-// $Id: classHyperRipper.pas,v 1.1.1.1 2004-05-08 10:25:13 elbereth Exp $
+// $Id: classHyperRipper.pas,v 1.1.1.1.2.1 2004-10-03 17:11:10 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classHyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -22,9 +22,12 @@ uses
   Forms,
   ComCtrls,
   lib_Language,
+  lib_utils,
   Classes,
   Dialogs,
   Windows,
+  Main,
+  Graphics,
   SysUtils;
 
 type FormatsListElem = record
@@ -180,7 +183,9 @@ begin
   begin
     repeat
       if IsConsole then
-        write(sr.name+ ' ');
+        write(sr.name+ ' ')
+      else
+        dup5Main.writeLog(' + '+sr.Name+' :');
       Handle := LoadLibrary(PChar(pth + sr.name));
       if Handle <> 0 then
       begin
@@ -191,7 +196,9 @@ begin
         if (@DUHIVer <> Nil) and ((DUHIVer = 1) or (DUHIVer = 2)) then
         begin
           if IsConsole then
-            write('IsDUHI... ');
+            write('IsDUHI... ')
+          else
+            dup5Main.appendLog('DUHI v'+inttostr(DUHIVer)+' -');
           Inc(NumPlugins);
 
           Plugins[NumPlugins].DUHIVersion := DUHIVer;
@@ -226,7 +233,11 @@ begin
             if IsConsole then
               writeln('Malformed!')
             else
-              MessageDlg(DLNGstr('ERRH02')+#10+sr.Name,mtWarning,[mbOk],0);
+            begin
+              dup5Main.appendLog(DLNGstr('ERRH02'));
+              dup5Main.colorLog(clRed);
+              //MessageDlg(DLNGstr('ERRH02')+#10+sr.Name,mtWarning,[mbOk],0);
+            end;
             dec(NumPlugins);
             FreeLibrary(handle);
           end
@@ -248,6 +259,7 @@ begin
               Plugins[NumPlugins].IsAboutBox := not(@Plugins[NumPlugins].ShowAboutBox2 = nil);
               Plugins[NumPlugins].IsConfigBox := not(@Plugins[NumPlugins].ShowConfigBox2 = nil);
             end;
+            dup5Main.appendLog(Plugins[NumPlugins].Version.Name +' v'+ GetPlugVersion(Plugins[NumPlugins].Version.Version))
           end;
         end
         else

@@ -1,6 +1,6 @@
 unit classConvert;
 
-// $Id: classConvert.pas,v 1.1.1.1 2004-05-08 10:25:12 elbereth Exp $
+// $Id: classConvert.pas,v 1.1.1.1.2.1 2004-10-03 17:11:10 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classConvert.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -24,6 +24,8 @@ uses
   Dialogs,
   Windows,
   Classes,
+  Main,
+  Graphics,
   SysUtils;
 
 type ConvertListElem = record
@@ -58,6 +60,7 @@ type
   TIsFileCompatible = function(nam: ShortString; Offset, Size: Int64; fmt: ShortString; DataX, DataY: Integer): boolean; stdcall;
   TGetFileConvert = function(nam: ShortString; Offset, Size: Int64; fmt: ShortString; DataX, DataY: Integer): ConvertList; stdcall;
   TConvert = function(src, dst, nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer; stdcall;
+  TConvertStream = function (src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer; stdcall;
   TInitPlugin = procedure(percent: TPercentCallback; dlngstr: TLanguageCallback; dup5pth: shortstring); stdcall;
   TInitPlugin2 = procedure(percent: TPercentCallback; dlngstr: TLanguageCallback; dup5pth: shortstring; AppHandle: THandle; AppOwner: TComponent); stdcall;
   TVersionInfo = function(): ConvertInfo;
@@ -71,6 +74,7 @@ type plugin = record
    TestFile : TIsFileCompatible;
    GetList : TGetFileConvert;
    Convert : TConvert;
+   ConvertStream : TConvertStream;
    Init : TInitPlugin;
    Init2 : TInitPlugin2;
    Version : TVersionInfo;
@@ -164,17 +168,22 @@ begin
   begin
     repeat
       if IsConsole then
-        write(sr.name+ ' ');
+        write(sr.name+ ' ')
+      else
+        dup5Main.writeLog(' + '+sr.Name+' :');
       Handle := LoadLibrary(PChar(pth + sr.name));
       if Handle <> 0 then
       begin
         if IsConsole then
           write('Loaded... ');
         @DUCIVer := GetProcAddress(Handle, 'DUCIVersion');
-        if (@DUCIVer <> Nil) and ((DUCIVer = 1) or (DUCIVer = 2)) then
+        if (@DUCIVer <> Nil) and ((DUCIVer = 1) or (DUCIVer = 2) or (DUCIVer = 3)) then
         begin
           if IsConsole then
-            write('IsDUCI... ');
+            write('IsDUCI... ')
+          else
+            dup5Main.appendLog('DUCI v'+inttostr(DUCIVer)+' -');
+
           Inc(NumPlugins);
 
           Plugins[NumPlugins].DUCIVersion := DUCIVer;
@@ -193,6 +202,13 @@ begin
             @Plugins[NumPlugins].Init2 := GetProcAddress(Handle, 'InitPlugin');
             @Plugins[NumPlugins].ShowAboutBox2 := GetProcAddress(Handle, 'AboutBox');
             @Plugins[NumPlugins].ShowConfigBox2 := GetProcAddress(Handle, 'ConfigBox');
+          end
+          else if (DUCIVer = 3) then
+          begin
+            @Plugins[NumPlugins].Init2 := GetProcAddress(Handle, 'InitPlugin');
+            @Plugins[NumPlugins].ShowAboutBox2 := GetProcAddress(Handle, 'AboutBox');
+            @Plugins[NumPlugins].ShowConfigBox2 := GetProcAddress(Handle, 'ConfigBox');
+            @Plugins[NumPlugins].ConvertStream := GetProcAddress(Handle, 'ConvertStream');
           end;
 
           @Plugins[NumPlugins].Version := GetProcAddress(Handle, 'VersionInfo');
@@ -201,14 +217,19 @@ begin
           or (@Plugins[NumPlugins].GetList = Nil)
           or (@Plugins[NumPlugins].Convert = Nil)
           or ((DUCIVer = 1) and (@Plugins[NumPlugins].Init = Nil))
-          or ((DUCIVer = 2) and (@Plugins[NumPlugins].Init2 = Nil))
+          or (((DUCIVer = 2) or (DUCIVer = 3)) and (@Plugins[NumPlugins].Init2 = Nil))
+          or ((DUCIVer = 3) and (@Plugins[NumPlugins].ConvertStream = Nil))
           or (@Plugins[NumPlugins].Version = Nil)
           then
           begin
             if IsConsole then
               writeln('Malformed!')
             else
-              MessageDlg(DLNGstr('ERRC02')+#10+sr.Name,mtWarning,[mbOk],0);
+            begin
+              dup5Main.appendLog(DLNGstr('ERRC02'));
+              dup5Main.colorLog(clRed);
+              //MessageDlg(DLNGstr('ERRC02')+#10+sr.Name,mtWarning,[mbOk],0);
+            end;
             dec(NumPlugins);
             FreeLibrary(handle);
           end
@@ -230,6 +251,7 @@ begin
               Plugins[NumPlugins].IsAboutBox := not(@Plugins[NumPlugins].ShowAboutBox2 = nil);
               Plugins[NumPlugins].IsConfigBox := not(@Plugins[NumPlugins].ShowConfigBox2 = nil);
             end;
+            dup5Main.appendLog(Plugins[NumPlugins].Version.Name +' v'+Plugins[NumPlugins].Version.Version)
           end;
         end
         else
@@ -237,7 +259,11 @@ begin
           if IsConsole then
             writeln('Bad DUCI')
           else
-            MessageDlg(DLNGstr('ERRC01')+#10+sr.Name,mtWarning,[mbOk],0);
+          begin
+            dup5Main.appendLog(DLNGstr('ERRC01'));
+            dup5Main.colorLog(clRed);
+            //MessageDlg(DLNGstr('ERRC01')+#10+sr.Name,mtWarning,[mbOk],0);
+          end;
           FreeLibrary(handle);
         end;
       end
@@ -290,7 +316,7 @@ begin
   begin
     Plugins[drvnum].ShowAboutBox(hwnd,language);
   end
-  else if (Plugins[drvnum].DUCIVersion = 2) then
+  else if (Plugins[drvnum].DUCIVersion = 2) or (Plugins[drvnum].DUCIVersion = 3) then
   begin
     Plugins[drvnum].ShowAboutBox2;
   end;
@@ -304,7 +330,7 @@ begin
   begin
     Plugins[drvnum].ShowConfigBox(hwnd,language);
   end
-  else if (Plugins[drvnum].DUCIVersion = 2) then
+  else if (Plugins[drvnum].DUCIVersion = 2) or (Plugins[drvnum].DUCIVersion = 3) then
   begin
     Plugins[drvnum].ShowConfigBox2;
   end;

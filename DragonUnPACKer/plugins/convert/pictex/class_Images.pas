@@ -1,6 +1,6 @@
 unit class_Images;
 
-// $Id: class_Images.pas,v 1.3 2004-07-15 16:40:18 elbereth Exp $
+// $Id: class_Images.pas,v 1.3.2.1 2004-10-03 17:13:35 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/class_Images.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -133,10 +133,15 @@ type ESIBadFormat = class(Exception);
 type TSaveImage = class
     function LoadPAL(dpalfil: string): boolean;
     procedure SaveToBMP(fil: String);
+    procedure SaveToBMPStream(stm: TStream);
     procedure SaveToPCX(fil: String);
+    procedure SaveToPCXStream(stm: TStream);
     procedure SaveToTGA8(fil: String);
+    procedure SaveToTGA8Stream(stm: TStream);
     procedure SaveToTGA24(fil: String);
+    procedure SaveToTGA24Stream(stm: TStream);
     procedure SaveToTGA32(fil: String);
+    procedure SaveToTGA32Stream(stm: TStream);
     procedure LoadFromTGA32(fil: String);
     procedure SetSize(x, y: Integer);
     procedure SetSizePal(x, y, cmsize: Integer; cmalpha: boolean);
@@ -165,7 +170,9 @@ type TSaveImage32 = class
     procedure LoadFromTBitmap(src: TBitmap);
     procedure LoadFromTGA32(fil: String);
     procedure SaveToTGA24(fil: String);
+    procedure SaveToTGA24Stream(stm: TStream);
     procedure SaveToTGA32(fil: String);
+    procedure SaveToTGA32Stream(stm: TStream);
     procedure SetSize(x, y: Integer);
     function GetBitmap: TBitmap;
     function Height(): Integer;
@@ -310,6 +317,7 @@ begin
         FileRead(dpal,HDR.Reserved,50);
         if (HDR.ID = 'DPAL'+chr(26)) and (HDR.Version = 1) then
         begin
+          SetLength(Palette,256);
           for x := 0 to 255 do
           begin
             Palette[x].A := 0;
@@ -328,14 +336,24 @@ begin
 end;
 
 procedure TSaveImage.SaveToBMP(fil: String);
+var bmp: TFileStream;
+begin
+
+  bmp := TFileStream.Create(fil,fmCreate or fmShareDenyWrite);
+  try
+    SaveToBMPStream(bmp);
+  finally
+    bmp.Free;
+  end;
+
+end;
+
+procedure TSaveImage.SaveToBMPStream(stm: TStream);
 var HDR: BMPHeader;
-    x,y,bmp,atend,BufSize: integer;
+    x,y,atend,BufSize: integer;
     Buffer: PByteArray;
 begin
 
-  bmp := FileCreate(fil,fmOpenWrite or fmShareDenyWrite);
-
-  try
     HDR.ID[0] := 'B';
     HDR.ID[1] := 'M';
     if (W - ((W div 4)*4)) > 0 then
@@ -360,22 +378,22 @@ begin
     HDR.ColorsUsed := PaletteSize;
     HDR.ColorsImportant := PaletteSize;
 
-    FileWrite(bmp,HDR.ID,2);
-    FileWrite(bmp,HDR.Size,4);
-    FileWrite(bmp,HDR.Reserved1,2);
-    FileWrite(bmp,HDR.Reserved2,2);
-    FileWrite(bmp,HDR.Offset,4);
-    FileWrite(bmp,HDR.ID2,4);
-    FileWrite(bmp,HDR.Width,4);
-    FileWrite(bmp,HDR.height,4);
-    FileWrite(bmp,HDR.Planes,2);
-    FileWrite(bmp,HDR.Bpp,2);
-    FileWrite(bmp,HDR.Compression,4);
-    FileWrite(bmp,HDR.SizeImage,4);
-    FileWrite(bmp,HDR.XPPM,4);
-    FileWrite(bmp,HDR.YPPM,4);
-    FileWrite(bmp,HDR.ColorsUsed,4);
-    FileWrite(bmp,HDR.ColorsImportant,4);
+    stm.WriteBuffer(HDR.ID,2);
+    stm.WriteBuffer(HDR.Size,4);
+    stm.WriteBuffer(HDR.Reserved1,2);
+    stm.WriteBuffer(HDR.Reserved2,2);
+    stm.WriteBuffer(HDR.Offset,4);
+    stm.WriteBuffer(HDR.ID2,4);
+    stm.WriteBuffer(HDR.Width,4);
+    stm.WriteBuffer(HDR.height,4);
+    stm.WriteBuffer(HDR.Planes,2);
+    stm.WriteBuffer(HDR.Bpp,2);
+    stm.WriteBuffer(HDR.Compression,4);
+    stm.WriteBuffer(HDR.SizeImage,4);
+    stm.WriteBuffer(HDR.XPPM,4);
+    stm.WriteBuffer(HDR.YPPM,4);
+    stm.WriteBuffer(HDR.ColorsUsed,4);
+    stm.WriteBuffer(HDR.ColorsImportant,4);
 
     BufSize := (W+atend)*H;
     if BufSize < 1024 then
@@ -390,7 +408,7 @@ begin
         Buffer[(x*4)+2] := Palette[x].R;
         Buffer[(x*4)+3] := Palette[x].A;
       end;
-      FileWrite(bmp,Buffer^,PaletteSize*4);
+      stm.WriteBuffer(Buffer^,PaletteSize*4);
 
       for y := H-1 downto 0 do
       begin
@@ -399,308 +417,346 @@ begin
         for x := 1 to atend do
           Buffer[(((H-1)-y)*(W+atend))+W-1+x] := 0;
       end;
-      FileWrite(bmp,Buffer^,(W+atend)*H);
+      stm.WriteBuffer(Buffer^,(W+atend)*H);
     finally
       FreeMem(Buffer);
     end;
-  finally
-    FileClose(bmp);
-  end;
 
 end;
 
 procedure TSaveImage.SaveToPCX(fil: String);
+var pcx: TFileStream;
+begin
+
+  pcx := TFileStream.Create(fil,fmCreate or fmShareDenyWrite);
+  try
+    SaveToPCXStream(pcx);
+  finally
+    pcx.free;
+  end;
+
+end;
+
+procedure TSaveImage.SaveToPCXStream(stm: TStream);
 var HDR: PCXHeader;
-    x,y,i,pcx: integer;
+    x,y,i: integer;
     tmpb: byte;
 begin
 
-  pcx := FileCreate(fil,fmOpenWrite or fmShareDenyWrite);
+  HDR.Manufacturer := 10;
+  HDR.Version := 5;
+  HDR.Encoding := 1;
+  HDR.Bpp := 8;
+  HDR.Window.XMin := 0;
+  HDR.Window.YMin := 0;
+  HDR.Window.XMax := W-1;
+  HDR.Window.YMax := H-1;
+  HDR.HRes := 0;
+  HDR.VRes := 0;
+  HDR.NPlanes := 1;
+  HDR.BytesPerLine := W;
+  HDR.PaletteInfo := 1;
+  FillChar(HDR.Colormap,48,0);
+  HDR.Reserved := 0;
+  FillChar(HDR.Filler,58,0);
+  stm.WriteBuffer(HDR.Manufacturer,1);
+  stm.WriteBuffer(HDR.Version,1);
+  stm.WriteBuffer(HDR.Encoding,1);
+  stm.WriteBuffer(HDR.Bpp,1);
+  stm.WriteBuffer(HDR.Window.XMin,2);
+  stm.WriteBuffer(HDR.Window.YMin,2);
+  stm.WriteBuffer(HDR.Window.XMax,2);
+  stm.WriteBuffer(HDR.Window.YMax,2);
+  stm.WriteBuffer(HDR.HRes,2);
+  stm.WriteBuffer(HDR.VRes,2);
+  stm.WriteBuffer(HDR.Colormap,48);
+  stm.WriteBuffer(HDR.Reserved,1);
+  stm.WriteBuffer(HDR.NPlanes,1);
+  stm.WriteBuffer(HDR.BytesPerLine,2);
+  stm.WriteBuffer(HDR.PaletteInfo,1);
+  stm.WriteBuffer(HDR.Filler,58);
 
-  try
-    HDR.Manufacturer := 10;
-    HDR.Version := 5;
-    HDR.Encoding := 1;
-    HDR.Bpp := 8;
-    HDR.Window.XMin := 0;
-    HDR.Window.YMin := 0;
-    HDR.Window.XMax := W-1;
-    HDR.Window.YMax := H-1;
-    HDR.HRes := 0;
-    HDR.VRes := 0;
-    HDR.NPlanes := 1;
-    HDR.BytesPerLine := W;
-    HDR.PaletteInfo := 1;
-    FillChar(HDR.Colormap,48,0);
-    HDR.Reserved := 0;
-    FillChar(HDR.Filler,58,0);
-
-    FileWrite(pcx,HDR.Manufacturer,1);
-    FileWrite(pcx,HDR.Version,1);
-    FileWrite(pcx,HDR.Encoding,1);
-    FileWrite(pcx,HDR.Bpp,1);
-    FileWrite(pcx,HDR.Window.XMin,2);
-    FileWrite(pcx,HDR.Window.YMin,2);
-    FileWrite(pcx,HDR.Window.XMax,2);
-    FileWrite(pcx,HDR.Window.YMax,2);
-    FileWrite(pcx,HDR.HRes,2);
-    FileWrite(pcx,HDR.VRes,2);
-    FileWrite(pcx,HDR.Colormap,48);
-    FileWrite(pcx,HDR.Reserved,1);
-    FileWrite(pcx,HDR.NPlanes,1);
-    FileWrite(pcx,HDR.BytesPerLine,2);
-    FileWrite(pcx,HDR.PaletteInfo,1);
-    FileWrite(pcx,HDR.Filler,58);
-
-    for y := 0 to H-1 do
+  for y := 0 to H-1 do
+  begin
+    x := 0;
+    while x <= (W-1) do
     begin
-      x := 0;
-      while x <= (W-1) do
+      i := 0;
+      while ((x+i) <= (W-2)) and (i < 63) and (Pixels[x+i][y] = Pixels[x+i+1][y]) do
+        inc(i);
+      if i > 0 then
       begin
-        i := 0;
-        while ((x+i) <= (W-2)) and (i < 63) and (Pixels[x+i][y] = Pixels[x+i+1][y]) do
-          inc(i);
-        if i > 0 then
+        //inc(i);
+        tmpb := i or 192;
+        stm.WriteBuffer(tmpb,1);
+        stm.WriteBuffer(Pixels[x][y],1);
+        Inc(X,I);
+      end
+      else
+      begin
+        if ((Pixels[x][y] and 192) = 192) then
         begin
-          //inc(i);
-          tmpb := i or 192;
-          FileWrite(pcx,tmpb,1);
-          FileWrite(pcx,Pixels[x][y],1);
-          Inc(X,I);
-        end
-        else
-        begin
-          if ((Pixels[x][y] and 192) = 192) then
-          begin
-            tmpb := 193;
-            FileWrite(pcx,tmpb,1);
-          end;
-          FileWrite(pcx,Pixels[x][y],1);
-          Inc(X);
+          tmpb := 193;
+          stm.WriteBuffer(tmpb,1);
         end;
+        stm.WriteBuffer(Pixels[x][y],1);
+        Inc(X);
       end;
     end;
+  end;
 
-    tmpb := 12;
-    FileWrite(pcx,tmpb,1);
+  tmpb := 12;
+  stm.WriteBuffer(tmpb,1);
 
-    for x := 0 to PaletteSize do
-    begin
-      FileWrite(pcx,Palette[x].R,1);
-      FileWrite(pcx,Palette[x].G,1);
-      FileWrite(pcx,Palette[x].B,1);
-    end;
+  for x := 0 to PaletteSize do
+  begin
+    stm.WriteBuffer(Palette[x].R,1);
+    stm.WriteBuffer(Palette[x].G,1);
+    stm.WriteBuffer(Palette[x].B,1);
+  end;
 
-    tmpb := 0;
-    for x := PaletteSize+1 to 255 do
-    begin
-      FileWrite(pcx,tmpb,1);
-      FileWrite(pcx,tmpb,1);
-      FileWrite(pcx,tmpb,1);
-    end;
-
-  finally
-    FileClose(pcx);
+  tmpb := 0;
+  for x := PaletteSize+1 to 255 do
+  begin
+    stm.WriteBuffer(tmpb,1);
+    stm.WriteBuffer(tmpb,1);
+    stm.WriteBuffer(tmpb,1);
   end;
 
 end;
 
 procedure TSaveImage.SaveToTGA24(fil: String);
+var tga: TFileStream;
+begin
+
+  tga := TFileStream.Create(fil,fmCreate or fmShareDenyWrite);
+  try
+    SaveToTGA24Stream(tga);
+  finally
+    tga.free;
+  end;
+
+end;
+
+procedure TSaveImage.SaveToTGA24Stream(stm: TStream);
 var HDR: TGAHeader;
-    x,y,tga,cpos: integer;
+    FTR: TGAFooter;
+    x,y,cpos: integer;
     Buffer: PByteArray;
 begin
 
-  tga := FileCreate(fil,fmOpenWrite or fmShareDenyWrite);
+  HDR.IDFieldLength := 0;
+  HDR.ColorMapType := 0;
+  HDR.ImageType := 2;
+  HDR.CMOrigin := 0;
+  HDR.CMLength := 0;
+  HDR.CMSize := 0;
+  HDR.ImgXOrig := 0;
+  HDR.ImgYOrig := 0;
+  HDR.ImgWidth := W;
+  HDR.ImgHeight := H;
+  HDR.ImgPixelSize := 24;
+  HDR.ImgDesc := 0;
 
+  stm.WriteBuffer(HDR.IDFieldLength,1);
+  stm.WriteBuffer(HDR.ColorMapType,1);
+  stm.WriteBuffer(HDR.ImageType,1);
+  stm.WriteBuffer(HDR.CMOrigin,2);
+  stm.WriteBuffer(HDR.CMLength,2);
+  stm.WriteBuffer(HDR.CMSize,1);
+  stm.WriteBuffer(HDR.ImgXOrig,2);
+  stm.WriteBuffer(HDR.ImgYOrig,2);
+  stm.WriteBuffer(HDR.ImgWidth,2);
+  stm.WriteBuffer(HDR.ImgHeight,2);
+  stm.WriteBuffer(HDR.ImgPixelSize,1);
+  stm.WriteBuffer(HDR.ImgDesc,1);
+
+  GetMem(Buffer,H*W*3);
   try
-    HDR.IDFieldLength := 0;
-    HDR.ColorMapType := 0;
-    HDR.ImageType := 2;
-    HDR.CMOrigin := 0;
-    HDR.CMLength := 0;
-    HDR.CMSize := 0;
-    HDR.ImgXOrig := 0;
-    HDR.ImgYOrig := 0;
-    HDR.ImgWidth := W;
-    HDR.ImgHeight := H;
-    HDR.ImgPixelSize := 24;
-    HDR.ImgDesc := 0;
-
-    FileWrite(tga,HDR.IDFieldLength,1);
-    FileWrite(tga,HDR.ColorMapType,1);
-    FileWrite(tga,HDR.ImageType,1);
-    FileWrite(tga,HDR.CMOrigin,2);
-    FileWrite(tga,HDR.CMLength,2);
-    FileWrite(tga,HDR.CMSize,1);
-    FileWrite(tga,HDR.ImgXOrig,2);
-    FileWrite(tga,HDR.ImgYOrig,2);
-    FileWrite(tga,HDR.ImgWidth,2);
-    FileWrite(tga,HDR.ImgHeight,2);
-    FileWrite(tga,HDR.ImgPixelSize,1);
-    FileWrite(tga,HDR.ImgDesc,1);
-
-    GetMem(Buffer,H*W*3);
-    try
-    for y := H-1 downto 0 do
-      for x := 0 to W-1 do
-      begin
-        cpos := ((((H-1)-y)*W)+x);
-        Buffer[cpos*3] := Palette[Pixels[x][y]].B;
-        Buffer[cpos*3+1] := Palette[Pixels[x][y]].G;
-        Buffer[cpos*3+2] := Palette[Pixels[x][y]].R;
-      end;
-      FileWrite(tga,Buffer^,H*W*3);
-    finally
-      FreeMem(Buffer);
+  for y := H-1 downto 0 do
+    for x := 0 to W-1 do
+    begin
+      cpos := ((((H-1)-y)*W)+x);
+      Buffer[cpos*3] := Palette[Pixels[x][y]].B;
+      Buffer[cpos*3+1] := Palette[Pixels[x][y]].G;
+      Buffer[cpos*3+2] := Palette[Pixels[x][y]].R;
     end;
+    stm.WriteBuffer(Buffer^,H*W*3);
   finally
-    FileClose(tga);
+    FreeMem(Buffer);
   end;
+
+  FillChar(FTR,sizeof(TGAFooter),0);
+  FTR.Signature := 'TRUEVISION-XFILE';
+  FTR.ReservedChar := '.';
+
+  stm.WriteBuffer(FTR,SizeOf(TGAFooter));
 
 end;
 
 procedure TSaveImage.SaveToTGA32(fil: String);
-var HDR: TGAHeader;
-    FTR: TGAFooter;
-    x,y,tga,cpos: integer;
-    Buffer: PByteArray;
+var tga: TFileStream;
 begin
 
-  tga := FileCreate(fil,fmOpenWrite or fmShareDenyWrite);
+  tga := TFileStream.Create(fil,fmOpenWrite or fmShareDenyWrite);
 
   try
-    HDR.IDFieldLength := 0;
-    HDR.ColorMapType := 0;
-    HDR.ImageType := 2;
-    HDR.CMOrigin := 0;
-    HDR.CMLength := 0;
-    HDR.CMSize := 0;
-    HDR.ImgXOrig := 0;
-    HDR.ImgYOrig := 0;
-    HDR.ImgWidth := W;
-    HDR.ImgHeight := H;
-    HDR.ImgPixelSize := 32;
-    HDR.ImgDesc := 8;   // Fixed (Bit 3 set = useful Alpha channel data is present)
-
-    FileWrite(tga,HDR.IDFieldLength,1);
-    FileWrite(tga,HDR.ColorMapType,1);
-    FileWrite(tga,HDR.ImageType,1);
-    FileWrite(tga,HDR.CMOrigin,2);
-    FileWrite(tga,HDR.CMLength,2);
-    FileWrite(tga,HDR.CMSize,1);
-    FileWrite(tga,HDR.ImgXOrig,2);
-    FileWrite(tga,HDR.ImgYOrig,2);
-    FileWrite(tga,HDR.ImgWidth,2);
-    FileWrite(tga,HDR.ImgHeight,2);
-    FileWrite(tga,HDR.ImgPixelSize,1);
-    FileWrite(tga,HDR.ImgDesc,1);
-
-    GetMem(Buffer,H*W*4);
-    try
-    for y := H-1 downto 0 do
-      for x := 0 to W-1 do
-      begin
-        cpos := ((((H-1)-y)*W)+x);
-        Buffer[cpos*4] := Palette[Pixels[x][y]].B;
-        Buffer[cpos*4+1] := Palette[Pixels[x][y]].G;
-        Buffer[cpos*4+2] := Palette[Pixels[x][y]].R;
-        Buffer[cpos*4+3] := Palette[Pixels[x][y]].A;
-      end;
-      FileWrite(tga,Buffer^,H*W*4);
-    finally
-      FreeMem(Buffer);
-    end;
-
-    FillChar(FTR,sizeof(TGAFooter),0);
-    FTR.Signature := 'TRUEVISION-XFILE';
-    FTR.ReservedChar := '.';
-
-    FileWrite(tga,FTR,SizeOf(TGAFooter));
+    SaveToTGA32Stream(tga);
   finally
-    FileClose(tga);
+    tga.free;
   end;
 
 end;
 
-procedure TSaveImage.SaveToTGA8(fil: String);
+procedure TSaveImage.SaveToTGA32Stream(stm: TStream);
 var HDR: TGAHeader;
-    x,y,tga,BufSize,wSize: integer;
+    FTR: TGAFooter;
+    x,y,cpos: integer;
     Buffer: PByteArray;
 begin
 
-  tga := FileCreate(fil,fmOpenWrite or fmShareDenyWrite);
+  HDR.IDFieldLength := 0;
+  HDR.ColorMapType := 0;
+  HDR.ImageType := 2;
+  HDR.CMOrigin := 0;
+  HDR.CMLength := 0;
+  HDR.CMSize := 0;
+  HDR.ImgXOrig := 0;
+  HDR.ImgYOrig := 0;
+  HDR.ImgWidth := W;
+  HDR.ImgHeight := H;
+  HDR.ImgPixelSize := 32;
+  HDR.ImgDesc := 8;   // Fixed (Bit 3 set = useful Alpha channel data is present)
+
+  stm.WriteBuffer(HDR.IDFieldLength,1);
+  stm.WriteBuffer(HDR.ColorMapType,1);
+  stm.WriteBuffer(HDR.ImageType,1);
+  stm.WriteBuffer(HDR.CMOrigin,2);
+  stm.WriteBuffer(HDR.CMLength,2);
+  stm.WriteBuffer(HDR.CMSize,1);
+  stm.WriteBuffer(HDR.ImgXOrig,2);
+  stm.WriteBuffer(HDR.ImgYOrig,2);
+  stm.WriteBuffer(HDR.ImgWidth,2);
+  stm.WriteBuffer(HDR.ImgHeight,2);
+  stm.WriteBuffer(HDR.ImgPixelSize,1);
+  stm.WriteBuffer(HDR.ImgDesc,1);
+
+  GetMem(Buffer,H*W*4);
+  try
+  for y := H-1 downto 0 do
+    for x := 0 to W-1 do
+    begin
+      cpos := ((((H-1)-y)*W)+x);
+      Buffer[cpos*4] := Palette[Pixels[x][y]].B;
+      Buffer[cpos*4+1] := Palette[Pixels[x][y]].G;
+      Buffer[cpos*4+2] := Palette[Pixels[x][y]].R;
+      Buffer[cpos*4+3] := Palette[Pixels[x][y]].A;
+    end;
+    stm.WriteBuffer(Buffer^,H*W*4);
+  finally
+    FreeMem(Buffer);
+  end;
+
+  FillChar(FTR,sizeof(TGAFooter),0);
+  FTR.Signature := 'TRUEVISION-XFILE';
+  FTR.ReservedChar := '.';
+
+  stm.WriteBuffer(FTR,SizeOf(TGAFooter));
+
+end;
+
+procedure TSaveImage.SaveToTGA8(fil: String);
+var tga: TFileStream;
+begin
+
+  tga := TFileStream.Create(fil,fmCreate or fmShareDenyWrite);
 
   try
-    HDR.IDFieldLength := 0;
-    HDR.ColorMapType := 1;
-    HDR.ImageType := 1;
-    HDR.CMOrigin := 0;
-    HDR.CMLength := PaletteSize;
-    if PaletteAlpha then
-      HDR.CMSize := 32
-    else
-      HDR.CMSize := 24;
-    HDR.ImgXOrig := 0;
-    HDR.ImgYOrig := 0;
-    HDR.ImgWidth := W;
-    HDR.ImgHeight := H;
-    HDR.ImgPixelSize := 8;
-    HDR.ImgDesc := 0;
-
-    FileWrite(tga,HDR.IDFieldLength,1);
-    FileWrite(tga,HDR.ColorMapType,1);
-    FileWrite(tga,HDR.ImageType,1);
-    FileWrite(tga,HDR.CMOrigin,2);
-    FileWrite(tga,HDR.CMLength,2);
-    FileWrite(tga,HDR.CMSize,1);
-    FileWrite(tga,HDR.ImgXOrig,2);
-    FileWrite(tga,HDR.ImgYOrig,2);
-    FileWrite(tga,HDR.ImgWidth,2);
-    FileWrite(tga,HDR.ImgHeight,2);
-    FileWrite(tga,HDR.ImgPixelSize,1);
-    FileWrite(tga,HDR.ImgDesc,1);
-
-    BufSize := W*H;
-    if BufSize < 1024 then
-      BufSize := 1024;
-
-    GetMem(Buffer,BufSize);
-    try
-
-      for x := 0 to PaletteSize do
-      begin
-        if PaletteAlpha then
-        begin
-          Buffer[(x*4)] := Palette[x].B;
-          Buffer[(x*4)+1] := Palette[x].G;
-          Buffer[(x*4)+2] := Palette[x].R;
-          Buffer[(x*4)+3] := Palette[x].A;
-        end
-        else
-        begin
-          Buffer[(x*3)] := Palette[x].B;
-          Buffer[(x*3)+1] := Palette[x].G;
-          Buffer[(x*3)+2] := Palette[x].R;
-        end;
-      end;
-      if PaletteAlpha then
-        wsize := PaletteSize*4
-      else
-        wsize := PaletteSize*3;
-      FileWrite(tga,Buffer^,wsize);
-
-      for y := H-1 downto 0 do
-        for x := 0 to W-1 do
-          Buffer[(((H-1)-y)*W)+x] := Pixels[x][y];
-      FileWrite(tga,Buffer^,W*H);
-    finally
-      FreeMem(Buffer);
-    end;
-
+    SaveToTGA8Stream(tga);
   finally
-    FileClose(tga);
+    tga.free;
   end;
+
+end;
+
+procedure TSaveImage.SaveToTGA8Stream(stm: TStream);
+var HDR: TGAHeader;
+    FTR: TGAFooter;
+    x,y,BufSize,wSize: integer;
+    Buffer: PByteArray;
+begin
+
+  HDR.IDFieldLength := 0;
+  HDR.ColorMapType := 1;
+  HDR.ImageType := 1;
+  HDR.CMOrigin := 0;
+  HDR.CMLength := PaletteSize;
+  if PaletteAlpha then
+    HDR.CMSize := 32
+  else
+    HDR.CMSize := 24;
+  HDR.ImgXOrig := 0;
+  HDR.ImgYOrig := 0;
+  HDR.ImgWidth := W;
+  HDR.ImgHeight := H;
+  HDR.ImgPixelSize := 8;
+  HDR.ImgDesc := 0;
+
+  stm.WriteBuffer(HDR.IDFieldLength,1);
+  stm.WriteBuffer(HDR.ColorMapType,1);
+  stm.WriteBuffer(HDR.ImageType,1);
+  stm.WriteBuffer(HDR.CMOrigin,2);
+  stm.WriteBuffer(HDR.CMLength,2);
+  stm.WriteBuffer(HDR.CMSize,1);
+  stm.WriteBuffer(HDR.ImgXOrig,2);
+  stm.WriteBuffer(HDR.ImgYOrig,2);
+  stm.WriteBuffer(HDR.ImgWidth,2);
+  stm.WriteBuffer(HDR.ImgHeight,2);
+  stm.WriteBuffer(HDR.ImgPixelSize,1);
+  stm.WriteBuffer(HDR.ImgDesc,1);
+
+  BufSize := W*H;
+  if BufSize < 1024 then
+    BufSize := 1024;
+
+  GetMem(Buffer,BufSize);
+  try
+
+    for x := 0 to PaletteSize do
+    begin
+      if PaletteAlpha then
+      begin
+        Buffer[(x*4)] := Palette[x].B;
+        Buffer[(x*4)+1] := Palette[x].G;
+        Buffer[(x*4)+2] := Palette[x].R;
+        Buffer[(x*4)+3] := Palette[x].A;
+      end
+      else
+      begin
+        Buffer[(x*3)] := Palette[x].B;
+        Buffer[(x*3)+1] := Palette[x].G;
+        Buffer[(x*3)+2] := Palette[x].R;
+      end;
+    end;
+    if PaletteAlpha then
+      wsize := PaletteSize*4
+    else
+      wsize := PaletteSize*3;
+    stm.WriteBuffer(Buffer^,wsize);
+
+    for y := H-1 downto 0 do
+      for x := 0 to W-1 do
+        Buffer[(((H-1)-y)*W)+x] := Pixels[x][y];
+    stm.WriteBuffer(Buffer^,W*H);
+  finally
+    FreeMem(Buffer);
+  end;
+
+  FillChar(FTR,sizeof(TGAFooter),0);
+  FTR.Signature := 'TRUEVISION-XFILE';
+  FTR.ReservedChar := '.';
+
+  stm.WriteBuffer(FTR,SizeOf(TGAFooter));
 
 end;
 
@@ -870,6 +926,7 @@ begin
       GetMem(Buffer,H*W*4);
       FileRead(tga,Buffer^,H*W*4);
       try
+      cpos := 0;
       for y := H-1 downto 0 do
         for x := 0 to W-1 do
         begin
@@ -897,122 +954,144 @@ begin
 end;
 
 procedure TSaveImage32.SaveToTGA24(fil: String);
-var HDR: TGAHeader;
-    x,y,tga,cpos: integer;
-    Buffer: PByteArray;
+var tga: TFileStream;
 begin
 
-  tga := FileCreate(fil,fmOpenWrite or fmShareDenyWrite);
+  tga := TFilestream.Create(fil,fmCreate or fmShareDenyWrite);
 
   try
-    HDR.IDFieldLength := 0;
-    HDR.ColorMapType := 0;
-    HDR.ImageType := 2;
-    HDR.CMOrigin := 0;
-    HDR.CMLength := 0;
-    HDR.CMSize := 0;
-    HDR.ImgXOrig := 0;
-    HDR.ImgYOrig := 0;
-    HDR.ImgWidth := W;
-    HDR.ImgHeight := H;
-    HDR.ImgPixelSize := 24;
-    HDR.ImgDesc := 0;
-
-    FileWrite(tga,HDR.IDFieldLength,1);
-    FileWrite(tga,HDR.ColorMapType,1);
-    FileWrite(tga,HDR.ImageType,1);
-    FileWrite(tga,HDR.CMOrigin,2);
-    FileWrite(tga,HDR.CMLength,2);
-    FileWrite(tga,HDR.CMSize,1);
-    FileWrite(tga,HDR.ImgXOrig,2);
-    FileWrite(tga,HDR.ImgYOrig,2);
-    FileWrite(tga,HDR.ImgWidth,2);
-    FileWrite(tga,HDR.ImgHeight,2);
-    FileWrite(tga,HDR.ImgPixelSize,1);
-    FileWrite(tga,HDR.ImgDesc,1);
-
-    GetMem(Buffer,H*W*3);
-    try
-    for y := H-1 downto 0 do
-      for x := 0 to W-1 do
-      begin
-        cpos := ((((H-1)-y)*W)+x);
-        Buffer[cpos*3] := Pixels[x][y].B;
-        Buffer[cpos*3+1] := Pixels[x][y].G;
-        Buffer[cpos*3+2] := Pixels[x][y].R;
-      end;
-      FileWrite(tga,Buffer^,H*W*3);
-    finally
-      FreeMem(Buffer);
-    end;
+    SaveToTGA24Stream(tga);
   finally
-    FileClose(tga);
+    tga.free;
   end;
 
 end;
 
-procedure TSaveImage32.SaveToTGA32(fil: String);
+procedure TSaveImage32.SaveToTGA24Stream(stm: TStream);
 var HDR: TGAHeader;
     FTR: TGAFooter;
-    x,y,tga,cpos: integer;
+    x,y,cpos: integer;
     Buffer: PByteArray;
 begin
 
-  tga := FileCreate(fil,fmOpenWrite or fmShareDenyWrite);
+  HDR.IDFieldLength := 0;
+  HDR.ColorMapType := 0;
+  HDR.ImageType := 2;
+  HDR.CMOrigin := 0;
+  HDR.CMLength := 0;
+  HDR.CMSize := 0;
+  HDR.ImgXOrig := 0;
+  HDR.ImgYOrig := 0;
+  HDR.ImgWidth := W;
+  HDR.ImgHeight := H;
+  HDR.ImgPixelSize := 24;
+  HDR.ImgDesc := 0;
+
+  stm.WriteBuffer(HDR.IDFieldLength,1);
+  stm.WriteBuffer(HDR.ColorMapType,1);
+  stm.WriteBuffer(HDR.ImageType,1);
+  stm.WriteBuffer(HDR.CMOrigin,2);
+  stm.WriteBuffer(HDR.CMLength,2);
+  stm.WriteBuffer(HDR.CMSize,1);
+  stm.WriteBuffer(HDR.ImgXOrig,2);
+  stm.WriteBuffer(HDR.ImgYOrig,2);
+  stm.WriteBuffer(HDR.ImgWidth,2);
+  stm.WriteBuffer(HDR.ImgHeight,2);
+  stm.WriteBuffer(HDR.ImgPixelSize,1);
+  stm.WriteBuffer(HDR.ImgDesc,1);
+
+  GetMem(Buffer,H*W*3);
+  try
+  for y := H-1 downto 0 do
+    for x := 0 to W-1 do
+    begin
+      cpos := ((((H-1)-y)*W)+x);
+      Buffer[cpos*3] := Pixels[x][y].B;
+      Buffer[cpos*3+1] := Pixels[x][y].G;
+      Buffer[cpos*3+2] := Pixels[x][y].R;
+    end;
+    stm.WriteBuffer(Buffer^,H*W*3);
+  finally
+    FreeMem(Buffer);
+  end;
+
+  FillChar(FTR,sizeof(TGAFooter),0);
+  FTR.Signature := 'TRUEVISION-XFILE';
+  FTR.ReservedChar := '.';
+
+  stm.WriteBuffer(FTR,SizeOf(TGAFooter));
+
+end;
+
+procedure TSaveImage32.SaveToTGA32(fil: String);
+var tga: TFileStream;
+begin
+
+  tga := TFileStream.Create(fil,fmCreate or fmShareDenyWrite);
 
   try
-    FillChar(HDR,sizeof(TGAHeader),0);
-    HDR.IDFieldLength := 0;
-    HDR.ColorMapType := 0;
-    HDR.ImageType := 2;
-    HDR.CMOrigin := 0;
-    HDR.CMLength := 0;
-    HDR.CMSize := 0;
-    HDR.ImgXOrig := 0;
-    HDR.ImgYOrig := 0;
-    HDR.ImgWidth := W;
-    HDR.ImgHeight := H;
-    HDR.ImgPixelSize := 32;
-    HDR.ImgDesc := 8;   // Fixed (Bit 3 set = useful Alpha channel data is present)
-
-    FileWrite(tga,HDR.IDFieldLength,1);
-    FileWrite(tga,HDR.ColorMapType,1);
-    FileWrite(tga,HDR.ImageType,1);
-    FileWrite(tga,HDR.CMOrigin,2);
-    FileWrite(tga,HDR.CMLength,2);
-    FileWrite(tga,HDR.CMSize,1);
-    FileWrite(tga,HDR.ImgXOrig,2);
-    FileWrite(tga,HDR.ImgYOrig,2);
-    FileWrite(tga,HDR.ImgWidth,2);
-    FileWrite(tga,HDR.ImgHeight,2);
-    FileWrite(tga,HDR.ImgPixelSize,1);
-    FileWrite(tga,HDR.ImgDesc,1);
-
-    GetMem(Buffer,H*W*4);
-    try
-    for y := H-1 downto 0 do
-      for x := 0 to W-1 do
-      begin
-        cpos := ((((H-1)-y)*W)+x);
-        Buffer[cpos*4] := Pixels[x][y].B;
-        Buffer[cpos*4+1] := Pixels[x][y].G;
-        Buffer[cpos*4+2] := Pixels[x][y].R;
-        Buffer[cpos*4+3] := Pixels[x][y].A;
-      end;
-      FileWrite(tga,Buffer^,H*W*4);
-    finally
-      FreeMem(Buffer);
-    end;
-
-    FillChar(FTR,sizeof(TGAFooter),0);
-    FTR.Signature := 'TRUEVISION-XFILE';
-    FTR.ReservedChar := '.';
-
-    FileWrite(tga,FTR,SizeOf(TGAFooter));
-
+    SaveToTGA32Stream(tga);
   finally
-    FileClose(tga);
+    tga.free;
   end;
+
+end;
+
+procedure TSaveImage32.SaveToTGA32Stream(stm: TStream);
+var HDR: TGAHeader;
+    FTR: TGAFooter;
+    x,y,cpos: integer;
+    Buffer: PByteArray;
+begin
+
+  FillChar(HDR,sizeof(TGAHeader),0);
+  HDR.IDFieldLength := 0;
+  HDR.ColorMapType := 0;
+  HDR.ImageType := 2;
+  HDR.CMOrigin := 0;
+  HDR.CMLength := 0;
+  HDR.CMSize := 0;
+  HDR.ImgXOrig := 0;
+  HDR.ImgYOrig := 0;
+  HDR.ImgWidth := W;
+  HDR.ImgHeight := H;
+  HDR.ImgPixelSize := 32;
+  HDR.ImgDesc := 8;   // Fixed (Bit 3 set = useful Alpha channel data is present)
+
+  stm.WriteBuffer(HDR.IDFieldLength,1);
+  stm.WriteBuffer(HDR.ColorMapType,1);
+  stm.WriteBuffer(HDR.ImageType,1);
+  stm.WriteBuffer(HDR.CMOrigin,2);
+  stm.WriteBuffer(HDR.CMLength,2);
+  stm.WriteBuffer(HDR.CMSize,1);
+  stm.WriteBuffer(HDR.ImgXOrig,2);
+  stm.WriteBuffer(HDR.ImgYOrig,2);
+  stm.WriteBuffer(HDR.ImgWidth,2);
+  stm.WriteBuffer(HDR.ImgHeight,2);
+  stm.WriteBuffer(HDR.ImgPixelSize,1);
+  stm.WriteBuffer(HDR.ImgDesc,1);
+
+  GetMem(Buffer,H*W*4);
+  try
+  for y := H-1 downto 0 do
+    for x := 0 to W-1 do
+    begin
+      cpos := ((((H-1)-y)*W)+x);
+      Buffer[cpos*4] := Pixels[x][y].B;
+      Buffer[cpos*4+1] := Pixels[x][y].G;
+      Buffer[cpos*4+2] := Pixels[x][y].R;
+      Buffer[cpos*4+3] := Pixels[x][y].A;
+    end;
+    stm.WriteBuffer(Buffer^,H*W*4);
+  finally
+    FreeMem(Buffer);
+  end;
+
+  FillChar(FTR,sizeof(TGAFooter),0);
+  FTR.Signature := 'TRUEVISION-XFILE';
+  FTR.ReservedChar := '.';
+
+  stm.WriteBuffer(FTR,SizeOf(TGAFooter));
 
 end;
 

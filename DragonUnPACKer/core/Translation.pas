@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.3 2004-05-16 15:48:11 elbereth Exp $
+// $Id: Translation.pas,v 1.3.2.2 2004-08-22 19:36:26 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,7 +18,6 @@ unit Translation;
 
 interface
 procedure TranslateAbout();
-//procedure TranslateDirSelect();
 procedure TranslateError();
 procedure TranslateHyperRipper();
 procedure TranslateInfos();
@@ -72,6 +71,10 @@ begin
     menuIndex_Infos.Caption := DLNGStr('POP2S3');
     menuIndex_Expand.Caption := DLNGStr('POP2S4');
     menuIndex_Collapse.Caption := DLNGStr('POP2S5');
+
+    menuLog_Show.Caption := DLNGstr('POP3S1');
+    menuLog_Hide.Caption := DLNGstr('POP3S2');
+    menuLog_Clear.Caption := DLNGstr('POP3S3');
 
     lstContent.Header.Columns.Items[0].Text := DLNGStr('LSTCP1');
     lstContent.Header.Columns.Items[1].Text := DLNGStr('LSTCP2');
@@ -264,6 +267,9 @@ begin
     chkUseHyperRipper.Caption := DLNGStr('OPT125');
     chkUseHyperRipper.Font.Name := GetFont();
 
+    chkLog.Caption := DLNGStr('OPT126');
+    chkLog.Font.Name := GetFont();
+
     cmdCnvAbout.Caption := DLNGStr('OPT201');
     cmdCnvAbout.Font.Name := GetFont();
 
@@ -285,6 +291,12 @@ begin
     strConvertList.Caption := DLNGstr('OPT501');
     strConvertList.Font.Name := GetFont();
 
+    lstConvert2.Columns.Items[0].Caption := DLNGStr('INFO20');
+    lstConvert2.Columns.Items[1].Caption := DLNGStr('INFO21');
+    lstConvert2.Columns.Items[2].Caption := DLNGStr('INFO10');
+    grpCnvAdvInfo.Caption := DLNGStr('INFO22');
+    lblCIntVer.Caption := DLNGStr('INFO23');
+
     cmdDrvAbout.Caption := DLNGStr('OPT201');
     cmdDrvAbout.Font.Name := GetFont();
 
@@ -302,6 +314,14 @@ begin
 
     strDrvInfoComments.Caption := DLNGStr('INFO03');
     strDrvInfoComments.Font.Name := GetFont();
+
+    lstDrivers2.Columns.Items[1].Caption := DLNGStr('INFO20');
+    lstDrivers2.Columns.Items[2].Caption := DLNGStr('INFO21');
+    lstDrivers2.Columns.Items[3].Caption := DLNGStr('INFO10');
+    grpAdvInfo.Caption := DLNGStr('INFO22');
+    lblIntVer.Caption := DLNGStr('INFO23');
+    butRefresh.Caption := DLNGStr('OPT221');
+    lblPriority.Caption := DLNGStr('OPT220');
 
     cmdHRAbout.Caption := DLNGStr('OPT201');
     cmdHRAbout.Font.Name := GetFont();
@@ -324,6 +344,12 @@ begin
     strHRInfoComments.Caption := DLNGStr('INFO03');
     strHRInfoComments.Font.Name := GetFont();
 
+    lstHR2.Columns.Items[0].Caption := DLNGStr('INFO20');
+    lstHR2.Columns.Items[1].Caption := DLNGStr('INFO21');
+    lstHR2.Columns.Items[2].Caption := DLNGStr('INFO10');
+    grpHRAdvInfo.Caption := DLNGStr('INFO22');
+    lblHIntVer.Caption := DLNGStr('INFO23');
+
     grpLookInfo.Caption := DLNGStr('OPT310');
     grpLookInfo.Font.Name := GetFont();
 
@@ -342,12 +368,6 @@ begin
     strLookList.Caption := DLNGstr('OPT320');
     strLookList.Font.Name := GetFont();
     
-    grpLookOpt.Caption := DLNGstr('OPT330');
-    grpLookOpt.Font.Name := GetFont();
-
-    chkXPStyle.Caption := DLNGstr('OPT331');
-    chkXPStyle.Font.Name := GetFont();
-
     tabAssoc.Caption := DLNGStr('OPT400');
     tabAssoc.Font.Name := GetFont();
 

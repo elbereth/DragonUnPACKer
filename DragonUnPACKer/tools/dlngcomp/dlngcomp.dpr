@@ -6,17 +6,22 @@ uses
   SysUtils,
   Classes,
   DateUtils,
-  lib_DLNG in 'lib_DLNG.pas';
+  zlib,
+  lib_utils in '..\..\common\lib_utils.pas',
+  spec_DLNG in '..\..\common\spec_DLNG.pas',
+  lib_BinUtils in '..\..\common\lib_BinUtils.pas',
+  lib_zlib in '..\..\common\lib_zlib.pas',
+  lib_crc in '..\..\common\lib_crc.pas';
 
-const AppVersion : string = '3.0.3';
+const AppVersion : string = '4.0.0';
       AppEdit : string = '';
-      DLNG_Version : Byte = 3;
+      DLNG_Version : Byte = 4;
       DLNG_Manufacturer : Byte = 30;
 
 type
    Internal_Tab = record
      ID: string;
-     Value: string;
+     Value: Widestring;
    end;
    LngTab = record
      Result: Boolean;
@@ -25,10 +30,25 @@ type
      PrgVER: Byte;
      FileSize: Word;
      FileCRC: Integer;
+     IndexOffSet: Integer;
+     IndexNum: Integer;
+     IndexCRC: Integer;
+     DataOffSet: Integer;
+     DataSize: Integer;
+     DataCSize: Integer;
+     DataCRC: Integer;
      ExtInfo: DLNG_ExtendedHeader;
+     Compression: Byte;
      NoValueCompare: Boolean;
      Num: integer;
      Tab: array[1..2000] of Internal_Tab;
+   end;
+
+   DLNG_Header = packed record
+     ID: array[0..4] of Char;
+     Version: Byte;
+     PrgID: array[1..2] of Char;
+     PrgVER: Byte;
    end;
 
 type LNGv1_Header = record
@@ -155,50 +175,10 @@ begin
       result := result + ' ';
 end;
 
-function Get8(src: integer): string;
-var tchar: array[0..255] of Char;
-    tbyt: byte;
-begin
-
-  FileRead(src,tbyt,1);
-  FillChar(tchar,256,0);
-  FileRead(src,tchar,tbyt);
-
-  Get8 := tchar;
-
-end;
-
-function Get32(src: integer): string;
-var tchar: Pchar;
-    tint: Integer;
-begin
-
-  FileRead(src,tint,4);
-  GetMem(tchar,tint);
-  FillChar(tchar^,tint,0);
-  FileRead(src,tchar^,tint);
-
-  Get32 := tchar;
-
-  FreeMem(tchar);
-
-end;
-
-function Get16v(src: integer; size: word): string;
-var tchar: array[1..1024] of Char;
-    res: string;
-begin
-
-  FillChar(tchar,1023,0);
-  FileRead(src,tchar,size);
-
-  res := tchar;
-  Get16v := Copy(res,1,size);
-
-end;
-
 procedure LoadLanguage(fil: string; out res: LngTab);
 var HDR: DLNG_Header;
+    HDR3: DLNG_Header_v3;
+    HDR4: DLNG_Header_v4;
     HDRX: DLNG_ExtendedHeader;
     HDR1: LNGv1_Header;
     HDR2: LNGv2_Header;
@@ -206,7 +186,11 @@ var HDR: DLNG_Header;
     FOOT2: LNGv1_Footer_v2;
     Idx1: LNGv1_Index;
     lng,x: integer;
-    Idx: DLNG_IndexEntry;
+    IDX3: DLNG_IndexEntry_v3;
+    Idx4: array[1..1000] of DLNG_IndexEntry_v4;
+    inpFileStm: THandleStream;
+    dataStm: TMemoryStream;
+    decompStm: TDecompressionStream;
 begin
 
   res.NoValueCompare := false;
@@ -226,22 +210,105 @@ begin
         res.Result := False;
       end
       else
-        if (HDR.Version <> 3) and (HDR.Version <> 1) then
+        if (HDR.Version <> 3) and (HDR.Version <> 1) and (HDR.Version <> 4) then
         begin
           Writeln(' - Unsupported version of Dragon Software Language file. (version '+IntToStr(HDR.Version)+')');
+          Writeln('   Supported versions include: v1 v3 v4');
           res.Result := False;
         end
         else
         begin
 
           case HDR.Version of
+            4: begin
+
+                 FileSeek(lng,0,0);
+                 FileRead(lng,HDR4,SizeOf(HDR4));
+                 res.Version := HDR4.Version;
+                 res.PrgID := HDR4.PrgID;
+                 res.PrgVER := HDR4.PrgVER;
+                 res.FileSize := 0;
+                 res.FileCRC := 0;
+                 res.DataOffSet := HDR4.DataOffSet;
+                 res.DataSize := HDR4.DataSize;
+                 res.DataCSize := HDR4.DataCSize;
+                 res.DataCRC := HDR4.DataCRC;
+                 res.IndexOffSet := HDR4.IndexOffSet;
+                 res.IndexNum := HDR4.IndexNum;
+                 res.IndexCRC := HDR4.IndexCRC;
+
+                 Write(' + Reading extended header... ');
+
+                 res.ExtInfo.Name := Get8u(lng);
+                 res.ExtInfo.Author := Get8u(lng);
+                 res.ExtInfo.URL := Get8u(lng);
+                 res.ExtInfo.Email := Get8u(lng);
+                 res.ExtInfo.FontName := Get8u(lng);
+
+                 Writeln('OK');
+
+                 Write(' + Loading language data... ');
+
+                 dataStm := TMemoryStream.Create;
+                 try
+
+                   inpFileStm := THandleStream.Create(lng);
+                   try
+                     inpFileStm.Seek(HDR4.DataOffSet,soFromBeginning);
+
+                     if HDR4.Compression = 0 then
+                     begin
+
+                       dataStm.CopyFrom(inpFileStm, HDR4.DataSize);
+
+                     end
+                     else if HDR4.Compression = 99 then
+                     begin
+
+                       decompStm := TDecompressionStream.Create(inpFileStm);
+                       dataStm.CopyFrom(decompStm,HDR4.DataSize);
+                       decompStm.Free;
+
+                     end;
+
+                     dataStm.Seek(0,soFromBeginning);
+
+                   finally
+                     inpFileStm.Free;
+                   end;
+
+                   FileSeek(lng, HDR4.IndexOffSet,0);
+
+                   res.Num := HDR4.IndexNum;
+
+                   for x := 1 to HDR4.IndexNum do
+                   begin
+                     FillChar(Idx4[x],SizeOf(DLNG_IndexEntry_v4),0);
+                     FileRead(lng,Idx4[x],SizeOf(DLNG_IndexEntry_v4));
+                     res.Tab[x].ID := Idx4[x].ID;
+                     dataStm.Seek(Idx4[x].Offset*2,soFromBeginning);
+                     setLength(res.Tab[x].Value,Idx4[x].Length);
+                     dataStm.ReadBuffer(res.Tab[x].Value[1],Idx4[x].Length*2);
+                   end;
+
+                 finally
+                   dataStm.Free;
+                 end;
+
+                 writeln('OK ('+inttostr(res.Num)+' entries)');
+
+                 res.Result := true;
+               end;
+
             3: begin
 
-                 res.Version := HDR.Version;
-                 res.PrgID := HDR.PrgID;
-                 res.PrgVER := HDR.PrgVER;
-                 res.FileSize := HDR.FileSize;
-                 res.FileCRC := HDR.FileCRC;
+                 FileSeek(lng,0,0);
+                 FileRead(lng,HDR3,SizeOf(HDR3));
+                 res.Version := HDR3.Version;
+                 res.PrgID := HDR3.PrgID;
+                 res.PrgVER := HDR3.PrgVER;
+                 res.FileSize := HDR3.FileSize;
+                 res.FileCRC := HDR3.FileCRC;
 
                  Write(' + Reading extended header... ');
 
@@ -254,16 +321,16 @@ begin
 
                  Write(' + Loading language data... ');
 
-                 FileSeek(lng, HDR.IndexOffSet,0);
+                 FileSeek(lng, HDR3.IndexOffSet,0);
 
-                 res.Num := HDR.IndexNum;
+                 res.Num := HDR3.IndexNum;
 
-                 for x := 1 to HDR.IndexNum do
+                 for x := 1 to HDR3.IndexNum do
                  begin
-                   FillChar(idx,8,0);
-                   FileRead(lng,idx,8);
-                   res.Tab[x].ID := idx.ID;
-                   res.Tab[x].Value := Get16v(lng,idx.Length);
+                   FillChar(idx3,8,0);
+                   FileRead(lng,idx3,8);
+                   res.Tab[x].ID := idx3.ID;
+                   res.Tab[x].Value := Get16v(lng,idx3.Length);
                  end;
 
                  writeln('OK ('+inttostr(res.Num)+' entries)');
@@ -420,8 +487,8 @@ begin
       Writeln(hTxt,'Language Compare Report created '+tmps+' using DLNGComp v'+AppVersion+' '+AppEdit);
       Writeln(hTxt,'===============================================================================');
       Writeln(hTxt);
-      Writeln(hTxt,'Language file 1: '+disp1+' ('+inttostr(lng1.Num)+' entries)');
-      Writeln(hTxt,'Language file 2: '+disp2+' ('+inttostr(lng2.Num)+' entries)');
+      Writeln(hTxt,'Language file 1: '+disp1+' (DLNG v'+inttostr(lng1.Version)+' - '+inttostr(lng1.Num)+' entries)');
+      Writeln(hTxt,'Language file 2: '+disp2+' (DLNG v'+inttostr(lng2.Version)+' - '+inttostr(lng2.Num)+' entries)');
       Writeln(hTxt);
       Writeln(hTxt,'Entries difference: '+IntToStr(abs(lng1.Num - lng2.Num)));
       Writeln(hTxt);
@@ -647,7 +714,9 @@ begin
      writeln;
      writeln(' Usage: dlngcomp <srcfile1.lng> <srcfile2.lng> [reportfile.txt]');
      writeln;
-     writeln(' Input format: DLNG version 3');
+     writeln(' Input formats: DLNG version 1 (without encryption)');
+     writeln('                DLNG version 3');
+     writeln('                DLNG version 4');
    end
    else
    begin

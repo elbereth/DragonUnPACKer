@@ -1,6 +1,6 @@
 library cnv_pictex;
 
-// $Id: cnv_pictex.dpr,v 1.4 2004-07-15 16:49:06 elbereth Exp $
+// $Id: cnv_pictex.dpr,v 1.5 2004-07-17 19:10:16 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/cnv_pictex.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -63,7 +63,7 @@ var Percent: TPercentCallback;
     AHandle: THandle;
     AOwner: TComponent;
 
-const DRIVER_VERSION = 10710;
+const DRIVER_VERSION = 10740;
 const DUP_VERSION = 50040;
 
 { * Version History:
@@ -78,6 +78,7 @@ const DUP_VERSION = 50040;
   * v1.0.6 Beta  (10610): Added Hitman: Contracts RGBA support
   * v1.0.7 Beta  (10710): Using class_Images from Glacier TEX Editor v3.1
   *                       (improved a lot...)
+  * v1.0.7       (10740): Removed beta status for 5.0.0 release
   * }
 
 function DUCIVersion: Byte; stdcall;
@@ -100,8 +101,6 @@ function IsFileCompatible(nam: ShortString; Offset, Size: Int64; fmt: ShortStrin
 begin
 
   result := false;
-
-//  ShowMessage(inttostr(DataX)+#10+fmt+#10+LeftStr(nam,8)+#10+inttostr(Size));
 
   if (fmt = 'WAD2') or (fmt = 'WAD3') then
   begin

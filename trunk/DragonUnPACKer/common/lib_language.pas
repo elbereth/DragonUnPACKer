@@ -1,6 +1,6 @@
 unit lib_language;
 
-// $Id: lib_language.pas,v 1.1.1.1 2004-05-08 10:25:11 elbereth Exp $
+// $Id: lib_language.pas,v 1.2 2004-05-08 13:43:49 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_language.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -338,7 +338,7 @@ begin
     res := 'octet(s)'
 
   else if sch = 'ABT001' then
-    res := 'Programme gratuit (Freeware)'
+    res := 'Open Source / Mozilla Public Licence 1.1'
   else if sch = 'ABT002' then
     res := 'Contactez moi:'
   else if sch = 'ABT003' then

@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.1.1.1 2004-05-08 10:25:49 elbereth Exp $
+// $Id: Main.pas,v 1.2 2004-05-08 13:43:50 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -420,7 +420,7 @@ begin
   frmAbout.txtMoreinfo.Visible := false;
   frmAbout.txtMoreinfo.Lines.Add('');
   frmAbout.txtMoreinfo.Lines.Add(DLNGstr('ABT002'));
-  frmAbout.txtMoreinfo.Lines.Add('dup5@dragonunpacker.com');
+  frmAbout.txtMoreinfo.Lines.Add('elbereth@user.sourceforge.net');
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsItalic]);
   frmAbout.txtMoreinfo.Lines.Add('');
   frmAbout.txtMoreinfo.Lines.Add(DLNGstr('ABT004'));

@@ -1,6 +1,6 @@
 object frmAbout: TfrmAbout
-  Left = 586
-  Top = 494
+  Left = 233
+  Top = 131
   AlphaBlend = True
   AlphaBlendValue = 230
   BorderIcons = []
@@ -844,7 +844,7 @@ object frmAbout: TfrmAbout
     Top = 296
     Width = 205
     Height = 13
-    Caption = '(c)Copyright 1997-2003 Alexandre Devilliers'
+    Caption = '(c)Copyright 1997-2004 Alexandre Devilliers'
   end
   object Shape1: TShape
     Left = 8

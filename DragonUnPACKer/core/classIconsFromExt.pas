@@ -1,6 +1,6 @@
 unit classIconsFromExt;
 
-// $Id: classIconsFromExt.pas,v 1.1.1.1 2004-05-08 10:25:13 elbereth Exp $
+// $Id: classIconsFromExt.pas,v 1.2 2004-05-16 09:30:04 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classIconsFromExt.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -41,7 +41,6 @@ type TIconsFromExt = class
     function findIcon(ext: string): Integer;
     function getExt(fileName: TFilename): string;
     function addIcon(ext: string; icon: TIcon): integer;
-    function getDefaultIcon: integer;
     function getInternalIcon(ext: string): integer;
     function useRegIcons(): boolean;
   public
@@ -251,7 +250,7 @@ var sicon: HICON;
     idxIcon: integer;
 begin
 
-  idxIcon := getInternalIcon(ext);
+//  idxIcon := getInternalIcon(ext);
 
   if not(useRegIcons) then
   begin
@@ -334,13 +333,6 @@ begin
 
 end;
 
-function TIconsFromExt.getDefaultIcon: integer;
-begin
-
-  result := 0;
-
-end;
-
 function TIconsFromExt.getInternalIcon(ext: string): integer;
 begin
 
@@ -387,15 +379,15 @@ function TIconsFromExt.useRegIcons: boolean;
 var Reg: TRegistry;
 begin
 
+  result := true;
+
   Reg := TRegistry.Create;
   Try
     Reg.RootKey := HKEY_CURRENT_USER;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
     begin
       if Reg.ValueExists('RegistryIcons') then
-        result := Reg.ReadBool('RegistryIcons')
-      else
-        result := true;
+        result := Reg.ReadBool('RegistryIcons');
       Reg.CloseKey;
     end;
   Finally

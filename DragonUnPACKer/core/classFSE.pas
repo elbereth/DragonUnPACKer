@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.1.1.1 2004-05-08 10:25:13 elbereth Exp $
+// $Id: classFSE.pas,v 1.2 2004-05-16 09:28:03 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -644,6 +644,7 @@ begin
             writeln('NumElems: '+IntToStr(NumElems));
 
           DispNumElems := 0;
+          y := 0;
 
           try
             for y := 1 to NumElems do
@@ -807,11 +808,11 @@ end;
 
 procedure TDrivers.BrowseDir(cdir: string);
 var a: FSE;
-    TDir,ext: string;
-    TDirPos,posext: integer;
+    TDir: string;
+    TDirPos: integer;
     TotSize: int64;
     TotFiles: longword;
-    curData, curSize, curIdx, per, perold, CDirSize, x: integer;
+    curData, curSize, curIdx, per, perold, x: integer;
     cache: TDirCache;
 //    starttime: TDateTime;
 begin
@@ -821,7 +822,6 @@ begin
   TotSize := 0;
 
   CDir := UpperCase(CDir);
-  CDirSize := length(CDir);
 
   cache := GetDirCache(CDir);
 
@@ -1092,8 +1092,8 @@ end;
 
 //procedure TDrivers.ExtractFile(entrynam, outfile: string; silent: boolean);
 procedure TDrivers.ExtractFile(entry: FSE; outfile: string; silent: boolean);
-var Offset,Size: int64;
-    DataX,DataY: integer;
+var //Offset,Size: int64;
+//    DataX,DataY: integer;
     Save_Cursor:TCursor;
 begin
 
@@ -1338,8 +1338,8 @@ begin
 end;
 
 function TDrivers.SearchAll(searchst: string; CaseSensible: Boolean): integer;
-var ext,outp: String;
-    testpos,posext,tmpi: integer;
+var ext: String;
+    testpos,posext: integer;
     a: FSE;
     TotSize: int64;
     CurData, TotFiles: integer;
@@ -1427,7 +1427,7 @@ end;
 
 function TDrivers.SearchDir(searchst, cdir: string;
   CaseSensible: Boolean): integer;
-var ext,outp,TDir: String;
+var ext,TDir: String;
     TDirPos,testpos,posext,tmpi: integer;
     a: FSE;
     TotSize: int64;

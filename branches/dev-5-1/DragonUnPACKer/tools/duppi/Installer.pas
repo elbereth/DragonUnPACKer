@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.3.2.1 2004-08-22 19:36:26 elbereth Exp $
+// $Id: Installer.pas,v 1.3.2.2 2005-03-27 10:20:57 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -673,7 +673,7 @@ begin
     @DUCIVer := GetProcAddress(Handle, 'DUCIVersion');
     @DUHIVer := GetProcAddress(Handle, 'DUHIVersion');
 
-    if ((@DUDIVer <> Nil) and ((DUDIVer = 1) or (DUDIVer = 2) or (DUDIVer = 3))) then
+    if ((@DUDIVer <> Nil) and ((DUDIVer = 1) or (DUDIVer = 2) or (DUDIVer = 3) or (DUDIVer = 4))) then
     begin
 
       @GetNumVer := GetProcAddress(Handle, 'GetNumVersion');
@@ -684,7 +684,7 @@ begin
         result := GetNumVer;
 
     end
-    else if ((@DUCIVer <> Nil) and ((DUCIVer = 1) or (DUCIVer = 2))) then
+    else if ((@DUCIVer <> Nil) and ((DUCIVer = 1) or (DUCIVer = 2) or (DUCIVer = 3))) then
     begin
 
       @GetCnvVer := GetProcAddress(Handle, 'VersionInfo');
@@ -695,7 +695,7 @@ begin
         result := GetCnvVer.VerID;
 
     end
-    else if ((@DUHIVer <> Nil) and ((DUHIVer = 1) or (DUHIVer = 2))) then
+    else if ((@DUHIVer <> Nil) and ((DUHIVer = 1) or (DUHIVer = 2) or (DUHIVer = 3))) then
     begin
 
       @GetHRVer := GetProcAddress(Handle, 'GetVersionInfo');

@@ -289,17 +289,6 @@ object dup5Main: Tdup5Main
         end>
       PopupMenu = Popup_Log
     end
-    object memLog: TMemo
-      Left = 0
-      Top = 0
-      Width = 667
-      Height = 82
-      Align = alClient
-      PopupMenu = Popup_Log
-      ReadOnly = True
-      ScrollBars = ssVertical
-      TabOrder = 1
-    end
     object richLog: TJvRichEdit
       Left = 0
       Top = 0
@@ -307,9 +296,10 @@ object dup5Main: Tdup5Main
       Height = 82
       Align = alClient
       HideScrollBars = False
+      PopupMenu = Popup_Log
       ReadOnly = True
       ScrollBars = ssVertical
-      TabOrder = 2
+      TabOrder = 1
       Zoom = 100
     end
   end

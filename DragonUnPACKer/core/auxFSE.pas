@@ -1,6 +1,6 @@
 unit auxFSE;
 
-// $Id: auxFSE.pas,v 1.2.2.1 2004-08-22 19:36:26 elbereth Exp $
+// $Id: auxFSE.pas,v 1.2.2.2 2004-10-03 17:11:10 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/auxFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -470,7 +470,7 @@ procedure ShowPanelEx;
 begin
 
 //  dup5Main.PanelStatusEx.Width :=
-  dup5Main.PanelStatusEx.Visible := not(dup5Main.memLog.Visible);
+  dup5Main.PanelStatusEx.Visible := not(dup5Main.richLog.Visible);
   dup5Main.Refresh;
 
 end;

@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.2.2.5 2004-10-10 09:17:47 elbereth Exp $
+// $Id: Options.pas,v 1.2.2.6 2005-03-27 10:06:49 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -124,6 +124,12 @@ type
     txtDUHI: TStaticText;
     txtHIntVer: TStaticText;
     trkAssocIcon: TTrackBar;
+    tabLog: TPanel;
+    grpLogVerbose: TGroupBox;
+    grpLogOptions: TGroupBox;
+    strVerbose: TLabel;
+    trackbarVerbose: TTrackBar;
+    lblVerbose: TLabel;
     chkLog: TCheckBox;
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -158,6 +164,7 @@ type
     procedure lstHR2Change(Sender: TObject; Item: TListItem;
       Change: TItemChange);
     procedure chkLogClick(Sender: TObject);
+    procedure trackbarVerboseChange(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -428,6 +435,8 @@ begin
 
   Loading := True;
 
+  trackbarVerbose.Position := dup5Main.getVerboseLevel;
+
   CONVList;
   DRVList;
   HRIPList;
@@ -684,6 +693,7 @@ begin
   tabPlugins.Visible := False;
   tabLook.Visible := False;
   tabAssoc.Visible := False;
+  tabLog.Visible := False;
   tabConvert.Visible := False;
   tabHyperRipper.Visible := False;
 
@@ -698,7 +708,7 @@ begin
     3: tabPlugins.Visible := True;
     4: tabHyperRipper.Visible := True;
     5: tabLook.Visible := True;
-    6: tabAssoc.Visible := True;
+    6: tabLog.Visible := True;
     7: tabAssoc.Visible := True;
   end;
 
@@ -884,6 +894,28 @@ begin
     dup5Main.menuLog_HideClick(self)
   else
     dup5Main.menuLog_ShowClick(self);
+
+end;
+
+procedure TfrmConfig.trackbarVerboseChange(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      Reg.WriteInteger('VerboseLevel',trackbarVerbose.Position);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
+
+  lblVerbose.Caption := DLNGStr('OPT85'+inttostr(trackbarVerbose.Position));
+
+  dup5Main.setVerboseLevel(trackbarVerbose.Position); 
 
 end;
 

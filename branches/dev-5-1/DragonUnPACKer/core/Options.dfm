@@ -935,15 +935,6 @@ object frmConfig: TfrmConfig
         WordWrap = True
         OnClick = chkUseHyperRipperClick
       end
-      object chkLog: TCheckBox
-        Left = 8
-        Top = 96
-        Width = 425
-        Height = 17
-        Caption = 'Afficher le journal d'#39'ex'#233'cution'
-        TabOrder = 5
-        OnClick = chkLogClick
-      end
     end
   end
   object cmdOk: TButton
@@ -985,6 +976,68 @@ object frmConfig: TfrmConfig
       00000000000000FFFFFFFFFFFFFFFF0000000000000000034C6F672500000000
       00000000000000FFFFFFFFFFFFFFFF00000000000000000C4173736F63696174
       696F6E73}
+  end
+  object tabLog: TPanel
+    Left = 144
+    Top = 8
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 8
+    object grpLogVerbose: TGroupBox
+      Left = 0
+      Top = 200
+      Width = 441
+      Height = 81
+      Caption = 'Verbose Options'
+      Color = clBtnFace
+      ParentColor = False
+      TabOrder = 0
+      object strVerbose: TLabel
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 13
+        AutoSize = False
+        Caption = 'Select level of verbose for log:'
+      end
+      object lblVerbose: TLabel
+        Left = 168
+        Top = 32
+        Width = 265
+        Height = 41
+        AutoSize = False
+        Layout = tlCenter
+        WordWrap = True
+      end
+      object trackbarVerbose: TTrackBar
+        Left = 8
+        Top = 40
+        Width = 150
+        Height = 33
+        Max = 2
+        PageSize = 1
+        TabOrder = 0
+        OnChange = trackbarVerboseChange
+      end
+    end
+    object grpLogOptions: TGroupBox
+      Left = 0
+      Top = 0
+      Width = 441
+      Height = 193
+      Caption = 'Log Options'
+      TabOrder = 1
+      object chkLog: TCheckBox
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Afficher le journal d'#39'ex'#233'cution'
+        TabOrder = 0
+        OnClick = chkLogClick
+      end
+    end
   end
   object imgLstLangue: TImageList
     BlendColor = clBlack

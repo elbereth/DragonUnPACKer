@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.3.2.1 2004-07-25 10:29:19 elbereth Exp $
+// $Id: classFSE.pas,v 1.3.2.2 2004-08-21 10:53:59 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -29,7 +29,7 @@ interface
 
 uses auxFSE, Classes, Comctrls, Controls, DateUtils, Dialogs, Forms,
      lib_binCopy, lib_binutils, lib_language, lib_utils, Main, prg_ver, Registry,
-     spec_HRF, strutils, Windows, SysUtils;
+     spec_HRF, strutils, Windows, SysUtils, Error;
 
 { Record declaration }
 
@@ -626,7 +626,19 @@ begin
         end;
       except
         on E:EFOpenError do MessageDlg(ReplaceValue('%f',DLNGstr('ERRIO'),pth),mtWarning,[mbOk],0);
-        on Ex:Exception do MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),ex.message),mtWarning,[mbOk],0);
+        on Ex:Exception do
+        begin  // New error dialog box
+          frmError.PrepareError;
+          frmError.details.Add('Error while calling:');
+          frmError.details.Add('if Drivers['+inttostr(x)+'].CanOpen('''+pth+''','+booltostr(SmartOpen,true)+') then');
+          frmError.details.Add('');
+          frmError.details.Add('Drivers['+inttostr(x)+'].Filename='+Drivers[x].FileName);
+          frmError.details.Add('Drivers['+inttostr(x)+'].Info.Name='+Drivers[x].Info.Name);
+          frmError.details.Add('Drivers['+inttostr(x)+'].Info.Author='+Drivers[x].Info.Author);
+          frmError.details.Add('Drivers['+inttostr(x)+'].Info.Version='+Drivers[x].Info.Version);
+          frmError.details.Add('Drivers['+inttostr(x)+'].Info.Comment='+Drivers[x].Info.Comment);
+          frmError.FillTxtError(Ex,'classFSE.pas','LoadFile:'+Drivers[x].FileName+'.CanOpen');
+        end;
       end;
       Inc(x);
     end;
@@ -656,9 +668,20 @@ begin
             NumElems := Drivers[CurrentDriver].OpenFile2(pchar(pth),SmartOpen);
         except
           on Ex:Exception do
-          begin
-            MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),ex.message),mtWarning,[mbOk],0);
-//            MessageDlg(ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),mtWarning,[mbOk],0);
+          begin  // New error dialog box
+            frmError.PrepareError;
+            frmError.details.Add('Error while calling:');
+            if Drivers[CurrentDriver].DUDIVersion = 1 then
+              frmError.details.Add('NumElems := Drivers['+inttostr(CurrentDriver)+'].OpenFile('''+pth+''',Percent,'+booltostr(SmartOpen,true)+')')
+            else if (Drivers[CurrentDriver].DUDIVersion = 2) or(Drivers[CurrentDriver].DUDIVersion = 3) then
+              frmError.details.Add('NumElems := Drivers['+inttostr(CurrentDriver)+'].OpenFile2('''+pth+''','+booltostr(SmartOpen,true)+')');
+            frmError.details.Add('');
+            frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
+            frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Name='+Drivers[CurrentDriver].Info.Name);
+            frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Author='+Drivers[CurrentDriver].Info.Author);
+            frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Version='+Drivers[CurrentDriver].Info.Version);
+            frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Comment='+Drivers[CurrentDriver].Info.Comment);
+            frmError.FillTxtError(Ex,'classFSE.pas','LoadFile:'+Drivers[CurrentDriver].FileName+'.OpenFile');
             NumElems := -999
           end;
         end;
@@ -683,25 +706,44 @@ begin
             for y := 1 to NumElems do
             begin
               Test := Drivers[CurrentDriver].GetEntry();
-//            ShowMessage(Test.FileName+#10+inttostr(Test.Offset)+#10+inttostr(Test.Size));
               if (Test.Offset >= 0) and (Test.Size > 0) then
               begin
                 Inc(DispNumElems);
-//              Percent(Round((y/NumElems)*100));
                 DataBlocAdd(Test.FileName,Test.Offset,Test.Size,Test.DataX,Test.DataY);
               end;
             end;
           except
             on Ex:Exception do
-            begin
-              MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),ex.message),mtWarning,[mbOk],0);
-//            MessageDlg(ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),mtWarning,[mbOk],0);
+            begin  // New error dialog box
+              frmError.PrepareError;
+              frmError.details.Add('Error while calling:');
+
+              frmError.details.Add('for y := 1 to '+inttostr(NumElems)+' do');
+              frmError.details.Add('begin');
+              frmError.details.Add('  Test := Drivers['+inttostr(CurrentDriver)+'].GetEntry();');
+              frmError.details.Add('  if ('+inttostr(Test.Offset)+' >= 0) and ('+inttostr(Test.Size)+' > 0) then');
+              frmError.details.Add('  begin');
+              frmError.details.Add('    Inc(DispNumElems);');
+              frmError.details.Add('    DataBlocAdd('''+Test.FileName+''','+inttostr(Test.Offset)+','+inttostr(Test.Size)+','+inttostr(Test.DataX)+','+inttostr(Test.DataY)+');');
+              frmError.details.Add('  end;');
+              frmError.details.Add('end;');
+
+              frmError.details.Add('');
+              frmError.details.Add('y='+inttostr(y));
+              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
+              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Name='+Drivers[CurrentDriver].Info.Name);
+              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Author='+Drivers[CurrentDriver].Info.Author);
+              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Version='+Drivers[CurrentDriver].Info.Version);
+              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Comment='+Drivers[CurrentDriver].Info.Comment);
+              frmError.FillTxtError(Ex,'classFSE.pas','LoadFile:'+Drivers[CurrentDriver].FileName+'.GetEntry');
+
               NumElems := y-1;
+//            MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),ex.message),mtWarning,[mbOk],0);
+//            MessageDlg(ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),mtWarning,[mbOk],0);
             end;
           end;
 
           LoadTimeRetrieve := MilliSecondsBetween(Now, StartTime);
-      //ShowMessage('Retrieve: OK');
           SetTitle(DLNGstr('TLD003'));
           StartTime := Now;
 
@@ -1252,7 +1294,24 @@ begin
     end;
   end;
  except
-  on E: Exception do MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].FileName),Drivers[CurrentDriver].Info.Author),E.Message),mtWarning,[mbOk],0);
+  on E: Exception do
+  begin  // New error dialog box
+    frmError.PrepareError;
+    frmError.details.Add('Error while extracting data from '+Drivers[CurrentDriver].FileName+' driver:');
+    frmError.details.Add('');
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Name='+Drivers[CurrentDriver].Info.Name);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Author='+Drivers[CurrentDriver].Info.Author);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Version='+Drivers[CurrentDriver].Info.Version);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Comment='+Drivers[CurrentDriver].Info.Comment);
+    frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].GetDriver.ExtractInternal='+booltostr(Drivers[CurrentDriver].GetDriver.ExtractInternal,true));
+    frmError.details.Add('outfile='+outfile);
+    frmError.details.Add('CurrentFile='+inttostr(CurrentFile));
+    frmError.details.Add('Offset='+inttostr(Offset));
+    frmError.details.Add('Size='+inttostr(Size));
+    frmError.FillTxtError(E,'classFSE.pas','ExtractFile_Alt:'+Drivers[CurrentDriver].FileName);
+  end;
+//   MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].FileName),Drivers[CurrentDriver].Info.Author),E.Message),mtWarning,[mbOk],0);
  end;
 
 end;

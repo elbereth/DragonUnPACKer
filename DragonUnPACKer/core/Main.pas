@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.2 2004-05-08 13:43:50 elbereth Exp $
+// $Id: Main.pas,v 1.3 2004-07-17 19:32:09 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -21,9 +21,10 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, ToolWin, Menus, ImgList,
-  lib_language, translation, ShellApi, StrUtils, VirtualTrees, lib_look,
+  lib_language, translation, ShellApi, JvJCLUtils, VirtualTrees, lib_look,
   DropSource, XPMan, DragDrop, DragDropFile, prg_ver, JvclVer,
-  classIconsFromExt, DateUtils, JvMenus, JvBaseDlg, JvBrowseFolder, JvRichEd;
+  classIconsFromExt, DateUtils, JvMenus,  JvRichEdit,
+  JvComponent, cxCpu40, JvBaseDlg, JvBrowseFolder, lib_binutils;
 
 type
   Tdup5Main = class(TForm)
@@ -187,7 +188,7 @@ type
   private
     AlreadyDragging: boolean;
     procedure Open_Hub(src: String);
-    procedure setRichEditLineStyle(R: TJvxRichEdit; Line: Integer;
+    procedure setRichEditLineStyle(R: TJvRichEdit; Line: Integer;
       Style: TFontStyles);
   public
     { Déclarations publiques }
@@ -382,7 +383,7 @@ begin
 
 end;
 
-procedure Tdup5Main.setRichEditLineStyle(R : TJvxRichEdit; Line : Integer; Style : TFontStyles);
+procedure Tdup5Main.setRichEditLineStyle(R : TJvRichEdit; Line : Integer; Style : TFontStyles);
 var
  oldPos,
  oldSelLength : Integer;
@@ -430,6 +431,15 @@ begin
   frmAbout.txtMoreinfo.Lines.Add('VirtualTree v'+VTVersion);
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
   frmAbout.txtMoreinfo.Lines.Add('http://www.delphi-gems.com');
+  frmAbout.txtMoreinfo.Lines.Add('cxCpu v'+cxCpu.Version.FormatVersion);
+  setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
+  frmAbout.txtMoreinfo.Lines.Add('http://www.carbonsoft.com/cxcpu/');
+  frmAbout.txtMoreinfo.Lines.Add('Drag and Drop Component Suite');
+  setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
+  frmAbout.txtMoreinfo.Lines.Add('http://www.users.on.net/johnson/delphi/');
+
+//  Compile Time Expert
+
   frmAbout.txtMoreinfo.Lines.Add('');
   frmAbout.txtMoreinfo.Lines.Add(DLNGStr('ABT005'));
   frmAbout.txtMoreinfo.Lines.Add('Babagunush');
@@ -474,12 +484,14 @@ begin
 
   frmAbout.txtMoreinfo.Visible := true;
 
-  frmAbout.lblVersion.Caption := CurVersion + ' ' + CurEdit + ' (Build ' + IntToStr(CurBuild) +')';
+  if CurEdit = '' then
+    frmAbout.lblVersion.Caption := CurVersion + ' (Build ' + IntToStr(CurBuild) +')'
+  else
+    frmAbout.lblVersion.Caption := CurVersion + ' ' + CurEdit + ' (Build ' + IntToStr(CurBuild) +')';
   frmAbout.Top := dup5Main.Top + ((Height - frmAbout.Height) div 2) ;
   frmAbout.Left := dup5Main.Left + ((Width - frmAbout.Width) div 2) ;
 
   frmAbout.lblCompDate.Caption := DateToStr(compileTime)+ ' '+TimeToStr(compileTime);
-//  frmAbout.lblCompTime.Caption := TimeToStr(compileTime);
 
   if (pos('WIP',Uppercase(CurEdit)) > 0) then
     frmAbout.imgWIP.visible := true

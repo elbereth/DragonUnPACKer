@@ -1,4 +1,4 @@
-; $Id: setup.iss,v 1.3.2.1 2004-08-22 19:36:26 elbereth Exp $
+; $Id: setup.iss,v 1.3.2.2 2004-10-03 17:12:12 elbereth Exp $
 ; $Source: /home/elbzone/backup/cvs/DragonUnPACKer/install/setup.iss,v $
 ;
 ; The contents of this file are subject to the Mozilla Public License
@@ -18,14 +18,14 @@
 Compression=lzma/max
 SolidCompression=yes
 AppName=Dragon UnPACKer 5
-AppVerName=Dragon UnPACKer v5.1.0 (build 144/wip)
+AppVerName=Dragon UnPACKer v5.1.1 (build 149/wip)
 AppPublisher=Elbereth Zone
 AppPublisherURL=http://www.elberethzone.net
 AppSupportURL=http://sourceforge.net/projects/dragonunpacker/
 AppUpdatesURL=http://www.dragonunpacker.com
 DefaultDirName={pf}\Dragon UnPACKer 5
 DefaultGroupName=Dragon UnPACKer 5
-OutputBaseFilename=dup510wip-setup
+OutputBaseFilename=dup511wip-setup
 AppMutex=DragonUnPACKer5
 AppId=DragonUnPACKer5
 DisableStartupPrompt=yes
@@ -34,14 +34,14 @@ UninstallDisplayIcon={app}\dunpacker5.exe
 WizardImageBackColor=$FFFFFF
 WizardImageFile=dup5-instimage.bmp
 WizardSmallImageFile=dup5-inst55x55.bmp
-VersionInfoVersion=5.1.0.144
+VersionInfoVersion=5.1.1.149
 ; uncomment the following line if you want your installation to run on NT 3.51 too.
-MinVersion=4.10,4
+MinVersion=4.10,4.0sp6
 
 [Languages]
-Name: "en"; MessagesFile: "compiler:Default.isl"; InfoBeforeFile: "H:\Programmation\CVS\DragonUnPACKer\DragonUnPACKer\install\setup-info-english.rtf"
+Name: "en"; MessagesFile: "compiler:Default.isl"; InfoBeforeFile: "setup-info-english.rtf"
 ;Name: "sp"; MessagesFile: "SpanishStd-1-4.1.4.isl"; InfoBeforeFile: "H:\Programmation\CVS\DragonUnPACKer\DragonUnPACKer\install\setup-info-spanish.rtf"
-Name: "fr"; MessagesFile: "compiler:languages\French.isl"; InfoBeforeFile: "H:\Programmation\CVS\DragonUnPACKer\DragonUnPACKer\install\setup-info-french.rtf"
+Name: "fr"; MessagesFile: "compiler:languages\French.isl"; InfoBeforeFile: "setup-info-french.rtf"
 
 [Tasks]
 Name: "desktopicon"; Languages: en; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; MinVersion: 4,4
@@ -73,6 +73,7 @@ Filename: "{app}\DrgUnPack5.url"; Section: "InternetShortcut"; Key: "URL"; Strin
 
 [Icons]
 Name: "{group}\Dragon UnPACKer 5"; Filename: "{app}\DrgUnPack5.exe"
+Name: "{group}\Read me (WIP version)"; Languages: en; Filename: "{app}\readme-wip.txt"
 ; vvv --- sp --- vvv
 Name: "{group}\Read me"; Languages: en; Filename: "{app}\readme.txt"
 Name: "{group}\Lisez moi"; Languages: fr; Filename: "{app}\lisezmoi.txt"

@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.2 2004-07-17 19:52:32 elbereth Exp $
+// $Id: Options.pas,v 1.2.2.1 2004-07-25 10:29:19 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -51,7 +51,6 @@ type
     Panel2: TPanel;
     lblLookComment: TLabel;
     tabPlugins: TPanel;
-    lstDrivers: TListBox;
     cmdDrvSetup: TButton;
     grpDrvInfo: TGroupBox;
     strDrvInfoAuthor: TLabel;
@@ -106,6 +105,16 @@ type
     chkXPstyle: TCheckBox;
     chkRegistryIcons: TCheckBox;
     chkUseHyperRipper: TCheckBox;
+    lstDrivers2: TListView;
+    grpAdvInfo: TGroupBox;
+    lblDUDI: TLabel;
+    txtDUDI: TStaticText;
+    lblIntVer: TLabel;
+    txtIntVer: TStaticText;
+    lblPriority: TLabel;
+    trkPriority: TTrackBar;
+    txtPriority: TStaticText;
+    butRefresh: TButton;
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cmdOkClick(Sender: TObject);
@@ -132,6 +141,12 @@ type
     procedure cmdHRAboutClick(Sender: TObject);
     procedure cmdHRSetupClick(Sender: TObject);
     procedure chkUseHyperRipperClick(Sender: TObject);
+    procedure lstDrivers2KeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure lstDrivers2Change(Sender: TObject; Item: TListItem;
+      Change: TItemChange);
+    procedure trkPriorityChange(Sender: TObject);
+    procedure butRefreshClick(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -251,15 +266,22 @@ end;
 
 procedure DRVList();
 var x : integer;
+    itmx : TListItem;
 begin
 
-  frmConfig.lstDrivers.Clear;
+  frmConfig.lstDrivers2.Clear;
   for x := 1 to FSE.NumDrivers do
-    frmConfig.lstDrivers.Items.Add(FSE.Drivers[x].Info.Name+' v'+FSE.Drivers[x].Info.Version +' ('+FSE.Drivers[x].FileName+')');
+  begin
+    itmx := frmConfig.lstDrivers2.Items.Add;
+    itmx.Caption := inttostr(FSE.Drivers[x].Priority);
+    itmx.SubItems.Add(FSE.Drivers[x].Info.Name);
+    itmx.SubItems.Add(FSE.Drivers[x].Info.Version);
+    itmx.SubItems.Add(ChangeFileExt(FSE.Drivers[x].FileName,''));
+  end;
 
   if FSE.NumDrivers > 0 then
   begin
-    frmConfig.lstDrivers.ItemIndex := 0;
+    frmConfig.lstDrivers2.ItemIndex := 0;
   end;
 
 end;
@@ -384,8 +406,8 @@ begin
   if CPlug.NumPlugins > 0 then
     frmConfig.lstConvertClick(Self);
   DRVList;
-  if FSE.NumDrivers > 0 then
-    frmConfig.lstDriversClick(Self);
+//  if FSE.NumDrivers > 0 then
+//    frmConfig.lstDriversClick(Self);
   HRIPList;
   if HPlug.NumPlugins > 0 then
     frmConfig.lstHyperRipperClick(Self);
@@ -430,13 +452,13 @@ end;
 procedure TfrmConfig.lstDriversClick(Sender: TObject);
 begin
 
-  lblDrvInfoAuthor.Caption := FSE.Drivers[lstDrivers.ItemIndex+1].Info.Author;
+{  lblDrvInfoAuthor.Caption := FSE.Drivers[lstDrivers.ItemIndex+1].Info.Author;
   lblDrvInfoVersion.Caption := FSE.Drivers[lstDrivers.ItemIndex+1].Info.Version;
   lblDrvInfoComments.Caption := FSE.Drivers[lstDrivers.ItemIndex+1].Info.Comment;
 
   cmdDrvAbout.Enabled := FSE.Drivers[lstDrivers.ItemIndex+1].IsAboutBox;
   cmdDrvSetup.Enabled := FSE.Drivers[lstDrivers.ItemIndex+1].IsConfigBox;
-
+}
 end;
 
 procedure GetLOOKInfos(fil: string);
@@ -644,7 +666,7 @@ end;
 procedure TfrmConfig.cmdDrvAboutClick(Sender: TObject);
 begin
 
-  FSE.showAboutBox(Application.Handle,lstDrivers.ItemIndex+1);
+  FSE.showAboutBox(Application.Handle,lstDrivers2.ItemIndex+1);
 
 end;
 
@@ -746,7 +768,7 @@ end;
 procedure TfrmConfig.cmdDrvSetupClick(Sender: TObject);
 begin
 
-  FSE.showConfigBox(Application.Handle,lstDrivers.ItemIndex+1);
+  FSE.showConfigBox(Application.Handle,lstDrivers2.ItemIndex+1);
 
 end;
 
@@ -793,6 +815,54 @@ begin
   Finally
     Reg.Free;
   end;
+
+end;
+
+procedure TfrmConfig.lstDrivers2KeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+
+  if (Key = 27) then
+    cmdOk.Click;
+
+end;
+
+procedure TfrmConfig.lstDrivers2Change(Sender: TObject; Item: TListItem;
+  Change: TItemChange);
+begin
+
+  if (Change = ctState)
+  and (lstDrivers2.ItemIndex > -1) then
+  begin
+    lblDrvInfoAuthor.Caption := FSE.Drivers[lstDrivers2.ItemIndex+1].Info.Author;
+    lblDrvInfoVersion.Caption := FSE.Drivers[lstDrivers2.ItemIndex+1].Info.Version;
+    lblDrvInfoComments.Caption := FSE.Drivers[lstDrivers2.ItemIndex+1].Info.Comment;
+
+    cmdDrvAbout.Enabled := FSE.Drivers[lstDrivers2.ItemIndex+1].IsAboutBox;
+    cmdDrvSetup.Enabled := FSE.Drivers[lstDrivers2.ItemIndex+1].IsConfigBox;
+
+    txtDUDI.Caption := 'v'+inttostr(FSE.Drivers[lstDrivers2.ItemIndex+1].DUDIVersion);
+    txtIntVer.Caption := inttostr(FSE.Drivers[lstDrivers2.ItemIndex+1].GetVersion);
+
+    trkPriority.Position := FSE.Drivers[lstDrivers2.ItemIndex+1].Priority;
+  end;
+
+end;
+
+procedure TfrmConfig.trkPriorityChange(Sender: TObject);
+begin
+
+  txtPriority.Caption := inttostr(trkPriority.Position);
+  if FSE.Drivers[lstDrivers2.ItemIndex + 1].Priority <> trkPriority.Position then
+    FSE.setDriverPriority(lstDrivers2.ItemIndex + 1, trkPriority.Position);
+
+end;
+
+procedure TfrmConfig.butRefreshClick(Sender: TObject);
+begin
+
+  FSE.sortDriversByPriority;
+  DRVlist;
 
 end;
 

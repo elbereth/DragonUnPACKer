@@ -1,6 +1,6 @@
 unit About;
 
-// $Id: About.pas,v 1.2 2004-05-16 09:24:00 elbereth Exp $
+// $Id: About.pas,v 1.3 2004-07-17 19:20:20 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/About.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -38,7 +38,6 @@ type
     imgWIP: TImage;
     procedure cmdOkClick(Sender: TObject);
     procedure TimerStartBlendTimer(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
     procedure lblURLClick(Sender: TObject);
     procedure txtMoreinfoURLClick(Sender: TObject; const URLText: String;
       Button: TMouseButton);
@@ -73,18 +72,6 @@ begin
   end
   else
     frmAbout.AlphaBlendValue := frmAbout.AlphaBlendValue + 1;
-
-end;
-
-procedure TfrmAbout.FormCreate(Sender: TObject);
-begin
-
-
-  //TimerStartBlend.Enabled := true;
-//  if CheckOs then
-//    imgAbout.Picture.Bitmap.LoadFromResourceName(Hinstance,'DUP5W2K')
-//  else
-//    imgAbout.Picture.Bitmap.LoadFromResourceName(Hinstance,'DUP5W9X');
 
 end;
 

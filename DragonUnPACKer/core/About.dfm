@@ -18,7 +18,6 @@ object frmAbout: TfrmAbout
   Font.Style = []
   FormStyle = fsStayOnTop
   OldCreateOrder = False
-  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object ImgAbout: TImage

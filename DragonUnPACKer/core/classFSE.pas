@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.3.2.5 2004-10-03 17:11:10 elbereth Exp $
+// $Id: classFSE.pas,v 1.3.2.6 2004-10-03 21:28:30 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -199,7 +199,7 @@ type TDrivers = class
     function GetFileSize(): Int64;
 //    procedure ExtractFile(entrynam: string; outfile: string; silent: boolean);
     procedure ExtractFile(entry: FSE; outfile: string; silent: boolean);
-    procedure ExtractFileToStream(entry: FSE; outstream: TStream; silent: boolean);
+    procedure ExtractFileToStream(entry: FSE; outstream: TStream; fallbacktempfile: string; silent: boolean);
     procedure ExtractDir(cdir: string; outpath: string);
     function IsListEmpty: Boolean;
     function GetListSize: Integer;
@@ -2180,11 +2180,9 @@ begin
 
 end;
 
-procedure TDrivers.ExtractFileToStream(entry: FSE; outstream: TStream;
-  silent: boolean);
-var //Offset,Size: int64;
-//    DataX,DataY: integer;
-    Save_Cursor:TCursor;
+procedure TDrivers.ExtractFileToStream(entry: FSE; outstream: TStream; fallbacktempfile: string; silent: boolean);
+var Save_Cursor:TCursor;
+    tmpStm: TFileStream;
 begin
 
   SetStatus('E');
@@ -2195,8 +2193,18 @@ begin
   ShowPanelEx;
   Screen.Cursor := crHourGlass;    { Affiche le curseur en forme de sablier }
   try
-    //GetListElem(entrynam,Offset,Size,DataX,DataY);
-    ExtractFileToStream_Alt(outstream,entry^.Name,entry^.Offset,entry^.Size,entry^.DataX,entry^.DataY,silent);
+    if (CurrentDriver <> -1) and Drivers[CurrentDriver].GetDriver.ExtractInternal and (Drivers[CurrentDriver].DUDIVersion < 4) then
+    begin
+      ExtractFile_Alt(fallbacktempfile,entry^.Name,entry^.Offset,entry^.Size,entry^.DataX,entry^.DataY,silent);
+      tmpStm := TFileStream.Create(fallbacktempfile,fmOpenRead or fmShareDenyWrite);
+      try
+        outstream.CopyFrom(tmpStm,tmpStm.Size);
+      finally
+        tmpStm.Free;
+      end;
+    end
+    else
+      ExtractFileToStream_Alt(outstream,entry^.Name,entry^.Offset,entry^.Size,entry^.DataX,entry^.DataY,silent);
   finally
     Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
     SetStatus('-');

@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.3.2.4 2004-10-03 17:11:10 elbereth Exp $
+// $Id: Main.pas,v 1.3.2.5 2004-10-03 21:28:30 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -1316,6 +1316,8 @@ var ext,dstfil,tmpfil: string;
     CurrentMenu: TMenuItem;
     Data: pvirtualTreeData;
     Filename: string;
+    tmpStm: TMemoryStream;
+    outStm: TFileStream;
 begin
 
   CurrentMenu := Sender as TMenuItem;
@@ -1325,6 +1327,8 @@ begin
 
   Data := lstContent.GetNodeData(lstContent.GetFirstSelected);
   Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+
+  writeLog('Converting "'+Data.data^.Name + '" to "'+CListInfo.List[CurrentMenu.Tag].Info.Display+'"...');
 
   SaveDialog.FileName := ChangeFileExt(filename,'.'+CListInfo.List[CurrentMenu.Tag].Info.Ext);
 
@@ -1338,26 +1342,42 @@ begin
 
     tmpfil := Strip0(TempDir)+'dup5tmp-'+IntToStr(Random(99999999))+'-'+filename;
 
-{    rep := GetNodePath2(lstIndex2.FocusedNode);
-    if length(rep) > 0 then
-      rep := rep + FSE.SlashMode;}
-    FSE.ExtractFile(Data.data,tmpfil,false);
-
     dstfil := SaveDialog.Filename;
-//    FSE.GetListElem(rep+filename,Offset,Size,DataX,DataY);
 
     ext := ExtractFileExt(filename);
     if ext[1] = '.' then
       ext := RightStr(ext,length(ext)-1);
     ext := UpperCase(ext);
-    CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].Convert(tmpfil,dstfil,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
+
+    if CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].DUCIVersion < 3 then
+    begin
+      appendLog('Using old (slow) method...');
+      FSE.ExtractFile(Data.data,tmpfil,false);
+      CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].Convert(tmpfil,dstfil,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
+    end
+    else
+    begin
+      appendLog('Using new (fast) method...');
+      tmpStm := TMemoryStream.Create;
+      outStm := TFileStream.Create(dstfil,fmCreate or fmShareDenyWrite);
+      try
+        FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,false);
+        tmpStm.Seek(0,soFromBeginning);
+        appendLog('Converting...');
+        CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].ConvertStream(tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
+        appendLog('Done!');
+      finally
+        tmpStm.Free;
+        outStm.Free;
+      end;
+    end;
 
     try
-      DeleteFile(tmpfil);
+      if FileExists(tmpfil) then
+        DeleteFile(tmpfil);
     except
       tempFiles.Add(tmpfil);
     end;
-    //  Application.MessageBox(PChar(DLNGStr('ERR101')),PChar(DLNGStr('ERR000')),MB_OK);
   end;
 
 end;
@@ -1417,6 +1437,9 @@ var outputdir: string;
     Silent: boolean;
     Node: PVirtualNode;
     Data: pvirtualTreeData;
+    useOldMethod: Boolean;
+    tmpStm: TMemoryStream;
+    outStm: TFileStream;
 begin
 
   CurrentMenu := Sender as TMenuItem;
@@ -1441,21 +1464,53 @@ begin
 
     Node := lstContent.GetFirstSelected;
 
+    writeLog('Converting multiple entries to "'+CListInfo.List[CurrentMenu.Tag].Info.Display+'"...');
+
+    useOldMethod := CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].DUCIVersion < 3;
+
+    if useOldMethod then
+      appendLog('Using old (slow) method...')
+    else
+      appendLog('Using new (fast) method...');
+
     while (Node <> Nil) do
     begin
       Data := lstContent.GetNodeData(Node);
       filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
       dstfil := outputdir + ChangeFileExt(fileName,'.'+CListInfo.List[CurrentMenu.Tag].Info.Ext);
       tmpfil := Strip0(TempDir)+'dup5tmp-'+IntToStr(Random(99999999))+'-'+fileName;
-      FSE.ExtractFile(data.data,tmpfil,true);
-//      FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
 
-      CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].Convert(tmpfil,dstfil,fileName,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
+      if useOldMethod then
+      begin
+        FSE.ExtractFile(Data.data,tmpfil,false);
+        CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].Convert(tmpfil,dstfil,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
+      end
+      else
+      begin
+        tmpStm := TMemoryStream.Create;
+        outStm := TFileStream.Create(dstfil,fmCreate or fmShareDenyWrite);
+        try
+          FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,false);
+          tmpStm.Seek(0,soFromBeginning);
+          appendLog('Converting...');
+          CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].ConvertStream(tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
+          appendLog('Done!');
+        finally
+          tmpStm.Free;
+          outStm.Free;
+        end;
+      end;
+
       if not(Silent) then
         Silent := True;
+//      FSE.ExtractFile(data.data,tmpfil,true);
+//      FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
+
+//      CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].Convert(tmpfil,dstfil,fileName,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
 
       try
-        DeleteFile(tmpfil);
+        if FileExists(tmpfil) then
+          DeleteFile(tmpfil);
       except
         tempFiles.Add(tmpfil);
       end;

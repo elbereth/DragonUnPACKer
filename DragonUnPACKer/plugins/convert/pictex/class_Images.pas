@@ -1,6 +1,6 @@
 unit class_Images;
 
-// $Id: class_Images.pas,v 1.3.2.1 2004-10-03 17:13:35 elbereth Exp $
+// $Id: class_Images.pas,v 1.3.2.2 2005-03-27 10:13:53 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/class_Images.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -131,6 +131,9 @@ type TCouleur = record
 type ESIBadFormat = class(Exception);
 
 type TSaveImage = class
+    constructor Create(x, y: Integer); overload;
+    constructor Create(x, y, cmsize: Integer; cmalpha: boolean); overload;
+    destructor Destroy; override;
     function LoadPAL(dpalfil: string): boolean;
     procedure SaveToBMP(fil: String);
     procedure SaveToBMPStream(stm: TStream);
@@ -219,6 +222,40 @@ begin
     result := CurPalSize - 1;
   end;
 
+end;
+
+constructor TSaveImage.Create(x, y: Integer);
+begin
+
+  inherited Create;
+  SetLength(Pixels,x,y);
+  W := X;
+  H := Y;
+  SetLength(Palette,256);
+  PaletteSize := 256;
+  PaletteAlpha := false;
+
+end;
+
+constructor TSaveImage.Create(x, y, cmsize: Integer; cmalpha: boolean);
+begin
+
+  inherited Create;
+  SetLength(Pixels,x,y);
+  W := X;
+  H := Y;
+  SetLength(Palette,cmsize);
+  PaletteSize := cmsize;
+  PaletteAlpha := cmalpha;
+  CurPalSize := 0;
+
+end;
+
+destructor TSaveImage.Destroy;
+begin
+  SetLength(Pixels,0,0);
+  SetLength(Palette,0);
+  inherited Destroy;
 end;
 
 procedure TSaveImage.GenerateMipMaps;
@@ -352,6 +389,7 @@ procedure TSaveImage.SaveToBMPStream(stm: TStream);
 var HDR: BMPHeader;
     x,y,atend,BufSize: integer;
     Buffer: PByteArray;
+//    Buffer: array of Byte;
 begin
 
     HDR.ID[0] := 'B';
@@ -396,19 +434,22 @@ begin
     stm.WriteBuffer(HDR.ColorsImportant,4);
 
     BufSize := (W+atend)*H;
-    if BufSize < 1024 then
-      BufSize := 1024;
+    if BufSize < (PaletteSize*4) then
+      BufSize := (PaletteSize*4);
 
     GetMem(Buffer,BufSize);
+//    New(Buffer);
+//    SetLength(Buffer,BufSize);
     try
-      for x := 0 to PaletteSize do
+      for x := 0 to PaletteSize-1 do
       begin
         Buffer[(x*4)] := Palette[x].B;
         Buffer[(x*4)+1] := Palette[x].G;
         Buffer[(x*4)+2] := Palette[x].R;
         Buffer[(x*4)+3] := Palette[x].A;
       end;
-      stm.WriteBuffer(Buffer^,PaletteSize*4);
+      stm.WriteBuffer(Buffer^,(PaletteSize*4));
+//      stm.WriteBuffer(Buffer[0],PaletteSize*4);
 
       for y := H-1 downto 0 do
       begin
@@ -418,8 +459,11 @@ begin
           Buffer[(((H-1)-y)*(W+atend))+W-1+x] := 0;
       end;
       stm.WriteBuffer(Buffer^,(W+atend)*H);
+//      stm.WriteBuffer(Buffer[0],(W+atend)*H);
     finally
       FreeMem(Buffer);
+      //SetLength(Buffer,0);
+      //Dispose(Buffer);
     end;
 
 end;
@@ -722,7 +766,7 @@ begin
   GetMem(Buffer,BufSize);
   try
 
-    for x := 0 to PaletteSize do
+    for x := 0 to PaletteSize-1 do
     begin
       if PaletteAlpha then
       begin

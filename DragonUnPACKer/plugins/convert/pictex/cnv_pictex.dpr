@@ -1,6 +1,6 @@
 library cnv_pictex;
 
-// $Id: cnv_pictex.dpr,v 1.1.1.1 2004-05-08 10:26:52 elbereth Exp $
+// $Id: cnv_pictex.dpr,v 1.2 2004-05-20 16:50:35 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/cnv_pictex.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -53,6 +53,16 @@ type ConvertListElem = record
      TLanguageCallback = function (lngid: ShortString): ShortString;
 //     EBadType = class(Exception);
 
+     HMC_TEX_Entry = packed record
+       Size: cardinal;
+       Type1: array[0..3] of char;
+       Type2: array[0..3] of char;
+       Unknown1: Cardinal;
+       Unknown2: word;
+       Height: word;
+       Unknown: array[1..4] of Cardinal;
+     end;
+
 var Percent: TPercentCallback;
     DLNGStr: TLanguageCallback;
     CurPath: ShortString;
@@ -60,7 +70,7 @@ var Percent: TPercentCallback;
     AHandle: THandle;
     AOwner: TComponent;
 
-const DRIVER_VERSION = 10510;
+const DRIVER_VERSION = 10610;
 const DUP_VERSION = 50040;
 
 { * Version History:
@@ -72,6 +82,7 @@ const DUP_VERSION = 50040;
   * v1.0.4 Beta  (10410): Using DUCI v2
   *                       Added palette management in config box
   * v1.0.5 Beta  (10510): Fixed some bugs in palette creator (author/name)
+  * v1.0.6 Beta  (10610): Added Hitman: Contracts RGBA support
   * }
 
 function DUCIVersion: Byte; stdcall;
@@ -82,9 +93,9 @@ end;
 function VersionInfo(): ConvertInfo;
 begin
 
-  result.Name := 'Elbereth''s Picture/Textures convert plugin';
+  result.Name := 'Picture/Textures Convert Plugin';
   result.Version := getVersion(DRIVER_VERSION);
-  result.Author := 'Alexandre Devilliers (aka Elbereth)';
+  result.Author := 'Dragon UnPACKer project team';
   result.Comment := 'Converting pictures and textures? Yeah!';
   result.VerID := DRIVER_VERSION;
 
@@ -110,6 +121,8 @@ begin
     end;
   end
   else if (fmt = 'POD3') and (uppercase(extractfileext(nam)) = '.TEX') then
+    result := true
+  else if (fmt = 'HMCTEX') and (uppercase(extractfileext(nam)) = '.RGBA') then
     result := true
   else if (fmt = 'ART') then
     result := true;
@@ -205,6 +218,16 @@ begin
     result.List[3].Display := 'TGA - Targa (24bpp)';
     result.List[3].Ext := 'TGA';
     result.List[3].ID := 'TGA24';
+  end
+  else if (fmt = 'HMCTEX') and (uppercase(extractfileext(nam)) = '.RGBA') then
+  begin
+    result.NumFormats := 2;
+    result.List[1].Display := 'TGA - Targa (24bpp)';
+    result.List[1].Ext := 'TGA';
+    result.List[1].ID := 'TGA24';
+    result.List[2].Display := 'TGA - Targa (32bpp)';
+    result.List[2].Ext := 'TGA';
+    result.List[2].ID := 'TGA32';
   end
   else if (fmt = 'ART') then
   begin
@@ -601,6 +624,69 @@ begin
 
 end;
 
+function Get0(src: integer): string;
+var tchar: Char;
+    res: string;
+begin
+
+  repeat
+    FileRead(src,tchar,1);
+    res := res + tchar;
+  until tchar = chr(0);
+
+  Get0 := res;
+
+end;
+
+function ConvertHMC_TEX_ABGR(src, dst, cnv: String): integer;
+var Img: TSaveImage32;
+    hSRC: integer;
+    W,H,fsize,x,y: cardinal;
+    HDR: HMC_TEX_Entry;
+    Buffer: PByteArray;
+begin
+
+  result := 0;
+
+  img := TSaveImage32.Create;
+  try
+    hSRC := FileOpen(src,fmOpenRead or fmShareDenyWrite);
+    try
+      FileRead(hSRC,HDR,SizeOf(HDR));
+      Get0(hSRC);
+      FileRead(hSRC,fsize,4);
+      W := HDR.Height;
+      H := (fsize div 4) div W;
+      img.SetSize(W,H);
+      GetMem(Buffer,W*H*4);
+      try
+        FileRead(hSRC,Buffer^,H*W*4);
+        for y := 0 to H-1 do
+          for x := 0 to W-1 do
+          begin
+            img.Pixels[x][y].R := Buffer[(y*W*4)+x*4];
+            img.Pixels[x][y].G := Buffer[(y*W*4)+x*4+1];
+            img.Pixels[x][y].B := Buffer[(y*W*4)+x*4+2];
+            img.Pixels[x][y].A := Buffer[(y*W*4)+x*4+3];
+          end;
+      finally
+        FreeMem(Buffer);
+      end;
+      if cnv = 'TGA24' then
+        img.SaveToTGA24(dst)
+      else if cnv = 'TGA32' then
+        img.SaveToTGA32(dst);
+    finally
+      FileClose(hSRC);
+    end;
+  finally
+    img.Free;
+  end;
+
+//  ShowMessage(IntToStr(MillisecondsBetween(Now,StartTime)));
+
+end;
+
 function setLastPal(lastPal: string): string;
 var Reg: TRegistry;
 begin
@@ -761,6 +847,10 @@ begin
   begin
     result := ConvertPOD3TEX(src,dst,cnv);
   end
+  else if (fmt = 'HMCTEX') and (uppercase(extractfileext(nam)) = '.RGBA') then
+  begin
+    result := ConvertHMC_TEX_ABGR(src,dst,cnv);
+  end
   else if (fmt = 'ART') then
   begin
     if not(Silent) or (palfil = '') then
@@ -785,12 +875,12 @@ end;
 procedure AboutBox; stdcall;
 begin
 
-  MessageBoxA(AHandle, PChar('Elbereth''s Picture/Textures convert plugin v'+getVersion(DRIVER_VERSION)+#10+
+  MessageBoxA(AHandle, PChar('Picture/Textures Convert Plugin v'+getVersion(DRIVER_VERSION)+#10+
                           '(c)Copyright 2002-2004 Alexandre Devilliers'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+#10+
                           DLNGStr('CNV010')
                           )
-                        , 'About Elbereth''s Picture/Textures convert plugin...', MB_OK);
+                        , 'About Picture/Textures Convert Plugin...', MB_OK);
 
 end;
 

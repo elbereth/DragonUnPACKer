@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.3.2.7 2005-03-27 07:19:10 elbereth Exp $
+// $Id: Main.pas,v 1.3.2.8 2005-03-27 10:05:58 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -209,6 +209,7 @@ type
       Color: TColor);
   public
     function getVerboseLevel(): integer;
+    procedure setVerboseLevel(verbLevel: integer);
     procedure writeLog(text: string);
     procedure writeLogVerbose(minLevel: integer; text: string);
     procedure appendLog(text: string);
@@ -1007,6 +1008,11 @@ begin
       end;
 
       if Reg.ValueExists('VerboseLevel') then
+      begin
+        verboseLevel := reg.ReadInteger('VerboseLevel');
+      end;
+
+      if Reg.ValueExists('VerboseLevel') then
         verboseLevel := Reg.ReadInteger('VerboseLevel')
       else
         verboseLevel := 0;
@@ -1345,6 +1351,7 @@ var ext,dstfil,tmpfil: string;
     Filename: string;
     tmpStm: TMemoryStream;
     outStm: TFileStream;
+    silentExtract: boolean;
 begin
 
   CurrentMenu := Sender as TMenuItem;
@@ -1355,7 +1362,7 @@ begin
   Data := lstContent.GetNodeData(lstContent.GetFirstSelected);
   Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
 
-  writeLog('Converting "'+Data.data^.Name + '" to "'+CListInfo.List[CurrentMenu.Tag].Info.Display+'"...');
+  writeLog(ReplaceStr(ReplaceStr(DLNGStr('LOGC10'),'%a',Data.data^.Name),'%b',CListInfo.List[CurrentMenu.Tag].Info.Display));
 
   SaveDialog.FileName := ChangeFileExt(filename,'.'+CListInfo.List[CurrentMenu.Tag].Info.Ext);
 
@@ -1376,23 +1383,27 @@ begin
       ext := RightStr(ext,length(ext)-1);
     ext := UpperCase(ext);
 
+    silentExtract := getVerboseLevel = 0;
+
     if CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].DUCIVersion < 3 then
     begin
-      appendLog('Using old (slow) method...');
-      FSE.ExtractFile(Data.data,tmpfil,false);
+      appendLog(DLNGStr('LOGC12'));
+      FSE.ExtractFile(Data.data,tmpfil,silentExtract);
+      writeLogVerbose(1,ReplaceStr(DLNGStr('LOGC13'),'%b',CListInfo.List[CurrentMenu.Tag].Info.Display));
       CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].Convert(tmpfil,dstfil,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
+      appendLog(DLNGStr('LOG510'));
     end
     else
     begin
-      appendLog('Using new (fast) method...');
+      appendLog(DLNGStr('LOGC11'));
       tmpStm := TMemoryStream.Create;
       outStm := TFileStream.Create(dstfil,fmCreate or fmShareDenyWrite);
       try
-        FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,false);
+        FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,silentExtract);
         tmpStm.Seek(0,soFromBeginning);
-        appendLog('Converting...');
+        writeLogVerbose(1,ReplaceStr(DLNGStr('LOGC13'),'%b',CListInfo.List[CurrentMenu.Tag].Info.Display));
         CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].ConvertStream(tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
-        appendLog('Done!');
+        appendLog(DLNGStr('LOG510'));
       finally
         tmpStm.Free;
         outStm.Free;
@@ -1491,14 +1502,14 @@ begin
 
     Node := lstContent.GetFirstSelected;
 
-    writeLog('Converting multiple entries to "'+CListInfo.List[CurrentMenu.Tag].Info.Display+'"...');
+    writeLog(ReplaceStr(DLNGStr('LOGC14'),'%b',CListInfo.List[CurrentMenu.Tag].Info.Display));
 
     useOldMethod := CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].DUCIVersion < 3;
 
     if useOldMethod then
-      appendLog('Using old (slow) method...')
+      appendLog(DLNGStr('LOGC12'))
     else
-      appendLog('Using new (fast) method...');
+      appendLog(DLNGStr('LOGC11'));
 
     while (Node <> Nil) do
     begin
@@ -1510,7 +1521,9 @@ begin
       if useOldMethod then
       begin
         FSE.ExtractFile(Data.data,tmpfil,false);
+        appendLog(DLNGStr('LOGC15'));
         CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].Convert(tmpfil,dstfil,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
+        appendLog(DLNGStr('LOG510'));
       end
       else
       begin
@@ -1519,14 +1532,14 @@ begin
         try
           FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,false);
           tmpStm.Seek(0,soFromBeginning);
-          appendLog('Converting...');
+          appendLog(DLNGStr('LOGC15'));
           CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].ConvertStream(tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
-          appendLog('Done!');
+          appendLog(DLNGStr('LOG510'));
         except
           on E: Exception do
           begin
-            appendLog('Error!');
-            writeLog('Unhandled exception: '+E.ClassName+' - '+E.Message);
+            appendLog(DLNGStr('LOG514'));
+            writeLog(DLNGStr('ERR200')+' '+E.ClassName+' - '+E.Message);
             colorLog(clRed);
             styleLog([fsBold]);
           end;
@@ -2545,6 +2558,13 @@ begin
 
   if verboseLevel >= minLevel then
     colorLog(Color);
+
+end;
+
+procedure Tdup5Main.setVerboseLevel(verbLevel: integer);
+begin
+
+  verboseLevel := verbLevel;
 
 end;
 

@@ -1,4 +1,4 @@
-; $Id: setup.iss,v 1.3.2.2 2004-10-03 17:12:12 elbereth Exp $
+; $Id: setup.iss,v 1.3.2.3 2005-03-27 12:15:04 elbereth Exp $
 ; $Source: /home/elbzone/backup/cvs/DragonUnPACKer/install/setup.iss,v $
 ;
 ; The contents of this file are subject to the Mozilla Public License
@@ -15,17 +15,17 @@
 ; (elbereth@users.sourceforge.net, http://www.elberethzone.net).
 
 [Setup]
-Compression=lzma/max
+Compression=lzma/ultra
 SolidCompression=yes
 AppName=Dragon UnPACKer 5
-AppVerName=Dragon UnPACKer v5.1.1 (build 149/wip)
+AppVerName=Dragon UnPACKer v5.1.2 (build 163/wip)
 AppPublisher=Elbereth Zone
 AppPublisherURL=http://www.elberethzone.net
 AppSupportURL=http://sourceforge.net/projects/dragonunpacker/
 AppUpdatesURL=http://www.dragonunpacker.com
 DefaultDirName={pf}\Dragon UnPACKer 5
 DefaultGroupName=Dragon UnPACKer 5
-OutputBaseFilename=dup511wip-setup
+OutputBaseFilename=dup512wip-setup
 AppMutex=DragonUnPACKer5
 AppId=DragonUnPACKer5
 DisableStartupPrompt=yes
@@ -34,7 +34,7 @@ UninstallDisplayIcon={app}\dunpacker5.exe
 WizardImageBackColor=$FFFFFF
 WizardImageFile=dup5-instimage.bmp
 WizardSmallImageFile=dup5-inst55x55.bmp
-VersionInfoVersion=5.1.1.149
+VersionInfoVersion=5.1.2.163
 ; uncomment the following line if you want your installation to run on NT 3.51 too.
 MinVersion=4.10,4.0sp6
 
@@ -52,21 +52,21 @@ Name: "quicklaunchicon"; Languages: fr; Description: "Placer une icone sur la ba
 ;Name: "quicklaunchicon"; Languages: sp; Description: "Poner un icono en la bara de lanzamiento rapido"; GroupDescription: "Iconos adicionales:"; MinVersion: 4,4; Flags: unchecked
 
 [Files]
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\drgunpack5.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\drgunpack5.exe.sig"; DestDir: "{app}"; Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\data\*.*"; DestDir: "{app}\data";  Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\data\drivers\*.*"; DestDir: "{app}\data\drivers"; Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\data\convert\*.*"; DestDir: "{app}\data\convert"; Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\data\hyperripper\*.*"; DestDir: "{app}\data\hyperripper"; Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\utils\*.*"; DestDir: "{app}\utils"; Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\utils\templates\*.*"; DestDir: "{app}\utils\templates\"; Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\utils\translation\*.*"; DestDir: "{app}\utils\translation\"; Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\file_id.diz"; DestDir: "{app}"; Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\historique.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\lisezmoi.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\readme.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\readme-wip.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "H:\Programmation\Compiled\drgunpacker\currentdev\whatsnew.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\drgunpack5.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\drgunpack5.exe.sig"; DestDir: "{app}"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\data\*.*"; DestDir: "{app}\data";  Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\data\drivers\*.*"; DestDir: "{app}\data\drivers"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\data\convert\*.*"; DestDir: "{app}\data\convert"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\data\hyperripper\*.*"; DestDir: "{app}\data\hyperripper"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\utils\*.*"; DestDir: "{app}\utils"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\utils\templates\*.*"; DestDir: "{app}\utils\templates\"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\utils\translation\*.*"; DestDir: "{app}\utils\translation\"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\file_id.diz"; DestDir: "{app}"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\historique.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\lisezmoi.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\readme.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\readme-wip.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "H:\Programmation\Compiled\drgunpacker\51240\whatsnew.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [INI]
 Filename: "{app}\DrgUnPack5.url"; Section: "InternetShortcut"; Key: "URL"; String: "http://www.dragonunpacker.com"

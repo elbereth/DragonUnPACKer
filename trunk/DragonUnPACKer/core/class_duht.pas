@@ -1,6 +1,6 @@
 unit class_duht;
 
-// $Id: class_duht.pas,v 1.1.1.1 2004-05-08 10:25:14 elbereth Exp $
+// $Id: class_duht.pas,v 1.2 2004-07-17 19:21:00 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/class_duht.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,7 +18,7 @@ unit class_duht;
 
 interface
 
-uses classes, sysutils, zlib, lib_Utils, spec_duht;
+uses classes, sysutils, zlib, lib_binUtils, spec_duht;
 
 type DUHTList_Entry = record
     entry: DUHT_Entry;

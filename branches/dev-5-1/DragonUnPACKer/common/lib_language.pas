@@ -1,6 +1,6 @@
 unit lib_language;
 
-// $Id: lib_language.pas,v 1.3.2.1 2004-08-22 19:36:25 elbereth Exp $
+// $Id: lib_language.pas,v 1.3.2.2 2004-10-10 09:17:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_language.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -1025,6 +1025,8 @@ begin
     res := 'Format de fichier non reconnu!'
   else if sch = 'LOG103' then
     res := 'Démarrage de HyperRipper...'
+  else if sch = 'LOG104' then
+    res := 'File not found (or is locked by another program)...'
   else if sch = 'LOG200' then
     res := 'Fermeture fichier actuel...'
   else if sch = 'LOG300' then
@@ -1087,7 +1089,9 @@ begin
   else if sch = 'ERRD02' then
     res := 'Le Driver n''a pas pu etre chargé (des fonctions importantes sont manquantes).'
   else if sch = 'ERRDRV' then
-    res := 'Une erreur est survenue lors de l''utilisation du driver DUP5 suivant:%n%n%d%nErreur: %e%nPour toute question en relation avec cette erreur veuillez contacter l''auteur du driver (%a).'
+    res := 'Une erreur est survenue lors de l''utilisation du driver "%d":'
+  else if sch = 'ERRDR1' then
+    res := 'Pour toute question en relation avec cette erreur veuillez contacter l''auteur du driver (%a).'
   else if sch = 'ERRC01' then
     res := 'Le Plugin de convertion n''a pas pu etre chargé (mauvaise version de l''interface ou ce n''est pas un plugin DUP5).'
   else if sch = 'ERRC02' then

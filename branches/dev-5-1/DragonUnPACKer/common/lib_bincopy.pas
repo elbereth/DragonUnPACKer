@@ -1,6 +1,6 @@
 unit lib_bincopy;
 
-// $Id: lib_bincopy.pas,v 1.1.1.1.2.1 2004-09-26 15:45:55 elbereth Exp $
+// $Id: lib_bincopy.pas,v 1.1.1.1.2.2 2004-10-10 09:17:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_bincopy.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -44,12 +44,16 @@ interface
 
 uses SysUtils, Dialogs, Classes;
 
-  procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean);
-  procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean);
+type TPercentCallback = procedure(p: byte);
+
+//procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean);
+procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
+//procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean);
+procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
 
 implementation
 
-procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean);
+procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
 var
   //sFileLength: Integer;
   Buffer: PChar;
@@ -59,7 +63,10 @@ var
 begin
 
 try
-  //sFileLength := FileSeek(src,0,2);
+
+  if not(silent) then
+    DisplayPercent(0);
+
   FileSeek(src,soff,0);
   numbuf := ssize div bufsize;
   restbuf := ssize mod bufsize;
@@ -80,13 +87,14 @@ try
       per := Round(real1);
       if per >= oldper + 10 then
       begin
+        DisplayPercent(per);
         oldper := per;
       end;
     end;
   end;
 
-//  if not(silent) then
-//    DisplayPercent(100);
+  if not(silent) then
+    DisplayPercent(100);
 
   FileRead(src, Buffer^, restbuf);
   FileWrite(dst, Buffer^, restbuf);
@@ -99,7 +107,7 @@ end;
 
 end;
 
-procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean);
+procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
 var
   //sFileLength: Integer;
   Buffer: PChar;
@@ -109,7 +117,10 @@ var
 begin
 
 try
-  //sFileLength := FileSeek(src,0,2);
+
+  if not(silent) then
+    DisplayPercent(0);
+
   FileSeek(src,soff,0);
   numbuf := ssize div bufsize;
   restbuf := ssize mod bufsize;
@@ -132,13 +143,14 @@ try
       per := Round(real1);
       if per >= oldper + 10 then
       begin
+        DisplayPercent(per);
         oldper := per;
       end;
     end;
   end;
 
-//  if not(silent) then
-//    DisplayPercent(100);
+  if not(silent) then
+    DisplayPercent(100);
 
   FileRead(src, Buffer^, restbuf);
   dst.WriteBuffer(Buffer^, restbuf);

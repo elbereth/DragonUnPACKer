@@ -1,10 +1,10 @@
 object dup5Main: Tdup5Main
-  Left = 248
-  Top = 229
+  Left = 219
+  Top = 145
   HelpContext = 1
   AlphaBlendValue = 128
   AutoScroll = False
-  Caption = 'Dragon UnPACKer v5.1.1'
+  Caption = 'Dragon UnPACKer v5.1.2'
   ClientHeight = 349
   ClientWidth = 667
   Color = clBtnFace

@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.3.2.1 2004-08-22 19:36:26 elbereth Exp $
+// $Id: Main.pas,v 1.3.2.2 2004-09-26 15:45:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -24,7 +24,8 @@ uses
   lib_language, translation, ShellApi, JvJCLUtils, VirtualTrees, lib_look,
   DropSource, XPMan, DragDrop, DragDropFile, prg_ver, JvclVer,
   classIconsFromExt, DateUtils, JvMenus,  JvRichEdit,
-  JvComponent, cxCpu40, JvBaseDlg, JvBrowseFolder, lib_binutils;
+  JvComponent, cxCpu40, JvBaseDlg, JvBrowseFolder, lib_binutils,
+  JvExStdCtrls;
 
 type
   Tdup5Main = class(TForm)
@@ -104,6 +105,7 @@ type
     memLog: TMemo;
     N3: TMenuItem;
     menuLog_Clear: TMenuItem;
+    richLog: TJvRichEdit;
     procedure FormResize(Sender: TObject);
     procedure menuFichier_QuitterClick(Sender: TObject);
     procedure menuAbout_AboutClick(Sender: TObject);
@@ -203,9 +205,13 @@ type
     procedure Open_Hub(src: String);
     procedure setRichEditLineStyle(R: TJvRichEdit; Line: Integer;
       Style: TFontStyles);
+    procedure setRichEditLineColor(R: TJvRichEdit; Line: Integer;
+      Color: TColor);
   public
     procedure writeLog(text: string);
     procedure appendLog(text: string);
+    procedure styleLog(Style : TFontStyles);
+    procedure colorLog(Color : TColor);
     procedure separatorLog();
     { Déclarations publiques }
   end;
@@ -426,6 +432,35 @@ begin
      R.SelStart := Line_Index;
      R.SelLength := Line_Range;
      R.SelAttributes.Style := Style;
+   end;
+ finally
+   R.SelStart := OldPos;
+   R.SelLength := oldSelLength;
+ end;
+end;
+
+procedure Tdup5Main.setRichEditLineColor(R : TJvRichEdit; Line : Integer; Color : TColor);
+var
+ oldPos,
+ oldSelLength : Integer;
+ Line_Index : Integer;
+ To_Line_Index : Integer;
+ Line_Range : Integer;
+begin
+ OldPos := R.SelStart;
+ oldSelLength := R.SelLength;
+ Try
+   Line_Index := R.Perform(EM_LINEINDEX,Line-1,0);
+   if Line_Index > - 1 then
+   begin
+     to_Line_Index := R.Perform(EM_LINEINDEX,Line,0);
+     if to_Line_Index < Line_Index then
+       Line_Range := Length(R.Text)-Line_Index
+     else
+       Line_Range := to_Line_Index-Line_Index;
+     R.SelStart := Line_Index;
+     R.SelLength := Line_Range;
+     R.SelAttributes.Color := Color;
    end;
  finally
    R.SelStart := OldPos;
@@ -1080,7 +1115,7 @@ begin
   FSE.SetOwner(frmConfig);
   FSE.LoadDrivers(ExtractFilePath(Application.ExeName)+'data\drivers\');
 
-  dup5Main.appendLog(ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(FSe.NumDrivers)));
+  dup5Main.writeLog(' = '+ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(FSe.NumDrivers)));
 
   dup5Main.writeLog(DLNGStr('LOG003'));
 
@@ -2331,7 +2366,8 @@ end;
 procedure Tdup5Main.writeLog(text: string);
 begin
 
-  memLog.Lines.Add(DateTimeToStr(now)+' : '+text)
+  memLog.Lines.Add(DateTimeToStr(now)+' : '+text);
+  richLog.Lines.Add(DateTimeToStr(now)+' : '+text);
 
 end;
 
@@ -2339,6 +2375,7 @@ procedure Tdup5Main.appendLog(text: string);
 begin
 
   memLog.Lines.Strings[memLog.Lines.Count-1] := memLog.Lines.Strings[memLog.Lines.Count-1]+' '+text;
+  richLog.Lines.Strings[richLog.Lines.Count-1] := richLog.Lines.Strings[richLog.Lines.Count-1]+' '+text;
 
 end;
 
@@ -2353,6 +2390,21 @@ procedure Tdup5Main.menuLog_ClearClick(Sender: TObject);
 begin
 
   memLog.Clear;
+  richLog.Clear;
+
+end;
+
+procedure Tdup5Main.styleLog(Style: TFontStyles);
+begin
+
+  setRichEditLineStyle(richLog, richLog.Lines.Count, Style);
+
+end;
+
+procedure Tdup5Main.colorLog(Color: TColor);
+begin
+
+  setRichEditLineColor(richLog, richLog.Lines.Count, Color);
 
 end;
 

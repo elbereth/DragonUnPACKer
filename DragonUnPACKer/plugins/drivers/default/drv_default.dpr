@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.3 2004-05-09 22:24:10 elbereth Exp $
+// $Id: drv_default.dpr,v 1.4 2004-05-20 16:46:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -127,6 +127,7 @@ type FSE = ^element;
                  Fixed the .POD extension running .007 open routine (which obviously won't work)
     13211        Fixed SCGL always opening files (even for WestWood TLK files).
     13220  50024 Added support for Painkiller .PAK files
+    13340        Added support for Hitman: Contracts .TEX files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1008,6 +1009,22 @@ type RFH_Entry = packed record
        Offset: integer;
      end;
 
+type TEX_Header = packed record
+       IndexOffset: cardinal;
+       UnknownOffset: cardinal;
+       ID3: cardinal;   // 3
+       ID4: cardinal;   // 4
+     end;
+     TEX_Entry = packed record
+       Size: cardinal;
+       Type1: array[0..3] of char;
+       Type2: array[0..3] of char;
+       Unknown1: Cardinal;
+       Unknown2: word;
+       Unknown3: word;
+       Unknown: array[1..4] of Cardinal;
+     end;
+
 type SYN_Header = packed record
        ID: array[0..3] of char;
        DirNum: integer;
@@ -1020,10 +1037,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 13220;
+  DRIVER_VERSION = 13340;
   DUP_VERSION = 50024;
-  CVS_REVISION = '$Revision: 1.3 $';
-  CVS_DATE = '$Date: 2004-05-09 22:24:10 $';
+  CVS_REVISION = '$Revision: 1.4 $';
+  CVS_DATE = '$Date: 2004-05-20 16:46:56 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1094,7 +1111,7 @@ begin
   GetDriverInfo.Author := 'Dragon UnPACKer project team';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
   GetDriverInfo.Comment := 'This driver support 66 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 54;
+  GetDriverInfo.NumFormats := 55;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -1203,6 +1220,8 @@ begin
   GetDriverInfo.Formats[53].Name := 'Empires: Dawn of the Modern World (*.SSA)';
   GetDriverInfo.Formats[54].Extensions := '*.STUFF';
   GetDriverInfo.Formats[54].Name := 'Eve Online (*.STUFF)';
+  GetDriverInfo.Formats[55].Extensions := '*.TEX';
+  GetDriverInfo.Formats[55].Name := 'Hitman: Contracts (*.TEX)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
 //  GetDriverInfo.Formats[50].Name := 'Heath: The Unchosen Path (*.PAXX.NRM)'
 //  GetDriverInfo.Formats[41].Extensions := '*.h4r';
@@ -3606,6 +3625,73 @@ begin
         end;
       end;
     end;
+  end
+  else
+    Result := -2;
+
+end;
+
+function ReadHitmanContractsTEX(src: string): Integer;
+var HDR: TEX_Header;
+    ENT: TEX_Entry;
+    NumE: cardinal;
+    x: integer;
+    nam: string;
+    offsets: array[1..2048] of cardinal;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, Sizeof(TEX_Header));
+
+    if ((HDR.ID3 <> 3) or (HDR.ID4 <> 4) or (HDR.IndexOffset >= TotFSize) or (HDR.UnknownOffset >= TotFSize) or ((HDR.UnknownOffset-HDR.IndexOffset) <> $2000)) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'TEX';
+      ErrInfo.Games := 'Hitman: Contracts';
+    end
+    else
+    begin
+
+      FileSeek(FHandle,HDR.IndexOffset+$80,0);
+
+      x := 0;
+
+      repeat
+        inc(x);
+        FileRead(FHandle,Offsets[x],4);
+      until Offsets[x] = 0;
+      dec(x);
+
+      NumE := x;
+
+      for x := 1 to NumE do
+      begin
+
+        Fileseek(FHandle,offsets[x],0);
+        FileRead(FHandle,ENT,SizeOf(TEX_Entry));
+        nam := Strip0(Get0(Fhandle));
+
+        FSE_Add(StringReplace(nam,'/','\',[rfReplaceAll])+'.'+revstr(ent.Type1),Offsets[x],ENT.Size,0,0);
+
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'HMCTEX';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := True;
+
+    end;
+
   end
   else
     Result := -2;
@@ -7234,6 +7320,13 @@ begin
         FileClose(FHandle);
         Result := ReadAscaronCPR(fil);
       end
+      // Hitman: Contracts - TEX
+      else if (ID127[8] = #3) and (ID127[9] = #0) and (ID127[10] = #0) and (ID127[11] = #0)
+          and (ID127[12] = #4) and (ID127[13] = #0) and (ID127[14] = #0) and (ID127[15] = #0) then
+      begin
+        FileClose(FHandle);
+        Result := ReadHitmanContractsTEX(fil);
+      end
       else
       begin
         Result := 0;
@@ -7347,6 +7440,8 @@ begin
       Result := ReadEveOnlineSTUFF(fil)
     else if ext = 'SYN' then
       ReadFormat := ReadNICE2SYN(fil)
+    else if ext = 'TEX' then
+      ReadFormat := ReadHitmanContractsTEX(fil)
     else if ext = 'TLK' then
       ReadFormat := ReadHubPAK(fil)
     else if ext = 'VOL' then
@@ -7607,6 +7702,10 @@ begin
       Result := true
     else if (Strip0(ID36)) = 'ASCARON_ARCHIVE V0.9' then
       Result := true
+    // Hitman: Contracts - TEX file
+    else if (ID127[8] = #3) and (ID127[9] = #0) and (ID127[10] = #0) and (ID127[11] = #0)
+        and (ID127[12] = #4) and (ID127[13] = #0) and (ID127[14] = #0) and (ID127[15] = #0) then
+      Result := true
     else
       Result := False;
   end;
@@ -7732,6 +7831,8 @@ begin
     else if ext = 'STUFF' then
       IsFormat := True
     else if ext = 'SYN' then
+      IsFormat := True
+    else if ext = 'TEX' then
       IsFormat := True
     else if ext = 'TLK' then
       IsFormat := True
@@ -8556,7 +8657,7 @@ begin
                           'Spellforce PAK and Eve Online STUFF support based on infos by:'+#10+
                           'DaReverse'+#10+#10+
                           'Painkiller PAK support partially based on infos by:'+#10+
-                          'MrMouse'
+                          'MrMouse (http://forum.xentax.com/viewtopic.php?p=3604#3604)'
                           )
                         , 'About Main Driver plugin...', MB_OK);
 

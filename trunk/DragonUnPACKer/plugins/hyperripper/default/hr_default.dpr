@@ -3,7 +3,7 @@ library hr_default;
 uses
   Forms,
   Math,
-  StrUtils,
+  JvJCLUtils,
   SysUtils,
   Registry,
   Windows,

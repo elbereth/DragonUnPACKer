@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ExtCtrls, Registry, RXSpin;
+  Dialogs, StdCtrls, ExtCtrls, Registry, JvSpin;
 
 type
   TfrmOptMPEGa = class(TForm)
@@ -27,15 +27,15 @@ type
     chkID3Tag: TCheckBox;
     Bevel1: TBevel;
     chkFramesMin: TCheckBox;
-    numFramesMin: TRxSpinEdit;
+    numFramesMin: TJvSpinEdit;
     lblFrameMin: TLabel;
     lblFrameMax: TLabel;
-    numFramesMax: TRxSpinEdit;
+    numFramesMax: TJvSpinEdit;
     chkFramesMax: TCheckBox;
     chkSizeMin: TCheckBox;
     chkSizeMax: TCheckBox;
-    numSizeMin: TRxSpinEdit;
-    numSizeMax: TRxSpinEdit;
+    numSizeMin: TJvSpinEdit;
+    numSizeMax: TJvSpinEdit;
     lblSizeMax: TLabel;
     lblSizeMin: TLabel;
     cmdOk: TButton;

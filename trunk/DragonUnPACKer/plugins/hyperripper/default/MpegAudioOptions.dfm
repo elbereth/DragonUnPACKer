@@ -254,7 +254,7 @@ object frmOptMPEGa: TfrmOptMPEGa
       TabOrder = 0
       OnClick = chkFramesMinClick
     end
-    object numFramesMin: TRxSpinEdit
+    object numFramesMin: TJvSpinEdit
       Left = 232
       Top = 10
       Width = 121
@@ -266,7 +266,7 @@ object frmOptMPEGa: TfrmOptMPEGa
       TabOrder = 1
       OnChange = numFramesMinChange
     end
-    object numFramesMax: TRxSpinEdit
+    object numFramesMax: TJvSpinEdit
       Left = 232
       Top = 32
       Width = 121
@@ -308,7 +308,7 @@ object frmOptMPEGa: TfrmOptMPEGa
       TabOrder = 5
       OnClick = chkSizeMaxClick
     end
-    object numSizeMin: TRxSpinEdit
+    object numSizeMin: TJvSpinEdit
       Left = 232
       Top = 58
       Width = 121
@@ -320,7 +320,7 @@ object frmOptMPEGa: TfrmOptMPEGa
       TabOrder = 6
       OnChange = numSizeMinChange
     end
-    object numSizeMax: TRxSpinEdit
+    object numSizeMax: TJvSpinEdit
       Left = 232
       Top = 80
       Width = 121

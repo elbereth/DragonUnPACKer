@@ -1,6 +1,6 @@
 unit lib_Utils;
 
-// $Id: lib_Utils.pas,v 1.1.1.1 2004-05-08 10:25:11 elbereth Exp $
+// $Id: lib_Utils.pas,v 1.2 2004-07-14 19:18:02 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_Utils.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -379,7 +379,8 @@ begin
 
   FileRead(src,tbyt,1);
   FillChar(tchar,256,0);
-  FileRead(src,tchar[1],tbyt);
+  // Fixed bug #958622 : this may have fixed other functions relying on get8
+  FileRead(src,tchar[0],tbyt);
 
   Get8 := tchar;
 

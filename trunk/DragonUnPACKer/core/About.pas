@@ -1,6 +1,6 @@
 unit About;
 
-// $Id: About.pas,v 1.1.1.1 2004-05-08 10:25:12 elbereth Exp $
+// $Id: About.pas,v 1.2 2004-05-16 09:24:00 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/About.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -20,7 +20,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, lib_Utils, ExtCtrls, StdCtrls, JclShell, ComCtrls, JvRichEd;
+  Dialogs, lib_Utils, ExtCtrls, StdCtrls, JclShell, ComCtrls, JvRichEdit,
+  JvExStdCtrls;
 
 type
   TfrmAbout = class(TForm)
@@ -33,7 +34,7 @@ type
     lblCompDate: TLabel;
     Label1: TLabel;
     Shape1: TShape;
-    txtMoreinfo: TJvxRichEdit;
+    txtMoreinfo: TJvRichEdit;
     imgWIP: TImage;
     procedure cmdOkClick(Sender: TObject);
     procedure TimerStartBlendTimer(Sender: TObject);

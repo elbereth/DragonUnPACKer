@@ -115,7 +115,7 @@ AutoIncBuild=1
 MajorVer=5
 MinorVer=1
 Release=0
-Build=146
+Build=149
 Debug=0
 PreRelease=1
 Special=0
@@ -126,7 +126,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElbererhZone
 FileDescription=Dragon UnPACKer 5
-FileVersion=5.1.0.146
+FileVersion=5.1.0.149
 InternalName=DrgUnPack5
 LegalCopyright=(c)Copyright 2001/2004 Alexandre "Elbereth" Devilliers
 LegalTrademarks=
@@ -138,7 +138,6 @@ Comments=Universal game ripper/Ripper universel de jeux
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlOutputDirectorry]
-Count=3
-Item0=H:\Programmation\Compiled\drgunpacker\currentdev\data\drivers
-Item1=H:\Programmation\Compiled\drgunpacker\current\data\drivers
-Item2=H:\Programmation\Compiled\drgunpacker\currentdev\utils
+Count=2
+Item0=H:\Programmation\Compiled\drgunpacker\currentdev\data\convert
+Item1=H:\Programmation\Compiled\drgunpacker\currentdev\utils

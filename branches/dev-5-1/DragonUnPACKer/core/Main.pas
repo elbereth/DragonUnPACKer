@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.3.2.3 2004-09-26 15:50:19 elbereth Exp $
+// $Id: Main.pas,v 1.3.2.4 2004-10-03 17:11:10 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -102,7 +102,6 @@ type
     menuLog_Show: TMenuItem;
     panBottom: TPanel;
     Status: TStatusBar;
-    memLog: TMemo;
     N3: TMenuItem;
     menuLog_Clear: TMenuItem;
     richLog: TJvRichEdit;
@@ -889,7 +888,7 @@ begin
       Reg.WriteInteger('Main_H',Height);
       Reg.WriteInteger('Main_W',Width);
       Reg.WriteInteger('Main_S',lstIndex2.Width);
-      if memLog.Visible then
+      if richLog.Visible then
         Reg.WriteInteger('Main_B',panBottom.Height)
       else
         Reg.WriteInteger('Main_B',bottomHeight);
@@ -981,8 +980,8 @@ begin
 
       if Reg.ValueExists('ShowLog') then
       begin
-        memLog.visible := Reg.ReadBool('ShowLog');
-        splitterBottom.Visible := memLog.Visible;
+        richLog.visible := Reg.ReadBool('ShowLog');
+        splitterBottom.Visible := richLog.Visible;
       end;
 
       if Reg.ValueExists('Look') then
@@ -1040,7 +1039,7 @@ begin
           bottomHeight := tmpi
         else
           bottomHeight := 100;
-        if memLog.Visible then
+        if richLog.Visible then
           panBottom.Height := bottomHeight
         else
           panBottom.Height := status.Height;
@@ -1104,6 +1103,8 @@ begin
   if clook <> 'default.dulk' then
     LoadLook(clook);
 
+  richLog.Refresh;
+
   dup5Main.writeLog(DLNGStr('LOG001'));
 
   dup5Main.writeLog(DLNGStr('LOG002'));
@@ -1126,7 +1127,7 @@ begin
   CPlug.SetOwner(self);
   CPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\convert\');
 
-  dup5Main.appendLog(ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(CPlug.NumPlugins)));
+  dup5Main.writeLog(' = '+ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(CPlug.NumPlugins)));
 
   dup5Main.writeLog(DLNGStr('LOG004'));
 
@@ -1137,7 +1138,7 @@ begin
   HPlug.SetOwner(frmHyperRipper);
   HPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\HyperRipper\');
 
-  dup5Main.appendLog(ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(HPlug.NumPlugins)));
+  dup5Main.writeLog(' = '+ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(HPlug.NumPlugins)));
 
   Icons := TIconsFromExt.Create;
   Icons.init(imgContents);
@@ -2326,7 +2327,7 @@ begin
     Reg.Free;
   end;
   
-  memLog.Visible := true;
+  richLog.Visible := true;
   SplitterBottom.Visible := true;
   panBottom.Height := bottomHeight;
 
@@ -2348,7 +2349,7 @@ begin
     Reg.Free;
   end;
 
-  memLog.Visible := false;
+  richLog.Visible := false;
   SplitterBottom.Visible := false;
   bottomHeight := panBottom.Height;
   panBottom.Height := status.Height;
@@ -2358,23 +2359,22 @@ end;
 procedure Tdup5Main.Popup_LogPopup(Sender: TObject);
 begin
 
-  menuLog_Show.Visible := not(memLog.Visible);
-  menuLog_Hide.Visible := memLog.Visible;
+  menuLog_Show.Visible := not(richLog.Visible);
+  menuLog_Hide.Visible := richLog.Visible;
 
 end;
 
 procedure Tdup5Main.writeLog(text: string);
 begin
 
-  memLog.Lines.Add(DateTimeToStr(now)+' : '+text);
   richLog.Lines.Add(DateTimeToStr(now)+' : '+text);
+  richLog.Perform(EM_LINESCROLL,0,1);
 
 end;
 
 procedure Tdup5Main.appendLog(text: string);
 begin
 
-  memLog.Lines.Strings[memLog.Lines.Count-1] := memLog.Lines.Strings[memLog.Lines.Count-1]+' '+text;
   richLog.Lines.Strings[richLog.Lines.Count-1] := richLog.Lines.Strings[richLog.Lines.Count-1]+' '+text;
 
 end;
@@ -2389,7 +2389,6 @@ end;
 procedure Tdup5Main.menuLog_ClearClick(Sender: TObject);
 begin
 
-  memLog.Clear;
   richLog.Clear;
 
 end;

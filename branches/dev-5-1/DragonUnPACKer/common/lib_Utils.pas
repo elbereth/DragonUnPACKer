@@ -1,6 +1,6 @@
 unit lib_Utils;
 
-// $Id: lib_Utils.pas,v 1.3 2004-07-15 16:38:42 elbereth Exp $
+// $Id: lib_Utils.pas,v 1.3.2.1 2004-10-03 17:11:10 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_Utils.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -46,6 +46,7 @@ unit lib_Utils;
 //  function splitStr(Chaine: string; Casseur: string): TStringList;
 //  function strip0(str : string): string;
 //  procedure UnSetRegistryType(ext: string);
+//  function getPlugVersion(version: integer): string;
 //
 // -----------------------------------------------------------------------------
 
@@ -74,6 +75,7 @@ function CheckRegistryType(ext: string): Boolean;
 function CheckRegistryHR(prefix: string; ID: integer): Boolean;
 procedure SetRegistryHR(prefix: string; ID: integer; value: boolean);
 function GetAllSystemInfo(): TOSInfo;
+function getPlugVersion(version: integer): string;
 
 implementation
 
@@ -565,5 +567,87 @@ begin
     Result.MemAvailable := MS.dwAvailPhys;
 
 end; {.GetAllSystemInfo}
+
+
+function getPlugVersion(version: integer): string;
+var majVer: integer;
+    minVer: integer;
+    revVer: integer;
+    typVer: integer;
+    valVer: integer;
+    inStr: String;
+    typStr: String;
+    valStr: String;
+begin
+
+  inStr := IntToStr(version);
+
+  if (length(inStr) >= 5) then
+    majVer := StrToInt(LeftStr(inStr, length(inStr)-4))
+  else
+    majVer := 0;
+
+  if (length(inStr) >= 4) then
+    minVer := StrToInt(MidStr(inStr,length(inStr)-3,1))
+  else
+    minVer := 0;
+
+  if (length(inStr) >= 3) then
+    revVer := StrToInt(MidStr(inStr,length(inStr)-2,1))
+  else
+    revVer := 0;
+
+  if (length(inStr) >= 2) then
+    typVer := StrToInt(MidStr(inStr,length(inStr)-1,1))
+  else
+    typVer := 0;
+
+  if (length(inStr) >= 5) then
+    valVer := StrToInt(RightStr(inStr, 1))
+  else
+    valVer := 0;
+
+  case typVer of
+    0: typStr := 'Alpha';
+    1: typStr := 'Beta';
+    2: typStr := 'RC';
+    3: typStr := 'Gold';
+    4: typStr := '';
+    5: typStr := '';
+    6: typStr := '';
+    7: typStr := 'Fix';
+    8: typStr := 'Patch';
+    9: typStr := 'Special';
+  end;
+
+  if (typVer = 4) and (valVer > 0) then
+  begin
+    typStr := 'Release';
+    valStr := Chr(64+valVer);
+  end
+  else if (typVer = 5) then
+  begin
+    typStr := 'Release';
+    valStr := Chr(74+valVer);
+  end
+  else if (typVer = 6) then
+  begin
+    typStr := 'Release';
+    case valVer of
+      7: valStr := '+';
+      8: valStr := '++';
+      9: valStr := '+++';
+    else
+      valStr := Chr(84+valVer);
+    end;
+  end
+  else if (valVer > 0) then
+    valStr := IntToStr(valVer)
+  else
+    valStr := '';
+
+  result := TrimRight(IntToStr(majVer)+'.'+IntToStr(minVer)+'.'+IntToStr(revVer)+' '+typStr+ ' '+valStr);
+
+end;
 
 end.

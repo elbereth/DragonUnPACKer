@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.3.2.4 2004-09-26 15:45:56 elbereth Exp $
+// $Id: classFSE.pas,v 1.3.2.5 2004-10-03 17:11:10 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -697,7 +697,7 @@ begin
         try
           if (Drivers[CurrentDriver].DUDIVersion = 1) then
             NumElems := Drivers[CurrentDriver].OpenFile(pchar(pth),Percent,SmartOpen)
-          else if (Drivers[CurrentDriver].DUDIVersion = 2) or (Drivers[CurrentDriver].DUDIVersion = 3) then
+          else if (Drivers[CurrentDriver].DUDIVersion = 2) or (Drivers[CurrentDriver].DUDIVersion = 3) or (Drivers[CurrentDriver].DUDIVersion = 4) then
             NumElems := Drivers[CurrentDriver].OpenFile2(pchar(pth),SmartOpen);
         except
           on Ex:Exception do
@@ -706,7 +706,7 @@ begin
             frmError.details.Add('Error while calling:');
             if Drivers[CurrentDriver].DUDIVersion = 1 then
               frmError.details.Add('NumElems := Drivers['+inttostr(CurrentDriver)+'].OpenFile('''+pth+''',Percent,'+booltostr(SmartOpen,true)+')')
-            else if (Drivers[CurrentDriver].DUDIVersion = 2) or(Drivers[CurrentDriver].DUDIVersion = 3) then
+            else if (Drivers[CurrentDriver].DUDIVersion = 2) or (Drivers[CurrentDriver].DUDIVersion = 3) or (Drivers[CurrentDriver].DUDIVersion = 4) then
               frmError.details.Add('NumElems := Drivers['+inttostr(CurrentDriver)+'].OpenFile2('''+pth+''','+booltostr(SmartOpen,true)+')');
             frmError.details.Add('');
             frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
@@ -2035,8 +2035,8 @@ begin
     // Run the second version of the ShowAboutBox function
     Drivers[drvnum].ShowAboutBox2(hwnd);
   end
-  // If driver at drvnum index has DUDI version 3
-  else if (Drivers[drvnum].DUDIVersion = 3) then
+  // If driver at drvnum index has DUDI version 3 or 4
+  else if (Drivers[drvnum].DUDIVersion = 3) or (Drivers[drvnum].DUDIVersion = 4) then
   begin
     // Run the third version of the ShowAboutBox function
     Drivers[drvnum].ShowAboutBox3;
@@ -2064,8 +2064,8 @@ begin
     // Run the second version of the ShowConfigBox function
     Drivers[drvnum].ShowConfigBox2(hwnd);
   end
-  // If driver at drvnum index has DUDI version 3
-  else if (Drivers[drvnum].DUDIVersion = 3) then
+  // If driver at drvnum index has DUDI version 3 or 4
+  else if (Drivers[drvnum].DUDIVersion = 3) or (Drivers[drvnum].DUDIVersion = 4) then
   begin
     // Run the third version of the ShowConfigBox function
     Drivers[drvnum].ShowConfigBox3;

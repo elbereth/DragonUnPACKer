@@ -861,7 +861,7 @@ object frmAbout: TfrmAbout
     TabOrder = 0
     OnClick = cmdOkClick
   end
-  object txtMoreinfo: TJvxRichEdit
+  object txtMoreinfo: TJvRichEdit
     Left = 9
     Top = 121
     Width = 407
@@ -873,6 +873,7 @@ object frmAbout: TfrmAbout
     ScrollBars = ssVertical
     SelectionBar = False
     TabOrder = 1
+    Zoom = 100
     OnURLClick = txtMoreinfoURLClick
   end
   object TimerStartBlend: TTimer

@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.9 2004-07-17 19:13:21 elbereth Exp $
+// $Id: drv_default.dpr,v 1.10 2004-07-21 21:36:03 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -134,6 +134,7 @@ type FSE = ^element;
     13440        Added support for CyberBykes .BIN files
                  Enhanced support for Glacier Engine .TEX files (previously Hitman: Contracts)
     13441  50040 Found the meaning of 8 bytes in the DWFBEntry structure.
+    13442        Incorporated the Westwood PAK MIX detection fix from Felix Riemann
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1063,10 +1064,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 13441;
+  DRIVER_VERSION = 13442;
   DUP_VERSION = 50040;
-  CVS_REVISION = '$Revision: 1.9 $';
-  CVS_DATE = '$Date: 2004-07-17 19:13:21 $';
+  CVS_REVISION = '$Revision: 1.10 $';
+  CVS_DATE = '$Date: 2004-07-21 21:36:03 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -6450,7 +6451,10 @@ begin
 
   repeat
     FileRead(FHandle, Offset, 4);
-    pakerr := ((Offset < OldOffset) and (Offset <> 0));
+    // Felix Riemann / dup5-westwood-pak-mix-detection-fix.patch / START //
+    // REMOVED // pakerr := ((Offset < OldOffset) and (Offset <> 0));
+    pakerr := (((Offset < OldOffset) or (OffSet > TotSize)) and (Offset <> 0));
+    // Felix Riemann / dup5-westwood-pak-mix-detection-fix.patch / END //
     if not(pakerr) then
     begin
       if (OldOffset > 0) then

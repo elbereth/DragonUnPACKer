@@ -1,6 +1,6 @@
 unit Splash;
 
-// $Id: Splash.pas,v 1.1.1.1 2004-05-08 10:25:50 elbereth Exp $
+// $Id: Splash.pas,v 1.2 2004-07-17 19:53:07 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Splash.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -26,7 +26,7 @@ type
   TfrmSplash = class(TForm)
     TimerClose: TTimer;
     ImgSplash: TImage;
-    Label1: TLabel;
+    lblLoading: TLabel;
     TimerFade: TTimer;
     imgBeta: TImage;
     imgRC: TImage;

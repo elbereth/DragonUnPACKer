@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.10.2.2 2004-10-03 17:14:23 elbereth Exp $
+// $Id: drv_default.dpr,v 1.10.2.3 2005-03-27 08:52:22 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -24,6 +24,7 @@ uses
   StrUtils,
   SysUtils,
   Windows,
+  U_IntList in '..\..\..\common\U_IntList.pas',
   spec_HRF in '..\..\..\common\spec_HRF.pas',
   lib_version in '..\..\..\common\lib_version.pas';
 
@@ -135,7 +136,12 @@ type FSE = ^element;
                  Enhanced support for Glacier Engine .TEX files (previously Hitman: Contracts)
     13441  50040 Found the meaning of 8 bytes in the DWFBEntry structure.
     13442        Incorporated the Westwood PAK MIX detection fix from Felix Riemann
-    20000  51140 Upgraded to new interface DUDI v4
+    13540        Some research on Transport Giant JFL/IND files.
+                 Added support for Myst IV Revelation .M4B files
+    13640        Added support for Leisure Suit Larry: Magna Cum Laude .JAM files.
+    20010        Started to upgrade to new interface DUDI v4
+    20011  51140 Upgraded to new interface DUDI v4
+    20012  51240 Merged with 5.0 changes (see 13540 and 13640 version)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -180,6 +186,11 @@ type NRMHeader = packed record
        Size: integer;
      end;
      // Get32 Filename
+
+type M4BHeader = packed record
+       SigSize: cardinal;
+       SigName: array[0..10] of char;
+     end;
 
 type MDK1Header = packed record
        Magic: integer;
@@ -742,6 +753,34 @@ type I3DGOBHeader = packed record
        Name: array[0..127] of char;
      end;
 
+type JFLHeader = packed record
+       ID: array[0..3] of char;   // AP32
+       Version: cardinal;         // 18
+     end;
+     JFLINDHeader = packed record
+       ID: cardinal;              // 7
+       NumEntries: cardinal;
+     end;
+
+type JAM2Header = packed record
+       ID: array[0..3] of char;   // JAM2
+       CreationDateTime: integer;
+       OffsetFirstEntry: cardinal;
+       UnknownString: array[0..15] of char;  // always "none"+chr(0)+.. ?
+       NumFiles: word;
+       NumExts: word;
+     end;
+     JAM2DirIndex = packed record
+       FileIdx: word;
+       ExtIdx: word;
+       Offset: cardinal;
+     end;
+     JAM2Entry = packed record
+       Size: cardinal;
+       SizeAlt: cardinal;
+       Unknown: array[1..6] of cardinal;  // FF    2D    42    53    8B    A2
+     end;
+
 type WAD2Header = packed record
        ID: array[0..3] of char;
        DirNum: integer;
@@ -1065,10 +1104,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 20011;
-  DUP_VERSION = 51140;
-  CVS_REVISION = '$Revision: 1.10.2.2 $';
-  CVS_DATE = '$Date: 2004-10-03 17:14:23 $';
+  DRIVER_VERSION = 20012;
+  DUP_VERSION = 51240;
+  CVS_REVISION = '$Revision: 1.10.2.3 $';
+  CVS_DATE = '$Date: 2005-03-27 08:52:22 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1143,7 +1182,7 @@ begin
   GetDriverInfo.Author := 'Dragon UnPACKer project team';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
   GetDriverInfo.Comment := 'This driver support 67 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 56;
+  GetDriverInfo.NumFormats := 58;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -1256,6 +1295,10 @@ begin
   GetDriverInfo.Formats[55].Name := 'Freedom Fighters (*.TEX;*.PRM)|Hitman 2: Silent Assassin (*.TEX;*.PRM)|Hitman: Contracts (*.TEX;*.PRM)';
   GetDriverInfo.Formats[56].Extensions := '*.BIN';
   GetDriverInfo.Formats[56].Name := 'CyberBykes: Shadow Racer VR (*.BIN)';
+  GetDriverInfo.Formats[57].Extensions := '*.M4B';
+  GetDriverInfo.Formats[57].Name := 'Myst IV: Revelation (*.M4B)';
+  GetDriverInfo.Formats[58].Extensions := '*.JAM';
+  GetDriverInfo.Formats[58].Name := 'Leisure Suite Larry: Magna Cum Laude (*.JAM)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
 //  GetDriverInfo.Formats[50].Name := 'Heath: The Unchosen Path (*.PAXX.NRM)'
 //  GetDriverInfo.Formats[41].Extensions := '*.h4r';
@@ -1349,6 +1392,10 @@ var tchar: Pchar;
 begin
 
   FileRead(src,tint,4);
+  if tint > 255 then
+  begin
+    raise Exception.Create(inttostr(tint)+' octets! t''es fou ?!'+#10+inttostr(fileseek(FHandle,0,1))+#10+inttohex(fileseek(FHandle,0,1),8));
+  end;
   GetMem(tchar,tint);
   FillChar(tchar^,tint,0);
   FileRead(src,tchar^,tint);
@@ -3739,7 +3786,6 @@ end;
 
 function ReadHitmanContractsPRM(src: string): Integer;
 var HDR: PRMHeader;
-    NumE: cardinal;
     x: integer;
     nam, prenam: string;
     offsets: array of cardinal;
@@ -3805,7 +3851,6 @@ var HDR: TEX_Header;
     x, y: integer;
     nam: string;
     offsets: array of cardinal;
-    numOffsets: cardinal;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead);
@@ -4299,6 +4344,251 @@ begin
       DrvInfo.ExtractInternal := False;
 
     end;
+  end
+  else
+    Result := -2;
+
+end;
+
+// Auxiliary function that will recursevely read the directory index of a JAM2 file
+function ReadLeisureSuitLarryMagnaCumLaudeJAM_alt(curDir: string; OList: TIntList; firstData: cardinal; FList, EList: TStringList): Integer;
+var cOffset, x, oldOffset: cardinal;
+    ENT: JAM2Entry;
+    DIR: JAM2DirIndex;
+    newDir: string;
+    numDirs: integer;
+    res : integer;
+begin
+
+  result := 0;
+
+  // Get current offset in source file
+  cOffset := FileSeek(FHandle,0,1);
+
+  if (cOffset < firstData) then      // If current offset is not before firstData then something is wrong
+  begin                              // there is no Directory data after firstData offset..
+
+    // Reading directory index information
+    FileRead(FHandle,DIR,SizeOf(DIR));
+
+    // If before firstData then it is a directory
+    if DIR.Offset < firstData then
+    begin
+
+      // Calculate how many entries in this directory
+      numDirs := ((DIR.FileIdx and $F000) shr 12) + DIR.ExtIdx div $20;
+
+      // Sometimes numDirs is 0, but there is one entry (strangely enough)
+      // I am not really sure about this one, but I keep it anyway...
+      if numDirs = 0 then
+        numDirs := 1;
+
+      // Get the "true" file index by filtering the 4 bits used for numDirs
+      DIR.FileIdx := DIR.FileIdx and $FFF;
+
+      // This is if something goes wrong to prevent an index out of bounds
+      // this part should never be triggered
+      // If into bounds then use the folder name in JAM2 file
+      if DIR.FileIdx > (FList.Count -1) then
+      begin
+        if length(curDir) = 0 then
+          newDir := 'UNK-'+inttohex(DIR.FileIdx,4)
+        else
+          newDir := curDir + '\' + 'UNK-'+inttohex(DIR.FileIdx,4);
+      end
+      else
+      begin
+        if length(curDir) = 0 then
+          newDir := FList.Strings[DIR.FileIdx]
+        else
+          newDir := curDir + '\' + FList.Strings[DIR.FileIdx];
+      end;
+
+      // Go through the entries in the directory
+      for x := 1 to numDirs do
+      begin
+
+        // If new index is after firstData, stop the FOR-loop
+        if (DIR.Offset+(x-1)*8) >= firstData then
+          break;
+
+        // Seek into position!
+        fileseek(FHandle,DIR.Offset+(x-1)*8,0);
+
+        // Recursively call the function at new offset
+        res := ReadLeisureSuitLarryMagnaCumLaudeJAM_alt(newDir,OList,firstData,FList,EList);
+
+        // If the function call returned no new file, then no need to continue (waste of time)
+        if res = 0 then
+          break;
+
+        // Increase number of found files
+        inc(result,res);
+
+      end;
+
+    end
+    else  // Then it is a file! :p
+    begin
+
+      // We are seeking to offset, but we want to keep current offset
+      OldOffset := FileSeek(FHandle,0,1);
+      FileSeek(FHandle,DIR.Offset,0);
+
+      // Here is the information we are looking for (size of file)
+      FileRead(FHandle,ENT,SizeOf(ENT));
+
+      // Go back to previous offset
+      FileSeek(FHandle,OldOffset,0);
+
+      // Add new entry to the list!
+      if length(curDir) > 0 then
+        FSE_Add(curDir+'\'+FList.Strings[DIR.FileIdx]+'.'+EList.Strings[DIR.ExtIdx],DIR.Offset+$20,ENT.Size,0,0)
+      else
+        FSE_Add(FList.Strings[DIR.FileIdx]+'.'+EList.Strings[DIR.ExtIdx],DIR.Offset+$20,ENT.Size,0,0);
+      inc(result);
+
+    end;
+  end;
+
+end;
+
+function ReadLeisureSuitLarryMagnaCumLaudeJAM(src: string): Integer;
+var HDR: JAM2Header;
+    NumE,x,OldOffset : integer;
+    FList: TStringList;
+    EList: TStringList;
+    OList: TIntList;
+    tmpChar: array[0..7] of char;
+    tmpExt: array[0..3] of char;
+    unkVal: word;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, Sizeof(HDR));
+
+    if (HDR.ID <> 'JAM2') then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'JAM2';
+      ErrInfo.Games := 'Leisure Suit Larry: Magna Cum Laude';
+    end
+    else
+    begin
+
+      NumE := 0;
+
+      // Preparing lists
+      EList := TStringList.Create;
+      FList := TStringList.Create;
+      OList := TIntList.Create;
+      try
+
+        // We are reading the filenames (without extensions)
+        // (8 characters, padded with trailing zeroes!)
+        for x := 1 to HDR.NumFiles do
+        begin
+          FileRead(FHandle,tmpChar,8);
+          FList.Add(strip0(tmpChar));
+        end;
+
+        // And now reading the extensions
+        // (4 characters, padded with trailing zeroes!)
+        for x := 1 to HDR.NumExts do
+        begin
+          FileRead(FHandle,tmpExt,4);
+          EList.Add(strip0(tmpExt));
+        end;
+
+        FileRead(FHandle,unkval,2);
+        FileSeek(FHandle,2,1);
+        OldOffset := FileSeek(FHandle,0,1);
+
+        // Go through initial (root) folder
+        // and then recursively through all the folders
+        for x := 1 to unkVal do
+        begin
+          fileseek(FHandle,OldOffset+(x-1)*8,0);
+          inc(NumE,ReadLeisureSuitLarryMagnaCumLaudeJAM_alt('',OList,HDR.OffsetFirstEntry,FList,EList));
+        end;
+
+        // Below is a VERY VERY UGLY method to read JAM2 files
+        // (doesn't take into account the folders structures)!!!
+        // ----Kept here for debug purposes---
+{
+        FSE_Add('00-'+inttohex(FList.Count-1,4)+'-'+inttohex(EList.Count -1,4),1,1,0,0);
+        FSE_Add('01-'+inttohex(unkval,8),1,1,0,0);
+        inc(NumE,2);
+
+        while FileSeek(FHandle,0,1) < HDR.OffsetFirstEntry do
+        begin
+          FileRead(Fhandle,DIR,SizeOf(DIR));
+
+          if (DIR.offset < HDR.OffsetFirstEntry) then
+          begin
+
+            FSE_Add('06-'+inttohex(DIR.FileIdx,4)+'-'+inttohex(DIR.ExtIdx,4)+'-'+inttohex(DIR.Offset,8)+'-'+booltostr((DIR.FileIdx and $1000)=$1000,true),FileSeek(FHandle,0,1)-8,1,0,0);
+            inc(numE);
+
+          end
+          else if (DIR.FileIdx and $1000) = $1000 then
+          begin
+
+            // Directory.. unhandled
+
+            if (DIR.FileIdx xor $1000) > (FList.Count-1) then
+            begin
+              FSE_Add('03-'+inttohex((DIR.FileIdx xor $1000),4)+'-'+inttohex(DIR.ExtIdx,4),DIR.Offset,1,0,0);
+            end
+            else
+              FSE_Add('02-'+FList.Strings[(DIR.FileIdx xor $1000)]+'-'+inttohex((DIR.FileIdx xor $1000),4)+'-'+inttohex(DIR.ExtIdx,4),DIR.Offset,1,0,0);
+            inc(NumE);
+
+          end
+          else
+          begin
+            if DIR.FileIdx <= (FList.Count-1) then
+            begin
+              OldOffset := FileSeek(FHandle,0,1);
+              FileSeek(FHandle,DIR.Offset,0);
+              FileRead(FHandle,ENT,SizeOf(ENT));
+              FileSeek(FHandle,OldOffset,0);
+              if DIR.ExtIdx > (EList.Count-1) then
+              begin
+                //showmessage(inttostr(DIR.FileIdx,4)+' '+inttostr(DIR.ExtIdx));
+                FSE_Add('04-'+FList.Strings[DIR.FileIdx]+'-'+inttohex(DIR.FileIdx,4)+'-'+inttohex(DIR.ExtIdx,4),DIR.Offset,ENT.Size,0,0);
+              end
+              else
+                FSE_Add('05-'+inttohex(DIR.FileIdx,4)+'-'+inttohex(DIR.ExtIdx,4)+'-'+FList.Strings[DIR.FileIdx]+'.'+EList.Strings[DIR.ExtIdx],DIR.Offset+$20,ENT.Size,0,0);
+              inc(NumE);
+            end;
+          end;
+
+        end;
+ }
+      finally  // We are done.. free lists
+        EList.Free;
+        FList.Free;
+        OList.Free;
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'JAM2';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
   end
   else
     Result := -2;
@@ -5277,6 +5567,89 @@ begin
     DrvInfo.Sch := '\';
     DrvInfo.FileHandle := FHandle;
     DrvInfo.ExtractInternal := False;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+function ReadMystIVRevelationM4B_Alt(dir: string): Integer;
+var tByt, x: Byte;
+    y, NumE, Size, Offset, tInt: cardinal;
+    disp: string;
+begin
+
+  result := 0;
+
+  FileRead(FHandle,tByt,1);
+
+  if tByt = 0 then
+  begin
+    FileRead(FHandle,NumE,4);
+    for y := 1 to NumE do
+    begin
+      disp := strip0(get32(FHandle));
+      FileRead(FHandle,Size,4);
+      FileRead(FHandle,Offset,4);
+      FSE_Add(dir + '\' + disp,offset,size,0,0);
+    end;
+    inc(result,NumE);
+  end
+  else
+  begin
+    for x := 1 to tByt do
+    begin
+      disp := Strip0(Get32(FHandle));
+      if length(dir) > 0 then
+        disp := dir + '\' + disp;
+      inc(result,ReadMystIVRevelationM4B_Alt(disp));
+    end;
+    FileRead(FHandle,tInt,4);
+    inc(tInt);
+    dec(tInt);
+  end;
+
+end;
+
+function ReadMystIVRevelationM4B(src: string): Integer;
+var HDR: M4BHeader;
+    tInt: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, SizeOf(HDR));
+
+    if (HDR.SigSize <> $B) and (strip0(HDR.SigName) <> 'UBI_BF_SIG') then
+    begin
+
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'M4B';
+      ErrInfo.Games := 'Myst IV: Revelation';
+
+    end
+    else
+    begin
+
+      FileRead(FHandle,tInt,4);  // Should be 1
+      FileRead(FHandle,tInt,4);  // Should be 0
+
+      Result := ReadMystIVRevelationM4B_Alt('');
+
+      DrvInfo.ID := 'M4B';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
 
   end
   else
@@ -7298,6 +7671,15 @@ begin
         FileClose(FHandle);
         Result := ReadDuke3DGRP(fil);
       end
+      // Myst IV: Revelation .M4B file
+      else if (ID23[0] = #11) and (ID23[1] = #0) and (ID23[2] = #0) and (ID23[3] = #0)
+          and (ID23[4] = 'U') and (ID23[5] = 'B') and (ID23[6] = 'I') and (ID23[7] = '_')
+          and (ID23[8] = 'B') and (ID23[9] = 'F') and (ID23[10] = '_') and (ID23[11] = 'S')
+          and (ID23[12] = 'I') and (ID23[13] = 'G') and (ID23[14] = #0) then
+      begin
+        FileClose(Fhandle);
+        Result := ReadMystIVRevelationM4B(fil);
+      end
       else if (ID4[0] = #1) and (ID4[1] = #0) and (ID4[2] = #0) and (ID4[3] = #0)
            and (ID28[12] = 'R') and (ID28[13] = 'O') and (ID28[14] = 'O') and (ID28[15] = 'T') then
       begin
@@ -7378,6 +7760,11 @@ begin
       begin
         FileClose(FHandle);
         Result := ReadTotalAnnihilationHPI(fil);
+      end
+      else if ID4 = ('JAM2') then
+      begin
+        FileClose(FHandle);
+        Result := ReadLeisureSuitLarryMagnaCumLaudeJAM(fil);
       end
  {     else if (ID4[0] = #72) and (ID4[1] = #52) and (ID4[2] = #82) and (ID4[3] = #5) then
       begin
@@ -7579,6 +7966,10 @@ begin
       ReadFormat := ReadHyperRipperHRF(fil)
     else if ext = 'IMG' then
       ReadFormat := ReadGTA3IMGDIR(fil)
+    else if ext = 'JAM' then
+      Result := ReadLeisureSuitLarryMagnaCumLaudeJAM(fil)
+    else if ext = 'M4B' then
+      Result := ReadMystIVRevelationM4B(fil)
     else if ext = 'MTF' then
       ReadFormat := ReadDarkstoneMTF(fil)
 {    else if ext = 'NRM' then
@@ -7789,6 +8180,12 @@ begin
 
     if ID4 = ('GOB'+#10) then
       Result := true
+    // Myst IV: Revelation .M4B file
+    else if (ID23[0] = #11) and (ID23[1] = #0) and (ID23[2] = #0) and (ID23[3] = #0)
+        and (ID23[4] = 'U') and (ID23[5] = 'B') and (ID23[6] = 'I') and (ID23[7] = '_')
+        and (ID23[8] = 'B') and (ID23[9] = 'F') and (ID23[10] = '_') and (ID23[11] = 'S')
+        and (ID23[12] = 'I') and (ID23[13] = 'G') and (ID23[14] = #0) then
+      Result := true
     // Hitman: Contracts .PRM file
     else if (ID4[0] = #30) and (ID4[1] = #7) and (ID4[2] = #0) and (ID4[3] = #0) then
       Result := true
@@ -7808,6 +8205,8 @@ begin
     else if ID8 = 'LiOnHeAd' then
       Result := true
     else if ID8 = 'FILECHNK' then
+      Result := true
+    else if ID4 = ('JAM2') then     // Leisure Suit Larry - Magna Cum Laude
       Result := true
     else if ID4 = ('DTA_') then
       Result := true
@@ -7975,6 +8374,10 @@ begin
     else if ext = 'HRF' then
       IsFormat := True
     else if ext = 'IMG' then
+      IsFormat := True
+    else if ext = 'JAM' then
+      IsFormat := True
+    else if ext = 'M4B' then
       IsFormat := True
     else if ext = 'MN3' then
       IsFormat := True
@@ -9153,8 +9556,7 @@ end;
 end;
 
 function ExtractFileToStream(outputstream: TStream; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
-var fil: Integer;
-    ENT: MTFCompress;
+var ENT: MTFCompress;
     SSA: SSACompress;
     tbyt,key: byte;
     ID: array[0..2] of char;
@@ -9326,188 +9728,14 @@ end;
 
 function ExtractFile(outputfile: ShortString; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
 var fil: Integer;
-    ENT: MTFCompress;
-    SSA: SSACompress;
-    tbyt,key: byte;
-    ID: array[0..2] of char;
-    test: THandleStream;
+    outStm: THandleStream;
 begin
 
   fil := FileCreate(outputfile,fmOpenRead or fmShareExclusive);
-  test := THandleStream.Create(fil);
-  ExtractFileToStream(test,entrynam,offset,size,datax,datay,silent);
-  test.Free;
+  outStm := THandleStream.Create(fil);
+  result := ExtractFileToStream(outStm,entrynam,offset,size,datax,datay,silent);
+  outStm.Free;
   FileClose(fil);
-
-{
-
-  FileSeek(FHandle,Offset,0);
-
-//  ShowMessage(DrvInfo.ID+' '+Inttostr(DataX)+' '+Inttostr(DataY)+' '+Inttostr(Size));
-
-  if DrvInfo.ID = 'RFH/RFD' then
-  begin
-    if (DataX = 2) then
-    begin
-      DecompressRFD(fil, DataY, Size);
-    end
-    else
-    begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
-    end;
-  end
-  else if DrvInfo.ID = '007' then
-  begin
-    if (DataX = 1) then
-    begin
-      DecompressZlib(fil, DataY, Size);
-    end
-    else
-    begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
-    end;
-  end
-  else if DrvInfo.ID = 'ADF' then
-  begin
-    DecryptADF(FHandle,fil,offset,Size,BUFFER_SIZE);
-  end
-  else if DrvInfo.ID = 'CBF' then
-  begin
-    if (DataY = 1) then
-    begin
-//      FileSeek(FHandle,Offset+12,0);
-//      DecompressZlib(fil, DataX-12, Size);
-      BinCopy(FHandle,fil,offset,DataX,BUFFER_SIZE);
-    end
-    else
-    begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
-    end;
-  end
-  else if DrvInfo.ID = 'H4R' then
-  begin
-//    if (DataX = 3) then
-//    begin
-//      ShowMessage(inttostr(DataX));
-//      DecompressH4R(fil, Size, DataY);
-//  end
-//  else
-//  begin
-//    GetMem(Buf,DataX);
-//    FileRead(FHandle,Buf^,DataX);
-//    FileWrite(fil,Buf^,DataX);
-  //  FreeMem(Buf);
-//  end;
-  end
-  else if DrvInfo.ID = 'MTF' then
-  begin
-    FileRead(FHandle,ENT,12);
-    if (ENT.ID2 = 190) and ((ENT.ID1 = 174) or (ENT.ID1 = 175)) then
-    begin
-      DecompressMTF(fil, Offset+12,Size);
-    end
-    else
-    begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
-    end;
-  end
-  else if DrvInfo.ID = 'HPI' then
-  begin
-    if (DataX = 0) then
-    begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
-    end
-    else if (DataX = 2) then
-    begin
-      DecompressHPI(fil, Offset, Size,2);
-    end
-    else if (DataX = 1) then
-    begin
-      DecompressHPI(fil,Offset,Size,1);
-    end;
-  end
-  else if DrvInfo.ID = 'PCK' then
-  begin
-    if (DataY = 1) then
-    begin
-      FileSeek(FHandle,offset+16,0);
-      FileRead(FHandle,tbyt,1);
-      tbyt := (tbyt xor $2C) - $10;
-      if (tbyt = 0) then
-        tbyt := $E
-      else if (tbyt = 8) then
-        tbyt := 6
-      else
-        dec(tbyt);
-      key := tbyt;
-      FileSeek(FHandle,offset,0);
-      FileRead(FHandle,tbyt,1);
-      tbyt := tbyt xor key;
-      DecryptPCK(FHandle,fil,offset,size,tbyt);
-    end
-    else if (DataY = 2) or (DataX <> 0) then
-    begin
-      FileSeek(FHandle,offset+1,0);
-      FileRead(FHandle,ID,3);
-      FileSeek(FHandle,offset,0);
-      if (ID = 'IFF') then
-        DataX := $52
-      else if (ID = 'DMB') then
-        DataX := $4C
-      else if (ID = 'FRL') then
-        DataX := $47
-      else if (ID = 'SMB') then
-        DataX := $42;
-      DecryptPCK(FHandle,fil,offset,size,DataX);
-    end
-    else
-    begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
-    end;
-  end
-  else if DrvInfo.ID = 'RFA' then
-  begin
-    if (DataX = 0) then
-    begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
-    end
-    else if (DataX = 1) then
-    begin
-      DecompressRFA(fil,Offset,Size);
-    end;
-  end
-  else if DrvInfo.ID = 'SSA' then
-  begin
-    FileSeek(FHandle,offset,0);
-    FileRead(FHandle,SSA,SizeOf(SSA));
-    if SSA.ID = 'PK01' then
-    begin
-      DecompressZlib(fil, Size, SSA.DecompSize);
-    end
-    else
-    begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
-    end;
-  end
-  else if DrvInfo.ID = 'PKPAK' then
-  begin
-    if DataX <> Size then
-    begin
-      DecompressZlib(fil, DataX, Size);
-    end
-    else
-    begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
-    end;
-  end
-  else
-  begin
-    BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
-  end;
-
-  FileClose(fil);
-
-  ExtractFile := true;}
 
 end;
 

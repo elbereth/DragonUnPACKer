@@ -1,6 +1,6 @@
 unit prg_ver;
 
-// $Id: prg_ver.pas,v 1.3 2004-05-16 15:50:12 elbereth Exp $
+// $Id: prg_ver.pas,v 1.4 2004-07-17 19:53:38 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/prg_ver.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,14 +18,14 @@ unit prg_ver;
 
 interface
 
-uses SysUtils, Windows, Forms, lib_utils, StrUtils;
+uses SysUtils, Windows, Forms, lib_binutils, StrUtils;
 
 function curBuild:integer;
 
 const
   CurVersion: String = '5.0.0';
 //  CurEdit: String = 'GiantsHell.com Edition';
-  CurEdit: String = 'RC5';
+  CurEdit: String = '';
   CurURL: String = 'http://www.dragonunpacker.com';
 
 implementation

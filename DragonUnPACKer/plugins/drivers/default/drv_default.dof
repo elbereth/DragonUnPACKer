@@ -115,9 +115,9 @@ AutoIncBuild=1
 MajorVer=1
 MinorVer=3
 Release=2
-Build=637
+Build=640
 Debug=0
-PreRelease=1
+PreRelease=0
 Special=0
 Private=0
 DLL=1
@@ -125,11 +125,17 @@ Locale=1036
 CodePage=1252
 [Version Info Keys]
 CompanyName=Dragon Software
-FileDescription=Elbereth's Main Driver plugin for Dragon UnPACKer 5
-FileVersion=1.3.2.637
+FileDescription=Main Driver plugin for Dragon UnPACKer 5
+FileVersion=1.3.2.640
 InternalName=drv_default
 LegalCopyright=(c)2002-2004 Alexandre Devilliers
 LegalTrademarks=
 OriginalFilename=drv_default.d5d
 ProductName=Dragon UnPACKer 5
 ProductVersion=5.0.0
+[HistoryLists\hlUnitAliases]
+Count=1
+Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlOutputDirectorry]
+Count=1
+Item0=H:\Programmation\Compiled\drgunpacker\current\data\drivers

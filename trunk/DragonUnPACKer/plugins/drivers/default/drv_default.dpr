@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.4 2004-05-20 16:46:56 elbereth Exp $
+// $Id: drv_default.dpr,v 1.5 2004-05-22 14:12:23 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -834,6 +834,13 @@ type PPRESIndex = packed record
        Unknown: array[1..11] of byte; // DOS Date & Time + ???
      end;
 
+type PRMHeader = packed record
+       ID: cardinal;   // ID - Always $71E ?
+       DirOffset: cardinal;
+       DirOffset2: cardinal;
+       NumEntries: cardinal;
+     end;
+
 type SLFHeader = packed record
        FileName: array[0..255] of char;
        Directory: array[0..255] of char;
@@ -1037,10 +1044,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 13340;
+  DRIVER_VERSION = 13341;
   DUP_VERSION = 50024;
-  CVS_REVISION = '$Revision: 1.4 $';
-  CVS_DATE = '$Date: 2004-05-20 16:46:56 $';
+  CVS_REVISION = '$Revision: 1.5 $';
+  CVS_DATE = '$Date: 2004-05-22 14:12:23 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -3631,6 +3638,67 @@ begin
 
 end;
 
+function ReadHitmanContractsPRM(src: string): Integer;
+var HDR: PRMHeader;
+    NumE: cardinal;
+    x: integer;
+    nam, prenam: string;
+    offsets: array of cardinal;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, Sizeof(PRMHeader));
+
+    if ((HDR.ID <> $71E) or (HDR.DirOffset >= TotFSize) or (HDR.DirOffset2 >= TotFSize)) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'PRM';
+      ErrInfo.Games := 'Hitman: Contracts';
+    end
+    else
+    begin
+      SetLength(offsets,HDR.NumEntries+1);
+      offsets[HDR.NumEntries] := HDR.DirOffset;
+
+      FileSeek(FHandle,HDR.DirOffset,0);
+
+      for x := 0 to HDR.NumEntries -1 do
+        FileRead(FHandle,Offsets[x],4);
+
+      prenam := StringReplace(ExtractFilename(src),'.','_',[rfReplaceAll])+'_';
+
+      for x := 0 to HDR.NumEntries-1 do
+      begin
+
+        nam := inttostr(x+1);
+
+        FSE_Add(prenam+rightstr('00000000'+nam,8)+'.raw',Offsets[x],Offsets[x+1]-Offsets[x],0,0);
+
+      end;
+
+      Result := HDR.NumEntries;
+
+      DrvInfo.ID := 'HMCPRM';
+      DrvInfo.Sch := '';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
 function ReadHitmanContractsTEX(src: string): Integer;
 var HDR: TEX_Header;
     ENT: TEX_Entry;
@@ -3688,7 +3756,7 @@ begin
       DrvInfo.ID := 'HMCTEX';
       DrvInfo.Sch := '\';
       DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := True;
+      DrvInfo.ExtractInternal := False;
 
     end;
 
@@ -7129,6 +7197,12 @@ begin
         FileClose(FHandle);
         Result := ReadNightFire007(fil);
       end
+      // Hitman: Contracts .PRM file
+      else if (ID4[0] = #30) and (ID4[1] = #7) and (ID4[2] = #0) and (ID4[3] = #0) then
+      begin
+        FileClose(FHandle);
+        Result := ReadHitmanContractsPRM(fil);
+      end
       else if ID8 = 'LiOnHeAd' then
       begin
         FileClose(FHandle);
@@ -7410,6 +7484,8 @@ begin
       ReadFormat := ReadTonyHawkPKR(fil)
     else if ext = 'POD' then
       ReadFormat := ReadHubPOD(fil)
+    else if ext = 'PRM' then
+      Result := ReadHitmanContractsPRM(fil)
     else if ext = 'RES' then
       ReadFormat := ReadHubRES(fil)
     else if ext = 'REZ' then
@@ -7603,6 +7679,9 @@ begin
     FileClose(TestFile);
 
     if ID4 = ('GOB'+#10) then
+      Result := true
+    // Hitman: Contracts .PRM file
+    else if (ID4[0] = #30) and (ID4[1] = #7) and (ID4[2] = #0) and (ID4[3] = #0) then
       Result := true
     else if ID12 = GRPID then
       Result := true
@@ -7801,6 +7880,9 @@ begin
     else if ext = 'PKR' then
       IsFormat := True
     else if ext = 'POD' then
+      IsFormat := True
+    // Hitman: Contracts .PRM
+    else if ext = 'PRM' then
       IsFormat := True
     else if ext = 'RES' then
       IsFormat := True

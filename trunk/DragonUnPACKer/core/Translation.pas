@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.2 2004-05-08 13:43:50 elbereth Exp $
+// $Id: Translation.pas,v 1.3 2004-05-16 15:48:11 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -39,9 +39,9 @@ begin
 
     Font.Name := getFont();
     lstContent.Font.Name := getFont();
-    mainMenu.fontname := getFont();
-    Popup_Contents.fontname := getFont();
-    Popup_Index.fontname := getFont();
+//    mainMenu.fontname := getFont();
+//    Popup_Contents.fontname := getFont();
+//    Popup_Index.fontname := getFont();
 
     menuFichier.Caption := DLNGStr('MNU1');
     menuFichier_Ouvrir.Caption := DLNGStr('MNU1S1');

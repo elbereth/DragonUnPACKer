@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.2 2004-07-14 19:05:47 elbereth Exp $
+// $Id: Installer.pas,v 1.3 2004-07-15 16:50:17 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -21,9 +21,9 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ComCtrls, lib_utils, spec_DUPP, zlib, lib_crc, lib_zlib, Registry,
+  Dialogs, StdCtrls, ComCtrls, lib_binutils, spec_DUPP, zlib, lib_crc, lib_zlib, Registry,
   ExtCtrls, ShellAPI, lib_language, XPMan, VirtualTrees, HttpProt,
-  JvListView, IniFiles;
+  JvListView, IniFiles, lib_utils;
 
 type
  pvirtualTreeData = ^virtualTreeData;

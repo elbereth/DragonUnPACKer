@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.1.1.1 2004-05-08 10:25:35 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.2 2004-05-16 15:57:01 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -22,7 +22,7 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, declFSE, lib_language, Registry,
   ExtCtrls, classHyperRipper, lib_utils, classFSE, spec_HRF,
-  DateUtils, Spin, JvComponent, JvxCtrls;
+  DateUtils, Spin, JvComponent, JvCtrls, JvExControls, JvLabel;
 
 type PFormatListElem = ^FormatsListElemEx;
      SearchItem = record
@@ -120,7 +120,7 @@ type PFormatListElem = ^FormatsListElemEx;
     cmdImage: TButton;
     cmdVideo: TButton;
     cmdAudio: TButton;
-    lblHRVersion: TJvxLabel;
+    lblHRVersion: TJvLabel;
     lblNamingLegF: TLabel;
     lblNamingLegX: TLabel;
     lblNamingLegO: TLabel;

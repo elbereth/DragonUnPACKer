@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.3 2004-07-17 19:29:03 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.3.2.1 2005-03-26 06:41:08 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -262,7 +262,7 @@ begin
   begin
     if numChecked > 0 then
     begin
-      Dup5Main.closeCurrent;
+//      Dup5Main.closeCurrent;
       RunSearch(txtSource.text, slist);
     end
     else
@@ -704,7 +704,7 @@ var hSRC, x: integer;
     per, oldper: real;
     SomethingFound: Boolean;
     foundOffset: integer;
-    found: FoundInfo;
+    found: FoundInfo64;
     numFound, rollback: integer;
     flist: TList;
     fitem: PFoundItem;
@@ -716,6 +716,7 @@ var hSRC, x: integer;
     prefix, resprefix, fext, predir: string;
     lastTimer: TDateTime;
     hrfver: byte;
+    intTmp1,intTmp2,absoluteOffset: int64;
 begin
 
   cancel := false;
@@ -775,7 +776,8 @@ begin
     hrip.LastResult(ReplaceValue('%f',DLNGstr('HRLG03'),ExtractFileName(filename))+' '+DLNGstr('HRLG04'));
     hrip.AddResult(DLNGstr('HRLG05'));
     flist := TList.Create;
-    totsize := FileSeek(hSRC,0,2);
+    curPos := 0;
+    totsize := FileSeek(hSRC,curPos,2);
     if totsize > MAXSIZE then
       bufsize := MAXSIZE
     else
@@ -821,7 +823,18 @@ begin
         for x := 0 to flist.Count-1 do
         begin
           fitem := flist.Items[x];
-          Found := HPlug.plugins[slist.items[fitem^.Index].DriverNum].SearchFile(slist.items[fitem^.Index].ID,hSRC,curPos+fitem^.Offset);
+          absoluteOffset := fitem^.offset;
+          absoluteOffset := absoluteOffset + curPos;
+          try
+            Found := HPlug.searchFile(slist.items[fitem^.Index].DriverNum,slist.items[fitem^.Index].ID,hSRC,absoluteOffset);
+          except
+            on ex: Exception do
+            begin
+              hrip.addResult(ex.ClassName + ': '+ex.Message);
+              break; 
+            end;
+          end;
+//          Found := HPlug.plugins[slist.items[fitem^.Index].DriverNum].SearchFile(slist.items[fitem^.Index].ID,hSRC,curPos+fitem^.Offset);
           if (Found.GenType <> HR_TYPE_ERROR) and (Found.Size > 0) then
           begin
             if (hrip.chkMakeDirs.Checked) then
@@ -918,7 +931,7 @@ begin
       hrip.Refresh;
       loadTime := getTickCount - startTime;
       FSE.LoadHyperRipper(filename,hSRC,loadTime,hrip.chkMakeDirs.Checked);
-      FSE.BrowseDir('');
+      //FSE.BrowseDir('');
       hrip.LastResult(DLNGstr('HRLG15')+' '+DLNGstr('HRLG04'));
      except
       hrip.AddResult(DLNGstr('HRLG16'));

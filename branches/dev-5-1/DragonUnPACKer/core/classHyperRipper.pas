@@ -1,6 +1,6 @@
 unit classHyperRipper;
 
-// $Id: classHyperRipper.pas,v 1.1.1.1.2.1 2004-10-03 17:11:10 elbereth Exp $
+// $Id: classHyperRipper.pas,v 1.1.1.1.2.2 2005-03-26 06:41:08 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classHyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -15,6 +15,15 @@ unit classHyperRipper;
 //
 // The Initial Developer of the Original Code is Alexandre Devilliers
 // (elbereth@users.sourceforge.net, http://www.elberethzone.net).
+
+// ============================================================================
+// classConvert unit / This unit manages the HiperRipper plugins (loading, use
+//                   / and freeing)
+// ----------------------------------------------------------------------------
+// Current DUHI (Dragon UnPACKer HyperRipper Interface): v3
+// History:
+//   v3 - Added support for 64bits SearchFile (very big files)
+// ============================================================================
 
 interface
 
@@ -59,6 +68,12 @@ type FormatsListElem = record
        Ext: ShortString;
        GenType: integer;
      end;
+     FoundInfo64 = record
+       Offset: int64;
+       Size: int64;
+       Ext: ShortString;
+       GenType: integer;
+     end;
      VersionInfo = record
        Name: ShortString;
        Author: ShortString;
@@ -73,12 +88,17 @@ type
   TGetSearchFormats = function(): SearchFormatsList; stdcall;
   TSearchBuffer = function(format: integer; buffer: PByteArray; bufSize: integer): integer; stdcall;
   TSearchFile = function(format: integer; handle: integer; offset: integer): FoundInfo; stdcall;
+  TSearchFile64 = function(format: integer; handle: integer; offset: int64): FoundInfo64; stdcall;
   TInitPlugin = procedure(percent: TPercentCallback; dlngstr: TLanguageCallback; dup5pth: shortstring); stdcall;
   TInitPlugin2 = procedure(percent: TPercentCallback; dlngstr: TLanguageCallback; dup5pth: shortstring; AppHandle: THandle; AppOwner: TComponent); stdcall;
   TGetVersionInfo = function(): VersionInfo; stdcall;
   TShowOptionPanel = procedure(DriverID: integer);
   TShowBox = procedure(hwnd: integer; lngstr: TLanguageCallback); stdcall;
   TShowBox2 = procedure; stdcall;
+
+type
+   EDUHIUnknownPluginIdentifier = class(Exception);
+   EDUHIFileIsTooBig = class(Exception);
 
 type HRPlugin = record
    DUHIVersion : Byte;
@@ -87,6 +107,7 @@ type HRPlugin = record
    GetList : TGetSearchFormats;
    SearchBuffer : TSearchBuffer;
    SearchFile : TSearchFile;
+   SearchFile64 : TSearchFile64;
    Init : TInitPlugin;
    Init2 : TInitPlugin2;
    Version : TGetVersionInfo;
@@ -111,6 +132,7 @@ type THRPlugins = class
     procedure SetOwner(AOwner: TComponent);
     procedure showAboutBox(hwnd: integer; drvnum: integer);
     procedure showConfigBox(hwnd: integer; drvnum: integer);
+    function searchFile(driverNumber: integer; format: integer; handle: integer; offset: int64): FoundInfo64;
   private
     Percent: TPercentCallback;
     Language: TLanguageCallback;
@@ -176,9 +198,6 @@ begin
 
   NumPlugins := 0;
 
-  if IsConsole then
-    writeln('Looking for HyperRipper plugins...');
-
   if FindFirst(pth+'*.d5h', faAnyFile, sr) = 0 then
   begin
     repeat
@@ -189,11 +208,9 @@ begin
       Handle := LoadLibrary(PChar(pth + sr.name));
       if Handle <> 0 then
       begin
-        if IsConsole then
-          write('Loaded... ');
         @DUHIVer := GetProcAddress(Handle, 'DUHIVersion');
 
-        if (@DUHIVer <> Nil) and ((DUHIVer = 1) or (DUHIVer = 2)) then
+        if (@DUHIVer <> Nil) and ((DUHIVer = 1) or (DUHIVer = 2) or (DUHIVer = 3)) then
         begin
           if IsConsole then
             write('IsDUHI... ')
@@ -204,19 +221,27 @@ begin
           Plugins[NumPlugins].DUHIVersion := DUHIVer;
           @Plugins[NumPlugins].GetList := GetProcAddress(Handle, 'GetSearchFormats');
           @Plugins[NumPlugins].SearchBuffer := GetProcAddress(Handle, 'SearchBuffer');
-          @Plugins[NumPlugins].SearchFile := GetProcAddress(Handle, 'SearchFile');
 
           if (DUHIVer = 1) then
           begin
             @Plugins[NumPlugins].Init := GetProcAddress(Handle, 'InitPlugin');
             @Plugins[NumPlugins].ShowAboutBox := GetProcAddress(Handle, 'AboutBox');
             @Plugins[NumPlugins].ShowConfigBox := GetProcAddress(Handle, 'ConfigBox');
+            @Plugins[NumPlugins].SearchFile := GetProcAddress(Handle, 'SearchFile');
           end
           else if (DUHIVer = 2) then
           begin
             @Plugins[NumPlugins].Init2 := GetProcAddress(Handle, 'InitPlugin');
             @Plugins[NumPlugins].ShowAboutBox2 := GetProcAddress(Handle, 'AboutBox');
             @Plugins[NumPlugins].ShowConfigBox2 := GetProcAddress(Handle, 'ConfigBox');
+            @Plugins[NumPlugins].SearchFile := GetProcAddress(Handle, 'SearchFile');
+          end
+          else if (DUHIVer = 3) then
+          begin
+            @Plugins[NumPlugins].Init2 := GetProcAddress(Handle, 'InitPlugin');
+            @Plugins[NumPlugins].ShowAboutBox2 := GetProcAddress(Handle, 'AboutBox');
+            @Plugins[NumPlugins].ShowConfigBox2 := GetProcAddress(Handle, 'ConfigBox');
+            @Plugins[NumPlugins].SearchFile64 := GetProcAddress(Handle, 'SearchFile64');
           end;
 
           @Plugins[NumPlugins].Version := GetProcAddress(Handle, 'GetVersionInfo');
@@ -224,27 +249,20 @@ begin
 
           if (@Plugins[NumPlugins].GetList = Nil)
           or (@Plugins[NumPlugins].SearchBuffer = Nil)
-          or (@Plugins[NumPlugins].SearchFile = Nil)
+          or (((DUHIVer = 1) or (DUHIVer = 2)) and (@Plugins[NumPlugins].SearchFile = Nil))
           or ((DUHIVer = 1) and (@Plugins[NumPlugins].Init = Nil))
           or ((DUHIVer = 2) and (@Plugins[NumPlugins].Init2 = Nil))
+          or ((DUHIVer = 3) and (@Plugins[NumPlugins].SearchFile64 = Nil))
           or (@Plugins[NumPlugins].Version = Nil)
           then
           begin
-            if IsConsole then
-              writeln('Malformed!')
-            else
-            begin
-              dup5Main.appendLog(DLNGstr('ERRH02'));
-              dup5Main.colorLog(clRed);
-              //MessageDlg(DLNGstr('ERRH02')+#10+sr.Name,mtWarning,[mbOk],0);
-            end;
+            dup5Main.appendLog(DLNGstr('ERRH02'));
+            dup5Main.colorLog(clRed);
             dec(NumPlugins);
             FreeLibrary(handle);
           end
           else
           begin
-            if IsConsole then
-              writeln('OK');
             Plugins[NumPlugins].FileName := ExtractFileName(sr.Name);
             Plugins[NumPlugins].Handle := Handle;
             if (DUHIVer = 1) then
@@ -259,15 +277,19 @@ begin
               Plugins[NumPlugins].IsAboutBox := not(@Plugins[NumPlugins].ShowAboutBox2 = nil);
               Plugins[NumPlugins].IsConfigBox := not(@Plugins[NumPlugins].ShowConfigBox2 = nil);
             end;
-            dup5Main.appendLog(Plugins[NumPlugins].Version.Name +' v'+ GetPlugVersion(Plugins[NumPlugins].Version.Version))
+            dup5Main.appendLog(Plugins[NumPlugins].Version.Name +' v'+ GetPlugVersion(Plugins[NumPlugins].Version.Version));
+            if (DUHIVer < 3) then
+            begin
+              dup5Main.appendLog('['+DLNGStr('ERRH03')+']');
+              dup5Main.colorLog(clRed);
+            end;
           end;
         end
         else
         begin
-          if IsConsole then
-            writeln('Bad DUHI')
-          else
-            MessageDlg(DLNGstr('ERRH01')+#10+sr.Name,mtWarning,[mbOk],0);
+          dup5Main.appendLog(DLNGstr('ERRH01'));
+          dup5Main.colorLog(clRed);
+//            MessageDlg(DLNGstr('ERRH01')+#10+sr.Name,mtWarning,[mbOk],0);
 //          dec(NumPlugins);
           FreeLibrary(handle);
         end;
@@ -281,8 +303,42 @@ begin
 
   FindClose(sr);
 
-  if IsConsole then
-    writeln('Finished!');
+end;
+
+// Function to encapsulate call to searchFile
+// This allow to manage old plugins that do not support 64bit for file access
+function THRPlugins.searchFile(driverNumber, format, handle: integer;
+  offset: int64): FoundInfo64;
+var found32: FoundInfo;
+begin
+
+  if ((driverNumber > 0) and (driverNumber <= NumPlugins)) then
+  begin
+    if (Plugins[driverNumber].DUHIVersion = 3) then
+    begin
+      result := Plugins[driverNumber].searchFile64(format,handle,offset);
+    end
+    else if offset <= high(integer) then
+    begin
+      found32 := Plugins[driverNumber].SearchFile(format,handle,offset);
+      result.Offset := found32.Offset;
+      result.Size := found32.Size;
+      result.Ext := found32.Ext;
+      result.GenType := found32.GenType;
+    end
+    else
+    begin
+
+      raise EDUHIFileIsTooBig.Create(ReplaceValue('%p',DLNGStr('ERRH05'),Plugins[driverNumber].Version.Name + ' v'+getPlugVersion(Plugins[driverNumber].Version.Version)+' ('+Plugins[driverNumber].FileName+')'));
+
+    end;
+  end
+  else
+  begin
+
+    raise EDUHIUnknownPluginIdentifier.Create(ReplaceValue('%i',DLNGStr('ERRH04'),inttostr(driverNumber)));
+
+  end;
 
 end;
 

@@ -1,6 +1,6 @@
 unit lib_language;
 
-// $Id: lib_language.pas,v 1.2 2004-05-08 13:43:49 elbereth Exp $
+// $Id: lib_language.pas,v 1.3 2004-07-15 16:46:55 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_language.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -47,7 +47,7 @@ var curlanguage : string = '';
 
 implementation
 
-uses SysUtils, forms,Dialogs,lib_zlib,lib_crc,spec_DLNG,Classes,lib_utils;
+uses SysUtils, forms,Dialogs,lib_zlib,lib_crc,spec_DLNG,Classes,lib_binutils;
 
 type
    Internal_Tab = record

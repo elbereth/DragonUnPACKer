@@ -1,6 +1,6 @@
 library cnv_pictex;
 
-// $Id: cnv_pictex.dpr,v 1.3 2004-07-15 16:41:48 elbereth Exp $
+// $Id: cnv_pictex.dpr,v 1.4 2004-07-15 16:49:06 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/cnv_pictex.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -1011,7 +1011,7 @@ procedure AboutBox; stdcall;
 begin
 
   MessageBoxA(AHandle, PChar('Picture/Textures Convert Plugin v'+getVersion(DRIVER_VERSION)+#10+
-                          '(c)Copyright 2002-2004 Alexandre Devilliers'+#10+#10+
+                          '(c)Copyright 2002-2004 Alexandre "Elbereth" Devilliers'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+#10+
                           DLNGStr('CNV010')
                           )

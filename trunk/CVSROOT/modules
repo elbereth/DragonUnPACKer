@@ -27,6 +27,7 @@
 
 # common librairies
 DragonUnPACKer		DragonUnPACKer
+DragonUnPACKer-Doc	DragonUnPACKer-Doc
 
 # core (drgunpack)
 #core			DragonUnPACKer/core

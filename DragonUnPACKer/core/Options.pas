@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.2.2.1 2004-07-25 10:29:19 elbereth Exp $
+// $Id: Options.pas,v 1.2.2.2 2004-07-25 10:39:51 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License

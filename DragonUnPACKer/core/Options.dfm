@@ -805,7 +805,6 @@ object frmConfig: TfrmConfig
         Width = 97
         Height = 17
         Caption = 'Refresh List'
-        Enabled = False
         TabOrder = 4
         OnClick = butRefreshClick
         OnKeyDown = FormKeyDown

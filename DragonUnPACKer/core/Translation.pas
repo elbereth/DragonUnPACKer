@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.3.2.3 2004-10-10 09:17:47 elbereth Exp $
+// $Id: Translation.pas,v 1.3.2.4 2005-03-27 07:21:22 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -297,6 +297,8 @@ begin
     lstConvert2.Columns.Items[2].Caption := DLNGStr('INFO10');
     grpCnvAdvInfo.Caption := DLNGStr('INFO22');
     lblCIntVer.Caption := DLNGStr('INFO23');
+
+    strDriversList.Caption := DLNGStr('OPT203');
 
     cmdDrvAbout.Caption := DLNGStr('OPT201');
     cmdDrvAbout.Font.Name := GetFont();

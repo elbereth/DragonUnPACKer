@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.3.2.4 2005-03-27 07:21:22 elbereth Exp $
+// $Id: Translation.pas,v 1.3.2.5 2005-03-27 10:07:16 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -382,6 +382,15 @@ begin
 
     cmdTypesAll.Caption := DLNGStr('OPT412');
     cmdTypesAll.Font.Name := GetFont();
+
+    grpLogOptions.Caption := DLNGStr('OPT810');
+    grpLogOptions.Font.Name := GetFont();
+
+    grpLogVerbose.Caption := DLNGStr('OPT840');
+    grpLogVerbose.Font.Name := GetFont();
+
+    strVerbose.Caption := DLNGStr('OPT841');
+    strVerbose.Font.Name := GetFont();
 
   end;
 

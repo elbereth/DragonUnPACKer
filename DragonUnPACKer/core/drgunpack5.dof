@@ -115,7 +115,7 @@ AutoIncBuild=1
 MajorVer=5
 MinorVer=1
 Release=0
-Build=137
+Build=142
 Debug=0
 PreRelease=1
 Special=0
@@ -126,7 +126,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElbererhZone
 FileDescription=Dragon UnPACKer 5
-FileVersion=5.1.0.137
+FileVersion=5.1.0.142
 InternalName=DrgUnPack5
 LegalCopyright=(c)Copyright 2001/2004 Alexandre "Elbereth" Devilliers
 LegalTrademarks=

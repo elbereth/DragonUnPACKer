@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.2 2004-05-09 21:39:54 elbereth Exp $
+// $Id: drv_default.dpr,v 1.3 2004-05-09 22:24:10 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,7 +18,7 @@ library drv_default;
 //
 
 uses
-  Dialogs,
+//  Dialogs,
   Zlib,
   Classes,
   StrUtils,
@@ -126,7 +126,7 @@ type FSE = ^element;
     13120        Added support for Nocturne .POD files
                  Fixed the .POD extension running .007 open routine (which obviously won't work)
     13211        Fixed SCGL always opening files (even for WestWood TLK files).
-    13240  50024 Added support for Painkiller .PAK files
+    13220  50024 Added support for Painkiller .PAK files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1020,10 +1020,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 13240;
+  DRIVER_VERSION = 13220;
   DUP_VERSION = 50024;
-  CVS_REVISION = '$Revision: 1.2 $';
-  CVS_DATE = '$Date: 2004-05-09 21:39:54 $';
+  CVS_REVISION = '$Revision: 1.3 $';
+  CVS_DATE = '$Date: 2004-05-09 22:24:10 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -5433,12 +5433,10 @@ end;
 
 function ReadPainKillerPAK(): Integer;
 var HDR: PKPAKHeader;
-    ENT: MFEntry;
     FileName: string;
-    x,y,z, FileSize, FileOffset, UnkVal: integer;
-    nbfatentry, filenamesize, InitKey, numE, EmbedSize: integer;
+    x,y,z, FileSize, FileOffset: integer;
+    nbfatentry, filenamesize, numE, EmbedSize: integer;
     HF: THandleStream;
-    FAT: TMemoryStream;
     FileNameKey, FileNameCrypted: array of byte;
     PreKey: array[0..15,0..15] of integer;
 begin
@@ -5521,7 +5519,7 @@ begin
       HF.Free;
     end;
 
-    Result := NbFatEntry;
+    Result := NumE;
 
     DrvInfo.ID := 'PKPAK';
     DrvInfo.Sch := '/';

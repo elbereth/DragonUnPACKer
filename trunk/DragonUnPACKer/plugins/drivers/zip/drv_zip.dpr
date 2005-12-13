@@ -1,6 +1,6 @@
 library drv_zip;
 
-// $Id: drv_zip.dpr,v 1.1.1.1 2004-05-08 10:26:54 elbereth Exp $
+// $Id: drv_zip.dpr,v 1.2 2005-12-13 21:43:38 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/zip/drv_zip.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -20,9 +20,10 @@ library drv_zip;
 uses
   SysUtils,
   Windows,
+  Classes,
   dup5drv_utils in '..\dup5drv_utils.pas',
   dup5drv_data in '..\dup5drv_data.pas',
-  UnZip32 in 'UnZip32.pas',
+  UnZip in 'UnZip.pas',
   lib_version in '..\..\..\common\lib_version.pas';
 
 {$E d5d}
@@ -37,24 +38,145 @@ type
   10240  50012  Added Line of Sight: Vietnam .ZA to the supported file types
                 Added Master of Orion 3 .MOB to the supported files types
   10340  50022  Added Hot Rod American Street Drag .ROD to the supported file types
-  10440  50022  Added Call of Duty .PK3 to the supported games
+                Added Call of Duty .PK3 to the supported games
+  11040  52040  Updated to DUDI v4
 
   /////////////////////////////////////////////////////////////////////////////}
-const DRIVER_VERSION = 10340;
-      DUP_VERSION = 50040;
+const DRIVER_VERSION = 11040;
+      DUP_VERSION = 52040;
+      COMPANY_NAME = 'Info-ZIP';
 
 var CurFormat: Integer = 0;
     DrvInfo: CurrentDriverInfo;
     ErrInfo: ErrorInfo;
     NumEntry: integer = 0;
-    UZfunc: TUserFunctions;
-    UZDCL: TDCL;
+    DCList: DCL;
     ZIPfile: string;
     DLLStatus: boolean = false;
     DLLFound: boolean = false;
     DLLHandle: THandle;
     DLLPath, DLLVersion: String;
+    SetPercent: TPercentCallback;
+    DLNGStr: TLanguageCallback;
+    CurPath: string;
+    AHandle : THandle;
+    AOwner : TComponent;
+    UFuncs : USERFUNCTIONS;
+    UzpFreeMemBuffer : PROCUzpFreeMemBuffer;
+    UzpVersion : PROCUzpVersion;
+    Wiz_UnzipToMemory : PROCWiz_UnzipToMemory;
+    Wiz_SingleEntryUnzip : PROCWiz_SingleEntryUnzip;
+    Loading : Boolean;
 
+type
+ TFVISubBlock = (sbCompanyName, sbFileDescription, sbFileVersion, sbInternalName, sbLegalCopyright,
+   sbLegalTradeMarks, sbOriginalFilename, sbProductName, sbProductVersion, sbComments);
+
+
+{----------------------------------------------------------------------------------
+ Description    : retrieves selected version information from the specified
+                  version-information resource. True on success
+ Parameters     :
+                  const FullPath : string;        the exe or dll full path
+                  SubBlock       : TFVISubBlock;  the requested sub block information ie sbCompanyName
+                  var sValue     : string         the returned string value
+ Error checking : YES
+ Notes          :
+                  1. 32bit only ( It does not work with 16-bit Windows file images )
+                  2. TFVISubBlock is declared as
+                     TFVISubBlock = (sbCompanyName, sbFileDescription, sbFileVersion, sbInternalName,
+                                     sbLegalCopyright, sbLegalTradeMarks, sbOriginalFilename,
+                                     sbProductName, sbProductVersion, sbComments);
+ Tested         : in Delphi 4 only
+ Author         : Theo Bebekis <bebekis@otenet.gr>
+-----------------------------------------------------------------------------------}
+function Get_FileVersionInfo(const FullPath: string; SubBlock: TFVISubBlock; var sValue: string):boolean;
+const
+ arStringNames : array[sbCompanyName..sbComments] of string =
+  ('CompanyName', 'FileDescription', 'FileVersion', 'InternalName', 'LegalCopyright',
+   'LegalTradeMarks', 'OriginalFilename', 'ProductName', 'ProductVersion', 'Comments');
+var
+  Dummy       : DWORD;
+  iLen        : DWORD;
+  pData       : PChar;
+  pVersion    : Pointer;
+  pdwLang     : PDWORD;
+  sLangID     : string;
+  sCharsetID  : string;
+  pValue      : PChar;
+begin
+
+  Result := False;
+
+  { get the size of the size in bytes of the file's version information}
+  iLen := GetFileVersionInfoSize(PChar(FullPath), Dummy);
+  if iLen = 0 then Exit;
+
+
+  { get the information }
+  pData := StrAlloc(iLen + 1);
+  if not GetFileVersionInfo(PChar(FullPath),  { pointer to filename string }
+                            0,                { ignored }
+                            iLen,             { size of buffer }
+                            pData)            { pointer to buffer to receive file-version info }
+  then Exit;
+
+
+  { get the national ID.
+    retrieve a pointer to an array of language and
+    character-set identifiers. Use these identifiers
+    to create the name of a language-specific
+    structure in the version-information resource}
+  if not VerQueryValue(pData,                       { address of buffer for version resource (in)}
+                       '\VarFileInfo\Translation',  { address of value to retrieve (in) }
+                       pVersion,                    { address of buffer for version pointer (out)}
+                       iLen )                       { address of version-value length buffer (out)}
+  then Exit;
+
+  { analyze it }
+  pdwLang    := pVersion;
+  sLangID    := IntToHex(pdwLang^, 8);
+  sCharsetID := Copy(sLangID, 1, 4);
+  sLangID    := Copy(sLangID, 5, 4);
+
+
+  { get the info for the requested sub block }
+  if not VerQueryValue(pData,
+                       PChar('\StringFileInfo\' + sLangID + sCharsetID + '\' + arStringNames[SubBlock]),
+                       pVersion,
+                       iLen)
+  then Exit;     
+
+  { copy it to sValue }
+  pValue := StrAlloc(iLen + 1);
+  StrLCopy(pValue, pVersion, iLen);
+  sValue := String(pValue);
+  StrDispose(pValue);
+
+  Result := True;
+end;      
+{----------------------------------------------------------------------------------
+ NOTE : this function uses the SearchPath WinAPI call to locate the dll and
+        then checks up for the version info using the above Get_FileVersionInfo
+        to get both the version number and the company name.
+        The dll's UzpVersion function does not check for the CompanyName.
+        I recommend to call the IsExpectedUnZipDllVersion function as the very
+        first step to ensure that is the right dll and not any other with a
+        similar name etc.
+        This function is more usefull when link the dll dynamically
+----------------------------------------------------------------------------------}
+function IsExpectedUnZipDllVersion(dllpath: string): boolean;
+var
+ sCompany  : string;
+begin
+
+  Result := FileExists(dllpath);
+
+  if Result then
+    if Get_FileVersionInfo(dllpath, sbCompanyName, sCompany) then
+      Result :=  (sCompany = COMPANY_NAME);
+
+end;
 
 procedure GetDLLVer();
 var tmpI: PUzpVer;
@@ -84,10 +206,11 @@ begin
     end;
     if DLLHandle <> 0 then
     begin
-      @Wiz_SingleEntryUnZip := GetProcAddress(DLLHandle, 'Wiz_SingleEntryUnzip');
-      @Wiz_Validate := GetProcAddress(DLLHandle, 'Wiz_Validate');
+      @UzpFreeMemBuffer := GetProcAddress(DLLHandle, 'UzpFreeMemBuffer');
+      @Wiz_SingleEntryUnzip := GetProcAddress(DLLHandle, 'Wiz_SingleEntryUnzip');
+      @Wiz_UnzipToMemory := GetProcAddress(DLLHandle, 'Wiz_UnzipToMemory');
       @UzpVersion := GetProcAddress(DLLHandle, 'UzpVersion');
-      DLLStatus := not(@Wiz_SingleEntryUnZip = Nil) and not(@Wiz_Validate = Nil);
+      DLLStatus := not(@UzpFreeMemBuffer = Nil) and not(@Wiz_SingleEntryUnzip = Nil) and not(@Wiz_UnzipToMemory = Nil) and not(@UzpVersion = Nil);
       if Not(DLLStatus) then
       begin
         FreeLibrary(DLLHandle);
@@ -127,14 +250,10 @@ end;
   parameters - none
      returns - Byte
   ----------------------------------------------------------
-
-  DO NOT CHANGE THIS FUNCTION.
-  Dragon UnPACKer 5 won't recognize your driver if this
-  function is missing or if return value is not 1.
 }
 function DUDIVersion: Byte; stdcall;
 begin
-  DUDIVersion := 1;
+  DUDIVersion := 4;
 end;
 
 function GetNumVersion: Integer; stdcall;
@@ -207,6 +326,31 @@ begin
 
 end;
 
+function ExtractFileToStream(outputstream: TStream; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
+var Buf: UzpBuffer;
+    retcode: longint;
+begin
+
+  Buf.StrLength := 0;
+  Buf.StrPtr := nil;
+
+  retcode := Wiz_UnzipToMemory(PChar(ZIPfile),PChar(String(entrynam)), UFuncs, Buf);
+
+  if retcode = 0 then
+  begin
+    result := False;
+  end
+  else
+  begin
+    outputstream.WriteBuffer(Buf.StrPtr^,Buf.StrLength);
+
+    UzpFreeMemBuffer(Buf);
+
+    result := True;
+  end;
+
+end;
+
 { ----------------------------------------------------------
     function - ExtractFile()                     Facultative
   parameters - OutPutFile: ShortString
@@ -224,35 +368,23 @@ end;
   NOTE: Include it only if needed.
 }
 function ExtractFile(outputfile: ShortString; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: Boolean): boolean; stdcall;
+var fil: Integer;
+    outStm: THandleStream;
+begin
+
+  fil := FileCreate(outputfile,fmOpenRead or fmShareExclusive);
+  outStm := THandleStream.Create(fil);
+  result := ExtractFileToStream(outStm,entrynam,offset,size,datax,datay,silent);
+  outStm.Free;
+  FileClose(fil);
+
+end;
+{
 var retcode, ps: integer;
     TmpFil,SrcFil: string;
     FNV: array[0..0] of PChar;
 
 begin
-
-{  Buf.StrLength := Size;
-  GetMem(Buf.StrPtr,Size);
-
-  Wiz_Init(UZfunc,UZfunc);
-
-  retcode := Wiz_UnzipToMemory(PChar(ZIPfile),PChar(String(entrynam)), UZfunc, Buf);
-
-  if retcode = 0 then
-  begin
-    ShowMessage('Error'+#10+inttostr(Buf.StrLength)+#10+Trim(entrynam));
-    ExtractFile := False;
-  end
-  else
-  begin
-    fil := FileCreate(outputfile,fmOpenRead or fmShareExclusive);
-
-    FileWrite(fil,Buf.StrPtr^,Buf.StrLength);
-
-    FileClose(fil);
-    UzpFreeMemBuffer(Buf);
-
-    ExtractFile := True;
-  end;}
 
   tmpfil := ExtractFilePath(outputfile);
 
@@ -261,27 +393,27 @@ begin
 
   with UZDCL do
   begin
-    ExtractOnlyNewer  := Integer(False);  { true if you are to extract only newer }
-    SpaceToUnderscore := Integer(False);  { true if convert space to underscore }
-    PromptToOverwrite := Integer(False);  { true if prompt to overwrite is wanted }
-    fQuiet            := 2;               { quiet flag. 1 = few messages, 2 = no messages, 0 = all messages }
-    nCFlag            := Integer(False);   { write to stdout if true }
-    nTFlag            := Integer(False);  { test zip file }
-    nVFlag            := Integer(False);  { verbose listing }
-    nUFlag            := Integer(False);   { "update" (extract only newer/new files) }
-    nZFlag            := Integer(False);  { display zip file comment }
-    nDFlag            := Integer(False);  { all args are files/dir to be extracted }
-    nOFlag            := Integer(True);  { true if you are to always over-write files, false if not }
-    nAFlag            := Integer(False);   { do end-of-line translation }
-    nZIFlag           := Integer(False);  { get zip info if true }
-    C_flag            := Integer(True);   { be case insensitive if TRUE }
-    fPrivilege        := 2;               { 1 => restore Acl's, 2 => Use privileges }
+    ExtractOnlyNewer  := Integer(False);
+    SpaceToUnderscore := Integer(False);
+    PromptToOverwrite := Integer(False);
+    fQuiet            := 2;
+    nCFlag            := Integer(False);
+    nTFlag            := Integer(False);
+    nVFlag            := Integer(False);
+    nUFlag            := Integer(False);
+    nZFlag            := Integer(False);
+    nDFlag            := Integer(False);
+    nOFlag            := Integer(True);
+    nAFlag            := Integer(False);
+    nZIFlag           := Integer(False);
+    C_flag            := Integer(True);
+    fPrivilege        := 2;
 
     lpszExtractDir    := PChar(tmpfil);
     lpszZipFN         := PChar(ZIPfile);
   end;
 
-  retcode := Wiz_SingleEntryUnzip(1, @FNV, 0, nil, UZDCL, UZfunc);
+  retcode := Wiz_SingleEntryUnzip(1, @FNV, 0, nil, UZDCL, Ufuncs);
 
   if (retcode <> 0) and (retcode <> 80) then
   begin
@@ -304,7 +436,7 @@ begin
     ExtractFile := True;
   end;
 
-end;
+end;            }
 
 { ----------------------------------------------------------
     function - IsFormat()
@@ -449,108 +581,90 @@ begin
 
 end;
 
-function DLLprnt(Buffer: PChar; Size: ULONG): integer; stdcall;
-var uZipInfo: string;
+function CallbackPassword (pwbuf: PChar; size: Longint; m, efn: PChar): EDllPassword; stdcall;
 begin
-
-  uZipInfo := strip0(Buffer);
-
-  DLLprnt := Size;
-
+  Result := IZ_PW_NONE;
 end;
 
-function DllPassword(P: PChar; N: Integer; M, Name: PChar): integer; stdcall;
+function CallbackPrint (buffer: PChar; size: Longword): EDllPrint; stdcall;
 begin
-
-  DllPassword := 1;
-
+   Result := size;
 end;
 
-function DllService(CurFile: PChar; Size: ULONG): integer; stdcall;
+function CallbackReplace (filename: PChar): EDllReplace; stdcall;
 begin
-
-  DllService := 1;
-
+  Result := IDM_REPLACE_NONE;
 end;
 
-function DllReplace(FileName: PChar): integer; stdcall;
+function CallbackService (efn: PChar; details: Longword): EDllService; stdcall;
 begin
-
-  DllReplace := 104;
-
+  Result := UZ_ST_CONTINUE;
 end;
 
-procedure DllMessage(UnCompSize : ULONG;
-                           CompSize   : ULONG;
-                           Factor     : UINT;
-                           Month      : UINT;
-                           Day        : UINT;
-                           Year       : UINT;
-                           Hour       : UINT;
-                           Minute     : UINT;
-                           C          : Char;
-                           FileName   : PChar;
-                           MethBuf    : PChar;
-                           CRC        : ULONG;
-                           Crypt      : Char); stdcall;
+procedure CallbackMessage (ucsize, csiz, cfactor, mo, dy, yr, hh, mm: Longword; c: Byte; fname, meth: PChar; crc: Longword; fCrypt: Byte); stdcall;
 var tmpStr: string;
 //Var T: TextFile;
 begin
 
-  {AssignFile(T, 'd:\test.vision.txt');
-  Append(T);}
-
-  tmpStr := Strip0(FileName);
-  {Write(T, tmpStr); }
-
-  if Copy(tmpStr,length(tmpStr),1) <> '/' then
+  if Loading then
   begin
-//    Write(T, ' - '+Copy(tmpStr,length(tmpStr)-1,1));
-    Inc(NumEntry);
-    FSE_Add(tmpStr,NumEntry,UnCompSize,CRC,0);
-  end;
-  {Writeln(T);
+    tmpStr := Strip0(fname);
 
-  Flush(T);
-  CloseFile(T);}
+    if Copy(tmpStr,length(tmpStr),1) <> '/' then
+    begin
+      Inc(NumEntry);
+      FSE_Add(tmpStr,NumEntry,ucsize,crc,0);
+    end;
+  end;
 
 end;
 
 function OpenZipFile(fil: String): integer;
 var retcode: integer;
+   incl:      PChar;
+   excl:      PChar;
 begin
 
-  with UZfunc do
+  with Ufuncs do
   begin
-    @Print := @DllPrnt;
-    @Sound := nil;
-    @Replace := @DllReplace;
-    @Password := @DllPassword;
-    @SendApplicationMessage := @DllMessage;
-    @ServCallBk := @DllService;
+      print := CallbackPrint;
+      sound := nil;
+      replace := CallbackReplace;
+      password := CallbackPassword;
+      SendApplicationMessage := CallbackMessage;
+      ServCallBk := CallbackService;
   end;
 
-  UZDCL.ExtractOnlyNewer := 0;
-  UZDCL.SpaceToUnderscore := 0;
-  UZDCL.PromptToOverwrite := 0;
-  UZDCL.fQuiet := 2;
-  UZDCL.nCFlag := 0;
-  UZDCL.nTFlag := 0;
-  UZDCL.nVFlag := 1;
-  UZDCL.nUFlag := 0;
-  UZDCL.nZFlag := 0;
-  UZDCL.nDFlag := 1;
-  UZDCL.nOFlag := 0;
-  UZDCL.nAFlag := 1;
-  UZDCL.nZIFlag := 0;
-  UZDCL.C_flag := 1;
-  UZDCL.fPrivilege := 2;
+  with DCList do
+  begin
+    ExtractOnlyNewer := 0;
+    SpaceToUnderscore := 0;
+    PromptToOverwrite := 0;
+    fQuiet := 2;
+    nCFlag := 0;
+    nTFlag := 0;
+    nVFlag := 1;
+    nFFlag := 0;
+    nZFlag := 0;
+    nDFlag := 1;
+    nOFlag := 0;
+    nAFlag := 1;
+    nZIFlag := 0;
+    C_flag := 1;
+    fPrivilege := 2;
+    lpszZipFN := PChar(fil);
+    lpszExtractDir := nil;
+  end;
+
   ZIPfile := fil;
-  UZDCL.lpszZipFN := PChar(fil);
-  UZDCL.lpszExtractDir := nil;
+
+  incl := nil;
+  excl := nil;
 
   NumEntry := 0;
-  retcode := Wiz_SingleEntryUnzip(0, nil, 0, nil, UZDCL, UZfunc);
+  Loading := true;
+  retcode := Wiz_SingleEntryUnzip(0, incl, 0, excl, DCList, Ufuncs);
+  Loading := false;
 
   if retcode <> 0 then
   begin
@@ -656,43 +770,6 @@ begin
 
 end;
 
-procedure AboutBox(hwnd: Integer; DLNGstr: TLanguageCallBack); stdcall;
-var msg: string;
-begin
-
-      msg := 'InfoZip''s ZIP Driver v'+getVersion(DRIVER_VERSION)+#10+
-                          '(c)Copyright 2002-2003 Alexandre Devilliers'+#10+#10+
-                          'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+#10+
-                          'This is a wrapper for the Info-ZIP UnZIP32.DLL.'+#10+
-                          'Using UnZip32.pas by Theo Bebekis <bebekis@otenet.gr>.'+#10+#10+
-                          'DLL Status:'+#10;
-
-  if DLLFound then
-    if DLLStatus then
-      msg := msg + 'Loaded (Version '+DLLVersion+')'
-    else
-      msg := msg + 'Error (Bad DLL found!)'
-  else
-    msg := msg + 'Error (Missing DLL)';
-
-  MessageBoxA(hwnd, PChar(msg), 'About InfoZip''s ZIP Driver...', MB_OK);
-
-end;
-
-// Exported functions
-exports
-  CloseFormat,
-  DUDIVersion,
-  ExtractFile,   // Export only if your program uses internal
-                 // extraction.
-  GetCurrentDriverInfo,
-  GetDriverInfo,
-  GetEntry,
-  GetErrorInfo,
-  GetNumVersion,
-  IsFormat,
-  ReadFormat,
-  AboutBox;
 
 function SearchDLL: string;
 var
@@ -716,13 +793,20 @@ begin
 
 end;
 
+procedure InitPlugin(per: TPercentCallback; lngid: TLanguageCallback; DUP5Path: ShortString; AppHandle: THandle; AppOwner: TComponent); stdcall;
 begin
 
-  DLLPath := ExtractFilePath(ParamStr(0))+'data\drivers\unzip32.dll';
+  SetPercent := per;
+  DLNGStr := lngid;
+  CurPath := DUP5Path;
+  AHandle := AppHandle;
+  AOwner := AppOwner;
+
+  DLLPath := ExtractFilePath(CurPath)+'data\drivers\unzip32.dll';
   DLLFound := IsExpectedUnzipDLLVersion(DLLPath);
   if not(DLLFound) then
   begin
-    DLLPath := ExtractFilePath(ParamStr(0))+'unzip32.dll';
+    DLLPath := ExtractFilePath(CurPath)+'unzip32.dll';
     DLLFound := IsExpectedUnzipDLLVersion(DLLPath);
     if not(DLLFound) then
     begin
@@ -732,5 +816,48 @@ begin
   end;
 
   LoadUNZipDLL;
+
+end;
+
+procedure AboutBox(hwnd: Integer; DLNGstr: TLanguageCallBack); stdcall;
+var msg: string;
+begin
+
+      msg := 'InfoZip''s ZIP Driver v'+getVersion(DRIVER_VERSION)+#10+
+                          '(c)Copyright 2002-2005 Alexandre Devilliers'+#10+#10+
+                          'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+#10+
+                          'This is a wrapper for the Info-ZIP UnZIP32.DLL.'+#10+
+                          'Using UnZip.pas by Gerke Preussner <j3rky@gerke-preussner.de>.'+#10+#10+
+                          'DLL Status:'+#10;
+
+  if DLLFound then
+    if DLLStatus then
+      msg := msg + 'Loaded (Version '+DLLVersion+')'
+    else
+      msg := msg + 'Error (Bad DLL found!)'
+  else
+    msg := msg + 'Error (Missing DLL)';
+
+  MessageBoxA(hwnd, PChar(msg), 'About InfoZip''s ZIP Driver...', MB_OK);
+
+end;
+
+// Exported functions
+exports
+  CloseFormat,
+  DUDIVersion,
+  ExtractFile,   // Export only if your program uses internal
+                 // extraction.
+  GetCurrentDriverInfo,
+  InitPlugin,
+  GetDriverInfo,
+  GetEntry,
+  GetErrorInfo,
+  GetNumVersion,
+  IsFormat,
+  ReadFormat,
+  ExtractFileToStream,
+  AboutBox;
+
 
 end.

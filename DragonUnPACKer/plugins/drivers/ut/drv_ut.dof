@@ -90,18 +90,18 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=H:\Programmation\Compiled\drgunpacker\current\data\drivers
+OutputDir=C:\Developpement\dup-dev-5.1-compiled\data\drivers
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=
-Packages=vcl;rtl;vclx;indy;inet;xmlrtl;vclie;inetdbbde;inetdbxpress;dbrtl;dsnap;dsnapcon;vcldb;soaprtl;VclSmp;dbexpress;dbxcds;inetdb;bdertl;vcldbx;webdsnap;websnap;adortl;ibxpress;teeui;teedb;tee;dss;visualclx;visualdbclx;vclactnband;vclshlctrls;dclOfficeXP;DJCL70;JVCL200_R70;qrpt;VirtualTreesD7;IcsDel70
+Packages=vcl;rtl;vclx;indy;inet;xmlrtl;vclie;inetdbbde;inetdbxpress;dbrtl;dsnap;dsnapcon;vcldb;soaprtl;VclSmp;dbexpress;dbxcds;inetdb;bdertl;vcldbx;webdsnap;websnap;adortl;ibxpress;teeui;teedb;tee;dss;visualclx;visualdbclx;vclactnband;vclshlctrls;dclOfficeXP;DJcl;JVCL200_R70;qrpt;VirtualTreesD7;IcsDel70
 Conditionals=
 DebugSourceDirs=
 UsePackages=0
 [Parameters]
 RunParams=
-HostApplication=H:\Programmation\Compiled\drgunpacker\current\drgunpack5.exe
+HostApplication=C:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
 Launcher=
 UseLauncher=0
 DebugCWD=
@@ -115,7 +115,7 @@ AutoIncBuild=1
 MajorVer=2
 MinorVer=3
 Release=0
-Build=108
+Build=109
 Debug=0
 PreRelease=0
 Special=0
@@ -126,11 +126,25 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone.net
 FileDescription=DUP5 - Unreal Tournament Packages Driver
-FileVersion=2.3.0.108
+FileVersion=2.3.0.109
 InternalName=drv_ut
-LegalCopyright=(c)2004 Alexandre Devilliers
+LegalCopyright=(c)2004-2005 Alexandre Devilliers
 LegalTrademarks=
 OriginalFilename=drv_ut.d5d
 ProductName=Dragon UnPACKer 5
-ProductVersion=5.0.0
+ProductVersion=5.2.0
 Comments=DUP5 - Unreal Tournament Packages Driver
+[HistoryLists\hlUnitAliases]
+Count=1
+Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlSearchPath]
+Count=1
+Item0=H:\Programmation\CVS\drgunpacker\common
+[HistoryLists\hlOutputDirectorry]
+Count=6
+Item0=C:\Developpement\dup-dev-5.1-compiled\data\drivers
+Item1=H:\Programmation\Compiled\drgunpacker\current\data\drivers
+Item2=C:\Developpement\dup-dev-5.1-compiled\utils
+Item3=C:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
+Item4=C:\Developpement\dup-dev-5.1-compiled\data\convert
+Item5=C:\Developpement\dup-dev-5.1-compiled

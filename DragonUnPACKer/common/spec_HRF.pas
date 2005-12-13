@@ -1,6 +1,6 @@
 unit spec_HRF;
 
-// $Id: spec_HRF.pas,v 1.1.1.1 2004-05-08 10:25:11 elbereth Exp $
+// $Id: spec_HRF.pas,v 1.2 2005-12-13 07:13:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/spec_HRF.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -41,7 +41,7 @@ unit spec_HRF;
 
 interface
 
-const HR_VERSION = 50042;	// HyperRipper version
+const HR_VERSION = 50043;	// HyperRipper version
       HR_ID = 1;
 
       HR_TYPE_ERROR = -1;

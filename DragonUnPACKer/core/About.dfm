@@ -18,6 +18,7 @@ object frmAbout: TfrmAbout
   Font.Style = []
   FormStyle = fsStayOnTop
   OldCreateOrder = False
+  Position = poMainFormCenter
   PixelsPerInch = 96
   TextHeight = 13
   object ImgAbout: TImage
@@ -872,7 +873,6 @@ object frmAbout: TfrmAbout
     ScrollBars = ssVertical
     SelectionBar = False
     TabOrder = 1
-    Zoom = 100
     OnURLClick = txtMoreinfoURLClick
   end
   object TimerStartBlend: TTimer

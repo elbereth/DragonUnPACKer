@@ -1,8 +1,8 @@
 object frmUTConfig: TfrmUTConfig
-  Left = 285
-  Top = 246
-  Width = 870
-  Height = 600
+  Left = 242
+  Top = 92
+  Width = 432
+  Height = 216
   Caption = 'frmUTConfig'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET

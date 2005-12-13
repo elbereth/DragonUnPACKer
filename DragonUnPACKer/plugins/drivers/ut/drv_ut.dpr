@@ -1,6 +1,6 @@
 library drv_ut;
 
-// $Id: drv_ut.dpr,v 1.2 2005-12-13 07:13:56 elbereth Exp $
+// $Id: drv_ut.dpr,v 1.3 2005-12-13 23:24:27 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/ut/drv_ut.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -311,8 +311,8 @@ begin
     begin
       frmGH := TfrmGameHint.Create(AOwner);
       try
-        frmGH.Width := 321;
-        frmGH.Height := 89;
+        frmGH.Width := 326;
+        frmGH.Height := 110;
         frmGH.chkDontAsk.Checked := dontask;
         with frmGH do
         begin
@@ -339,7 +339,6 @@ begin
 
       Application.Handle := OldH;
     end;
-
 
     try
       package.Initialize(fil, GH);
@@ -564,6 +563,25 @@ begin
 
 end;
 
+procedure ConfigBox; stdcall;
+var OldH: THandle;
+    frmUTC: TfrmUTConfig;
+begin
+
+  OldH := Application.Handle;
+  Application.Handle := AHandle;
+
+  frmUTC := TfrmUTConfig.Create(AOwner);
+  try
+    frmUTC.ShowModal;
+  finally
+    frmUTC.free;
+  end;
+
+  Application.Handle := OldH;
+
+end;
+
 procedure InitPlugin(per: TPercentCallback; lngid: TLanguageCallback; DUP5Path: ShortString; AppHandle: THandle; AppOwner: TComponent); stdcall;
 begin
 
@@ -587,6 +605,7 @@ exports
   ExtractFileToStream,
   GetErrorInfo,
   AboutBox,
+  ConfigBox,
   IsFormat,
   InitPlugin;
 

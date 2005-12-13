@@ -115,7 +115,7 @@ AutoIncBuild=1
 MajorVer=2
 MinorVer=3
 Release=0
-Build=109
+Build=110
 Debug=0
 PreRelease=0
 Special=0
@@ -126,7 +126,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone.net
 FileDescription=DUP5 - Unreal Tournament Packages Driver
-FileVersion=2.3.0.109
+FileVersion=2.3.0.110
 InternalName=drv_ut
 LegalCopyright=(c)2004-2005 Alexandre Devilliers
 LegalTrademarks=

@@ -1,6 +1,6 @@
 unit GameHint;
 
-// $Id: GameHint.pas,v 1.1.1.1 2004-05-08 10:26:54 elbereth Exp $
+// $Id: GameHint.pas,v 1.2 2005-12-13 23:24:27 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/ut/GameHint.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -26,11 +26,10 @@ uses
 type
   TfrmGameHint = class(TForm)
     panOpen: TPanel;
-    Label1: TLabel;
+    lblOpening: TLabel;
     lstGameHints: TComboBox;
     chkDontAsk: TCheckBox;
     butOK: TButton;
-    grpEdit: TGroupBox;
     procedure butOKClick(Sender: TObject);
   private
     { Private declarations }

@@ -1,11 +1,11 @@
 object frmGameHint: TfrmGameHint
-  Left = 404
-  Top = 335
+  Left = 363
+  Top = 87
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'A.Cordero'#39's UT Package Driver'
-  ClientHeight = 275
-  ClientWidth = 424
+  ClientHeight = 90
+  ClientWidth = 320
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -23,7 +23,7 @@ object frmGameHint: TfrmGameHint
     Height = 89
     BevelOuter = bvNone
     TabOrder = 0
-    object Label1: TLabel
+    object lblOpening: TLabel
       Left = 8
       Top = 8
       Width = 305
@@ -60,13 +60,5 @@ object frmGameHint: TfrmGameHint
       TabOrder = 2
       OnClick = butOKClick
     end
-  end
-  object grpEdit: TGroupBox
-    Left = 8
-    Top = 168
-    Width = 321
-    Height = 97
-    Caption = 'Edit game'
-    TabOrder = 1
   end
 end

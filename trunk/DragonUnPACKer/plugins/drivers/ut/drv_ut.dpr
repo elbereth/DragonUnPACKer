@@ -1,6 +1,6 @@
 library drv_ut;
 
-// $Id: drv_ut.dpr,v 1.1.1.1 2004-05-08 10:26:54 elbereth Exp $
+// $Id: drv_ut.dpr,v 1.2 2005-12-13 07:13:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/ut/drv_ut.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -29,7 +29,7 @@ uses
   Forms,
   Registry,
   lib_version in '..\..\..\common\lib_version.pas',
-  ut_packages in '..\..\..\..\UT_Packages\Sources\ut_packages.pas',
+  ut_packages in 'ut_packages.pas',
   GameHint in 'GameHint.pas' {frmGameHint},
   UTConfig in 'UTConfig.pas' {frmUTConfig};
 
@@ -63,9 +63,9 @@ type CurrentDriverInfo = record
    TPercentCallback = procedure (p: byte);
    TLanguageCallback = function (lngid: ShortString): ShortString;
 
-const DRIVER_VERSION = 23011;
-      DUP_VERSION = 50040;
-      TUTP_VERSION = '2.3-cvs (03/04/2004)';
+const DRIVER_VERSION = 23040;
+      DUP_VERSION = 52040;
+      TUTP_VERSION = '2.3-cvs (09/05/2004)';
 
 var CurPos: integer = 0;
     DrvInfo: CurrentDriverInfo;
@@ -86,7 +86,7 @@ end;
 
 function DUDIVersion: Byte; stdcall;
 begin
-  DUDIVersion := 3;
+  DUDIVersion := 4;
 end;
 
 function GetDriverInfo: DriverInfo; stdcall;
@@ -475,6 +475,41 @@ begin
 
 end;
 
+function ExtractFileToStream(outputstream: TStream; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
+var Obj: TUTObject;
+    Bmp: TBitmap;
+begin
+
+  Obj:=Package.Exported[DataX].UTObject;
+  if Obj<>nil then
+  begin
+    Obj.ReadObject;
+    if (Package.Exported[DataX].UTClassName = 'Sound') then
+    begin
+      TUTObjectClassSound(Obj).SaveToStream(outputstream);
+//      ShowMessage(TUTObjectClassSound(Obj).Format+#10+TUTObjectClassSound(Obj).Data+#10+BoolToStr(TUTObjectClassSound(Obj).HasBeenRead,true)+#10+BoolToStr(TUTObjectClassSound(Obj).HasBeenInterpreted,true));
+//      TUTObjectClassSound(Obj).RawSaveToFile('h:\test'+ExtractFileName(outputfile)+'.wav');
+    end
+    else if (Package.Exported[DataX].UTClassName = 'Music') then
+      TUTObjectClassMusic(Obj).SaveToStream(outputstream)
+    else if (Package.Exported[DataX].UTClassName = 'Texture') then
+    begin
+      if TUTObjectClassTexture(Obj).GoodMipMapCount > 0 then
+      begin
+        Bmp := TUTObjectClassTexture(Obj).GoodMipMap[0].AsBitmap;
+        Bmp.SaveToStream(outputstream);
+      end;
+    end
+    else
+      Obj.RawSaveToStream(outputstream);
+    obj.ReleaseObject;
+    //obj.Free;
+  end;
+
+  result := true;
+
+end;
+
 function ExtractFile(outputfile: shortstring; entrynam: shortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
 var Obj: TUTObject;
     Bmp: TBitmap;
@@ -497,7 +532,7 @@ begin
       if TUTObjectClassTexture(Obj).GoodMipMapCount > 0 then
       begin
         Bmp := TUTObjectClassTexture(Obj).GoodMipMap[0].AsBitmap;
-        Bmp.SaveToFile(outputfile) 
+        Bmp.SaveToFile(outputfile)
       end;
     end
     else
@@ -521,7 +556,7 @@ procedure AboutBox; stdcall;
 begin
 
   MessageBoxA(AHandle, PChar('A.Cordero''s UT Package Driver v'+getVersion(DRIVER_VERSION)+#10+
-                          '(c)Copyright 2003-2004 Alexandre Devilliers'+#10+#10+
+                          '(c)Copyright 2003-2005 Alexandre Devilliers'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+#10+
                           'Uses UT Packages Delphi unit v'+TUTP_VERSION+' by Antonio Cordero Balcazar.'+#10+#10+
                           'Size of entries may not be accurate.')
@@ -549,6 +584,7 @@ exports
   GetCurrentDriverInfo,
   GetNumVersion,
   ExtractFile,
+  ExtractFileToStream,
   GetErrorInfo,
   AboutBox,
   IsFormat,

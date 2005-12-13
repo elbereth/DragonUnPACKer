@@ -1,6 +1,6 @@
 object frmSplash: TfrmSplash
-  Left = 538
-  Top = 551
+  Left = 435
+  Top = 202
   AlphaBlend = True
   AlphaBlendValue = 200
   BorderStyle = bsNone

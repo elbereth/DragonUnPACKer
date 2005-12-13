@@ -1,11 +1,11 @@
 object dup5Main: Tdup5Main
-  Left = 198
-  Top = 535
+  Left = 441
+  Top = 113
   HelpContext = 1
   AlphaBlendValue = 128
   AutoScroll = False
-  Caption = 'Dragon UnPACKer v5.0.0'
-  ClientHeight = 349
+  Caption = 'Dragon UnPACKer v5.1.2'
+  ClientHeight = 311
   ClientWidth = 667
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -69,39 +69,19 @@ object dup5Main: Tdup5Main
   object Splitter: TSplitter
     Left = 113
     Top = 30
-    Height = 300
+    Height = 177
     HelpContext = 2
+    MinSize = 20
   end
-  object Status: TStatusBar
+  object SplitterBottom: TSplitter
     Left = 0
-    Top = 330
+    Top = 207
     Width = 667
-    Height = 19
-    HelpContext = 3
-    Panels = <
-      item
-        Text = '0 objet(s)'
-        Width = 230
-      end
-      item
-        Text = '0 octet(s)'
-        Width = 220
-      end
-      item
-        Alignment = taCenter
-        Bevel = pbRaised
-        Text = '-'
-        Width = 22
-      end
-      item
-        Alignment = taCenter
-        Text = '-'
-        Width = 70
-      end
-      item
-        Bevel = pbNone
-        Width = 16
-      end>
+    Height = 3
+    Cursor = crVSplit
+    Align = alBottom
+    AutoSnap = False
+    MinSize = 100
   end
   object ctrlBar: TControlBar
     Left = 0
@@ -112,7 +92,7 @@ object dup5Main: Tdup5Main
     Align = alTop
     Anchors = [akLeft, akTop, akRight, akBottom]
     AutoSize = True
-    TabOrder = 1
+    TabOrder = 0
     object Percent: TProgressBar
       Left = 104
       Top = 2
@@ -179,7 +159,7 @@ object dup5Main: Tdup5Main
     Left = 116
     Top = 30
     Width = 551
-    Height = 300
+    Height = 177
     HelpContext = 11
     Align = alClient
     DragMode = dmAutomatic
@@ -193,9 +173,8 @@ object dup5Main: Tdup5Main
     Header.Options = [hoColumnResize, hoShowSortGlyphs, hoVisible]
     HintAnimation = hatNone
     Images = imgContents
-    ParentBackground = False
     PopupMenu = Popup_Contents
-    TabOrder = 2
+    TabOrder = 1
     TreeOptions.AutoOptions = [toAutoDropExpand, toAutoScroll, toAutoSort, toAutoTristateTracking, toAutoDeleteMovedNodes]
     TreeOptions.PaintOptions = [toShowButtons, toShowDropmark, toThemeAware, toUseBlendedImages]
     TreeOptions.SelectionOptions = [toMultiSelect]
@@ -235,7 +214,7 @@ object dup5Main: Tdup5Main
     Left = 0
     Top = 30
     Width = 113
-    Height = 300
+    Height = 177
     HelpContext = 12
     Align = alLeft
     Header.AutoSizeIndex = 0
@@ -247,9 +226,8 @@ object dup5Main: Tdup5Main
     Header.MainColumn = -1
     Header.Options = [hoColumnResize, hoDrag]
     Images = imgIndex
-    ParentBackground = False
     PopupMenu = Popup_Index
-    TabOrder = 3
+    TabOrder = 2
     TreeOptions.PaintOptions = [toHideSelection, toShowButtons, toShowDropmark, toShowRoot, toShowTreeLines, toThemeAware, toUseBlendedImages]
     TreeOptions.SelectionOptions = [toRightClickSelect]
     OnCompareNodes = lstIndex2CompareNodes
@@ -266,8 +244,62 @@ object dup5Main: Tdup5Main
     Height = 17
     HelpContext = 13
     BevelOuter = bvLowered
-    TabOrder = 4
+    TabOrder = 3
     Visible = False
+  end
+  object panBottom: TPanel
+    Left = 0
+    Top = 210
+    Width = 667
+    Height = 101
+    Align = alBottom
+    BevelOuter = bvNone
+    TabOrder = 4
+    object Status: TStatusBar
+      Left = 0
+      Top = 82
+      Width = 667
+      Height = 19
+      HelpContext = 3
+      Panels = <
+        item
+          Text = '0 objet(s)'
+          Width = 230
+        end
+        item
+          Text = '0 octet(s)'
+          Width = 220
+        end
+        item
+          Alignment = taCenter
+          Bevel = pbRaised
+          Text = '-'
+          Width = 22
+        end
+        item
+          Alignment = taCenter
+          Text = '-'
+          Width = 70
+        end
+        item
+          Bevel = pbNone
+          Width = 16
+        end>
+      PopupMenu = Popup_Log
+    end
+    object richLog: TJvRichEdit
+      Left = 0
+      Top = 0
+      Width = 667
+      Height = 82
+      Align = alClient
+      HideScrollBars = False
+      PopupMenu = Popup_Log
+      ReadOnly = True
+      ScrollBars = ssVertical
+      TabOrder = 1
+      WordWrap = False
+    end
   end
   object OpenDialog: TOpenDialog
     Options = [ofHideReadOnly, ofFileMustExist, ofEnableSizing]
@@ -5378,5 +5410,31 @@ object dup5Main: Tdup5Main
     OnTimer = TimerParamTimer
     Left = 520
     Top = 168
+  end
+  object Popup_Log: TJvPopupMenu
+    OnPopup = Popup_LogPopup
+    ImageMargin.Left = 0
+    ImageMargin.Top = 0
+    ImageMargin.Right = 0
+    ImageMargin.Bottom = 0
+    ImageSize.Height = 0
+    ImageSize.Width = 0
+    Left = 584
+    Top = 72
+    object menuLog_Hide: TMenuItem
+      Caption = 'Cacher le journal...'
+      OnClick = menuLog_HideClick
+    end
+    object menuLog_Show: TMenuItem
+      Caption = 'Afficher le journal...'
+      OnClick = menuLog_ShowClick
+    end
+    object N3: TMenuItem
+      Caption = '-'
+    end
+    object menuLog_Clear: TMenuItem
+      Caption = 'Effacer le journal'
+      OnClick = menuLog_ClearClick
+    end
   end
 end

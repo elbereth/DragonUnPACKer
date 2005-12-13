@@ -1,6 +1,6 @@
 unit lib_language;
 
-// $Id: lib_language.pas,v 1.3 2004-07-15 16:46:55 elbereth Exp $
+// $Id: lib_language.pas,v 1.4 2005-12-13 07:13:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_language.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -56,7 +56,7 @@ type
    end;
 
 const DLNG_VERSION : byte = 4;
-      DLNG_PRGVER : byte = 6;
+      DLNG_PRGVER : byte = 8;
 
 var tabLNG: array[1..1000] of Internal_Tab;
     numLNG: integer = 0;
@@ -374,6 +374,14 @@ begin
     res := 'Taille:'
   else if sch = 'INFO14' then
     res := 'Chargement:'
+  else if sch = 'INFO20' then
+    res := 'Nom du plugin'
+  else if sch = 'INFO21' then
+    res := 'Version'
+  else if sch = 'INFO22' then
+    res := 'Informations Avancées'
+  else if sch = 'INFO23' then
+    res := 'Ver.Int.:'
   else if sch = 'SCHTIT' then
     res := 'Rechercher'
   else if sch = 'SCHGRP' then
@@ -410,6 +418,13 @@ begin
     res := 'Développer tout'
   else if sch = 'POP2S5' then
     res := 'Replier tout'
+  else if sch = 'POP3S1' then
+    res := 'Afficher le journal'
+  else if sch = 'POP3S2' then
+    res := 'Cacher le journal'
+  else if sch = 'POP3S3' then
+    res := 'Effacer le journal'
+
   else if sch = 'OPTTIT' then
     res := 'Configuration'
   else if sch = 'OPT100' then
@@ -428,14 +443,22 @@ begin
     res := 'Prendre les icones dans le registre Windows (plus lent)'
   else if sch = 'OPT125' then
     res := 'Utiliser l''HyperRipper si aucun plugin n''arrive à ouvrir le fichier'
+  else if sch = 'OPT126' then
+    res := 'Afficher le journal d''exécution'
   else if sch = 'OPT200' then
     res := 'Drivers'
   else if sch = 'OPT201' then
     res := 'A Propos..'
   else if sch = 'OPT202' then
     res := 'Configurer'
+  else if sch = 'OPT203' then
+    res := 'Drivers:'
   else if sch = 'OPT210' then
     res := 'Informations'
+  else if sch = 'OPT220' then
+    res := 'Priorité :'
+  else if sch = 'OPT221' then
+    res := 'Rafraîchir la liste'
   else if sch = 'OPT300' then
     res := 'Icones/Look'
   else if sch = 'OPT310' then
@@ -466,6 +489,20 @@ begin
     res := 'Plugins HyperRipper:'
   else if sch = 'OPT710' then
     res := 'Informations'
+  else if sch = 'OPT800' then
+    res := 'Journal d''exécution'
+  else if sch = 'OPT810' then
+    res := 'Options du journal d''exécution'
+  else if sch = 'OPT840' then
+    res := 'Niveau de détail'
+  else if sch = 'OPT841' then
+    res := 'Sélectionnez le niveau de détail pour le journal d''exécution:'
+  else if sch = 'OPT850' then
+    res := 'Bas - Aucune information supplémentaire'
+  else if sch = 'OPT851' then
+    res := 'Moyen - Affichage de plus d''informations'
+  else if sch = 'OPT852' then
+    res := 'Haut - Affichage du maximum d''informations'
   else if sch = 'OPEN00' then
     res := 'Ouvrir un fichier...'
   else if sch = 'XTRCAP' then
@@ -988,6 +1025,69 @@ begin
   else if sch = 'EXTXT' then
     res := 'Document Texte'
 
+  else if sch = 'LOG001' then
+    res := 'Initialisation des plugins:'
+  else if sch = 'LOG002' then
+    res := 'Chargement des plugins Drivers...'
+  else if sch = 'LOG003' then
+    res := 'Chargement des plugins Convertions...'
+  else if sch = 'LOG004' then
+    res := 'Chargement des plugins HyperRipper...'
+  else if sch = 'LOG009' then
+    res := '%p plugin(s)'
+  else if sch = 'LOG101' then
+    res := 'Ouverture du fichier "%f":'
+  else if sch = 'LOG102' then
+    res := 'Format de fichier non reconnu!'
+  else if sch = 'LOG103' then
+    res := 'Démarrage de HyperRipper...'
+  else if sch = 'LOG104' then
+    res := 'Fichier introuvable (ou bloqué par un autre programme/utilisateur)...'
+  else if sch = 'LOG200' then
+    res := 'Fermeture fichier actuel...'
+  else if sch = 'LOG300' then
+    res := 'Affichage des entrées du répertoire "%d"...'
+  else if sch = 'LOG301' then
+    res := '%e entrée(s)...'
+  else if sch = 'LOG400' then
+    res := 'Utilisation de la détection intelligente du format du fichier source.'
+  else if sch = 'LOG500' then
+    res := 'Le plugin Driver "%d" pense pouvoir ouvrir ce fichier.'
+  else if sch = 'LOG501' then
+    res := 'Ouverture du fichier en utilisant le plugin "%d"...'
+  else if sch = 'LOG502' then
+    res := 'Récupération de %x entrée(s)...'
+  else if sch = 'LOG503' then
+    res := 'Récupération des répertoires...'
+  else if sch = 'LOG504' then
+    res := 'Fichier ouvert grâce au plugin "%p" (format détecté: "%f")'
+  else if sch = 'LOG510' then
+    res := 'Fait!'
+  else if sch = 'LOG511' then
+    res := '- Succès!'
+  else if sch = 'LOG512' then
+    res := '- Echec!'
+  else if sch = 'LOG513' then
+    res := '- Erreur!'
+  else if sch = 'LOG514' then
+    res := 'Erreur!'
+  else if sch = 'LOGC01' then
+    res := 'Libération de %p plugins...'
+  else if sch = 'LOGC02' then
+    res := 'Recherche des plugins...'
+  else if sch = 'LOGC10' then
+    res := 'Convertion de "%a" vers "%b"...'
+  else if sch = 'LOGC11' then
+    res := 'Méthode rapide!'
+  else if sch = 'LOGC12' then
+    res := 'Méthode lente (plugins obsolètes)!'
+  else if sch = 'LOGC13' then
+    res := 'Convertion vers "%b"...'
+  else if sch = 'LOGC14' then
+    res := 'Convertion de multiples entrées vers "%b"...'
+  else if sch = 'LOGC15' then
+    res := 'Convertion...'
+
   else if sch = 'ERR000' then
     res := 'Erreur'
   else if sch = 'ERR101' then
@@ -1023,7 +1123,9 @@ begin
   else if sch = 'ERRD02' then
     res := 'Le Driver n''a pas pu etre chargé (des fonctions importantes sont manquantes).'
   else if sch = 'ERRDRV' then
-    res := 'Une erreur est survenue lors de l''utilisation du driver DUP5 suivant:%n%n%d%nErreur: %e%nPour toute question en relation avec cette erreur veuillez contacter l''auteur du driver (%a).'
+    res := 'Une erreur est survenue lors de l''utilisation du driver "%d":'
+  else if sch = 'ERRDR1' then
+    res := 'Pour toute question en relation avec cette erreur veuillez contacter l''auteur du driver (%a).'
   else if sch = 'ERRC01' then
     res := 'Le Plugin de convertion n''a pas pu etre chargé (mauvaise version de l''interface ou ce n''est pas un plugin DUP5).'
   else if sch = 'ERRC02' then
@@ -1032,6 +1134,12 @@ begin
     res := 'Le Plugin HyperRipper n''a pas pu etre chargé (mauvaise version de l''interface ou ce n''est pas un plugin DUP5).'
   else if sch = 'ERRH02' then
     res := 'Le Plugin HyperRipper n''a pas pu etre chargé (des fonctions importantes sont manquantes).'
+  else if sch = 'ERRH03' then
+    res := 'Attention: Ce plugin ne peut pas rechercher après 2Go de données (après cette limite il ne trouvera rien).'
+  else if sch = 'ERRH04' then
+    res := 'HyperRipper plugin ID #%i inconnu'
+  else if sch = 'ERRH05' then
+    res := 'Le plugin "%p" ne peut pas rechercher de données après la limite des 2Go.'
   else if sch = 'ERREMP' then
     res := 'Le fichier est vide.'
   else if sch = 'ERRIO' then

@@ -90,7 +90,7 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=H:\Programmation\Compiled\drgunpacker\current\data\drivers
+OutputDir=C:\Developpement\dup-dev-5.1-compiled\data\drivers
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
@@ -101,10 +101,10 @@ DebugSourceDirs=
 UsePackages=0
 [Parameters]
 RunParams=
-HostApplication=H:\Programmation\Compiled\drgunpacker\current\drgunpack5.exe
+HostApplication=C:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
 Launcher=
 UseLauncher=0
-DebugCWD=H:\Programmation\Compiled\drgunpacker\current
+DebugCWD=H:\Programmation\Compiled\drgunpacker\currentdev
 [Language]
 ActiveLang=
 ProjectLang=
@@ -112,10 +112,10 @@ RootDir=
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=1
-MajorVer=1
-MinorVer=3
-Release=6
-Build=666
+MajorVer=2
+MinorVer=0
+Release=0
+Build=672
 Debug=0
 PreRelease=0
 Special=0
@@ -126,18 +126,24 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Dragon Software
 FileDescription=Main Driver plugin for Dragon UnPACKer 5
-FileVersion=1.3.6.666
+FileVersion=2.0.0.672
 InternalName=drv_default
-LegalCopyright=(c)2002-2004 Alexandre Devilliers
+LegalCopyright=(c)2002-2005 Alexandre Devilliers
 LegalTrademarks=
 OriginalFilename=drv_default.d5d
 ProductName=Dragon UnPACKer 5
-ProductVersion=5.0.0
+ProductVersion=5.2
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlSearchPath]
+Count=1
+Item0=H:\Programmation\CVS\drgunpacker\common
 [HistoryLists\hlOutputDirectorry]
-Count=3
-Item0=H:\Programmation\Compiled\drgunpacker\current\data\drivers
-Item1=H:\Programmation\Compiled\drgunpacker\current\data\convert
-Item2=H:\Programmation\Compiled\drgunpacker\current\utils
+Count=6
+Item0=C:\Developpement\dup-dev-5.1-compiled\data\drivers
+Item1=H:\Programmation\Compiled\drgunpacker\current\data\drivers
+Item2=C:\Developpement\dup-dev-5.1-compiled\utils
+Item3=C:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
+Item4=C:\Developpement\dup-dev-5.1-compiled\data\convert
+Item5=C:\Developpement\dup-dev-5.1-compiled

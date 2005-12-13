@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.12 2004-10-10 15:30:34 elbereth Exp $
+// $Id: drv_default.dpr,v 1.13 2005-12-13 07:13:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -24,7 +24,7 @@ uses
   StrUtils,
   SysUtils,
   Windows,
-  U_IntList,
+  U_IntList in '..\..\..\common\U_IntList.pas',
   spec_HRF in '..\..\..\common\spec_HRF.pas',
   lib_version in '..\..\..\common\lib_version.pas';
 
@@ -139,6 +139,10 @@ type FSE = ^element;
     13540        Some research on Transport Giant JFL/IND files.
                  Added support for Myst IV Revelation .M4B files
     13640        Added support for Leisure Suit Larry: Magna Cum Laude .JAM files.
+    20010        Started to upgrade to new interface DUDI v4
+    20011  51140 Upgraded to new interface DUDI v4
+    20012  51240 Merged with 5.0 changes (see 13540 and 13640 version)
+    20040  52040 Changed version number for 5.2 release
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1101,10 +1105,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 13640;
-  DUP_VERSION = 50040;
-  CVS_REVISION = '$Revision: 1.12 $';
-  CVS_DATE = '$Date: 2004-10-10 15:30:34 $';
+  DRIVER_VERSION = 20040;
+  DUP_VERSION = 52040;
+  CVS_REVISION = '$Revision: 1.13 $';
+  CVS_DATE = '$Date: 2005-12-13 07:13:56 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1133,6 +1137,10 @@ var DataBloc: FSE;
     DNISize : Integer;
     NumFSE: Integer;
     HPIKey: Integer;
+    DLNGStr: TLanguageCallback;
+    CurPath: string;
+    AHandle : THandle;
+    AOwner : TComponent;
 
 // This function reverse a string
 //  Ex: "abcd" becomes "dcba"
@@ -1154,7 +1162,7 @@ end;
 // Exported
 function DUDIVersion: Byte; stdcall;
 begin
-  DUDIVersion := 1;
+  DUDIVersion := 4;
 end;
 
 // Returns Driver plugin version
@@ -7564,7 +7572,8 @@ begin
 
 end;
 }
-function ReadFormat(fil: ShortString; percent: TPercentCallback; Deeper: boolean): Integer; stdcall;
+//function ReadFormat(fil: ShortString; percent: TPercentCallback; Deeper: boolean): Integer; stdcall;
+function ReadFormat(fil: ShortString; Deeper: boolean): Integer; stdcall;
 var ext: string;
     ID4: array[0..3] of char;
     ID6: array[0..5] of char;
@@ -7579,7 +7588,6 @@ var ext: string;
     x: integer;
 begin
 
-  SetPercent := percent;
   SetPercent(0);
 
   ext := ExtractFileExt(fil);
@@ -8471,7 +8479,7 @@ begin
 
 end;
 
-procedure DecompressMTF(fil: integer; Offset, Size: int64);
+procedure DecompressMTFToStream(outputstream: TStream; Offset, Size: int64);
 var
   Buf: PByteArray;
   BufEnd: PByteArray;
@@ -8560,7 +8568,7 @@ begin
 
 //  CloseFile(T);
 
-  FileWrite(fil,BufEnd^, Size);
+  outputstream.WriteBuffer(BufEnd^, Size);
 
   FreeMem(Buf);
   FreeMem(BufEnd);
@@ -8909,11 +8917,13 @@ endfunc:
 
 end;
 
-procedure DecompressRFA(fil: integer; Offset, Size: int64);
+procedure DecompressRFAToStream(outputstream: TStream; Offset, Size: int64; silent: boolean);
 var
   SBuff: PByteArray;
   OBuff: PByteArray;
   res: integer;
+  per, oldper, perstep: word;
+  real1, real2: real;
 
   DataH: array of RFA_DataHeader;
   x, Segments: longword;
@@ -8939,6 +8949,7 @@ begin
   for x := 0 to Segments-1 do
   begin
 //    writeln(T,'{HEADI='+inttostr(x+1)+'}');
+
     GetMem(SBuff,DataH[x].csize);
     GetMem(OBuff,DataH[x].ucsize);
     FileSeek(FHandle,Offset+(segments*12)+DataH[x].doffset+4,0);
@@ -8950,21 +8961,35 @@ begin
       FreeMem(OBuff);
       Break;
     end;
-    FileWrite(fil,OBuff^, DataH[x].ucsize);
+    outputstream.WriteBuffer(OBuff^, DataH[x].ucsize);
     FreeMem(SBuff);
     FreeMem(OBuff);
+    if not silent then
+    begin
+      real1 := x+1;
+      real2 := Segments;
+      real1 := (real1 / real2)*100;
+      per := Round(real1);
+      if per >= oldper + perstep then
+      begin
+        oldper := per;
+        SetPercent(per);
+      end;
+    end;
 //    writeln(T,'{/HEADI}');
   end;
+
+  if not silent then
+    SetPercent(100);
 
 //  CloseFile(T);
 
 end;
 
-function DecompressRFD(fil: integer; Size:  Int64; OSize: Int64) : Boolean;
+function DecompressRFDToStream(outputstream: TStream; Size:  Int64; OSize: Int64) : Boolean;
 var
   Buf: PChar;
   InputStream: TMemoryStream;
-  OutputStream: TFileStream;
   DStream: TDecompressionStream;
   FinalSize: integer;
 begin
@@ -8975,7 +9000,6 @@ begin
     FileRead(FHandle,Buf^,Size-4);
 
     InputStream := TMemoryStream.Create;
-    OutputStream := TFileStream.Create(fil);
     try
       InputStream.Write(Buf^,Size-4);
       InputStream.Seek(0, soFromBeginning);
@@ -8989,7 +9013,6 @@ begin
 
     finally
       InputStream.Free;
-      OutputStream.Free;
     end
   finally
     FreeMem(Buf);
@@ -8999,11 +9022,10 @@ begin
 
 End;
 
-function DecompressZlib(fil: integer; Size:  Int64; OSize: Int64) : Boolean;
+function DecompressZlibToStream(OutputStream: TStream; Size:  Int64; OSize: Int64) : Boolean;
 var
   Buf: PChar;
   InputStream: TMemoryStream;
-  OutputStream: THandleStream;
   DStream: TDecompressionStream;
   FinalSize: integer;
 begin
@@ -9013,7 +9035,6 @@ begin
     FileRead(FHandle,Buf^,Size);
 
     InputStream := TMemoryStream.Create;
-    OutputStream := THandleStream.Create(fil);
     try
       InputStream.Write(Buf^,Size);
       InputStream.Seek(0, soFromBeginning);
@@ -9027,7 +9048,6 @@ begin
 
     finally
       InputStream.Free;
-      OutputStream.Free;
     end
   finally
     FreeMem(Buf);
@@ -9099,7 +9119,7 @@ begin
 
 end;
 
-procedure DecompressHPI(fil: integer; Offset, Size: int64; Comp: integer);
+procedure DecompressHPIToStream(outputstream: TStream; Offset, Size: int64; Comp: integer; silent: boolean);
 var chunks, x,y: integer;
     HDR: HPIChunk;
     Buffer: PByteArray;
@@ -9108,8 +9128,10 @@ var chunks, x,y: integer;
     c: Byte;
    // ftmp: integer;
     ChunkSize: array of Integer;
-    OutputStream: TMemoryStream;
+//    OutputStream: TMemoryStream;
     DStream: TDecompressionStream;
+    per, oldper: word;
+    real1, real2: real;
 begin
 
   chunks := Size div 65536;
@@ -9180,14 +9202,14 @@ begin
           BufMem.Read(Buffer^,HDR.CompressedSize);
           GetMem(DecompBuffer,HDR.DecompressedSize);
           DecompressLZ77(DecompBuffer,Buffer,HDR.CompressedSize);
-          FileWrite(fil,DecompBuffer^,HDR.DecompressedSize);
+          outputstream.WriteBuffer(DecompBuffer^,HDR.DecompressedSize);
           FreeMem(DecompBuffer);
         end
         else
         begin
 
   //        BufMem.SaveToFile('h:\testhpi-zlib-'+inttostr(x)+'.bin');
-          OutputStream := TMemoryStream.Create;
+//          OutputStream := TMemoryStream.Create;
           try
             BufMem.Seek(0,0);
             DStream := TDecompressionStream.Create(BufMem);
@@ -9198,12 +9220,12 @@ begin
             finally
               DStream.Free;
             end;
-            GetMem(DecompBuffer,HDR.DecompressedSize);
+//            GetMem(DecompBuffer,HDR.DecompressedSize);
 //            OutputStream.SaveToFile('h:\testhpi-zlib-'+inttostr(x)+'-decomp.bin');
-            OutputStream.Seek(0,0);
-            OutputStream.Read(DecompBuffer^,HDR.DecompressedSize);
-            FileWrite(fil,DecompBuffer^,HDR.DecompressedSize);
-            FreeMem(DecompBuffer);
+//            OutputStream.Seek(0,0);
+//            OutputStream.Read(DecompBuffer^,HDR.DecompressedSize);
+//            FileWrite(fil,DecompBuffer^,HDR.DecompressedSize);
+//            FreeMem(DecompBuffer);
           finally
             OutputStream.Free;
           end;
@@ -9214,7 +9236,23 @@ begin
       finally
         FreeMem(Buffer);
       end;
+
+      if not silent then
+      begin
+        real1 := x;
+        real2 := chunks;
+        real1 := (real1 / real2)*100;
+        per := Round(real1);
+        if per >= oldper + 10 then
+        begin
+          SetPercent(per);
+          oldper := per;
+        end;
+      end;
     end;
+
+    if not silent then
+      SetPercent(100);
 
   finally
     BufMem.Destroy;
@@ -9222,10 +9260,10 @@ begin
 
 end;
 
-procedure AboutBox(hwnd: Integer; DLNGstr: TLanguageCallBack); stdcall;
+procedure AboutBox; stdcall;
 begin
 
-  MessageBoxA(hwnd, PChar('Main Driver plugin v'+getVersion(DRIVER_VERSION)+#10+
+  MessageBoxA(AHandle, PChar('Main Driver plugin v'+getVersion(DRIVER_VERSION)+#10+
                           '(c)Copyright 2002-2004 Alexandre Devilliers'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
                           'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+#10+
@@ -9304,7 +9342,57 @@ end;
 
 end;
 
-procedure DecryptADF(src : integer; dst : integer; soff : Int64; ssize : Int64; bufsize : Integer);
+procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; bufsize : Integer; silent: boolean);
+var
+  //sFileLength: Integer;
+  Buffer: PChar;
+  i,numbuf, restbuf: Integer;
+  per, oldper: word;
+  real1, real2: real;
+begin
+
+  //sFileLength := FileSeek(src,0,2);
+  FileSeek(src,soff,0);
+  numbuf := ssize div bufsize;
+  restbuf := ssize mod bufsize;
+
+  GetMem(Buffer,bufsize);
+
+  try
+
+    oldper := 0;
+
+    for i := 1 to numbuf do
+    begin
+      FileRead(src, Buffer^, bufsize);
+      dst.WriteBuffer(Buffer^, bufsize);
+      if not(silent) then
+      begin
+        real1 := i;
+        real2 := numbuf;
+        real1 := (real1 / real2)*100;
+        per := Round(real1);
+        if per >= oldper + 10 then
+        begin
+          SetPercent(per);
+          oldper := per;
+        end;
+      end;
+    end;
+
+    if not(silent) then
+      SetPercent(100);
+
+    FileRead(src, Buffer^, restbuf);
+    dst.WriteBuffer(Buffer^, restbuf);
+
+  finally
+    FreeMem(Buffer);
+  end;
+
+end;
+
+procedure DecryptADFToStream(src : integer; dst : TStream; soff : Int64; ssize : Int64; bufsize : Integer; silent: boolean);
 var
   //sFileLength: Integer;
   Buffer: PByteArray;
@@ -9337,26 +9425,30 @@ try
     begin
       Buffer^[x] := Buffer^[x] xor $22;
     end;
-    FileWrite(dst, Buffer^, bufsize);
-    real1 := i;
-    real2 := numbuf;
-    real1 := (real1 / real2)*100;
-    per := Round(real1);
-    if per >= oldper + perstep then
+    dst.WriteBuffer(Buffer^, bufsize);
+    if not silent then
     begin
-      oldper := per;
-      SetPercent(per);
+      real1 := i;
+      real2 := numbuf;
+      real1 := (real1 / real2)*100;
+      per := Round(real1);
+      if per >= oldper + perstep then
+      begin
+        oldper := per;
+        SetPercent(per);
+      end;
     end;
   end;
 
-  SetPercent(100);
+  if not silent then
+    SetPercent(100);
 
   FileRead(src, Buffer^, restbuf);
   for x := 0 to restbuf do
   begin
     Buffer^[x] := Buffer^[x] xor $22;
   end;
-  FileWrite(dst, Buffer^, restbuf);
+  dst.WriteBuffer(Buffer^, restbuf);
 
 finally
   FreeMem(Buffer);
@@ -9364,7 +9456,7 @@ end;
 
 end;
 
-procedure DecryptPCK(src : integer; dst : integer; soff : Int64; ssize : Int64; seed: integer);
+procedure DecryptPCKToStream(src : integer; dst : TStream; soff : Int64; ssize : Int64; seed: integer; silent: boolean);
 var
   //sFileLength: Integer;
   Buffer: PByteArray;
@@ -9419,19 +9511,23 @@ try
       if (key >= 15) then
         key := 0;
     end;
-    FileWrite(dst, Buffer^,1024);
-    real1 := i;
-    real2 := numbuf;
-    real1 := (real1 / real2)*100;
-    per := Round(real1);
-    if per >= oldper + perstep then
+    dst.WriteBuffer(Buffer^,1024);
+    if not silent then
     begin
-      oldper := per;
-      SetPercent(per);
+      real1 := i;
+      real2 := numbuf;
+      real1 := (real1 / real2)*100;
+      per := Round(real1);
+      if per >= oldper + perstep then
+      begin
+        oldper := per;
+        SetPercent(per);
+      end;
     end;
   end;
 
-  SetPercent(100);
+  if not silent then
+    SetPercent(100);
 
   FileRead(src, Buffer^, restbuf);
   for x := 0 to ((restbuf-1) div 16) do
@@ -9452,7 +9548,7 @@ try
     if (key >= 15) then
       key := 0;
   end;
-  FileWrite(dst, Buffer^, restbuf);
+  dst.WriteBuffer(Buffer^, restbuf);
 
 finally
   FreeMem(Buffer);
@@ -9460,15 +9556,12 @@ end;
 
 end;
 
-function ExtractFile(outputfile: ShortString; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
-var fil: Integer;
-    ENT: MTFCompress;
+function ExtractFileToStream(outputstream: TStream; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
+var ENT: MTFCompress;
     SSA: SSACompress;
     tbyt,key: byte;
     ID: array[0..2] of char;
 begin
-
-  fil := FileCreate(outputfile,fmOpenRead or fmShareExclusive);
 
   FileSeek(FHandle,Offset,0);
 
@@ -9478,27 +9571,27 @@ begin
   begin
     if (DataX = 2) then
     begin
-      DecompressRFD(fil, DataY, Size);
+      DecompressRFDToStream(outputstream, DataY, Size);
     end
     else
     begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
+      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
     end;
   end
   else if DrvInfo.ID = '007' then
   begin
     if (DataX = 1) then
     begin
-      DecompressZlib(fil, DataY, Size);
+      DecompressZlibToStream(outputstream, DataY, Size);
     end
     else
     begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
+      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
     end;
   end
   else if DrvInfo.ID = 'ADF' then
   begin
-    DecryptADF(FHandle,fil,offset,Size,BUFFER_SIZE);
+    DecryptADFToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
   end
   else if DrvInfo.ID = 'CBF' then
   begin
@@ -9506,15 +9599,15 @@ begin
     begin
 //      FileSeek(FHandle,Offset+12,0);
 //      DecompressZlib(fil, DataX-12, Size);
-      BinCopy(FHandle,fil,offset,DataX,BUFFER_SIZE);
+      BinCopyToStream(FHandle,outputstream,offset,DataX,BUFFER_SIZE,silent);
     end
     else
     begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
+      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
     end;
   end
-  else if DrvInfo.ID = 'H4R' then
-  begin
+//  else if DrvInfo.ID = 'H4R' then
+//  begin
 //    if (DataX = 3) then
 //    begin
 //      ShowMessage(inttostr(DataX));
@@ -9527,32 +9620,28 @@ begin
       FileWrite(fil,Buf^,DataX);
       FreeMem(Buf);
     end;}
-  end
+//  end
   else if DrvInfo.ID = 'MTF' then
   begin
     FileRead(FHandle,ENT,12);
     if (ENT.ID2 = 190) and ((ENT.ID1 = 174) or (ENT.ID1 = 175)) then
     begin
-      DecompressMTF(fil, Offset+12,Size);
+      DecompressMTFToStream(outputstream, Offset+12,Size);
     end
     else
     begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
+      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
     end;
   end
   else if DrvInfo.ID = 'HPI' then
   begin
-    if (DataX = 0) then
+    if (DataX = 2) or (DataX = 1) then
     begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
+      DecompressHPIToStream(outputstream,Offset,Size,DataX,silent);
     end
-    else if (DataX = 2) then
+    else
     begin
-      DecompressHPI(fil, Offset, Size,2);
-    end
-    else if (DataX = 1) then
-    begin
-      DecompressHPI(fil,Offset,Size,1);
+      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
     end;
   end
   else if DrvInfo.ID = 'PCK' then
@@ -9572,7 +9661,7 @@ begin
       FileSeek(FHandle,offset,0);
       FileRead(FHandle,tbyt,1);
       tbyt := tbyt xor key;
-      DecryptPCK(FHandle,fil,offset,size,tbyt);
+      DecryptPCKToStream(FHandle,outputstream,offset,size,tbyt,silent);
     end
     else if (DataY = 2) or (DataX <> 0) then
     begin
@@ -9587,22 +9676,22 @@ begin
         DataX := $47
       else if (ID = 'SMB') then
         DataX := $42;
-      DecryptPCK(FHandle,fil,offset,size,DataX);
+      DecryptPCKToStream(FHandle,outputstream,offset,size,DataX,silent);
     end
     else
     begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
+      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
     end;
   end
   else if DrvInfo.ID = 'RFA' then
   begin
     if (DataX = 0) then
     begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
+      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
     end
     else if (DataX = 1) then
     begin
-      DecompressRFA(fil,Offset,Size);
+      DecompressRFAToStream(outputstream,Offset,Size,silent);
     end;
   end
   else if DrvInfo.ID = 'SSA' then
@@ -9611,38 +9700,61 @@ begin
     FileRead(FHandle,SSA,SizeOf(SSA));
     if SSA.ID = 'PK01' then
     begin
-      DecompressZlib(fil, Size, SSA.DecompSize);
+      DecompressZlibToStream(outputstream, Size, SSA.DecompSize);
     end
     else
     begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
+      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
     end;
   end
   else if DrvInfo.ID = 'PKPAK' then
   begin
     if DataX <> Size then
     begin
-      DecompressZlib(fil, DataX, Size);
+      DecompressZlibToStream(outputstream, DataX, Size);
     end
     else
     begin
-      BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
+      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
     end;
   end
   else
   begin
-    BinCopy(FHandle,fil,offset,Size,BUFFER_SIZE);
+    BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
   end;
 
+  result := true;
+
+end;
+
+function ExtractFile(outputfile: ShortString; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
+var fil: Integer;
+    outStm: THandleStream;
+begin
+
+  fil := FileCreate(outputfile,fmOpenRead or fmShareExclusive);
+  outStm := THandleStream.Create(fil);
+  result := ExtractFileToStream(outStm,entrynam,offset,size,datax,datay,silent);
+  outStm.Free;
   FileClose(fil);
 
-  ExtractFile := true;
+end;
+
+procedure InitPlugin(per: TPercentCallback; lngid: TLanguageCallback; DUP5Path: ShortString; AppHandle: THandle; AppOwner: TComponent); stdcall;
+begin
+
+  SetPercent := per;
+  DLNGStr := lngid;
+  CurPath := DUP5Path;
+  AHandle := AppHandle;
+  AOwner := AppOwner;
 
 end;
 
 exports
   DUDIVersion,
   ExtractFile,
+  ExtractFileToStream,
   ReadFormat,
   CloseFormat,
   GetEntry,
@@ -9651,6 +9763,7 @@ exports
   GetCurrentDriverInfo,
   GetErrorInfo,
   AboutBox,
+  InitPlugin,
   IsFormat;
 
 begin

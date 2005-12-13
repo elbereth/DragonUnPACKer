@@ -1166,7 +1166,7 @@ object frmInstaller: TfrmInstaller
       Width = 385
       Height = 13
       AutoSize = False
-      Caption = 'InfoLabel'
+      Caption = '...'
     end
     object strInternetComment: TLabel
       Left = 8
@@ -1638,6 +1638,8 @@ object frmInstaller: TfrmInstaller
     ContentTypePost = 'application/x-www-form-urlencoded'
     MultiThreaded = False
     RequestVer = '1.0'
+    FollowRelocation = True
+    Options = []
     OnDocData = HttpCli1DocData
     SocksLevel = '5'
     SocksAuthentication = socksNoAuthentication

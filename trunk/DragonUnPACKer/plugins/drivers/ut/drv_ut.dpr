@@ -1,6 +1,6 @@
 library drv_ut;
 
-// $Id: drv_ut.dpr,v 1.3 2005-12-13 23:24:27 elbereth Exp $
+// $Id: drv_ut.dpr,v 1.4 2005-12-14 16:51:37 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/ut/drv_ut.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -28,6 +28,7 @@ uses
   Classes,
   Forms,
   Registry,
+  ComCtrls,
   lib_version in '..\..\..\common\lib_version.pas',
   ut_packages in 'ut_packages.pas',
   GameHint in 'GameHint.pas' {frmGameHint},
@@ -159,6 +160,52 @@ begin
 
 end;
 
+function getGameHintFreeIdx(): integer;
+var Reg: TRegistry;
+    x, MaxK: integer;
+begin
+
+  result := 1;
+
+  Reg := TRegistry.Create;
+  Try
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Plugins\drv_ut.d5d',True) then
+    begin
+      if Reg.ValueExists('CurrentID') then
+      begin
+        MaxK := Reg.ReadInteger('CurrentID');
+        Reg.CloseKey;
+
+        result := MaxK + 1;
+        for x := 1 to MaxK do
+        begin
+          if not(Reg.KeyExists('\Software\Dragon Software\Dragon UnPACKer 5\Plugins\drv_ut.d5d\'+inttohex(x,8))) then
+          begin
+            Result := x;
+            break;
+          end;
+        end;
+        if result = MaxK + 1 then
+        begin
+          if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Plugins\drv_ut.d5d',True) then
+          begin
+            Reg.WriteInteger('CurrentID',result);
+            Reg.CloseKey;
+          end;
+        end;
+
+      end
+      else
+      begin
+        Reg.CloseKey;
+      end;
+    end;
+  Finally
+    Reg.Free;
+  end;
+
+end;
+
 function getGHDontAsk(ix: integer): boolean;
 var Reg: TRegistry;
 begin
@@ -239,12 +286,7 @@ begin
       else
       begin
 
-        if Reg.ValueExists('CurrentID') then
-          NK := Reg.ReadInteger('CurrentID')
-        else
-          NK := 0;
-        inc(NK);
-        Reg.WriteInteger('CurrentID',NK);
+        NK := getGameHintFreeIdx;
 
       end;
 
@@ -313,14 +355,20 @@ begin
       try
         frmGH.Width := 326;
         frmGH.Height := 110;
+        frmGH.lblOpening.Caption := DLNGStr('DUT201');
+        frmGH.chkDontAsk.Caption := DLNGStr('DUT202');
         frmGH.chkDontAsk.Checked := dontask;
         with frmGH do
         begin
 
+          curSel := 0;
           z := 0;
           for x := Low(TUTPackage_GameHint) to high(TUTPackage_GameHint) do
           begin
-            lstGameHints.Items.Add(UTPackage_GameHintStrings[x]);
+            if (x = Low(TUTPackage_GameHint)) then
+              lstGameHints.Items.Add(DLNGStr('DUT203'))
+            else
+              lstGameHints.Items.Add(UTPackage_GameHintStrings[x]);
             if GH = x then
               curSel := z;
             inc(z);
@@ -566,6 +614,9 @@ end;
 procedure ConfigBox; stdcall;
 var OldH: THandle;
     frmUTC: TfrmUTConfig;
+    Reg: TRegistry;
+    x, NK: integer;
+    itmX: TListItem;
 begin
 
   OldH := Application.Handle;
@@ -573,6 +624,53 @@ begin
 
   frmUTC := TfrmUTConfig.Create(AOwner);
   try
+
+    frmUTC.Caption := 'A.Cordero''s UT Package Driver - '+DLNGStr('DUT100');
+    frmUTC.lstGames.Columns.Items[0].Caption := DLNGStr('DUT110');
+    frmUTC.lstGames.Columns.Items[1].Caption := DLNGStr('DUT111');
+    frmUTC.lstGames.Columns.Items[2].Caption := DLNGStr('DUT112');
+    frmUTC.lstGames.Columns.Items[3].Caption := DLNGStr('DUT113');
+    frmUTC.lstGames.Columns.Items[4].Caption := DLNGStr('DUT114');
+    frmUTC.butOK.Caption := DLNGStr('BUTOK');
+    frmUTC.butRemove.Caption := DLNGStr('BUTREM');
+    frmUTC.butEdit.Caption := DLNGStr('BUTEDT');
+    frmUTC.lblVersion.Caption :=  'v'+getVersion(DRIVER_VERSION)+' - '+DLNGStr('DUT101')+' v'+TUTP_VERSION;
+    frmUTC.translationDUT201 := DLNGStr('DUT201');
+    frmUTC.translationDUT202 := DLNGStr('DUT202');
+    frmUTC.translationDUT203 := DLNGStr('DUT203');
+
+    Reg := TRegistry.Create;
+    Try
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Plugins\drv_ut.d5d',True) then
+      begin
+        if Reg.ValueExists('CurrentID') then
+        begin
+          NK := Reg.ReadInteger('CurrentID');
+
+          Reg.CloseKey;
+
+          for x := 1 to NK do
+          begin
+            if Reg.OpenKeyReadOnly('\Software\Dragon Software\Dragon UnPACKer 5\Plugins\drv_ut.d5d\'+inttohex(x,8)) then
+            begin
+              if Reg.ValueExists('Directory') then
+              begin
+                itmX := frmUTC.lstGames.Items.Add;
+                itmX.Caption := IntTostr(x);
+                itmX.SubItems.Add(Reg.ReadString('Directory'));
+                itmX.SubItems.Add(UTPackage_GameHintStrings[getGameHint(x)]);
+                itmX.SubItems.Add(BoolToStr(getGHDontAsk(x),false));
+                itmX.SubItems.Add(inttostr(getGameHintV(x)));
+                Reg.CloseKey;
+              end;
+            end;
+          end;
+        end;
+      end;
+    Finally
+      Reg.Free;
+    end;
+
     frmUTC.ShowModal;
   finally
     frmUTC.free;

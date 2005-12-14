@@ -1,6 +1,6 @@
 unit lib_language;
 
-// $Id: lib_language.pas,v 1.4 2005-12-13 07:13:56 elbereth Exp $
+// $Id: lib_language.pas,v 1.5 2005-12-14 16:53:29 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_language.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -56,7 +56,7 @@ type
    end;
 
 const DLNG_VERSION : byte = 4;
-      DLNG_PRGVER : byte = 8;
+      DLNG_PRGVER : byte = 9;
 
 var tabLNG: array[1..1000] of Internal_Tab;
     numLNG: integer = 0;
@@ -545,6 +545,8 @@ begin
     res := 'Rafraichir'
   else if sch = 'BUTREM' then
     res := 'Supprimer'
+  else if sch = 'BUTEDT' then
+    res := 'Editer'
   else if sch = 'HYPAD' then
     res := 'Cette pre-version ne cherche que les fichiers sons WAVE.'
   else if sch = 'HYPFIN' then
@@ -980,6 +982,27 @@ begin
     res := 'Statut actuel:'
   else if sch = '11TH14' then
     res := 'Support The 11th Hour:'
+
+  else if sch = 'DUT100' then
+    res := 'Configuration'
+  else if sch = 'DUT101' then
+    res := 'Librairie'
+  else if sch = 'DUT110' then
+    res := 'ID'
+  else if sch = 'DUT111' then
+    res := 'Chemin d''accès'
+  else if sch = 'DUT112' then
+    res := 'Jeu'
+  else if sch = 'DUT113' then
+    res := 'ND?'   // Ne plus demander? (PD? aurait été moyen non?)
+  else if sch = 'DUT114' then
+    res := 'IDJ'   // ID du jeu
+  else if sch = 'DUT201' then
+    res := 'Indiquez le jeu correspondant au fichier ouvert:'
+  else if sch = 'DUT202' then
+    res := 'Ne plus demander pour ce répertoire'
+  else if sch = 'DUT203' then
+    res := '- Inconnu / Autre -'
 
   else if sch = 'TLD001' then
     res := 'Lecture de %f par le driver...'

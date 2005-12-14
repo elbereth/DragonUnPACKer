@@ -1,6 +1,6 @@
 library drv_zip;
 
-// $Id: drv_zip.dpr,v 1.2 2005-12-13 21:43:38 elbereth Exp $
+// $Id: drv_zip.dpr,v 1.3 2005-12-14 16:59:30 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/zip/drv_zip.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -294,7 +294,7 @@ begin
     GetDriverInfo.Version := GetVersion(DRIVER_VERSION)+' (No DLL!)';
   end;
   GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
-  GetDriverInfo.Comment := 'This Driver is a wrapper to the Info-ZIP UnZip32.DLL. Using UnZip32.pas by Theo Bebekis <bebekis@otenet.gr>.';
+  GetDriverInfo.Comment := 'This Driver is a wrapper to the Info-ZIP UnZip32.DLL. Using UnZip.pas by Gerke Preussner <j3rky@gerke-preussner.de>.';
   if DLLStatus then
   begin
     GetDriverInfo.NumFormats := 11;

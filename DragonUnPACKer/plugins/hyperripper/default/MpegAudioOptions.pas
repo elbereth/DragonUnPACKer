@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ExtCtrls, Registry, JvSpin;
+  Dialogs, StdCtrls, ExtCtrls, Registry, JvSpin, Mask, JvExMask;
 
 type
   TfrmOptMPEGa = class(TForm)

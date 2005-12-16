@@ -1,11 +1,11 @@
 object frmInstaller: TfrmInstaller
-  Left = 411
-  Top = 132
+  Left = 660
+  Top = 311
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'DUP5 Package Installer'
   ClientHeight = 357
-  ClientWidth = 480
+  ClientWidth = 545
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -135,7 +135,7 @@ object frmInstaller: TfrmInstaller
   PixelsPerInch = 96
   TextHeight = 13
   object imgBanner: TImage
-    Left = 8
+    Left = 40
     Top = 8
     Width = 465
     Height = 90
@@ -1127,7 +1127,7 @@ object frmInstaller: TfrmInstaller
   object lblLastExec: TLabel
     Left = 184
     Top = 336
-    Width = 129
+    Width = 193
     Height = 13
     AutoSize = False
     Caption = '-'
@@ -1141,118 +1141,22 @@ object frmInstaller: TfrmInstaller
   object lineBas: TBevel
     Left = 0
     Top = 320
-    Width = 313
+    Width = 377
     Height = 10
     Shape = bsBottomLine
   end
   object imgCustomBanner: TImage
-    Left = 7
+    Left = 39
     Top = 8
     Width = 465
     Height = 90
     Stretch = True
     Visible = False
   end
-  object stepInternet: TPanel
-    Left = 0
-    Top = 104
-    Width = 481
-    Height = 217
-    TabOrder = 6
-    Visible = False
-    object InfoLabel: TLabel
-      Left = 88
-      Top = 8
-      Width = 385
-      Height = 13
-      AutoSize = False
-      Caption = '...'
-    end
-    object strInternetComment: TLabel
-      Left = 8
-      Top = 184
-      Width = 65
-      Height = 13
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Comment:'
-    end
-    object butRefresh: TButton
-      Left = 8
-      Top = 8
-      Width = 75
-      Height = 25
-      Caption = 'Refresh'
-      TabOrder = 0
-      OnClick = butRefreshClick
-    end
-    object lstUpdates: TListView
-      Left = 8
-      Top = 40
-      Width = 465
-      Height = 137
-      Checkboxes = True
-      Columns = <
-        item
-          Caption = 'Title'
-          Width = 200
-        end
-        item
-          Caption = 'Your Version'
-          Width = 102
-        end
-        item
-          Caption = 'Available version'
-          Width = 102
-        end
-        item
-          Alignment = taRightJustify
-          Caption = 'Size'
-          Width = 40
-        end>
-      TabOrder = 1
-      ViewStyle = vsReport
-      OnClick = lstUpdatesClick
-      OnSelectItem = lstUpdatesSelectItem
-    end
-    object ProgressDL: TProgressBar
-      Left = 88
-      Top = 24
-      Width = 385
-      Height = 9
-      TabOrder = 2
-    end
-    object Panel1: TPanel
-      Left = 80
-      Top = 182
-      Width = 393
-      Height = 30
-      BevelOuter = bvLowered
-      Color = clWindow
-      TabOrder = 3
-      object lblInternetComment: TLabel
-        Left = 2
-        Top = 2
-        Width = 388
-        Height = 25
-        AutoSize = False
-        Caption = '-'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlue
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = []
-        ParentFont = False
-        ShowAccelChar = False
-        Transparent = True
-        WordWrap = True
-      end
-    end
-  end
   object stepInstall: TPanel
     Left = 0
     Top = 104
-    Width = 481
+    Width = 545
     Height = 220
     BevelOuter = bvNone
     TabOrder = 3
@@ -1268,23 +1172,15 @@ object frmInstaller: TfrmInstaller
     object lblStatus: TLabel
       Left = 80
       Top = 60
-      Width = 393
+      Width = 457
       Height = 13
       AutoSize = False
       Caption = 'Waiting for user input...'
     end
-    object List: TListBox
-      Left = 8
-      Top = 120
-      Width = 465
-      Height = 73
-      ItemHeight = 13
-      TabOrder = 4
-    end
     object panInstall: TPanel
       Left = 8
       Top = 0
-      Width = 465
+      Width = 529
       Height = 49
       BevelOuter = bvNone
       TabOrder = 1
@@ -1292,7 +1188,7 @@ object frmInstaller: TfrmInstaller
       object lblInstalling: TLabel
         Left = 0
         Top = 24
-        Width = 465
+        Width = 529
         Height = 13
         Alignment = taCenter
         AutoSize = False
@@ -1308,14 +1204,14 @@ object frmInstaller: TfrmInstaller
     object panIntro: TPanel
       Left = 8
       Top = 0
-      Width = 465
+      Width = 529
       Height = 49
       BevelOuter = bvNone
       TabOrder = 0
       object lblInstall2: TLabel
         Left = 0
         Top = 28
-        Width = 465
+        Width = 529
         Height = 13
         Alignment = taCenter
         AutoSize = False
@@ -1330,7 +1226,7 @@ object frmInstaller: TfrmInstaller
       object lblInstall1: TLabel
         Left = 0
         Top = 12
-        Width = 465
+        Width = 529
         Height = 13
         Alignment = taCenter
         AutoSize = False
@@ -1345,24 +1241,32 @@ object frmInstaller: TfrmInstaller
         ParentFont = False
       end
     end
+    object List: TListBox
+      Left = 8
+      Top = 120
+      Width = 465
+      Height = 73
+      ItemHeight = 13
+      TabOrder = 4
+    end
     object Progress: TProgressBar
       Left = 8
       Top = 81
-      Width = 465
+      Width = 529
       Height = 16
       TabOrder = 2
     end
     object grpPackInfos: TGroupBox
       Left = 8
       Top = 104
-      Width = 465
+      Width = 529
       Height = 113
       Caption = 'Package informations'
       TabOrder = 3
       object panPVersion: TPanel
         Left = 112
         Top = 34
-        Width = 345
+        Width = 409
         Height = 17
         Alignment = taLeftJustify
         BevelOuter = bvSpace
@@ -1386,7 +1290,7 @@ object frmInstaller: TfrmInstaller
       object panTitle: TPanel
         Left = 112
         Top = 17
-        Width = 345
+        Width = 409
         Height = 17
         Alignment = taLeftJustify
         BevelOuter = bvSpace
@@ -1418,7 +1322,7 @@ object frmInstaller: TfrmInstaller
       object panAuthor: TPanel
         Left = 112
         Top = 51
-        Width = 345
+        Width = 409
         Height = 17
         Alignment = taLeftJustify
         Caption = '-'
@@ -1435,7 +1339,7 @@ object frmInstaller: TfrmInstaller
       object panComment: TPanel
         Left = 112
         Top = 68
-        Width = 345
+        Width = 409
         Height = 17
         Alignment = taLeftJustify
         Caption = '-'
@@ -1452,14 +1356,14 @@ object frmInstaller: TfrmInstaller
       object panURL: TPanel
         Left = 112
         Top = 85
-        Width = 334
+        Width = 398
         Height = 17
         Alignment = taLeftJustify
         Caption = '-'
         TabOrder = 7
       end
       object cmdURL: TButton
-        Left = 446
+        Left = 510
         Top = 85
         Width = 11
         Height = 17
@@ -1472,14 +1376,14 @@ object frmInstaller: TfrmInstaller
   object stepChoice: TPanel
     Left = 0
     Top = 104
-    Width = 481
+    Width = 545
     Height = 217
     BevelOuter = bvNone
     TabOrder = 4
     object lblChoice: TLabel
       Left = 8
       Top = 48
-      Width = 465
+      Width = 529
       Height = 13
       AutoSize = False
       Caption = 'What would you like to do ?'
@@ -1487,7 +1391,7 @@ object frmInstaller: TfrmInstaller
     object lblWhat: TLabel
       Left = 0
       Top = 16
-      Width = 481
+      Width = 545
       Height = 13
       Alignment = taCenter
       AutoSize = False
@@ -1504,7 +1408,7 @@ object frmInstaller: TfrmInstaller
     object lblInternetNote: TLabel
       Left = 128
       Top = 98
-      Width = 345
+      Width = 409
       Height = 25
       AutoSize = False
       Caption = 'Note: Absolutly no data is sent to the web site.'
@@ -1522,7 +1426,7 @@ object frmInstaller: TfrmInstaller
     object optInstall: TRadioButton
       Left = 8
       Top = 136
-      Width = 465
+      Width = 529
       Height = 17
       Caption = 'Install a package from the hard disk:'
       TabOrder = 0
@@ -1530,13 +1434,13 @@ object frmInstaller: TfrmInstaller
     object txtPathD5P: TEdit
       Left = 24
       Top = 154
-      Width = 425
+      Width = 473
       Height = 21
       TabOrder = 1
       OnClick = txtPathD5PClick
     end
     object cmdBrowseD5P: TButton
-      Left = 452
+      Left = 500
       Top = 154
       Width = 21
       Height = 21
@@ -1547,7 +1451,7 @@ object frmInstaller: TfrmInstaller
     object optInternet: TRadioButton
       Left = 8
       Top = 80
-      Width = 465
+      Width = 529
       Height = 17
       Caption = 'Check on internet for new or updated packages and install them.'
       Checked = True
@@ -1564,8 +1468,239 @@ object frmInstaller: TfrmInstaller
       OnClick = butProxyClick
     end
   end
+  object stepInternet: TPanel
+    Left = 8
+    Top = 8
+    Width = 529
+    Height = 313
+    TabOrder = 6
+    Visible = False
+    object Shape1: TShape
+      Left = 390
+      Top = 102
+      Width = 129
+      Height = 33
+      Brush.Color = clBlack
+    end
+    object InfoLabel: TLabel
+      Left = 88
+      Top = 8
+      Width = 329
+      Height = 13
+      AutoSize = False
+      Caption = '...'
+    end
+    object strInternetComment: TLabel
+      Left = 8
+      Top = 280
+      Width = 65
+      Height = 13
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Comment:'
+    end
+    object lblLinkToStable: TLabel
+      Left = 240
+      Top = 104
+      Width = 145
+      Height = 13
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Current stable version :'
+    end
+    object lblUpdatesTypes: TLabel
+      Left = 8
+      Top = 115
+      Width = 97
+      Height = 13
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Show updates:'
+    end
+    object lblLinkToWIP: TLabel
+      Left = 240
+      Top = 120
+      Width = 145
+      Height = 13
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Current WIP version :'
+    end
+    object linkToStable: TLabel
+      Left = 392
+      Top = 104
+      Width = 3
+      Height = 13
+      Cursor = crHandPoint
+      Color = clBtnFace
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clLime
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = []
+      ParentColor = False
+      ParentFont = False
+      Transparent = True
+      OnClick = linkToStableClick
+      OnMouseEnter = linkToStableMouseEnter
+      OnMouseLeave = linkToStableMouseLeave
+    end
+    object linkToWIP: TLabel
+      Left = 392
+      Top = 120
+      Width = 3
+      Height = 13
+      Cursor = crHandPoint
+      Color = clBtnFace
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clGreen
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = [fsUnderline]
+      ParentColor = False
+      ParentFont = False
+      Transparent = True
+      OnMouseEnter = linkToWIPMouseEnter
+      OnMouseLeave = linkToWIPMouseLeave
+    end
+    object lstUpdates: TListView
+      Left = 8
+      Top = 136
+      Width = 513
+      Height = 137
+      Checkboxes = True
+      Columns = <
+        item
+          Caption = 'Title'
+          Width = 245
+        end
+        item
+          Caption = 'Your Version'
+          Width = 102
+        end
+        item
+          Caption = 'Available version'
+          Width = 102
+        end
+        item
+          Alignment = taRightJustify
+          Caption = 'Size'
+          Width = 40
+        end>
+      TabOrder = 1
+      ViewStyle = vsReport
+      OnClick = lstUpdatesClick
+      OnSelectItem = lstUpdatesSelectItem
+    end
+    object lstTranslations: TListView
+      Left = 8
+      Top = 136
+      Width = 513
+      Height = 137
+      Checkboxes = True
+      Columns = <
+        item
+          Caption = 'Translation'
+          Width = 150
+        end
+        item
+          Caption = 'Revision'
+          Width = 65
+        end
+        item
+          Caption = 'Author'
+          Width = 235
+        end
+        item
+          Alignment = taRightJustify
+          Caption = 'Size'
+          Width = 40
+        end>
+      TabOrder = 7
+      ViewStyle = vsReport
+      Visible = False
+      OnClick = lstUpdatesClick
+      OnSelectItem = lstUpdatesSelectItem
+    end
+    object butRefresh: TButton
+      Left = 8
+      Top = 8
+      Width = 75
+      Height = 25
+      Caption = 'Refresh'
+      TabOrder = 0
+      OnClick = butRefreshClick
+    end
+    object ProgressDL: TProgressBar
+      Left = 88
+      Top = 22
+      Width = 329
+      Height = 10
+      TabOrder = 2
+    end
+    object Panel1: TPanel
+      Left = 80
+      Top = 278
+      Width = 441
+      Height = 30
+      BevelOuter = bvLowered
+      Color = clWindow
+      TabOrder = 3
+      object lblInternetComment: TLabel
+        Left = 2
+        Top = 2
+        Width = 388
+        Height = 25
+        AutoSize = False
+        Caption = '-'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlue
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = []
+        ParentFont = False
+        ShowAccelChar = False
+        Transparent = True
+        WordWrap = True
+      end
+    end
+    object butProxy2: TButton
+      Left = 424
+      Top = 8
+      Width = 97
+      Height = 25
+      Caption = 'Proxy Options'
+      TabOrder = 4
+      OnClick = butProxyClick
+    end
+    object richLog: TJvRichEdit
+      Left = 8
+      Top = 40
+      Width = 513
+      Height = 57
+      HideScrollBars = False
+      ReadOnly = True
+      ScrollBars = ssVertical
+      TabOrder = 5
+      WordWrap = False
+    end
+    object lstUpdatesTypes: TComboBox
+      Left = 112
+      Top = 112
+      Width = 121
+      Height = 21
+      AutoComplete = False
+      Style = csDropDownList
+      ItemHeight = 13
+      TabOrder = 6
+      OnChange = lstUpdatesTypesChange
+      Items.Strings = (
+        'Plugins'
+        'Translations')
+    end
+  end
   object cmdClose: TButton
-    Left = 400
+    Left = 464
     Top = 328
     Width = 75
     Height = 25
@@ -1575,7 +1710,7 @@ object frmInstaller: TfrmInstaller
     OnClick = cmdCloseClick
   end
   object butInstall: TButton
-    Left = 400
+    Left = 464
     Top = 328
     Width = 75
     Height = 25
@@ -1586,7 +1721,7 @@ object frmInstaller: TfrmInstaller
     OnClick = butInstallClick
   end
   object cmdCancel: TButton
-    Left = 320
+    Left = 384
     Top = 328
     Width = 75
     Height = 25
@@ -1596,7 +1731,7 @@ object frmInstaller: TfrmInstaller
     OnClick = cmdCancelClick
   end
   object cmdNext: TButton
-    Left = 400
+    Left = 464
     Top = 328
     Width = 75
     Height = 25
@@ -1605,7 +1740,7 @@ object frmInstaller: TfrmInstaller
     OnClick = cmdNextClick
   end
   object butDownload: TButton
-    Left = 400
+    Left = 464
     Top = 328
     Width = 75
     Height = 25
@@ -1616,7 +1751,7 @@ object frmInstaller: TfrmInstaller
     OnClick = butDownloadClick
   end
   object cmdContinue: TButton
-    Left = 400
+    Left = 464
     Top = 328
     Width = 75
     Height = 25
@@ -1627,27 +1762,29 @@ object frmInstaller: TfrmInstaller
   end
   object XPManifest: TXPManifest
     Left = 448
-    Top = 40
+    Top = 48
   end
   object HttpCli1: THttpCli
     LocalAddr = '0.0.0.0'
     ProxyPort = '80'
-    Agent = 'Duppi/2.0'
+    Agent = 'Duppi/2.1'
     Accept = 'image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, */*'
     NoCache = False
     ContentTypePost = 'application/x-www-form-urlencoded'
     MultiThreaded = False
     RequestVer = '1.0'
     FollowRelocation = True
-    Options = []
+    BandwidthLimit = 10000
+    BandwidthSampling = 1000
+    Options = [httpoNoNTLMAuth]
     OnDocData = HttpCli1DocData
     SocksLevel = '5'
     SocksAuthentication = socksNoAuthentication
-    Left = 448
-    Top = 8
+    Left = 416
+    Top = 48
   end
   object OpenDialog: TOpenDialog
-    Left = 416
-    Top = 8
+    Left = 384
+    Top = 48
   end
 end

@@ -1,6 +1,6 @@
 unit lib_Utils;
 
-// $Id: lib_Utils.pas,v 1.4 2005-12-13 07:13:55 elbereth Exp $
+// $Id: lib_Utils.pas,v 1.5 2005-12-16 20:17:42 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_Utils.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -99,17 +99,18 @@ begin
   TempString := Chaine; //used to check if the last char from
                         // "Chaine" is the LineBreaker
   Delete(TempString,1,length(TempString)-1); // keep the last Char
-  if TempString <> Casseur then
+  if (length(TempString)>0) and (TempString <> Casseur) then
     Chaine := Chaine + Casseur;
 
   // if the last char is not "Casseur" then put it at the end
-  repeat
+  while not(Pos(Casseur,Chaine) = 0) do
+  begin
     Start := Pos(Casseur,Chaine); // find the "casseur"
     LeftString := Chaine; // Create tempory handler
     Delete(LeftString,Start,Length(LeftString));// keep the LeftToken
     Delete(Chaine,1,Start); // keep the rest of "Chaine"
     Result.Add (LeftString);// Add the new Parse to "Retour"
-  until Pos(Casseur,Chaine) = 0; // Reapet until end
+  end;
 
 end;
 

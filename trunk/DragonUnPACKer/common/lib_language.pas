@@ -1,6 +1,6 @@
 unit lib_language;
 
-// $Id: lib_language.pas,v 1.5 2005-12-14 16:53:29 elbereth Exp $
+// $Id: lib_language.pas,v 1.6 2005-12-16 20:17:42 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_language.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -493,6 +493,8 @@ begin
     res := 'Journal d''exécution'
   else if sch = 'OPT810' then
     res := 'Options du journal d''exécution'
+  else if sch = 'OPT811' then
+    res := 'Afficher le journal d''exécution dans la fenêtre principale'
   else if sch = 'OPT840' then
     res := 'Niveau de détail'
   else if sch = 'OPT841' then
@@ -915,6 +917,10 @@ begin
     res := 'Ce package ne peut pas être installé avec votre version de Dragon UnPACKer.'
   else if sch = 'PI0043' then
     res := 'Impossible d''enregistrer %s.'
+  else if sch = 'PI0044' then
+    res := 'Données erronnées en provenance du serveur de mises à jour!'
+  else if sch = 'PI0044' then
+    res := 'Données erronnées en provenance du serveur de mises à jour!'
 
   else if sch = 'PII001' then
     res := 'Titre'
@@ -926,6 +932,22 @@ begin
     res := 'Description'
   else if sch = 'PII005' then
     res := 'Taille'
+  else if sch = 'PII011' then
+    res := 'Afficher les:'
+  else if sch = 'PII012' then
+    res := 'Plugins'
+  else if sch = 'PII013' then
+    res := 'Traductions'
+  else if sch = 'PII021' then
+    res := 'Version stable actuelle :'
+  else if sch = 'PII022' then
+    res := 'Version WIP actuelle :'
+  else if sch = 'PII030' then
+    res := 'Traduction'
+  else if sch = 'PII031' then
+    res := 'Revision'
+  else if sch = 'PII032' then
+    res := 'Auteur'
   else if sch = 'PII100' then
     res := 'la liste des mises a jours'
   else if sch = 'PII101' then
@@ -942,6 +964,8 @@ begin
     res := '-Aucune description-'
   else if sch = 'PII107' then
     res := 'Une nouvelle version de Dragon UnPACKer est disponible en téléchargement.%n%nNouvelle version: %v%nCommentaire: %c%n%nVoulez vous aller sur la page officielle pour la télécharger?'
+  else if sch = 'PII108' then
+    res := '%p plugin(s) et %t traduction(s) disponibles!'
   else if sch = 'PII200' then
     res := 'Aucune mise a jour n''a pu être téléchargée.%nLe programme va maintenant s''arreter.'
 
@@ -1087,13 +1111,12 @@ begin
   else if sch = 'LOG510' then
     res := 'Fait!'
   else if sch = 'LOG511' then
-    res := '- Succès!'
+    res := 'Succès!'
   else if sch = 'LOG512' then
-    res := '- Echec!'
+    res := 'Echec!'
   else if sch = 'LOG513' then
-    res := '- Erreur!'
-  else if sch = 'LOG514' then
     res := 'Erreur!'
+
   else if sch = 'LOGC01' then
     res := 'Libération de %p plugins...'
   else if sch = 'LOGC02' then

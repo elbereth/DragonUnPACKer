@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.4 2005-12-13 07:13:56 elbereth Exp $
+// $Id: Installer.pas,v 1.5 2005-12-16 20:17:42 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -23,7 +23,7 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, lib_binutils, spec_DUPP, zlib, lib_crc, lib_zlib, Registry,
   ExtCtrls, ShellAPI, lib_language, XPMan, VirtualTrees, HttpProt,
-  JvListView, IniFiles, lib_utils;
+  JvListView, IniFiles, lib_utils, JvExStdCtrls, JvRichEdit;
 
 type
  pvirtualTreeData = ^virtualTreeData;
@@ -99,6 +99,16 @@ type
     Panel1: TPanel;
     lblInternetComment: TLabel;
     imgCustomBanner: TImage;
+    butProxy2: TButton;
+    richLog: TJvRichEdit;
+    lstUpdatesTypes: TComboBox;
+    lblLinkToStable: TLabel;
+    lblUpdatesTypes: TLabel;
+    lblLinkToWIP: TLabel;
+    linkToStable: TLabel;
+    linkToWIP: TLabel;
+    Shape1: TShape;
+    lstTranslations: TListView;
     procedure parseDUPP_version1(src: integer);
     function infosDUPP_version1(src: integer): boolean;
     function infosDUPP_version2(src: integer): boolean;
@@ -122,6 +132,12 @@ type
     procedure txtPathD5PClick(Sender: TObject);
     procedure lstUpdatesSelectItem(Sender: TObject; Item: TListItem;
       Selected: Boolean);
+    procedure linkToStableMouseEnter(Sender: TObject);
+    procedure linkToStableMouseLeave(Sender: TObject);
+    procedure linkToWIPMouseEnter(Sender: TObject);
+    procedure linkToWIPMouseLeave(Sender: TObject);
+    procedure linkToStableClick(Sender: TObject);
+    procedure lstUpdatesTypesChange(Sender: TObject);
   private
     DUS: TIniFile;
     Dup5Path: string;
@@ -139,6 +155,8 @@ type
     PackURL: string;
     PackAuthor: string;
     PackComment: string;
+    urlToStable: string;
+    urlToWIP: string;
     NFOLoaded: boolean;
     function infosDUPP(): boolean;
     procedure parseDUPP();
@@ -149,6 +167,15 @@ type
     function getDup5Version(): integer;
     function ExecAndWait(const ExecuteFile, ParamString : string): boolean;
     function RegisterOCX(ocxpath: string): boolean;
+    procedure appendLog(text: string);
+    procedure colorLog(Color: TColor);
+    procedure separatorLog;
+    procedure setRichEditLineColor(R: TJvRichEdit; Line: Integer;
+      Color: TColor);
+    procedure setRichEditLineStyle(R: TJvRichEdit; Line: Integer;
+      Style: TFontStyles);
+    procedure styleLog(Style: TFontStyles);
+    procedure writeLog(text: string);
     { Déclarations privées }
   public
     proxy: string;
@@ -165,7 +192,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 20342;
+  VERSION: Integer = 21040;
 
 implementation
 
@@ -759,6 +786,7 @@ begin
   optInternet.Caption := DLNGstr('PI0036');
   lblInternetNote.Caption := DLNGstr('PI0037');
   butProxy.Caption := DLNGstr('PI0038');
+  butProxy2.Caption := butProxy.Caption;
   optInstall.Caption := DLNGstr('PI0039');
   lstUpdates.Columns.Items[0].Caption := DLNGstr('PII001');
   lstUpdates.Columns.Items[1].Caption := DLNGstr('PII002');
@@ -766,6 +794,17 @@ begin
 //  lstUpdates.Columns.Items[3].Caption := DLNGstr('PII004');
   lstUpdates.Columns.Items[3].Caption := DLNGstr('PII005');
   strInternetComment.Caption := DLNGstr('INFO03');
+
+  lstTranslations.Columns.Items[0].Caption := DLNGstr('PII030');
+  lstTranslations.Columns.Items[1].Caption := DLNGstr('PII031');
+  lstTranslations.Columns.Items[2].Caption := DLNGstr('PII032');
+  lstTranslations.Columns.Items[3].Caption := DLNGstr('PII005');
+
+  lblUpdatesTypes.Caption := DLNGstr('PII011');
+  lstUpdatesTypes.Items.Strings[0] := DLNGstr('PII012');
+  lstUpdatesTypes.Items.Strings[1] := DLNGstr('PII013');
+  lblLinkToStable.Caption := DLNGstr('PII021');
+  lblLinkToWIP.Caption := DLNGstr('PII022');
 
 end;
 
@@ -787,6 +826,7 @@ begin
 
   if optInternet.Checked then
   begin
+    lstUpdatesTypes.ItemIndex := 0;
     butDownload.Visible := true;
     cmdNext.Visible := false;
     stepChoice.Visible := false;
@@ -830,6 +870,7 @@ end;
 
 procedure TfrmInstaller.butRefreshClick(Sender: TObject);
 Var updList: TStringList;
+    lngList: TStringList;
     itm: TListItem;
     x, tmpVer: integer;
     butDl, coreUpdate: boolean;
@@ -844,12 +885,13 @@ begin
   CurDL := DLNGstr('PII100');
     try
         try
-            InfoLabel.Caption := ReplaceValue('%f',DLNGstr('PII101'),curDL);
+            writeLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
             HttpCli1.Get;
-            InfoLabel.Caption := ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size));
+            writeLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
         except
             on E: EHttpException do begin
-              InfoLabel.Caption := ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase);
+              writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
+              colorLog(clRed);
             end
             else
                 raise;
@@ -863,66 +905,127 @@ begin
 
     butDl := false;
 
-    dus := TIniFile.Create(tmpFile);
-    if dus.SectionExists('ID') then
-      if dus.ValueExists('ID','DUS') then
-        if dus.ReadInteger('ID','DUS',0) = 2 then
+    if fileexists(tmpFile) then
+    begin
+      dus := TIniFile.Create(tmpFile);
+      if not(dus.SectionExists('ID')) then
+      begin
+        writeLog(DLNGStr('PI0044'));
+      end
+      else
+        if not(dus.ValueExists('ID','DUS')) then
         begin
-          InfoLabel.Caption := dus.ReadString('ID','Description',DLNGstr('PII105'));
-          updList := splitStr(dus.ReadString('ID','Updates',''),' ');
-          lstUpdates.Clear;
-          coreUpdate := false;
-          for x:=0 to updList.Count -1 do
+          writeLog(DLNGStr('PI0044'));
+        end
+        else
+          if dus.ReadInteger('ID','DUS',0) <> 2 then
           begin
+            writeLog(DLNGStr('PI0044'));
+          end
+          else
+          begin
+            writeLog(dus.ReadString('ID','Description',DLNGstr('PII105')));
+            updList := splitStr(dus.ReadString('ID','Updates',''),' ');
+            lngList := splitStr(dus.ReadString('ID','Translations',''),' ');
+            writeLog(ReplaceValue('%t',ReplaceValue('%p',DLNGStr('PII108'),inttostr(updList.Count)),inttostr(lngList.Count)));
+            lstUpdates.Clear;
+            lstTranslations.Clear;
+            coreUpdate := false;
 
-            if (dus.ReadBool(updList.Strings[x],'AutoUpdate',true)) then
+            for x:=0 to updList.Count -1 do
             begin
-              itm := lstUpdates.Items.Add;
-              itm.Caption := dus.ReadString(updList.Strings[x],'Description',DLNGstr('PII106'));
-              tmpVer := getPluginVersion(Dup5Path+dus.ReadString(updList.Strings[x],'File',''));
-              itm.SubItems.Add(getVersionFromInt(tmpVer));
-              if tmpVer < dus.ReadInteger(updList.Strings[x],'Version',0) then
+
+              if (dus.ReadBool(updList.Strings[x],'AutoUpdate',true)) then
               begin
-                itm.Checked := true;
-                butDl := true;
+                itm := lstUpdates.Items.Add;
+                itm.Caption := dus.ReadString(updList.Strings[x],'Description',DLNGstr('PII106'));
+                tmpVer := getPluginVersion(Dup5Path+dus.ReadString(updList.Strings[x],'File',''));
+                itm.SubItems.Add(getVersionFromInt(tmpVer));
+                if tmpVer < dus.ReadInteger(updList.Strings[x],'Version',0) then
+                begin
+                  itm.Checked := true;
+                  butDl := true;
+                end;
+                itm.SubItems.Add(dus.ReadString(updList.Strings[x],'VersionDisp',''));
+                itm.SubItems.Add(inttostr(dus.ReadInteger(updList.Strings[x],'Size',0)));
+                if CurLanguage = '*' then
+                  itm.SubItems.Add(dus.ReadString(updList.Strings[x],'CommentFR',''))
+                else
+                  itm.SubItems.Add(dus.ReadString(updList.Strings[x],'Comment',''));
+                itm.SubItems.Add(updList.Strings[x]);
               end;
-              itm.SubItems.Add(dus.ReadString(updList.Strings[x],'VersionDisp',''));
-              itm.SubItems.Add(inttostr(dus.ReadInteger(updList.Strings[x],'Size',0)));
-              if CurLanguage = '*' then
-                itm.SubItems.Add(dus.ReadString(updList.Strings[x],'CommentFR',''))
-              else
-                itm.SubItems.Add(dus.ReadString(updList.Strings[x],'Comment',''));
-              itm.SubItems.Add(updList.Strings[x]);
-            end
-            else if updList.Strings[x] = 'core' then
+            end;
+
+            for x:=0 to lngList.Count -1 do
+            begin
+
+              if (dus.ReadBool(lngList.Strings[x],'AutoUpdate',true)) then
+              begin
+                itm := lstTranslations.Items.Add;
+                itm.Caption := dus.ReadString(lngList.Strings[x],'Description',DLNGstr('PII106'));
+                itm.SubItems.Add(dus.ReadString(lngList.Strings[x],'Revision',''));
+                itm.SubItems.Add(dus.ReadString(lngList.Strings[x],'Author',''));
+                itm.SubItems.Add(inttostr(dus.ReadInteger(lngList.Strings[x],'Size',0)));
+                if CurLanguage = '*' then
+                  itm.SubItems.Add(dus.ReadString(updList.Strings[x],'CommentFR',''))
+                else
+                  itm.SubItems.Add(dus.ReadString(updList.Strings[x],'Comment',''));
+                itm.SubItems.Add(lngList.Strings[x]);
+              end;
+            end;
+
+            butDownload.Enabled := butDL;
+
+            if dus.SectionExists('core') then
             begin
               if (dus.ReadInteger('core','Version',0) > coreBuild) then
               begin
                 coreUpdate := true;
               end;
-            end;
-          end;
-          butDownload.Enabled := butDL;
-
-          if (CoreUpdate) then
-          begin
-            coreMessage := ReplaceValue('%v',DLNGstr('PII107'),dus.ReadString('core','VersionDisp','-'));
-            if curLanguage = '*' then
-              coreMessage := ReplaceValue('%c',coreMessage,dus.ReadString('core','CommentFR','-'))
+              linkToStable.Caption := dus.ReadString('core','VersionDisp','');
+              if curLanguage = '*' then
+                linkToStable.hint := ReplaceValue('%c',coreMessage,dus.ReadString('core','CommentFR','-'))
+              else
+                linkToStable.hint := ReplaceValue('%c',coreMessage,dus.ReadString('core','Comment','-'));
+              urlToStable := dus.ReadString('core','updateurl','http://sourceforge.net/project/showfiles.php?group_id=108923&package_id=117643&release_id=253827');
+              linkToStable.Visible := true;
+            end
             else
-              coreMessage := ReplaceValue('%c',coreMessage,dus.ReadString('core','Comment','-'));
-            if (MessageDlg(coreMessage,mtInformation,[mbYes, mbNo],0) = mrYes) then
+              linkToStable.Visible := false;
+
+            if dus.SectionExists('corewip') then
             begin
-              ShellExecute(Application.Handle,
+              linkToWIP.Caption := dus.ReadString('corewip','VersionDisp','');
+              if curLanguage = '*' then
+                linkToWIP.hint := ReplaceValue('%c',coreMessage,dus.ReadString('corewip','CommentFR','-'))
+              else
+                linkToWIP.hint := ReplaceValue('%c',coreMessage,dus.ReadString('corewip','Comment','-'));
+              urlToWIP := dus.ReadString('corewip','updateurl','http://sourceforge.net/project/showfiles.php?group_id=108923&package_id=127752&release_id=315908');
+              linkToWIP.Visible := true;
+            end
+            else
+              linkToWIP.Visible := false;
+
+            if (CoreUpdate) then
+            begin
+              coreMessage := ReplaceValue('%v',DLNGstr('PII107'),dus.ReadString('core','VersionDisp','-'));
+              if curLanguage = '*' then
+                coreMessage := ReplaceValue('%c',coreMessage,dus.ReadString('core','CommentFR','-'))
+              else
+                coreMessage := ReplaceValue('%c',coreMessage,dus.ReadString('core','Comment','-'));
+              if (MessageDlg(coreMessage,mtInformation,[mbYes, mbNo],0) = mrYes) then
+              begin
+                ShellExecute(Application.Handle,
                            'OPEN',
                            PChar(dus.ReadString('core','URL','http://www.dragonunpacker.com')),
                            nil,
                            nil,
                            SW_SHOW);
-              close;
+                close;
+              end;
             end;
-          end;
 
+          end;
         end;
 
 end;
@@ -952,7 +1055,7 @@ procedure TfrmInstaller.HttpCli1DocData(Sender: TObject; Buffer: Pointer;
   Len: Integer);
 begin
 
-  InfoLabel.Caption := ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII102'),curDL),IntToStr(HttpCli1.RcvdCount));
+  infoLabel.Caption := ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII102'),curDL),IntToStr(HttpCli1.RcvdCount));
   ProgressDL.Position := HttpCli1.RcvdCount;
 
 end;
@@ -967,6 +1070,12 @@ begin
   while (x < lstUpdates.Items.Count) and not(res) do
   begin
     res := lstUpdates.Items.Item[x].Checked;
+    inc(x);
+  end;
+  x:=0;
+  while (x < lstTranslations.Items.Count) and not(res) do
+  begin
+    res := lstTranslations.Items.Item[x].Checked;
     inc(x);
   end;
 
@@ -987,6 +1096,7 @@ begin
   lstUpdates.Enabled := false;
   butDownload.Enabled := false;
   butRefresh.Enabled := false;
+  butProxy2.Enabled := false;
 
   for x := 0 to lstUpdates.Items.Count-1 do
   begin
@@ -1007,13 +1117,58 @@ begin
         delFile := false;
         try
           try
-            InfoLabel.Caption := ReplaceValue('%f',DLNGstr('PII101'),curDL);
+            WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
             HttpCli1.Get;
             lstUpd.Add(tmpFile);
-            InfoLabel.Caption := ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size));
+            WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
           except
             on E: EHttpException do begin
-                InfoLabel.Caption := ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase);
+                writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
+                colorLog(clRed);
+                DelFile := true;
+            end
+          else
+            raise;
+          end;
+
+        finally
+          HttpCli1.RcvdStream.Destroy;
+          HttpCli1.RcvdStream := nil;
+          ButDownload.Visible := true;
+          if DelFile and FileExists(tmpFile) then
+            DeleteFile(tmpFile);
+        end;
+      end;
+    end;
+  end;
+
+  for x := 0 to lstTranslations.Items.Count-1 do
+  begin
+    if lstTranslations.Items.Item[x].Checked then
+    begin
+      if dus.ValueExists(lstTranslations.Items.Item[x].SubItems[4],'URL') then
+      begin
+        url := dus.ReadString(lstTranslations.Items.Item[x].SubItems[4],'URL','');
+        tmpFileName := dus.ReadString(lstTranslations.Items.Item[x].SubItems[4],'FileDL',getTempFile(extractfileext(url)));
+        tmpFile := dup5Path+'Download\'+tmpFileName;
+        HttpCli1.URL := url;
+        HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
+        CurDL := tmpFileName;
+        CurDLSize := strtoint(lstTranslations.Items.Item[x].SubItems[2]);
+        inc(curDLSize);
+        progressDL.Position := 0;
+        progressDL.Max := CurDLSize*1024;
+        delFile := false;
+        try
+          try
+            WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
+            HttpCli1.Get;
+            lstUpd.Add(tmpFile);
+            WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
+          except
+            on E: EHttpException do begin
+                writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
+                colorLog(clRed);
                 DelFile := true;
             end
           else
@@ -1129,6 +1284,20 @@ begin
 
   frmProxy.ShowModal;
 
+  proxy := frmProxy.txtProxy.Text;
+  proxyPort := frmProxy.txtProxyPort.Text;
+  proxyUser := frmProxy.txtProxyUser.Text;
+  proxyPass := frmProxy.txtProxyPass.Text;
+  proxyUserPass := frmProxy.chkUserPass.Checked;
+
+  httpCli1.Proxy := proxy;
+  httpCli1.ProxyPort := proxyPort;
+  if proxyUserPass then
+  begin
+    httpCli1.ProxyUsername := proxyUser;
+    httpCli1.ProxyPassword := proxyPass;
+  end;
+
 end;
 
 procedure TfrmInstaller.cmdBrowseD5PClick(Sender: TObject);
@@ -1234,6 +1403,104 @@ begin
   end;
  except
   MessageDlg(ReplaceValue('%s',DLNGStr('PI0043'),ocxPath),mtWarning,[mbOk],0);
+ end;
+end;
+
+procedure TfrmInstaller.writeLog(text: string);
+begin
+
+  if richLog.Lines.Count = 32760 then
+    richLog.Lines.Delete(0);
+
+  richLog.Lines.Add(DateTimeToStr(now)+' : '+text);
+  richLog.Perform(EM_LINESCROLL,0,1);
+
+end;
+
+procedure TfrmInstaller.appendLog(text: string);
+begin
+
+  richLog.Lines.Strings[richLog.Lines.Count-1] := richLog.Lines.Strings[richLog.Lines.Count-1]+' '+text;
+
+end;
+
+
+procedure TfrmInstaller.separatorLog;
+begin
+
+  writelog(StringOfchar('-',80));
+
+end;
+
+procedure TfrmInstaller.styleLog(Style: TFontStyles);
+begin
+
+  setRichEditLineStyle(richLog, richLog.Lines.Count, Style);
+
+end;
+
+procedure TfrmInstaller.colorLog(Color: TColor);
+begin
+
+  setRichEditLineColor(richLog, richLog.Lines.Count, Color);
+
+end;
+
+procedure TfrmInstaller.setRichEditLineStyle(R : TJvRichEdit; Line : Integer; Style : TFontStyles);
+var
+ oldPos,
+ oldSelLength : Integer;
+ Line_Index : Integer;
+ To_Line_Index : Integer;
+ Line_Range : Integer;
+begin
+ OldPos := R.SelStart;
+ oldSelLength := R.SelLength;
+ Try
+   Line_Index := R.Perform(EM_LINEINDEX,Line-1,0);
+   if Line_Index > - 1 then
+   begin
+     to_Line_Index := R.Perform(EM_LINEINDEX,Line,0);
+     if to_Line_Index < Line_Index then
+       Line_Range := Length(R.Text)-Line_Index
+     else
+       Line_Range := to_Line_Index-Line_Index;
+     R.SelStart := Line_Index;
+     R.SelLength := Line_Range;
+     R.SelAttributes.Style := Style;
+   end;
+ finally
+   R.SelStart := OldPos;
+   R.SelLength := oldSelLength;
+ end;
+end;
+
+procedure TfrmInstaller.setRichEditLineColor(R : TJvRichEdit; Line : Integer; Color : TColor);
+var
+ oldPos,
+ oldSelLength : Integer;
+ Line_Index : Integer;
+ To_Line_Index : Integer;
+ Line_Range : Integer;
+begin
+ OldPos := R.SelStart;
+ oldSelLength := R.SelLength;
+ Try
+   Line_Index := R.Perform(EM_LINEINDEX,Line-1,0);
+   if Line_Index > - 1 then
+   begin
+     to_Line_Index := R.Perform(EM_LINEINDEX,Line,0);
+     if to_Line_Index < Line_Index then
+       Line_Range := Length(R.Text)-Line_Index
+     else
+       Line_Range := to_Line_Index-Line_Index;
+     R.SelStart := Line_Index;
+     R.SelLength := Line_Range;
+     R.SelAttributes.Color := Color;
+   end;
+ finally
+   R.SelStart := OldPos;
+   R.SelLength := oldSelLength;
  end;
 end;
 
@@ -1351,6 +1618,62 @@ begin
   end;
 
   result := cont;
+
+end;
+
+procedure TfrmInstaller.linkToStableMouseEnter(Sender: TObject);
+begin
+
+  linkToStable.Font.Style := [fsUnderline];
+
+end;
+
+procedure TfrmInstaller.linkToStableMouseLeave(Sender: TObject);
+begin
+
+  linkToStable.Font.Style := []
+
+end;
+
+procedure TfrmInstaller.linkToWIPMouseEnter(Sender: TObject);
+begin
+
+  linkToWIP.Font.Style := [fsUnderline];
+
+end;
+
+procedure TfrmInstaller.linkToWIPMouseLeave(Sender: TObject);
+begin
+
+  linkToWIP.Font.Style := [];
+
+end;
+
+procedure TfrmInstaller.linkToStableClick(Sender: TObject);
+begin
+
+   ShellExecute(Application.Handle,
+                        'OPEN',
+                        PChar(urlToStable),
+                        nil,
+                        nil,
+                        SW_SHOW);
+
+end;
+
+procedure TfrmInstaller.lstUpdatesTypesChange(Sender: TObject);
+begin
+
+  if lstUpdatesTypes.ItemIndex = 0 then
+  begin
+    lstUpdates.Visible := true;
+    lstTranslations.Visible := false;
+  end
+  else
+  begin
+    lstUpdates.Visible := false;
+    lstTranslations.Visible := true;
+  end;
 
 end;
 

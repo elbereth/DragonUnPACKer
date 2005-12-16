@@ -1,6 +1,6 @@
 unit classConvert;
 
-// $Id: classConvert.pas,v 1.2 2005-12-13 07:13:56 elbereth Exp $
+// $Id: classConvert.pas,v 1.3 2005-12-16 20:15:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classConvert.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -181,14 +181,14 @@ begin
       if IsConsole then
         write(sr.name+ ' ')
       else
-        dup5Main.writeLog(' + '+sr.Name+' :');
+        dup5Main.writeLogVerbose(1,' + '+sr.Name+' :');
       Handle := LoadLibrary(PChar(pth + sr.name));
       if Handle <> 0 then
       begin
         @DUCIVer := GetProcAddress(Handle, 'DUCIVersion');
         if (@DUCIVer <> Nil) and ((DUCIVer = 1) or (DUCIVer = 2) or (DUCIVer = 3)) then
         begin
-          dup5Main.appendLog('DUCI v'+inttostr(DUCIVer)+' -');
+          dup5Main.appendLogVerbose(2,'DUCI v'+inttostr(DUCIVer)+' -');
 
           Inc(NumPlugins);
 
@@ -228,6 +228,8 @@ begin
           or (@Plugins[NumPlugins].Version = Nil)
           then
           begin
+            if dup5Main.getVerboseLevel = 0 then
+              dup5Main.writeLog(' + '+sr.Name+' :');
             dup5Main.appendLog(DLNGstr('ERRC02'));
             dup5Main.colorLog(clRed);
             //MessageDlg(DLNGstr('ERRC02')+#10+sr.Name,mtWarning,[mbOk],0);
@@ -250,11 +252,13 @@ begin
               Plugins[NumPlugins].IsAboutBox := not(@Plugins[NumPlugins].ShowAboutBox2 = nil);
               Plugins[NumPlugins].IsConfigBox := not(@Plugins[NumPlugins].ShowConfigBox2 = nil);
             end;
-            dup5Main.appendLog(Plugins[NumPlugins].Version.Name +' v'+Plugins[NumPlugins].Version.Version)
+            dup5Main.appendLogVerbose(1,Plugins[NumPlugins].Version.Name +' v'+Plugins[NumPlugins].Version.Version)
           end;
         end
         else
         begin
+          if dup5Main.getVerboseLevel = 0 then
+            dup5Main.writeLog(' + '+sr.Name+' :');
           dup5Main.appendLog(DLNGstr('ERRC01'));
           dup5Main.colorLog(clRed);
           //MessageDlg(DLNGstr('ERRC01')+#10+sr.Name,mtWarning,[mbOk],0);

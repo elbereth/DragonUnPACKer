@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.3 2005-12-13 07:13:56 elbereth Exp $
+// $Id: Options.pas,v 1.4 2005-12-16 20:15:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -168,6 +168,7 @@ type
   private
     { Déclarations privées }
   public
+    procedure trackbarVerboseUpdateHint;
     { Déclarations publiques }
   end;
 
@@ -436,6 +437,7 @@ begin
   Loading := True;
 
   trackbarVerbose.Position := dup5Main.getVerboseLevel;
+  trackbarVerboseUpdateHint;
 
   CONVList;
   DRVList;
@@ -897,6 +899,11 @@ begin
 
 end;
 
+procedure TfrmConfig.trackbarVerboseUpdateHint();
+begin
+  lblVerbose.Caption := DLNGStr('OPT85'+inttostr(trackbarVerbose.Position));
+end;
+
 procedure TfrmConfig.trackbarVerboseChange(Sender: TObject);
 var Reg: TRegistry;
 begin
@@ -913,9 +920,9 @@ begin
     Reg.Free;
   end;
 
-  lblVerbose.Caption := DLNGStr('OPT85'+inttostr(trackbarVerbose.Position));
+  trackbarVerboseUpdateHint;
 
-  dup5Main.setVerboseLevel(trackbarVerbose.Position); 
+  dup5Main.setVerboseLevel(trackbarVerbose.Position);
 
 end;
 

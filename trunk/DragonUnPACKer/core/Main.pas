@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.4 2005-12-13 07:13:56 elbereth Exp $
+// $Id: Main.pas,v 1.5 2005-12-16 20:15:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -1507,9 +1507,9 @@ begin
     useOldMethod := CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].DUCIVersion < 3;
 
     if useOldMethod then
-      appendLog(DLNGStr('LOGC12'))
+      appendLogVerbose(2,DLNGStr('LOGC12'))
     else
-      appendLog(DLNGStr('LOGC11'));
+      appendLogVerbose(2,DLNGStr('LOGC11'));
 
     while (Node <> Nil) do
     begin
@@ -1521,7 +1521,7 @@ begin
       if useOldMethod then
       begin
         FSE.ExtractFile(Data.data,tmpfil,false);
-        appendLog(DLNGStr('LOGC15'));
+        appendLogVerbose(2,DLNGStr('LOGC15'));
         CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].Convert(tmpfil,dstfil,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
         appendLog(DLNGStr('LOG510'));
       end
@@ -1538,7 +1538,7 @@ begin
         except
           on E: Exception do
           begin
-            appendLog(DLNGStr('LOG514'));
+            appendLog(DLNGStr('LOG513'));
             writeLog(DLNGStr('ERR200')+' '+E.ClassName+' - '+E.Message);
             colorLog(clRed);
             styleLog([fsBold]);
@@ -2295,10 +2295,10 @@ var disp: string;
 begin
 
   disp := GetNodePath2(Node);
-  writelog(ReplaceStr(DLNGStr('LOG300'),'%d',disp));
+  writelogVerbose(1,ReplaceStr(DLNGStr('LOG300'),'%d',disp));
   FSE.BrowseDir(disp);
   CurrentDir := disp;
-  appendLog(ReplaceStr(DLNGStr('LOG301'),'%e',inttostr(lstContent.TotalCount)));
+  appendLogVerbose(1,ReplaceStr(DLNGStr('LOG301'),'%e',inttostr(lstContent.TotalCount)));
 
 end;
 

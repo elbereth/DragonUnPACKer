@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.4 2005-12-13 07:13:56 elbereth Exp $
+// $Id: Translation.pas,v 1.5 2005-12-16 20:15:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -391,6 +391,10 @@ begin
 
     strVerbose.Caption := DLNGStr('OPT841');
     strVerbose.Font.Name := GetFont();
+
+    chkLog.Caption := DLNGStr('OPT811');
+
+    trackbarVerboseUpdateHint;
 
   end;
 

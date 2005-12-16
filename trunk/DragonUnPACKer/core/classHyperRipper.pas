@@ -1,6 +1,6 @@
 unit classHyperRipper;
 
-// $Id: classHyperRipper.pas,v 1.2 2005-12-13 07:13:56 elbereth Exp $
+// $Id: classHyperRipper.pas,v 1.3 2005-12-16 20:15:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classHyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -204,7 +204,7 @@ begin
       if IsConsole then
         write(sr.name+ ' ')
       else
-        dup5Main.writeLog(' + '+sr.Name+' :');
+        dup5Main.writeLogVerbose(1,' + '+sr.Name+' :');
       Handle := LoadLibrary(PChar(pth + sr.name));
       if Handle <> 0 then
       begin
@@ -215,7 +215,7 @@ begin
           if IsConsole then
             write('IsDUHI... ')
           else
-            dup5Main.appendLog('DUHI v'+inttostr(DUHIVer)+' -');
+            dup5Main.appendLogVerbose(2,'DUHI v'+inttostr(DUHIVer)+' -');
           Inc(NumPlugins);
 
           Plugins[NumPlugins].DUHIVersion := DUHIVer;
@@ -256,6 +256,8 @@ begin
           or (@Plugins[NumPlugins].Version = Nil)
           then
           begin
+            if dup5Main.getVerboseLevel = 0 then
+              dup5Main.writeLog(' + '+sr.Name+' :');
             dup5Main.appendLog(DLNGstr('ERRH02'));
             dup5Main.colorLog(clRed);
             dec(NumPlugins);
@@ -277,9 +279,11 @@ begin
               Plugins[NumPlugins].IsAboutBox := not(@Plugins[NumPlugins].ShowAboutBox2 = nil);
               Plugins[NumPlugins].IsConfigBox := not(@Plugins[NumPlugins].ShowConfigBox2 = nil);
             end;
-            dup5Main.appendLog(Plugins[NumPlugins].Version.Name +' v'+ GetPlugVersion(Plugins[NumPlugins].Version.Version));
+            dup5Main.appendLogVerbose(1,Plugins[NumPlugins].Version.Name +' v'+ GetPlugVersion(Plugins[NumPlugins].Version.Version));
             if (DUHIVer < 3) then
             begin
+              if dup5Main.getVerboseLevel = 0 then
+                dup5Main.writeLog(' + '+sr.Name+' : '+Plugins[NumPlugins].Version.Name +' v'+ GetPlugVersion(Plugins[NumPlugins].Version.Version));
               dup5Main.appendLog('['+DLNGStr('ERRH03')+']');
               dup5Main.colorLog(clRed);
             end;
@@ -287,6 +291,8 @@ begin
         end
         else
         begin
+          if dup5Main.getVerboseLevel = 0 then
+            dup5Main.writeLog(' + '+sr.Name+' :');
           dup5Main.appendLog(DLNGstr('ERRH01'));
           dup5Main.colorLog(clRed);
 //            MessageDlg(DLNGstr('ERRH01')+#10+sr.Name,mtWarning,[mbOk],0);

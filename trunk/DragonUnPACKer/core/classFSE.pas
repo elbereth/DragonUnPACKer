@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.4 2005-12-13 07:13:56 elbereth Exp $
+// $Id: classFSE.pas,v 1.5 2005-12-16 20:15:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -444,7 +444,7 @@ begin
       if IsConsole then
         write(sr.name+ ' ')
       else
-        dup5Main.writeLog(' + '+sr.Name+' :');
+        dup5Main.writeLogVerbose(1,' + '+sr.Name+' :');
       Handle := LoadLibrary(PChar(pth + sr.name));
       if Handle <> 0 then
       begin
@@ -456,7 +456,7 @@ begin
           if IsConsole then
             write('IsDUDI... ')
           else
-            dup5Main.appendLog('DUDI v'+inttostr(DUDIVer)+' -');
+            dup5Main.appendLogVerbose(2,'DUDI v'+inttostr(DUDIVer)+' -');
           Inc(NumDrivers);
 
           Drivers[NumDrivers].DUDIVersion := DUDIVer;
@@ -515,6 +515,10 @@ begin
               writeln('Malformed!')
             else
             begin
+              if dup5Main.getVerboseLevel = 0 then
+              begin
+                dup5Main.writeLog(' + '+sr.Name+' :');
+              end;
               dup5Main.appendLog(DLNGstr('ERRD02'));
               dup5Main.colorLog(clRed);
               //MessageDlg(DLNGstr('ERRD02')+#10+sr.Name,mtWarning,[mbOk],0);
@@ -542,7 +546,7 @@ begin
               Drivers[NumDrivers].IsAboutBox := not(@Drivers[NumDrivers].ShowAboutBox = nil) or not(@Drivers[NumDrivers].ShowAboutBox2 = nil) or not(@Drivers[NumDrivers].ShowAboutBox3 = nil);
               Drivers[NumDrivers].IsConfigBox := not(@Drivers[NumDrivers].ShowConfigBox = nil) or not(@Drivers[NumDrivers].ShowConfigBox2 = nil) or not(@Drivers[NumDrivers].ShowConfigBox3 = nil);
               Drivers[NumDrivers].Priority := getDriverPriority(ExtractFileName(sr.Name));
-              dup5Main.appendLog(Drivers[NumDrivers].Info.Name+' v'+Drivers[NumDrivers].Info.Version)
+              dup5Main.appendLogVerbose(1,Drivers[NumDrivers].Info.Name+' v'+Drivers[NumDrivers].Info.Version)
             except
               on E:Exception do
               begin
@@ -557,6 +561,10 @@ begin
             writeln('Bad DUDI')
           else
           begin
+            if dup5Main.getVerboseLevel = 0 then
+            begin
+              dup5Main.writeLog(' + '+sr.Name+' :');
+            end;
             dup5Main.appendLog(DLNGstr('ERRD01'));
             dup5Main.colorLog(clRed);
           end;
@@ -653,7 +661,7 @@ begin
 
     SmartOpen := GetRegistryBool('StartUp','SmartOpen',True);
     if SmartOpen then
-      dup5Main.writeLog(DLNGStr('LOG400'));
+      dup5Main.writeLogVerbose(1,DLNGStr('LOG400'));
 
     x := 1 ;
     NumCanOpen := 0;
@@ -666,7 +674,7 @@ begin
       try
         if Drivers[x].CanOpen(pchar(pth),SmartOpen) then
         begin
-          dup5Main.writeLog(ReplaceStr(DLNGStr('LOG500'),'%d',Drivers[x].Info.Name));
+          dup5Main.writeLogVerbose(1,ReplaceStr(DLNGStr('LOG500'),'%d',Drivers[x].Info.Name));
           Inc(NumCanOpen);
           CanOpen[NumCanOpen] := x;
         end;
@@ -708,7 +716,7 @@ begin
         CurrentFileSize := FileSeek(i,zero64,2);
         FileClose(i);
 
-        dup5Main.writeLog(ReplaceStr(DLNGStr('LOG501'),'%d',Drivers[CurrentDriver].Info.Name));
+        dup5Main.writeLogVerbose(1,ReplaceStr(DLNGStr('LOG501'),'%d',Drivers[CurrentDriver].Info.Name));
 
         StartTime := Now;
         try
@@ -737,12 +745,12 @@ begin
         end;
         LoadTimeOpen := MilliSecondsBetween(Now, StartTime);
 
-        dup5Main.appendLog(inttostr(LoadTimeOpen)+'ms');
+        dup5Main.appendLogVerbose(2,inttostr(LoadTimeOpen)+'ms');
 
         if NumElems > 0 then
         begin
 
-          dup5Main.appendLog(' - '+DLNGStr('LOG511'));
+          dup5Main.appendLog(DLNGStr('LOG511'));
 
           SetTitle(DLNGstr('TLD002'));
           StartTime := Now;
@@ -756,7 +764,7 @@ begin
           DispNumElems := 0;
           y := 0;
 
-          dup5Main.writeLog(ReplaceStr(DLNGStr('LOG502'),'%x',inttostr(NumElems)));
+          dup5Main.writeLogVerbose(1,ReplaceStr(DLNGStr('LOG502'),'%x',inttostr(NumElems)));
 
           try
             for y := 1 to NumElems do
@@ -808,7 +816,7 @@ begin
 
           LoadTimeRetrieve := MilliSecondsBetween(Now, StartTime);
 
-          dup5Main.appendLog(inttostr(LoadTimeRetrieve)+'ms');
+          dup5Main.appendLogVerbose(2,inttostr(LoadTimeRetrieve)+'ms');
 
           SetTitle(DLNGstr('TLD003'));
           StartTime := Now;
@@ -818,7 +826,7 @@ begin
           InternalExtract := DrvInfo.ExtractInternal;
           CurrentFile := DrvInfo.FileHandle;
 
-          dup5Main.writeLog(DLNGStr('LOG503'));
+          dup5Main.writeLogVerbose(1,DLNGStr('LOG503'));
 
           if Sch <> '' then
             ParseDirs(Sch, DataBloc, ExtractFileName(pth))
@@ -827,7 +835,7 @@ begin
 
           LoadTimeParse := MilliSecondsBetween(Now, StartTime);
 
-          dup5Main.appendLog(inttostr(LoadTimeParse)+'ms');
+          dup5Main.appendLogVerbose(2,inttostr(LoadTimeParse)+'ms');
 
           CurrentFileName := pth;
 
@@ -835,14 +843,14 @@ begin
 
           res := dlOK;
 
-          dup5Main.writeLog(ReplaceStr(ReplaceStr(DLNGStr('LOG504'),'%p',Drivers[CurrentDriver].Info.Name),'%f',DriverID));
+          dup5Main.writeLogVerbose(1,ReplaceStr(ReplaceStr(DLNGStr('LOG504'),'%p',Drivers[CurrentDriver].Info.Name),'%f',DriverID));
 
           break;
 
         end
         else if NumElems = 0 then
         begin
-          dup5Main.appendLog(' - '+DLNGStr('LOG512'));
+          dup5Main.appendLog(DLNGStr('LOG512'));
           inc(ErrNum);
           DrvInfo := Drivers[CurrentDriver].GetDriver;
           Drivers[CurrentDriver].CloseFile;
@@ -854,7 +862,7 @@ begin
         end
         else
         begin
-          dup5Main.appendLog(' - '+DLNGStr('LOG513'));
+          dup5Main.appendLog(DLNGStr('LOG513'));
           inc(ErrNum);
           case NumElems of
             -4: begin
@@ -1371,7 +1379,7 @@ begin
     begin
       dup5Main.appendLog(DLNGStr('LOG512'));
       dup5Main.colorLog(clRed);
-      dup5Main.writeLog(ReplaceStr('%f',DLNGStr('ERR900'),'ExtractFile()'));
+      dup5Main.writeLog(ReplaceStr(DLNGStr('ERR900'),'%f','ExtractFile()'));
       dup5Main.colorLog(clRed);
     end;
   end
@@ -1391,15 +1399,15 @@ begin
  except
   on E: Exception do
   begin  // New error dialog box
-    dup5Main.writeLog(ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].FileName));
+    dup5Main.writeLog(ReplaceValue(DLNGstr('ERRDRV'),'%d',Drivers[CurrentDriver].FileName));
     dup5Main.colorLog(clRed);
     dup5Main.writeLog(E.Message +' @ TDrivers.ExtractFile_Alt:'+Drivers[CurrentDriver].FileName);
     dup5Main.colorLog(clRed);
-    dup5Main.writeLog(ReplaceValue('%a',DLNGstr('ERRDR1'),Drivers[CurrentDriver].Info.Author));
+    dup5Main.writeLog(ReplaceValue(DLNGstr('ERRDR1'),'%a',Drivers[CurrentDriver].Info.Author));
     dup5Main.colorLog(clRed);
 
     frmError.PrepareError;
-    frmError.details.Add(ReplaceStr('%f',DLNGStr('ERREXT'),Drivers[CurrentDriver].FileName));
+    frmError.details.Add(ReplaceStr(DLNGStr('ERREXT'),'%f',Drivers[CurrentDriver].FileName));
     frmError.details.Add('');
     frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
     frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Name='+Drivers[CurrentDriver].Info.Name);
@@ -1434,7 +1442,7 @@ begin
     begin
       dup5Main.appendLog(DLNGStr('LOG512'));
       dup5Main.colorLog(clRed);
-      dup5Main.writeLog(ReplaceStr('%f',DLNGStr('ERR900'),'ExtractFileToStream()'));
+      dup5Main.writeLog(ReplaceStr(DLNGStr('ERR900'),'%f','ExtractFileToStream()'));
       dup5Main.colorLog(clRed);
     end;
   end
@@ -1449,7 +1457,7 @@ begin
     dup5Main.appendLog(DLNGStr('LOG513'));
     dup5Main.colorLog(clRed);
     frmError.PrepareError;
-    frmError.details.Add(ReplaceStr('%f',DLNGStr('ERRSTM'),Drivers[CurrentDriver].FileName));
+    frmError.details.Add(ReplaceStr(DLNGStr('ERRSTM'),'%f',Drivers[CurrentDriver].FileName));
     frmError.details.Add('');
     frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
     frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Name='+Drivers[CurrentDriver].Info.Name);

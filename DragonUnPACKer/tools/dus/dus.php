@@ -1,6 +1,6 @@
 <?php
 
-// $Id: dus.php,v 1.1 2005-12-16 23:57:34 elbereth Exp $
+// $Id: dus.php,v 1.2 2005-12-17 11:40:53 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dus/dus.php,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,9 +18,9 @@
 //
 
   // CVS variables
-  $CVS_REVISION = '$Revision: 1.1 $';
+  $CVS_REVISION = '$Revision: 1.2 $';
   $CVS_REVISION_DISPLAY = substr($CVS_REVISION,11,strlen($CVS_REVISION)-13);
-  $CVS_DATE = '$Date: 2005-12-16 23:57:34 $';
+  $CVS_DATE = '$Date: 2005-12-17 11:40:53 $';
   $CVS_DATE_DISPLAY = substr($CVS_DATE,7,strlen($CVS_DATE)-9);
 
   // Sending the header
@@ -32,7 +32,7 @@
   // Connect to MYSQL Database
   $link = mysql_connect("mysql4-d", "d108923ro", "rofordus3");
   if (mysql_errno() != 0) {
-    echo "Result=M001\n";
+    echo "Result=M01\n";
     echo "ResultDescription=".mysql_error()."\n";
     return;
   }
@@ -40,7 +40,7 @@
   // Selecting database
   mysql_select_db ("d108923_DragonUnPACKer");
   if (mysql_errno() != 0) {
-    echo "Result=M002\n";
+    echo "Result=M02\n";
     echo "ResultDescription=".mysql_error()."\n";
     return;
   }
@@ -48,7 +48,7 @@
   // Getting user build from HTTP GET parameter
   $userBuild = $_GET['installedbuild'];
   if ((!isset($userBuild)) | (strlen($userBuild) == 0) | (!is_numeric($userBuild))) {
-  	echo "Result=P001\n";
+  	echo "Result=P01\n";
   	echo "ResultDescription=Parameter \"installedbuild\" is missing!\n";
   	return;
   }
@@ -60,7 +60,7 @@
   $query = "SELECT * FROM dus_core WHERE type = 'stable' AND available = 'yes' AND build>=".$userBuild." ORDER BY build DESC";
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
-  	echo "Result=M010\n";
+  	echo "Result=M10\n";
     echo "ResultDescription=".mysql_error()."\n";
   	return;
   }
@@ -77,7 +77,7 @@
   $query = "SELECT * FROM dus_core WHERE type = 'wip' AND available = 'yes' AND build>=$installedbuild ORDER BY build DESC";
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
-  	echo "Result=M011\n";
+  	echo "Result=M11\n";
     echo "ResultDescription=".mysql_error()."\n";
   	return;
   }
@@ -94,7 +94,7 @@
   $query = "SELECT duci, dudi, duhi, translation FROM dus_versions WHERE dup = ".$userBuild;
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
-  	echo "Result=M020\n";
+  	echo "Result=M20\n";
     echo "ResultQuery=".$query."\n";
     echo "ResultDescription=".mysql_error()."\n";
   	return;
@@ -110,7 +110,7 @@
   }
   else
   {
-  	echo "Result=P002\n";
+  	echo "Result=P02\n";
     echo "ResultDescription=Unknown build of Dragon UnPACKer\n\n";
     echo $dusbody;
   	return;
@@ -122,7 +122,7 @@
   $query = "SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR FROM dus_convert WHERE duci = ".$userduci." ORDER BY name, version DESC";
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
-  	echo "Result=M030\n";
+  	echo "Result=M30\n";
     echo "ResultQuery=".$query."\n";
     echo "ResultDescription=".mysql_error()."\n";
   	return;
@@ -147,7 +147,7 @@
   $query = "SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR FROM dus_driver WHERE dudi = ".$userdudi." ORDER BY name, version DESC";
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
-  	echo "Result=M031\n";
+  	echo "Result=M31\n";
     echo "ResultQuery=".$query."\n";
     echo "ResultDescription=".mysql_error()."\n";
   	return;
@@ -171,7 +171,7 @@
   $query = "SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR FROM dus_hyperripper WHERE duhi = ".$userduhi." ORDER BY name, version DESC";
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
-  	echo "Result=M032\n";
+  	echo "Result=M32\n";
     echo "ResultQuery=".$query."\n";
     echo "ResultDescription=".mysql_error()."\n";
   	return;
@@ -191,7 +191,34 @@
 
   mysql_free_result($queryresult);
 
-  echo trim($dusupdates)."\n\n";
+  // Retrieving available translations
+  $query = "SELECT name, release, description, author, URL, file, fileDL, size, date FROM dus_translation WHERE version = ".$userlang." ORDER BY name, release DESC";
+  $queryresult = mysql_query ($query);
+  if (mysql_errno() != 0) {
+  	echo "Result=M33\n";
+    echo "ResultQuery=".$query."\n";
+    echo "ResultDescription=".mysql_error()."\n";
+  	return;
+  }
+
+  $lastlangname = '';
+  $dustranslations = 'Translations=';
+
+  while ($line = mysql_fetch_array($queryresult, MYSQL_NUM)) {
+
+    if ($lastlangname != $line[0]) {
+      $dusbody .= '['.$line[0]."]\nRelease=".$line[1]."\nDescription=".$line[2]."\nAuthor=".$line[3]."\nURL=".$line[4]."\nSize=".$line[7]."\nFile=".$line[5]."\nFileDL=".$line[6]."\nDate=".$line[8]."\n\n";
+      $lastlangname = $line[0];
+      $dustranslations .= $line[0].' ';
+    }
+ 	
+  }
+
+  mysql_free_result($queryresult);
+
+	echo "Result=OK\n";
+  echo trim($dusupdates)."\n";
+  echo trim($dustranslations)."\n\n";
   echo $dusbody;
   
   // Closing MYSQL connection

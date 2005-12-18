@@ -844,7 +844,7 @@ object frmAbout: TfrmAbout
     Top = 296
     Width = 205
     Height = 13
-    Caption = '(c)Copyright 1997-2004 Alexandre Devilliers'
+    Caption = '(c)Copyright 1997-2005 Alexandre Devilliers'
   end
   object Shape1: TShape
     Left = 8

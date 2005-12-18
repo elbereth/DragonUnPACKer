@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.13 2005-12-13 07:13:56 elbereth Exp $
+// $Id: drv_default.dpr,v 1.14 2005-12-18 23:25:25 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -143,6 +143,7 @@ type FSE = ^element;
     20011  51140 Upgraded to new interface DUDI v4
     20012  51240 Merged with 5.0 changes (see 13540 and 13640 version)
     20040  52040 Changed version number for 5.2 release
+                 Added support for Black & White 2 .STUFF files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -459,6 +460,13 @@ type BUNHeader = packed record
      BUNEntry = packed record
         FileName: Array[1..8] of Char;
         Ext: Array[1..4] of char;
+     end;
+
+type BW2STUFFEntry = packed record
+       Filename: array[0..255] of char;  // Null terminated
+       Offset: integer;
+       Size: integer;
+       CDateTime: integer;
      end;
 
 type CBFHeader = packed record
@@ -1107,8 +1115,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20040;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.13 $';
-  CVS_DATE = '$Date: 2005-12-13 07:13:56 $';
+  CVS_REVISION = '$Revision: 1.14 $';
+  CVS_DATE = '$Date: 2005-12-18 23:25:25 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -2655,66 +2663,58 @@ type
     Size: integer;
   end;
 
-function ReadEveOnlineSTUFF(src: string): Integer;
+function ReadEveOnlineSTUFF : Integer;
 var NumE,Size,DataOffset,x : integer;
     disp : string;
     ENTL: array of STUFFList;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  TotFSize := FileSeek(FHandle,0,2);
 
-  if FHandle > 0 then
+  FileSeek(Fhandle, 0, 0);
+  FileRead(FHandle, NumE, 4);
+
+//  Result := 0;
+
+  if (NumE > TotFSize) or (NumE < 1) then
   begin
-    TotFSize := FileSeek(FHandle,0,2);
-
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, NumE, 4);
-
-//    Result := 0;
-
-    if (NumE > TotFSize) or (NumE < 1) then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'STUFF';
-      ErrInfo.Games := 'Eve Online';
-    end
-    else
-    begin
-
-      SetLength(ENTL,NumE);
-      for x := 0 to NumE-1 do
-      begin
-        FileRead(FHandle,Size,4);
-        FileSeek(FHandle,4,1);
-        Disp := strip0(get0(Fhandle));
-        ENTL[x].Name := Disp;
-        ENTL[x].Size := Size;
-      end;
-
-      DataOffset := FileSeek(FHandle,0,1);
-
-      for x := 0 to NumE-1 do
-      begin
-        FSE_Add(ENTL[x].Name,DataOffset,ENTL[x].Size,0,0);
-        inc(DataOffset,ENTL[x].Size);
-      end;
-
-      SetLength(ENTL,0);
-
-      Result := NumE;
-
-      DrvInfo.ID := 'STUFF';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := True;
-
-    end;
-
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'STUFF';
+    ErrInfo.Games := 'Eve Online';
   end
   else
-    Result := -2;
+  begin
+
+    SetLength(ENTL,NumE);
+    for x := 0 to NumE-1 do
+    begin
+      FileRead(FHandle,Size,4);
+      FileSeek(FHandle,4,1);
+      Disp := strip0(get0(Fhandle));
+      ENTL[x].Name := Disp;
+      ENTL[x].Size := Size;
+    end;
+
+    DataOffset := FileSeek(FHandle,0,1);
+
+    for x := 0 to NumE-1 do
+    begin
+      FSE_Add(ENTL[x].Name,DataOffset,ENTL[x].Size,0,0);
+      inc(DataOffset,ENTL[x].Size);
+    end;
+
+    SetLength(ENTL,0);
+
+    Result := NumE;
+
+    DrvInfo.ID := 'STUFF';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := True;
+
+  end;
 
 end;
 
@@ -3165,6 +3165,47 @@ begin
   end
   else
     ReadBlackAndWhiteSAD := -2;
+
+end;
+
+function ReadBlackAndWhite2STUFF: Integer;
+var NumE, x, TotFSize, DirOffset : integer;
+    disp : string;
+    ENT: BW2STUFFEntry;
+begin
+
+  TotFSize := FileSeek(FHandle,0,2);
+  FileSeek(FHandle,TotFSize-4,0);
+  FileRead(FHandle, DirOffset, 4);
+  if (DirOffset <= 0) or (DirOffset >= TotFSize) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'BW2STUFF';
+    ErrInfo.Games := 'Black & White 2';
+  end
+  else
+  begin
+
+    NumE := (TotFSize - DirOffset - 4) div 268;
+    FileSeek(FHandle,DirOffset,0);
+
+    for x := 0 to NumE-1 do
+    begin
+      FileRead(FHandle,ENT,268);
+      Disp := strip0(ENT.Filename);
+      FSE_Add(disp,ENT.Offset,ENT.Size,ENT.CDateTime,0);
+    end;
+
+    Result := NumE;
+
+    DrvInfo.ID := 'BW2STUFF';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
 
 end;
 
@@ -7446,6 +7487,52 @@ begin
 
 end;
 
+function ReadHubSTUFF(src: String): Integer;
+var ID64: array[0..63] of char;
+    res: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileRead(FHandle,ID64,64);
+    if (ID64[0] = #1) and (ID64[1] = #0) and (ID64[2] = #0) and (ID64[3] = #0)
+    and (ID64[4] = #0) and (ID64[5] = #0) and (ID64[6] = #0) and (ID64[7] = #0)
+    and (ID64[8] = #0) and (ID64[9] = #0) and (ID64[10] = #0) and (ID64[11] = #0)
+    and (ID64[12] = #0) and (ID64[13] = #0) and (ID64[14] = #0) and (ID64[15] = #0)
+    and (ID64[16] = #0) and (ID64[17] = #0) and (ID64[18] = #0) and (ID64[19] = #0)
+    and (ID64[20] = #0) and (ID64[21] = #0) and (ID64[22] = #0) and (ID64[23] = #0)
+    and (ID64[24] = #0) and (ID64[25] = #0) and (ID64[26] = #0) and (ID64[27] = #0)
+    and (ID64[28] = #0) and (ID64[29] = #0) and (ID64[30] = #0) and (ID64[31] = #0)
+    and (ID64[32] = #0) and (ID64[33] = #0) and (ID64[34] = #0) and (ID64[35] = #0)
+    and (ID64[36] = #0) and (ID64[37] = #0) and (ID64[38] = #0) and (ID64[39] = #0)
+    and (ID64[40] = #0) and (ID64[41] = #0) and (ID64[42] = #0) and (ID64[43] = #0)
+    and (ID64[44] = #0) and (ID64[45] = #0) and (ID64[46] = #0) and (ID64[47] = #0)
+    and (ID64[48] = #0) and (ID64[49] = #0) and (ID64[50] = #0) and (ID64[51] = #0)
+    and (ID64[52] = #0) and (ID64[53] = #0) and (ID64[54] = #0) and (ID64[55] = #0)
+    and (ID64[56] = #0) and (ID64[57] = #0) and (ID64[58] = #0) and (ID64[59] = #0)
+    and (ID64[60] = #0) and (ID64[61] = #0) and (ID64[62] = #0) and (ID64[63] = #0) then
+      res := ReadBlackAndWhite2STUFF
+    else
+      res := ReadEveOnlineSTUFF;
+
+    if res = -3 then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'STUFF';
+      ErrInfo.Games := 'Eve Online, Black & White 2';
+    end
+    else
+      Result := res;
+  end
+  else
+    Result := -2;
+
+end;
+
 function ReadHubPOD(src: String): Integer;
 var ID: array[0..3] of char;
     res: integer;
@@ -7681,6 +7768,24 @@ begin
         FileClose(Fhandle);
         Result := ReadMystIVRevelationM4B(fil);
       end
+      // Black & White 2 .STUFF file (Everything.stuff)
+      else if (ID127[0] = #1) and (ID127[1] = #0) and (ID127[2] = #0) and (ID127[3] = #0)
+          and (ID127[4] = #0) and (ID127[5] = #0) and (ID127[6] = #0) and (ID127[7] = #0)
+          and (ID127[8] = #0) and (ID127[9] = #0) and (ID127[10] = #0) and (ID127[11] = #0)
+          and (ID127[12] = #0) and (ID127[13] = #0) and (ID127[14] = #0) and (ID127[15] = #0)
+          and (ID127[16] = #0) and (ID127[17] = #0) and (ID127[18] = #0) and (ID127[19] = #0)
+          and (ID127[20] = #0) and (ID127[21] = #0) and (ID127[22] = #0) and (ID127[23] = #0)
+          and (ID127[24] = #0) and (ID127[25] = #0) and (ID127[26] = #0) and (ID127[27] = #0)
+          and (ID127[28] = #0) and (ID127[29] = #0) and (ID127[30] = #0) and (ID127[31] = #0)
+          and (ID127[32] = #0) and (ID127[33] = #0) and (ID127[34] = #0) and (ID127[35] = #0)
+          and (ID127[36] = #0) and (ID127[37] = #0) and (ID127[38] = #0) and (ID127[39] = #0)
+          and (ID127[40] = #0) and (ID127[41] = #0) and (ID127[42] = #0) and (ID127[43] = #0)
+          and (ID127[44] = #0) and (ID127[45] = #0) and (ID127[46] = #0) and (ID127[47] = #0)
+          and (ID127[48] = #0) and (ID127[49] = #0) and (ID127[50] = #0) and (ID127[51] = #0)
+          and (ID127[52] = #0) and (ID127[53] = #0) and (ID127[54] = #0) and (ID127[55] = #0)
+          and (ID127[56] = #0) and (ID127[57] = #0) and (ID127[58] = #0) and (ID127[59] = #0)
+          and (ID127[60] = #0) and (ID127[61] = #0) and (ID127[62] = #0) and (ID127[63] = #0) then
+        Result := ReadBlackAndWhite2STUFF
       else if (ID4[0] = #1) and (ID4[1] = #0) and (ID4[2] = #0) and (ID4[3] = #0)
            and (ID28[12] = 'R') and (ID28[13] = 'O') and (ID28[14] = 'O') and (ID28[15] = 'T') then
       begin
@@ -8014,7 +8119,7 @@ begin
     else if ext = 'SSA' then
       Result := ReadEmpiresDawnOfTheModernWorldSSA(fil)
     else if ext = 'STUFF' then
-      Result := ReadEveOnlineSTUFF(fil)
+      Result := ReadHubSTUFF(fil)
     else if ext = 'SYN' then
       ReadFormat := ReadNICE2SYN(fil)
     else if ext = 'TEX' then
@@ -8186,6 +8291,24 @@ begin
         and (ID23[4] = 'U') and (ID23[5] = 'B') and (ID23[6] = 'I') and (ID23[7] = '_')
         and (ID23[8] = 'B') and (ID23[9] = 'F') and (ID23[10] = '_') and (ID23[11] = 'S')
         and (ID23[12] = 'I') and (ID23[13] = 'G') and (ID23[14] = #0) then
+      Result := true
+    // Black & White 2 .STUFF file (Everything.stuff)
+    else if (ID127[0] = #1) and (ID127[1] = #0) and (ID127[2] = #0) and (ID127[3] = #0)
+        and (ID127[4] = #0) and (ID127[5] = #0) and (ID127[6] = #0) and (ID127[7] = #0)
+        and (ID127[8] = #0) and (ID127[9] = #0) and (ID127[10] = #0) and (ID127[11] = #0)
+        and (ID127[12] = #0) and (ID127[13] = #0) and (ID127[14] = #0) and (ID127[15] = #0)
+        and (ID127[16] = #0) and (ID127[17] = #0) and (ID127[18] = #0) and (ID127[19] = #0)
+        and (ID127[20] = #0) and (ID127[21] = #0) and (ID127[22] = #0) and (ID127[23] = #0)
+        and (ID127[24] = #0) and (ID127[25] = #0) and (ID127[26] = #0) and (ID127[27] = #0)
+        and (ID127[28] = #0) and (ID127[29] = #0) and (ID127[30] = #0) and (ID127[31] = #0)
+        and (ID127[32] = #0) and (ID127[33] = #0) and (ID127[34] = #0) and (ID127[35] = #0)
+        and (ID127[36] = #0) and (ID127[37] = #0) and (ID127[38] = #0) and (ID127[39] = #0)
+        and (ID127[40] = #0) and (ID127[41] = #0) and (ID127[42] = #0) and (ID127[43] = #0)
+        and (ID127[44] = #0) and (ID127[45] = #0) and (ID127[46] = #0) and (ID127[47] = #0)
+        and (ID127[48] = #0) and (ID127[49] = #0) and (ID127[50] = #0) and (ID127[51] = #0)
+        and (ID127[52] = #0) and (ID127[53] = #0) and (ID127[54] = #0) and (ID127[55] = #0)
+        and (ID127[56] = #0) and (ID127[57] = #0) and (ID127[58] = #0) and (ID127[59] = #0)
+        and (ID127[60] = #0) and (ID127[61] = #0) and (ID127[62] = #0) and (ID127[63] = #0) then
       Result := true
     // Hitman: Contracts .PRM file
     else if (ID4[0] = #30) and (ID4[1] = #7) and (ID4[2] = #0) and (ID4[3] = #0) then

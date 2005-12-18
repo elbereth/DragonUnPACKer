@@ -115,7 +115,7 @@ AutoIncBuild=1
 MajorVer=1
 MinorVer=1
 Release=0
-Build=126
+Build=130
 Debug=0
 PreRelease=0
 Special=0
@@ -126,7 +126,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone
 FileDescription=DUP5 - ZIP Driver (Info-ZIP's DLL wrapper)
-FileVersion=1.1.0.126
+FileVersion=1.1.0.130
 InternalName=drv_zip
 LegalCopyright=
 LegalTrademarks=
@@ -141,10 +141,11 @@ Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 Count=1
 Item0=H:\Programmation\CVS\drgunpacker\common
 [HistoryLists\hlOutputDirectorry]
-Count=6
-Item0=C:\Developpement\dup-dev-5.1-compiled\data\drivers
-Item1=H:\Programmation\Compiled\drgunpacker\current\data\drivers
-Item2=C:\Developpement\dup-dev-5.1-compiled\utils
-Item3=C:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
-Item4=C:\Developpement\dup-dev-5.1-compiled\data\convert
-Item5=C:\Developpement\dup-dev-5.1-compiled
+Count=7
+Item0=C:\Developpement
+Item1=C:\Developpement\dup-dev-5.1-compiled\utils
+Item2=C:\Developpement\dup-dev-5.1-compiled\data\drivers
+Item3=H:\Programmation\Compiled\drgunpacker\current\data\drivers
+Item4=C:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
+Item5=C:\Developpement\dup-dev-5.1-compiled\data\convert
+Item6=C:\Developpement\dup-dev-5.1-compiled

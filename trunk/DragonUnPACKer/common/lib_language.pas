@@ -1,6 +1,6 @@
 unit lib_language;
 
-// $Id: lib_language.pas,v 1.6 2005-12-16 20:17:42 elbereth Exp $
+// $Id: lib_language.pas,v 1.7 2005-12-18 15:04:34 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_language.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -968,6 +968,29 @@ begin
     res := '%p plugin(s) et %t traduction(s) disponibles!'
   else if sch = 'PII200' then
     res := 'Aucune mise a jour n''a pu être téléchargée.%nLe programme va maintenant s''arreter.'
+
+  else if sch = 'PIEM01' then
+    res := 'Connection à la base de données impossible. Réessayez ultérieurement!'
+  else if sch = 'PIEM10' then
+    res := 'Erreur serveur lors de la recherche dernière version stable!'
+  else if sch = 'PIEM11' then
+    res := 'Erreur serveur lors de la recherche dernière version WIP!'
+  else if sch = 'PIEM20' then
+    res := 'Erreur serveur lors de la recherche de votre version!'
+  else if sch = 'PIEM30' then
+    res := 'Erreur serveur lors de la recherche des plugins de convertion disponibles!'
+  else if sch = 'PIEM31' then
+    res := 'Erreur serveur lors de la recherche des plugins driver disponibles!'
+  else if sch = 'PIEM32' then
+    res := 'Erreur serveur lors de la recherche des plugins HyperRipper disponibles!'
+  else if sch = 'PIEM33' then
+    res := 'Erreur serveur lors de la recherche des traductions disponibles!'
+  else if sch = 'PIEP01' then
+    res := 'Paramètre erronnée! Si vous n''avez pas encore lancer Dragon UnPACKer faites-le, puis relancer Duppi.'
+  else if sch = 'PIEP02' then
+    res := 'Le serveur n''a pas reconnu votre version de Dragon UnPACKer.'
+  else if sch = 'PIEUNK' then
+    res := 'Erreur serveur inconnu: "%e"'
 
   else if sch = 'PIP000' then
     res := 'Configuration du proxy'

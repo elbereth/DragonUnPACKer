@@ -1553,13 +1553,14 @@ object frmInstaller: TfrmInstaller
       Cursor = crHandPoint
       Color = clBtnFace
       Font.Charset = DEFAULT_CHARSET
-      Font.Color = clGreen
+      Font.Color = clYellow
       Font.Height = -11
       Font.Name = 'MS Sans Serif'
-      Font.Style = [fsUnderline]
+      Font.Style = []
       ParentColor = False
       ParentFont = False
       Transparent = True
+      OnClick = linkToWIPClick
       OnMouseEnter = linkToWIPMouseEnter
       OnMouseLeave = linkToWIPMouseLeave
     end
@@ -1620,7 +1621,6 @@ object frmInstaller: TfrmInstaller
       ViewStyle = vsReport
       Visible = False
       OnClick = lstUpdatesClick
-      OnSelectItem = lstUpdatesSelectItem
     end
     object butRefresh: TButton
       Left = 8

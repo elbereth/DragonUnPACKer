@@ -1,6 +1,6 @@
 library drv_zip;
 
-// $Id: drv_zip.dpr,v 1.3 2005-12-14 16:59:30 elbereth Exp $
+// $Id: drv_zip.dpr,v 1.4 2005-12-18 15:01:44 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/zip/drv_zip.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -40,6 +40,9 @@ type
   10340  50022  Added Hot Rod American Street Drag .ROD to the supported file types
                 Added Call of Duty .PK3 to the supported games
   11040  52040  Updated to DUDI v4
+                Added Doom 3 & Quake 4 .PK4 to the supported file types
+                Added Serious Sam 2 .GRO to the supported file types
+                Added Call of Duty 2 .IWD to the supported file types
 
   /////////////////////////////////////////////////////////////////////////////}
 const DRIVER_VERSION = 11040;
@@ -297,7 +300,7 @@ begin
   GetDriverInfo.Comment := 'This Driver is a wrapper to the Info-ZIP UnZip32.DLL. Using UnZip.pas by Gerke Preussner <j3rky@gerke-preussner.de>.';
   if DLLStatus then
   begin
-    GetDriverInfo.NumFormats := 11;
+    GetDriverInfo.NumFormats := 13;
     GetDriverInfo.Formats[1].Extensions := '*.pk3';
     GetDriverInfo.Formats[1].Name := 'Call of Duty (*.PK3)|Quake 3 Arena (*.PK3)|Medal of Honor: Allied Assault (*.PK3)|American McGee Alice (*.PK3)|Jedi Knight 2: Jedi Outcast (*.PK3)|Heavy Metal: F.A.K.K.2 (*.PK3)';
     GetDriverInfo.Formats[2].Extensions := '*.rvi;*.rvm;*.rvr';
@@ -320,6 +323,10 @@ begin
     GetDriverInfo.Formats[10].Name := 'Master of Orion 3 (*.MOB)';
     GetDriverInfo.Formats[11].Extensions := '*.rod';
     GetDriverInfo.Formats[11].Name := 'Hot Rod American Street Drag (*.ROD)';
+    GetDriverInfo.Formats[12].Extensions := '*.pk4';
+    GetDriverInfo.Formats[12].Name := 'Doom 3 (*.PK4)|Quake 4 (*.PK4)';
+    GetDriverInfo.Formats[13].Extensions := '*.iwd';
+    GetDriverInfo.Formats[13].Name := 'Call of Duty 2 (*.IWD)';
   end
   else
     GetDriverInfo.NumFormats := 0;
@@ -474,9 +481,13 @@ begin
         IsFormat := True
       else if ext = 'GRO' then
         IsFormat := True
+      else if ext = 'IWD' then
+        IsFormat := True
       else if ext = 'MOB' then
         IsFormat := True
       else if ext = 'NOB' then
+        IsFormat := True
+      else if ext = 'PK4' then
         IsFormat := True
       else if ext = 'RVI' then
         IsFormat := True
@@ -754,7 +765,8 @@ begin
     else
       if (ext = 'PK3') or (ext = 'CRF') or (ext = 'RVI') or (ext = 'RVM')
       or (ext = 'RVR') or (ext = 'NOB') or (ext = 'ZIP') or (ext = 'GRO')
-      or (ext = 'VL2') or (ext = 'ZA')  or (ext = 'MOB') then
+      or (ext = 'VL2') or (ext = 'ZA')  or (ext = 'MOB') or (ext = 'PK4')
+      or (ext = 'IWD') then
         Result := OpenZIPFile(fil)
       else
         ReadFormat := -1;

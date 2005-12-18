@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.5 2005-12-16 20:17:42 elbereth Exp $
+// $Id: Installer.pas,v 1.6 2005-12-18 15:04:36 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -138,6 +138,7 @@ type
     procedure linkToWIPMouseLeave(Sender: TObject);
     procedure linkToStableClick(Sender: TObject);
     procedure lstUpdatesTypesChange(Sender: TObject);
+    procedure linkToWIPClick(Sender: TObject);
   private
     DUS: TIniFile;
     Dup5Path: string;
@@ -875,11 +876,13 @@ Var updList: TStringList;
     x, tmpVer: integer;
     butDl, coreUpdate: boolean;
     coreMessage: string;
+    errCode: string;
 begin
 
   butRefresh.Enabled := false;
-//HttpCli1.URL := 'http://dus.dragonunpacker.com/dup5.dus';
-  HttpCli1.URL := 'http://www.elberethzone.net/dup5.dus';
+//HttpCli1.URL := 'http://dus.dragonunpacker.com/dup5.dus';   // Old URL
+//HttpCli1.URL := 'http://www.elberethzone.net/dup5.dus';     // 5.0/5.1 URL DUS v2.0
+  HttpCli1.URL := 'http://dragonunpacker.sourceforge.net/dus.php?installedbuild='+inttostr(corebuild);     // 5.2+ URL DUS v3.0
   tmpFile := getTempFile('.dus');
   HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
   CurDL := DLNGstr('PII100');
@@ -918,13 +921,46 @@ begin
           writeLog(DLNGStr('PI0044'));
         end
         else
-          if dus.ReadInteger('ID','DUS',0) <> 2 then
+          if (dus.ReadInteger('ID','DUS',0) <> 3) or not(dus.ValueExists('ID','Result')) then
           begin
             writeLog(DLNGStr('PI0044'));
           end
           else
           begin
             writeLog(dus.ReadString('ID','Description',DLNGstr('PII105')));
+
+            if (dus.ReadString('ID','Result','ERR') <> 'OK') then
+            begin
+              errCode := dus.ReadString('ID','Result','ERR');
+
+              if errCode = 'M01' then
+                writeLog(DLNGStr('PIEM01'))
+              else if errCode = 'M02' then
+                writeLog(DLNGStr('PIEM01'))
+              else if errCode = 'M10' then
+                writeLog(DLNGStr('PIEM10'))
+              else if errCode = 'M11' then
+                writeLog(DLNGStr('PIEM11'))
+              else if errCode = 'M20' then
+                writeLog(DLNGStr('PIEM20'))
+              else if errCode = 'M30' then
+                writeLog(DLNGStr('PIEM30'))
+              else if errCode = 'M31' then
+                writeLog(DLNGStr('PIEM31'))
+              else if errCode = 'M32' then
+                writeLog(DLNGStr('PIEM32'))
+              else if errCode = 'M33' then
+                writeLog(DLNGStr('PIEM33'))
+              else if errCode = 'P01' then
+                writeLog(DLNGStr('PIEP01'))
+              else if errCode = 'P02' then
+                writeLog(DLNGStr('PIEP02'))
+              else
+                writeLog(ReplaceValue('%e',DLNGStr('PIEUNK'),errCode));
+
+              colorLog(clRed);
+            end;
+
             updList := splitStr(dus.ReadString('ID','Updates',''),' ');
             lngList := splitStr(dus.ReadString('ID','Translations',''),' ');
             writeLog(ReplaceValue('%t',ReplaceValue('%p',DLNGStr('PII108'),inttostr(updList.Count)),inttostr(lngList.Count)));
@@ -959,19 +995,13 @@ begin
             for x:=0 to lngList.Count -1 do
             begin
 
-              if (dus.ReadBool(lngList.Strings[x],'AutoUpdate',true)) then
-              begin
-                itm := lstTranslations.Items.Add;
-                itm.Caption := dus.ReadString(lngList.Strings[x],'Description',DLNGstr('PII106'));
-                itm.SubItems.Add(dus.ReadString(lngList.Strings[x],'Revision',''));
-                itm.SubItems.Add(dus.ReadString(lngList.Strings[x],'Author',''));
-                itm.SubItems.Add(inttostr(dus.ReadInteger(lngList.Strings[x],'Size',0)));
-                if CurLanguage = '*' then
-                  itm.SubItems.Add(dus.ReadString(updList.Strings[x],'CommentFR',''))
-                else
-                  itm.SubItems.Add(dus.ReadString(updList.Strings[x],'Comment',''));
-                itm.SubItems.Add(lngList.Strings[x]);
-              end;
+              itm := lstTranslations.Items.Add;
+              itm.Caption := dus.ReadString(lngList.Strings[x],'Description',DLNGstr('PII106'));
+              itm.SubItems.Add(dus.ReadString(lngList.Strings[x],'Release',''));
+              itm.SubItems.Add(dus.ReadString(lngList.Strings[x],'Author',''));
+              itm.SubItems.Add(inttostr(dus.ReadInteger(lngList.Strings[x],'Size',0)));
+              itm.SubItems.Add(lngList.Strings[x]);
+
             end;
 
             butDownload.Enabled := butDL;
@@ -1146,10 +1176,10 @@ begin
   begin
     if lstTranslations.Items.Item[x].Checked then
     begin
-      if dus.ValueExists(lstTranslations.Items.Item[x].SubItems[4],'URL') then
+      if dus.ValueExists(lstTranslations.Items.Item[x].SubItems[3],'URL') then
       begin
-        url := dus.ReadString(lstTranslations.Items.Item[x].SubItems[4],'URL','');
-        tmpFileName := dus.ReadString(lstTranslations.Items.Item[x].SubItems[4],'FileDL',getTempFile(extractfileext(url)));
+        url := dus.ReadString(lstTranslations.Items.Item[x].SubItems[3],'URL','');
+        tmpFileName := dus.ReadString(lstTranslations.Items.Item[x].SubItems[3],'FileDL',getTempFile(extractfileext(url)));
         tmpFile := dup5Path+'Download\'+tmpFileName;
         HttpCli1.URL := url;
         HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
@@ -1674,6 +1704,18 @@ begin
     lstUpdates.Visible := false;
     lstTranslations.Visible := true;
   end;
+
+end;
+
+procedure TfrmInstaller.linkToWIPClick(Sender: TObject);
+begin
+
+   ShellExecute(Application.Handle,
+                        'OPEN',
+                        PChar(urlToWIP),
+                        nil,
+                        nil,
+                        SW_SHOW);
 
 end;
 

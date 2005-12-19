@@ -1,6 +1,6 @@
 unit lib_version;
 
-// $Id: lib_version.pas,v 1.1.1.1 2004-05-08 10:25:11 elbereth Exp $
+// $Id: lib_version.pas,v 1.2 2005-12-19 23:30:35 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_version.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -29,8 +29,35 @@ interface
 uses StrUtils, SysUtils;
 
 function getVersion(version: integer): string;
+function getCVSRevision(CVSRevisionTag: string): string;
+function getCVSDate(CVSDateTag: string): string;
 
 implementation
+
+function getCVSDate(CVSDateTag: string): string;
+begin
+
+  If (length(CVSDateTag) > 7) and (Copy(CVSDateTag,1,7) = '$Date: ') then
+  begin
+    result := Copy(CVSDateTag,8,Length(CVSDateTag)-9);
+  end
+  else
+    result := CVSDateTag;
+
+end;
+
+function getCVSRevision(CVSRevisionTag: string): string;
+begin
+
+  If (length(CVSRevisionTag) > 12) and (Copy(CVSRevisionTag,1,11) = '$Revision: ') then
+  begin
+    result := Copy(CVSRevisionTag,12,Length(CVSRevisionTag)-13);
+  end
+  else
+    result := CVSRevisionTag;
+
+end;
+
 function getVersion(version: integer): string;
 var majVer: integer;
     minVer: integer;

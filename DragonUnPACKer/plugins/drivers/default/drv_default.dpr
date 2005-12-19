@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.15 2005-12-19 00:20:44 elbereth Exp $
+// $Id: drv_default.dpr,v 1.16 2005-12-19 23:29:49 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -143,7 +143,11 @@ type FSE = ^element;
     20011  51140 Upgraded to new interface DUDI v4
     20012  51240 Merged with 5.0 changes (see 13540 and 13640 version)
     20040  52040 Changed version number for 5.2 release
+                 Added support for Age of Empires 3 .BAR files
                  Added support for Black & White 2 .STUFF files
+                 Added support for Black & White 2 .LUG files
+                 Added support for Fable: The Lost Chapters .LUG files
+                 Added support for The Movies .LUG files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -288,6 +292,29 @@ type BARHeader = packed record
        Unknow2: integer;
      end;
      // get0 filename
+
+type AOE3BAR_Header = packed record
+       ID: array[0..3] of char;       // "ESPN"
+       Unknown1: integer;             // Always 2 (version?)
+       Unknown2: integer;             // Always 11 22 33 44 ?
+       Unknown3: array[0..65] of integer;
+       Unknown4: integer;
+       NumEntries: integer;
+       DirOffset: integer;
+       Unknown6: integer;
+     end;
+     // BasedirName: get32w
+     // NumEntries: integer;
+     AOE3BAR_Entry = packed record
+       Offset: integer;
+       Size: integer;
+       Size2: integer;                // Uncompressed size?
+       Unknown1: integer;
+       Unknown2: integer;
+       Unknown3: integer;
+       Unknown4: integer;
+     end;
+     // Filename: get32w
 
 type BIGHeader = packed record
        ID: array[0..3] of char;  // BIGF
@@ -1165,8 +1192,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20040;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.15 $';
-  CVS_DATE = '$Date: 2005-12-19 00:20:44 $';
+  CVS_REVISION = '$Revision: 1.16 $';
+  CVS_DATE = '$Date: 2005-12-19 23:29:49 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1240,8 +1267,8 @@ begin
   GetDriverInfo.Name := 'Main Driver';
   GetDriverInfo.Author := 'Dragon UnPACKer project team';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 67 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 58;
+  GetDriverInfo.Comment := 'This driver support 70 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.NumFormats := 60;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -1331,7 +1358,7 @@ begin
   GetDriverInfo.Formats[44].Extensions := '*.img;*.adf';
   GetDriverInfo.Formats[44].Name := 'GTA3/Grand Theft Auto 3 (*.ADF;*.IMG)';
   GetDriverInfo.Formats[45].Extensions := '*.bar';
-  GetDriverInfo.Formats[45].Name := 'Age of Mythology (*.BAR)';
+  GetDriverInfo.Formats[45].Name := 'Age of Mythology (*.BAR)|Age of Empires 3 (*.BAR)';
   GetDriverInfo.Formats[46].Extensions := '*.sak';
   GetDriverInfo.Formats[46].Name := 'Postal (*.SAK)';
   GetDriverInfo.Formats[47].Extensions := '*.007';
@@ -1358,6 +1385,10 @@ begin
   GetDriverInfo.Formats[57].Name := 'Myst IV: Revelation (*.M4B)';
   GetDriverInfo.Formats[58].Extensions := '*.JAM';
   GetDriverInfo.Formats[58].Name := 'Leisure Suite Larry: Magna Cum Laude (*.JAM)';
+  GetDriverInfo.Formats[59].Extensions := '*.LUG';
+  GetDriverInfo.Formats[59].Name := 'Fable: The Lost Chapter (*.LUG)|The Movies (*.LUG)';
+  GetDriverInfo.Formats[60].Extensions := '*.STUFF;*.LUG';
+  GetDriverInfo.Formats[60].Name := 'Black & White 2 (*.LUG;*.STUFF)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
 //  GetDriverInfo.Formats[50].Name := 'Heath: The Unchosen Path (*.PAXX.NRM)'
 //  GetDriverInfo.Formats[41].Extensions := '*.h4r';
@@ -1483,6 +1514,19 @@ begin
   FreeMem(tchar);
 
   Get32v := Copy(res,1,size);
+
+end;
+
+function Get32w(src: integer): string;
+var wString: WideString;
+    tint: Integer;
+begin
+
+  FileRead(src,tint,4);
+  SetLength(wString,tint);
+  FileRead(src,Pointer(wString)^,tint*2);
+
+  result := UTF8Encode(wString);
 
 end;
 
@@ -1613,57 +1657,103 @@ begin
 
 end;
 
-function ReadAgeOfMythologyBAR(src: string): Integer;
+function ReadAgeOfEmpires3BAR: Integer;
+var HDR: AOE3BAR_Header;
+    ENT: AOE3BAR_Entry;
+    disp, basedir: string;
+    NumE, oldper, x: integer;
+begin
+
+  FileSeek(Fhandle,0,0);
+  FileRead(FHandle,HDR,SizeOf(HDR));
+
+  if HDR.ID <> 'ESPN' then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'AOE3BAR';
+    ErrInfo.Games := 'Age of Empires 3';
+  end
+  else
+  begin
+
+    NumE := HDR.NumEntries;
+
+    FileSeek(FHandle,HDR.DirOffset,0);
+    basedir := Get32w(FHandle);
+    FileSeek(FHandle,4,1);
+
+    OldPer := 0;
+
+    for x:= 1 to NumE do
+    begin
+      Per := ROund(((x / NumE)*100));
+      if (Per > OldPer + 5) then
+      begin
+        SetPercent(Per);
+        OldPer := Per;
+      end;
+      FileRead(FHandle,ENT,SizeOf(ENT));
+      disp := get32w(FHandle);
+
+      FSE_Add(basedir+disp,ENT.Offset,ENT.Size,0,0);
+    end;
+
+    Result := NumE;
+
+    DrvInfo.ID := 'BAR';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
+
+end;
+
+function ReadAgeOfMythologyBAR: Integer;
 var HDR: BARHeader;
     ENT: BAREntry;
     disp: string;
     NumE, x: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  FileSeek(Fhandle,0,0);
+  FileRead(FHandle,HDR,SizeOf(BARHeader));
 
-  if FHandle > 0 then
+  if HDR.ID <> BARID then
   begin
-
-    FileSeek(Fhandle,0,0);
-    FileRead(FHandle,HDR,SizeOf(BARHeader));
-
-    if HDR.ID <> BARID then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'BAR';
-      ErrInfo.Games := 'Age of Mythology';
-    end
-    else
-    begin
-
-      NumE := HDR.NumEntries;
-
-      FileSeek(FHandle,HDR.DirOffset+(4*NumE),0);
-
-      for x:= 1 to NumE do
-      begin
-        Per := ROund(((x / NumE)*100));
-        SetPercent(Per);
-        FileRead(FHandle,ENT,SizeOf(BAREntry));
-        disp := strip0(get0(FHandle));
-
-        FSE_Add(disp,ENT.Offset,ENT.Size,ENT.Unknow1,ENT.Unknow2);
-      end;
-
-      Result := NumE;
-
-      DrvInfo.ID := 'BAR';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'BAR';
+    ErrInfo.Games := 'Age of Mythology';
   end
   else
-    Result := -2;
+  begin
+
+    NumE := HDR.NumEntries;
+
+    FileSeek(FHandle,HDR.DirOffset+(4*NumE),0);
+
+    for x:= 1 to NumE do
+    begin
+      Per := ROund(((x / NumE)*100));
+      SetPercent(Per);
+      FileRead(FHandle,ENT,SizeOf(BAREntry));
+      disp := strip0(get0(FHandle));
+
+      FSE_Add(disp,ENT.Offset,ENT.Size,ENT.Unknow1,ENT.Unknow2);
+    end;
+
+    Result := NumE;
+
+    DrvInfo.ID := 'BAR';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
 
 end;
 
@@ -3077,148 +3167,7 @@ begin
 
 end;
 
-function ReadBlackAndWhiteSAD(src: string): Integer;
-var HDR: SAD_Header;
-    ENT: SAD_Entry;
-    FSBI: SAD_FileSegmentBankInfo;
-    IDst: array[0..7] of char;
-    disp: string;
-    NumE, x: integer;
-    DataOffset, DirOffset, DirNum, DirNumT, FLength, CurP: integer;
-    MusicOffset, MusicSize: integer;
-    tagid, nam: string;
-    IsMusic, IsFirst: boolean;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-  IsMusic := False;
-
-  if FHandle > 0 then
-  begin
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, IDst, 8);
-
-    if (IDst <> 'LiOnHeAd') then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      ReadBlackAndWhiteSAD := -3;
-      ErrInfo.Format := 'SAD';
-      ErrInfo.Games := 'Black & White';
-    end
-    else
-    begin
-
-      DataOffset := 0;
-//      MaxOffset := 0;
-      DirOffset := 0;
-      DirNum := 0;
-
-      FLength := FileSeek(FHandle,0,2);
-      FileSeek(FHandle,8,0);
-
-      repeat
-
-          FileRead(FHandle,HDR,36);
-
-          CurP := FileSeek(FHandle,0,1);
-
-          tagid := strip0(HDR.ID);
-
-          if (tagid = 'LHFileSegmentBankInfo') then
-          begin
-             FileRead(FHandle,FSBI.Unknown,12);
-             FileRead(FHandle,FSBI.Comment,520);
-          end
-          else if (tagid = 'LHAudioWaveData') then
-          begin
-             DataOffset := CurP;
-//             MaxOffset := DataOffset + HDR.Size;
-          end
-          else if (tagid = 'LHAudioBankSampleTable') then
-          begin
-             DirOffset := CurP + 4;
-             FileRead(FHandle,DirNumT,4);
-             DirNum := HDR.Size div 640;
-          end;
-
-          FileSeek(FHandle,CurP + HDR.Size,0);
-
-      until ((length(tagid) = 0) or (FileSeek(FHandle,0,1) >= FLength)) ;
-
-      NumE := 0;
-
-      FileSeek(FHandle,DirOffset,0);
-
-      MusicOffset := 0;
-      MusicSize := 0;
-      IsFirst := True;
-      for x:= 1 to DirNum do
-      begin
-        FillChar(ENT,SizeOf(ENT),0);
-
-        FileRead(FHandle,ENT.Filename,260);
-        FileRead(FHandle,ENT.NumID,4);
-        FileRead(FHandle,ENT.NumID2,4);
-        FileRead(FHandle,ENT.Size,4);
-        FileRead(FHandle,ENT.Offset,4);
-        FileRead(FHandle,ENT.Unknown,364);
-
-        disp := strip0(ENT.Filename);
-
-        if copy(disp,2,2) = ':\' then
-          Disp := Copy(disp,4,length(disp)-3);
-
-        nam := ExtractFileName(Strip0(ENT.Filename));
-
-//        ShowMessage(inttostr(ENT.Size));
-
-        if ENT.Size > 0 then
-        begin
-          IsMusic := (lowercase(Copy(nam,1,4)) = 'sect') and (lowercase(copy(nam,length(nam)-3,4)) = '.mpg');
-          if IsMusic then
-          begin
-            if IsFirst then
-            begin
-              MusicOffset := ENT.Offset;
-              IsFirst := Not(IsFirst);
-            end;
-            Inc(MusicSize,ENT.Size);
-            //ShowMessage(IntToStr(MusicOffset)+#10+IntToStr(MusicSize));
-          end
-          else
-          begin
-            FSE_Add(disp,ENT.Offset+DataOffset,ENT.Size,0,0);
-            Inc(NumE);
-          end;
-
-        end;
-
-      end;
-
-      If IsMusic then
-      begin
-        nam := ExtractFilename(src);
-        nam := ChangeFileext(nam,'.mpg');
-        FSE_Add(nam,MusicOffset+DataOffset,MusicSize,0,0);
-        NumE := 1;
-      end;
-
-      ReadBlackAndWhiteSAD := NumE;
-
-      DrvInfo.ID := 'SAD';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-  end
-  else
-    ReadBlackAndWhiteSAD := -2;
-
-end;
-
-function ReadLionheadLUG(src: string): Integer;
+function ReadLionheadAudioBank(src: string): Integer;
 var HDR: LUG_Chunk;
     ABST_HDR: LUG_LHAudioBankSampleTable;
     ABST_ENT: LUG_LHAudioBankSampleTable_Entry;
@@ -3226,19 +3175,23 @@ var HDR: LUG_Chunk;
     IDst: array[0..7] of char;
     disp: string;
     NumE, x: integer;
-    DataOffset, DirOffset, DirNum, DirNumT, FLength, CurP: integer;
-    MusicOffset, MusicSize: integer;
+    DataOffset, DirOffset, DirNum, DirSize, FLength, CurP, idx: integer;
+    MusicOffset, MusicSize, OldPer, Per: integer;
     tagid, nam: string;
     IsMusic, IsFirst: boolean;
+    StoredOffsets: TIntList;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead);
 
   if FHandle > 0 then
   begin
+
+    // We seek to start of file and read the 8 first bytes
     FileSeek(Fhandle, 0, 0);
     FileRead(FHandle, IDst, 8);
 
+    // Lionhead Audio Banks starts with "LiOnHeAd"
     if (IDst <> 'LiOnHeAd') then
     begin
       FileClose(Fhandle);
@@ -3250,74 +3203,205 @@ begin
     else
     begin
 
+      // We initialize all variables
       DataOffset := 0;
-//      MaxOffset := 0;
       DirOffset := 0;
+      DirSize := 0;
       DirNum := 0;
 
+      // We retrieve the file size
       FLength := FileSeek(FHandle,0,2);
+      // We seek to the first chunk
       FileSeek(FHandle,8,0);
 
+      // We go through all chunks of data in the sound bank
       repeat
 
-          FileRead(FHandle,HDR,SizeOf(HDR));
+        FileRead(FHandle,HDR,SizeOf(HDR));
 
-          CurP := FileSeek(FHandle,0,1);
+        // Current offset
+        CurP := FileSeek(FHandle,0,1);
 
-          tagid := strip0(HDR.ID);
+        // Chunk ID
+        tagid := strip0(HDR.ID);
 
-          if (tagid = 'LHAudioWaveData') then
-          begin
-             DataOffset := CurP;
-          end
-          else if (tagid = 'LHFileSegmentBankInfo') then
-          begin
-            if HDR.Size = 520 then
-              ABST_ENT_Size := 652
-            else if HDR.Size = 532 then
-              ABST_ENT_Size := 640;
-          end
-          else if (tagid = 'LHAudioBankSampleTable') then
-          begin
-             DirOffset := CurP + 4;
-             FileRead(FHandle,ABST_HDR,SizeOf(ABST_HDR));
-             DirNum := ABST_HDR.NumEntries1;
-          end;
+        // If we reached the sound data chunk we store the data offset
+        if (tagid = 'LHAudioWaveData') then
+        begin
+          DataOffset := CurP;
+        end
+        // If we reached the sample table chunk
+        else if (tagid = 'LHAudioBankSampleTable') then
+        begin
+          // Read the chunk header
+          FileRead(FHandle,ABST_HDR,SizeOf(ABST_HDR));
+          // We get the number of entries
+          DirNum := ABST_HDR.NumEntries1;
+          // Directory offset is current offset (therefore chunk data offset + 4)
+          DirOffset := CurP + 4;
+          // Directory size is chunk data - 4 (chunk header size)
+          DirSize := HDR.Size - 4;
+        end;
 
-          FileSeek(FHandle,CurP + HDR.Size,0);
+        // We go to next chunk
+        FileSeek(FHandle,CurP + HDR.Size,0);
 
       until ((length(tagid) = 0) or (FileSeek(FHandle,0,1) >= FLength)) ;
 
-      NumE := 0;
-
-      FileSeek(FHandle,DirOffset,0);
-
-      for x:= 1 to DirNum do
+      // If the 2 blocs we are using to read the sound bank don't exist then just exit
+      //   LHAudioBankSampleTable   --> Directory
+      //   LHAudioWaveData          --> Sound Data
+      // We also checks if the integers have positive values
+      if (DirOffset <= 0) or (DataOffset <= 0) or (DirSize <= 0) then
       begin
-        FileRead(FHandle,ABST_ENT,ABST_ENT_Size);
+        FileClose(Fhandle);
+        FHandle := 0;
+        Result := -3;
+        ErrInfo.Format := 'LUG';
+        ErrInfo.Games := 'Black & White, Black & White 2, Fable: The Lost Chapters, ..';
+      end
+      else
+      begin
 
-        disp := strip0(ABST_ENT.SampleName);
+        // Calculates the entry size
+        ABST_ENT_Size := DirSize div DirNum;
+        // I know at least those two values:
+        //   640 for Black & White .SAD files
+        //   652 for Black & White 2 and Fable: The Lost Chapters .LUG files
+        // If the value is under 652, no problem we should be able to handle it
+        // if not this will do a write access violation I think, so we better exit if it happen
 
-        if copy(disp,2,2) = ':\' then
-          Disp := Copy(disp,4,length(disp)-3);
-
-        nam := ExtractFileName(Strip0(ABST_ENT.SampleName));
-
-        if ABST_ENT.Size > 0 then
+        // Entry size must fill the sound bank table, if not something is wrong so we exit
+        if (ABST_ENT_Size <= 652) and ((DirSize mod ABST_ENT_Size) <> 0) then
         begin
-          FSE_Add(disp,ABST_ENT.RelOffset+DataOffset,ABST_ENT.Size,0,0);
-          Inc(NumE);
+          FileClose(Fhandle);
+          FHandle := 0;
+          Result := -3;
+          ErrInfo.Format := 'LUG';
+          ErrInfo.Games := 'Black & White, Black & White 2, Fable: The Lost Chapters, ..';
+        end
+        else
+        begin
+
+          // We initialize the number of entries to 0
+          NumE := 0;
+
+          // We go to the directory offset
+          FileSeek(FHandle,DirOffset,0);
+
+          // We initialize music related variables
+          MusicOffset := 0;
+          MusicSize := 0;
+          IsMusic := True;
+          IsFirst := True;
+
+          // Percentage of completion display
+          OldPer := 0;
+
+          // We will store offsets to be sure there is no duplicate entries
+          StoredOffsets := TIntList.Create;
+
+          try
+
+            // For each entry in the directory
+            for x:= 1 to DirNum do
+            begin
+
+              // Display percentage of completion
+              Per := Round((x / DirNum)*100);
+              if (Per >= OldPer + 5) then
+              begin
+                SetPercent(Per);
+                OldPer := Per;
+              end;
+
+              // We read the entry
+              FileRead(FHandle,ABST_ENT,ABST_ENT_Size);
+
+              // We retrieve the sample name (filename) by stripping null chars at the end
+              disp := strip0(ABST_ENT.SampleName);
+
+              // If the filename is a full Windows path (which is always the case)
+              //   i.e: C:\Temp\Toto.wav
+              // Then we strip the 3 first chars
+              //   i.e: Temp\Toto.wav
+              if copy(disp,2,2) = ':\' then
+                Disp := Copy(disp,4,length(disp)-3);
+
+              // We extract the filename from the path
+              //   i.e: Toto.wav
+              nam := ExtractFileName(disp);
+
+              // If size of entry is not zero
+              if ABST_ENT.Size > 0 then
+              begin
+                // If this is the first time we see that offset
+                if not(StoredOffsets.Find(ABST_ENT.RelOffset,idx)) then
+                begin
+                  // We store it
+                  StoredOffsets.Add(ABST_ENT.RelOffset);
+
+                  // We check if we are in a music audio bank
+                  // filenames (without path) start with sect and end with .mpg
+                  // Each sector of the video is therefore stored as different file (sometimes more than 400 files for a song..)
+                  // so we basically join them as one file
+                  IsMusic := IsMusic and (length(nam) >= 4) and (lowercase(Copy(nam,1,4)) = 'sect') and (lowercase(extractfileext(nam)) = '.mpg');
+                  if IsMusic then
+                  begin
+                    // If this is the first entry
+                    if IsFirst then
+                    begin
+                      // We store the offset of the music file (which should be DataOffset + 0 actually)
+                      MusicOffset := ABST_ENT.RelOffset;
+                      // We set IsFirst to false
+                      IsFirst := Not(IsFirst);
+                    end;
+                    // We increase the size of the music file with the size of entry
+                    Inc(MusicSize,ABST_ENT.Size);
+                  end
+                  // If this is not a music audio bank (used by Black & White .SAD files)
+                  else
+                  begin
+                    // We store the entry path & name
+                    // Offset is Data Offset + Relative Offset of the entry
+                    FSE_Add(disp,ABST_ENT.RelOffset+DataOffset,ABST_ENT.Size,0,0);
+
+                    // We increase by 1 the number of available entries
+                    Inc(NumE);
+                  end;
+                end;
+              end;
+            end;
+          finally // Finally we free the stored offsets because we don't need them anymore
+            StoredOffsets.Free;
+          end;
+
+          // If we detected a music audio bank
+          If IsMusic then
+          begin
+            // We extract the currently opened filename
+            // and we put '.mpg' as extension
+            nam := ExtractFilename(src);
+            nam := ChangeFileext(nam,'.mpg');
+            // We store a unique entry with MusicOffset + DataOffset offset
+            // and MusicSize size (sum of all single entries)
+            FSE_Add(nam,MusicOffset+DataOffset,MusicSize,0,0);
+            NumE := 1;
+          end;
+
+          // Final steps, we return the number of entries found
+          Result := NumE;
+
+          // Send identification
+          DrvInfo.ID := 'LHAB';    // Lionhead Audio Bank
+          // Directories are using '\' as separators
+          DrvInfo.Sch := '\';
+          DrvInfo.FileHandle := FHandle;
+          // Entries are not compressed, nor crypted, extraction will be handled by Dragon UnPACKer (core) directly
+          DrvInfo.ExtractInternal := False;
+
         end;
-
       end;
-
-      Result := NumE;
-
-      DrvInfo.ID := 'LUG';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
     end;
   end
   else
@@ -7520,6 +7604,37 @@ begin
 
 end;
 
+function ReadHubBAR(src: String): Integer;
+var ID: array[0..3] of char;
+    res: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileRead(FHandle,ID,4);
+    if ID = 'ESPN' then
+      res := ReadAgeOfEmpires3BAR
+    else
+      res := ReadAgeOfMythologyBAR;
+
+    if res = -3 then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'BAR';
+      ErrInfo.Games := 'Age of Mythology, Age of Empires 3';
+    end
+    else
+      Result := res;
+  end
+  else
+    Result := -2;
+
+end;
+
 function ReadHubDAT(src: String): Integer;
 var ID: array[0..7] of char;
     res: integer;
@@ -7959,7 +8074,7 @@ begin
       begin
         FileClose(FHandle);
 //        Result := ReadBlackAndWhiteSAD(fil);
-        Result := ReadLionheadLUG(fil);
+        Result := ReadLionheadAudioBank(fil);
       end
       else if ID6 = 'LEMBOX' then
       begin
@@ -8010,6 +8125,8 @@ begin
         FileClose(FHandle);
         Result := ReadMortyrHAL(fil);
       end
+      else if ID4 = ('ESPN') then
+        Result := ReadAgeOfEmpires3BAR
       else if ID4 = ('VOLN') then
       begin
         FileClose(FHandle);
@@ -8182,7 +8299,7 @@ begin
     else if ext = 'BAG' then
       ReadFormat := ReadDune3BAG(fil)
     else if ext = 'BAR' then
-      ReadFormat := ReadAgeOfMythologyBAR(fil)
+      ReadFormat := ReadHubBAR(fil)
     else if ext = 'BIN' then
       ReadFormat := ReadCyberBykesBIN(fil)
     else if ext = 'BKF' then
@@ -8259,7 +8376,7 @@ begin
     else if ext = 'RFH' then
       ReadFormat := ReadDune3RFH(fil)
     else if ext = 'SAD' then
-      ReadFormat := ReadBlackAndWhiteSAD(fil)
+      ReadFormat := ReadLionheadAudioBank(fil)
     else if ext = 'SAK' then
       ReadFormat := ReadPostalSAK(fil)
     else if ext = 'SDT' then
@@ -8491,6 +8608,8 @@ begin
     else if ID4 = ('JAM2') then     // Leisure Suit Larry - Magna Cum Laude
       Result := true
     else if ID4 = ('DTA_') then
+      Result := true
+    else if ID4 = ('ESPN') then     // Age of Empire 3 .BAR
       Result := true
     else if ID4 = ('rass') then
       Result := true
@@ -9545,27 +9664,22 @@ procedure AboutBox; stdcall;
 begin
 
   MessageBoxA(AHandle, PChar('Main Driver plugin v'+getVersion(DRIVER_VERSION)+#10+
-                          '(c)Copyright 2002-2004 Alexandre Devilliers'+#10+#10+
+                          '(c)Copyright 2002-2006 Alexandre Devilliers'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
-                          'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+#10+
+                          'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+
+                          'Based on CVS rev '+getCVSRevision(CVS_REVISION)+' ('+getCVSDate(CVS_DATE)+')'+#10+#10+
                           'Limitations:'+#10+
-                          'Novalogic .PFF files: Only PFF3 can be loaded.'+#10+
+                          'Breakneck .SYN files are not decrypted (useless support?)'+#10+
+                          'Commandos 3 .PCK decryption is experimental.'+#10+
                           'Daikatana .PAK files: No extraction is possible.'+#10+
-                          'Breakneck .SYN files are not decrypted (useless support?)'+#10+#10+
-                          'realMyst 3D DNI support code based on source of:'+#10+
-                          'dniExtract by Ken Taylor'+#10+#10+
-                          'Darkstone MTF decompression code based on infos by:'+#10+
-                          'Guy Ratajczak'+#10+#10+
-                          'GTA3 IMG/DIR support based on specs and infos by:'+#10+
-                          'Dan Strandberg of Game-Editing.net'+#10+#10+
-                          'Commandos 3 PCK decryption is experimental:'+#10+
-                          'Unrecognized files are saved encrypted!'+#10+#10+
-                          'Empires: Dawn of the Modern World SSA support is partial:'+#10+
-                          'Some files are compressed by unknown method.'+#10+#10+
-                          'Spellforce PAK and Eve Online STUFF support based on infos by:'+#10+
-                          'DaReverse'+#10+#10+
-                          'Painkiller PAK support partially based on infos by:'+#10+
-                          'MrMouse (http://forum.xentax.com/viewtopic.php?p=3604#3604)'
+                          'Empires: Dawn of the Modern World SSA support is partial.'+#10+
+                          'Novalogic .PFF files: Only PFF3 can be loaded.'+#10+#10+
+                          'Credits:'+#10+
+                          'realMyst 3D DNI support code based on source of: dniExtract by Ken Taylor'+#10+
+                          'Darkstone MTF decompression code based on infos by: Guy Ratajczak'+#10+
+                          'GTA3 IMG/DIR support based on specs and infos by: Dan Strandberg of Game-Editing.net'+#10+
+                          'Spellforce PAK and Eve Online STUFF support based on infos by: DaReverse'+#10+
+                          'Painkiller PAK support partially based on infos by: MrMouse'
                           )
                         , 'About Main Driver plugin...', MB_OK);
 

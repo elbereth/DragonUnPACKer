@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.14 2005-12-18 23:25:25 elbereth Exp $
+// $Id: drv_default.dpr,v 1.15 2005-12-19 00:20:44 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -1058,6 +1058,56 @@ type SAD_Header = packed record
        Unknown: array[1..364] of byte;
      end;
 
+type LUG_Chunk = packed record
+       ID: array[0..31] of char;
+       Size: integer;
+     end;
+     LUG_LHAudioBankMetaData = packed record
+       Unknown0: array[0..27] of byte;
+       NumEntries: integer;
+     end;
+     // SampleID: Integer;
+     // SampleName: get32
+     LUG_LHAudioBankMetaData_Entry = packed record
+       Size: Integer;
+       Offset: Integer;
+       Unknown1: integer;         // 01 00 01 00
+       SampleRate: Integer;
+       Unknown2: Integer;         // 00 00 00 00 or FF FF FF FF
+       Unknown3: Integer;
+     end;
+     LUG_LHFileSegmentBankInfo = packed record
+       TitleDescription: array[0..519] of char;
+     end;
+     LUG_LHAudioBankSampleTable = packed record
+       NumEntries1: word;
+       NumEntries2: word;         // Always identical to NumEntries1 ?
+     end;
+     LUG_LHAudioBankSampleTable_Entry = packed record
+       SampleName: array[0..255] of char;
+       Unknown1: integer;
+       Unknown2a: integer;
+       Unknown2b: integer;
+       Size: integer;
+       RelOffset: integer;        // Offset in WaveData of LHAudioWaveData bloc
+       Unknown3: integer;
+       Unknown4: integer;
+       Unknown5: integer;
+       Unknown6: integer;
+       Unknown7: integer;
+       SampleRate: integer;
+       Unknown8: integer;
+       Unknown9: integer;
+       Unknown10: integer;
+       Unknown11: integer;
+       Unknown12: integer;
+       SampleDescription: array[0..255] of char;
+       Unknown13: array[0..75] of byte;
+     end;
+
+
+
+
 type SAK_Header = packed record
        ID: array[0..3] of char;
        Version: integer;
@@ -1115,8 +1165,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20040;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.14 $';
-  CVS_DATE = '$Date: 2005-12-18 23:25:25 $';
+  CVS_REVISION = '$Revision: 1.15 $';
+  CVS_DATE = '$Date: 2005-12-19 00:20:44 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -3165,6 +3215,113 @@ begin
   end
   else
     ReadBlackAndWhiteSAD := -2;
+
+end;
+
+function ReadLionheadLUG(src: string): Integer;
+var HDR: LUG_Chunk;
+    ABST_HDR: LUG_LHAudioBankSampleTable;
+    ABST_ENT: LUG_LHAudioBankSampleTable_Entry;
+    ABST_ENT_Size: cardinal;
+    IDst: array[0..7] of char;
+    disp: string;
+    NumE, x: integer;
+    DataOffset, DirOffset, DirNum, DirNumT, FLength, CurP: integer;
+    MusicOffset, MusicSize: integer;
+    tagid, nam: string;
+    IsMusic, IsFirst: boolean;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, IDst, 8);
+
+    if (IDst <> 'LiOnHeAd') then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'LUG';
+      ErrInfo.Games := 'Black & White, Black & White 2, Fable: The Lost Chapters, ..';
+    end
+    else
+    begin
+
+      DataOffset := 0;
+//      MaxOffset := 0;
+      DirOffset := 0;
+      DirNum := 0;
+
+      FLength := FileSeek(FHandle,0,2);
+      FileSeek(FHandle,8,0);
+
+      repeat
+
+          FileRead(FHandle,HDR,SizeOf(HDR));
+
+          CurP := FileSeek(FHandle,0,1);
+
+          tagid := strip0(HDR.ID);
+
+          if (tagid = 'LHAudioWaveData') then
+          begin
+             DataOffset := CurP;
+          end
+          else if (tagid = 'LHFileSegmentBankInfo') then
+          begin
+            if HDR.Size = 520 then
+              ABST_ENT_Size := 652
+            else if HDR.Size = 532 then
+              ABST_ENT_Size := 640;
+          end
+          else if (tagid = 'LHAudioBankSampleTable') then
+          begin
+             DirOffset := CurP + 4;
+             FileRead(FHandle,ABST_HDR,SizeOf(ABST_HDR));
+             DirNum := ABST_HDR.NumEntries1;
+          end;
+
+          FileSeek(FHandle,CurP + HDR.Size,0);
+
+      until ((length(tagid) = 0) or (FileSeek(FHandle,0,1) >= FLength)) ;
+
+      NumE := 0;
+
+      FileSeek(FHandle,DirOffset,0);
+
+      for x:= 1 to DirNum do
+      begin
+        FileRead(FHandle,ABST_ENT,ABST_ENT_Size);
+
+        disp := strip0(ABST_ENT.SampleName);
+
+        if copy(disp,2,2) = ':\' then
+          Disp := Copy(disp,4,length(disp)-3);
+
+        nam := ExtractFileName(Strip0(ABST_ENT.SampleName));
+
+        if ABST_ENT.Size > 0 then
+        begin
+          FSE_Add(disp,ABST_ENT.RelOffset+DataOffset,ABST_ENT.Size,0,0);
+          Inc(NumE);
+        end;
+
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'LUG';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+  end
+  else
+    Result := -2;
 
 end;
 
@@ -7801,7 +7958,8 @@ begin
       else if ID8 = 'LiOnHeAd' then
       begin
         FileClose(FHandle);
-        Result := ReadBlackAndWhiteSAD(fil);
+//        Result := ReadBlackAndWhiteSAD(fil);
+        Result := ReadLionheadLUG(fil);
       end
       else if ID6 = 'LEMBOX' then
       begin

@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.16 2005-12-19 23:29:49 elbereth Exp $
+// $Id: drv_default.dpr,v 1.17 2005-12-20 16:57:46 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -146,6 +146,7 @@ type FSE = ^element;
                  Added support for Age of Empires 3 .BAR files
                  Added support for Black & White 2 .STUFF files
                  Added support for Black & White 2 .LUG files
+                 Added support for Civilization 4 .FPK files
                  Added support for Fable: The Lost Chapters .LUG files
                  Added support for The Movies .LUG files
         TODO --> Added Warrior Kings Battles BCP
@@ -356,6 +357,19 @@ type LEMBOXHeader = packed record
 // DirNum * Entry
      LEMBOXEntry = record
        Offset: integer;
+     end;
+
+type FPKHeader = packed record
+       Unknown1: Integer;
+       ID: array[0..3] of char;
+       Unknown2: Byte;
+       NumEntries: integer;
+     end;
+     FPKEntry = packed record
+       FileTime: Integer;
+       Unknown: Integer;
+       Size: Integer;
+       Offset: Integer;
      end;
 
 type GDATHeader = packed record
@@ -1192,8 +1206,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20040;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.16 $';
-  CVS_DATE = '$Date: 2005-12-19 23:29:49 $';
+  CVS_REVISION = '$Revision: 1.17 $';
+  CVS_DATE = '$Date: 2005-12-20 16:57:46 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1267,8 +1281,8 @@ begin
   GetDriverInfo.Name := 'Main Driver';
   GetDriverInfo.Author := 'Dragon UnPACKer project team';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 70 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 60;
+  GetDriverInfo.Comment := 'This driver support 71 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.NumFormats := 61;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -1389,6 +1403,8 @@ begin
   GetDriverInfo.Formats[59].Name := 'Fable: The Lost Chapter (*.LUG)|The Movies (*.LUG)';
   GetDriverInfo.Formats[60].Extensions := '*.STUFF;*.LUG';
   GetDriverInfo.Formats[60].Name := 'Black & White 2 (*.LUG;*.STUFF)';
+  GetDriverInfo.Formats[61].Extensions := '*.FPK';
+  GetDriverInfo.Formats[61].Name := 'Civilization 4 (*.FPK)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
 //  GetDriverInfo.Formats[50].Name := 'Heath: The Unchosen Path (*.PAXX.NRM)'
 //  GetDriverInfo.Formats[41].Extensions := '*.h4r';
@@ -1492,6 +1508,32 @@ begin
 
   res := tchar;
   Get32 := Copy(res,1,tint);
+
+  FreeMem(tchar);
+
+end;
+
+function Get32_FPK(src: integer): string;
+var tchar: Pchar;
+    tint, x: Integer;
+    res: string;
+begin
+
+  FileRead(src,tint,4);
+  if tint > 255 then
+  begin
+    raise Exception.Create(inttostr(tint)+' octets! t''es fou ?!'+#10+inttostr(fileseek(FHandle,0,1))+#10+inttohex(fileseek(FHandle,0,1),8));
+  end;
+  GetMem(tchar,tint);
+  FillChar(tchar^,tint,0);
+  FileRead(src,tchar^,tint);
+  for x := 0 to tint-1 do
+  begin
+    tchar[x] := chr(ord(tchar[x])-1);
+  end;
+
+  res := tchar;
+  result := Copy(res,1,tint);
 
   FreeMem(tchar);
 
@@ -2033,6 +2075,82 @@ begin
   result := tab[3] + tab[2] * $100 + tab[1] * $10000 + tab[0] * $1000000;
 
 //  ShowMessage(inttostr(tab[0])+#10+inttostr(tab[1])+#10+inttostr(tab[2])+#10+inttostr(tab[3]));
+end;
+
+function ReadCivilization4FPK(src: string): Integer;
+var HDR: FPKHeader;
+    ENT: FPKEntry;
+    disp: string;
+    NumE, x, NumTest, CurP: integer;
+    NumDummy: byte;
+    TotFSize: longword;
+    OldPer: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    TotFSize := FileSeek(Fhandle,0,2);
+    FileSeek(FHandle,0,0);
+    FileRead(FHandle,HDR,SizeOf(HDR));
+
+    if (HDR.ID <> 'FPK_') then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'FPK';
+      ErrInfo.Games := 'Cibilization 4';
+    end
+    else
+    begin
+
+      NumE := HDR.NumEntries;
+
+      for x:= 1 to NumE do
+      begin
+        Per := ROund(((x / NumE)*100));
+        if Per >= OldPer + 5 then
+        begin
+          SetPercent(Per);
+          OldPer := Per;
+        end;
+        try
+          disp := Strip0(Get32_FPK(FHandle));
+        except
+          disp := inttostr(x);
+        end;
+        CurP := FileSeek(FHandle,0,1);
+        FileRead(FHandle,ENT,SizeOf(ENT));
+        FileRead(FHandle,NumTest,4);
+        if (NumTest <= 255) and (NumTest >= 0) and (ENT.Offset > 12) and (ENT.Offset < TotFSize) and (ENT.Size < TotFSize) and (ENT.Offset + ENT.Size <= TotFSize) then
+        begin
+          FileSeek(FHandle,-4,1);
+        end
+        else
+        begin
+          FileSeek(FHandle,CurP,0);
+          FileRead(FHandle,NumDummy,1);
+          FileSeek(FHandle,NumDummy-1,1);
+          FileRead(FHandle,ENT,SizeOf(ENT));
+        end;
+        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'FPK';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+  end
+  else
+    Result := -2;
+
 end;
 
 function ReadCommandAndConquerGeneralsBIG(src: string): Integer;
@@ -8064,6 +8182,12 @@ begin
         FileClose(FHandle);
         Result := ReadNightFire007(fil);
       end
+      // Civilization 4 .FPK file
+      else if (ID8[4] = 'F') and (ID8[5] = 'P') and (ID8[6] = 'K') and (ID8[7] = '_') then
+      begin
+        FileClose(FHandle);
+        Result := ReadCivilization4FPK(fil);
+      end
       // Hitman: Contracts .PRM file
       else if (ID4[0] = #30) and (ID4[1] = #7) and (ID4[2] = #0) and (ID4[3] = #0) then
       begin
@@ -8326,6 +8450,8 @@ begin
       ReadFormat := ReadTheSimsFAR(fil)
     else if ext = 'FFL' then
       ReadFormat := ReadAvPRFFL(fil)
+    else if ext = 'FPK' then
+      Result := ReadCivilization4FPK(fil)
     else if ext = 'GL' then
     begin
       FHandle := FileOpen(fil, fmOpenRead);
@@ -8585,6 +8711,9 @@ begin
         and (ID127[56] = #0) and (ID127[57] = #0) and (ID127[58] = #0) and (ID127[59] = #0)
         and (ID127[60] = #0) and (ID127[61] = #0) and (ID127[62] = #0) and (ID127[63] = #0) then
       Result := true
+    // Civilization 4 .FPK file
+    else if (ID8[4] = 'F') and (ID8[5] = 'P') and (ID8[6] = 'K') and (ID8[7] = '_') then
+      Result := true
     // Hitman: Contracts .PRM file
     else if (ID4[0] = #30) and (ID4[1] = #7) and (ID4[2] = #0) and (ID4[3] = #0) then
       Result := true
@@ -8757,6 +8886,8 @@ begin
     else if ext = 'FAR' then
       IsFormat := True
     else if ext = 'FFL' then
+      IsFormat := True
+    else if ext = 'FPK' then   // Civilization 4
       IsFormat := True
     else if ext = 'GL' then
       IsFormat := True

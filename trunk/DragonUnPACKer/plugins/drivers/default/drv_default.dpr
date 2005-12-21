@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.17 2005-12-20 16:57:46 elbereth Exp $
+// $Id: drv_default.dpr,v 1.18 2005-12-21 18:21:55 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -148,6 +148,8 @@ type FSE = ^element;
                  Added support for Black & White 2 .LUG files
                  Added support for Civilization 4 .FPK files
                  Added support for Fable: The Lost Chapters .LUG files
+                 Added experimental support for Fable: The Lost Chapters .BIG files (this is not in the list of supported files)
+                 Added support for The Movies .BIG files
                  Added support for The Movies .LUG files
         TODO --> Added Warrior Kings Battles BCP
 
@@ -329,6 +331,38 @@ type BIGHeader = packed record
      end;
      // Get0 filename
 
+     // Fable BIGB files
+type FBIG_Header = packed record
+       ID: array[0..3] of char;              // "BIGB"
+       Unknown: integer;                     // Always 0x64 ?
+       FooterOffset: Integer;
+     end;
+     // EntryName: Get0
+     FBIG_FooterEntry = packed record
+       Unknown1: Integer;
+       NumEntries: Integer;
+       Offset: Integer;
+       Unknown2: Integer;
+       Unknown3: Integer;
+     end;
+     // NumUnknownEntries: integer;
+     FBIG_EntryUnknown = packed record
+       Unknown1: integer;
+       Unknown2: integer;
+     end;
+     FBIG_Entry = packed record
+       Unknown1: integer;                  // 0x2A ?
+       Unknown2: integer;                  // Counter
+       Unknown3: integer;
+       Size: integer;
+       Offset: integer;
+       Unknown4: integer;                  // Probably a checksum of some sort
+     end;
+     // EntryName: Get32
+     // Unknown5: integer;
+     // Unknown6: integer;
+     // DescriptionName: Get32
+     
 type BIN_Entry = packed record
        Filename: array[0..15] of char;
        Offset: cardinal;
@@ -457,6 +491,37 @@ type PAKEntry = packed record
 type PKPAKHeader = packed record
         ID: byte;
         Offset: longword;
+     end;
+
+type TMPAK_Header = packed record
+       ID: integer;            // 0x05 00 00 00
+       DataOffset: Integer;
+       Unknown1: integer;
+       NumEntries: Integer;
+       DirTableNum: Integer;
+       DirNum: Integer;
+       DirSize: Integer;
+       Unknown5: Integer;     // Always Null ?
+       Unknown6: Integer;     // Always Null ?
+       Unknown7: Integer;     // Always Null ?
+       Unknown8: Integer;     // Always 0x34 ?
+       DirTableOffset: Integer;
+       DirOffset: Integer;
+     end;
+     TMPAK_Entry = packed record
+       Unknown1: Integer;
+       Unknown2: Integer;
+       Offset: integer;
+       CmpSize: Integer;
+       UncSize: Integer;
+       DirPos: Integer;
+       EntryName: array[0..31] of char;   // Null terminated
+     end;
+     TMPAK_CompHeader = packed record
+       TotSize: Integer;   // Size of compressed data + header
+       UncSize: Integer;   // Size of uncompressed data
+       CmpSize: integer;   // Size of compressed data alone
+       NotCompressed: Integer;   // 1 = True, 0 = False
      end;
 
 type MFHeader = packed record
@@ -1206,8 +1271,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20040;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.17 $';
-  CVS_DATE = '$Date: 2005-12-20 16:57:46 $';
+  CVS_REVISION = '$Revision: 1.18 $';
+  CVS_DATE = '$Date: 2005-12-21 18:21:55 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1281,8 +1346,8 @@ begin
   GetDriverInfo.Name := 'Main Driver';
   GetDriverInfo.Author := 'Dragon UnPACKer project team';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 71 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 61;
+  GetDriverInfo.Comment := 'This driver support 73 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.NumFormats := 62;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -1400,11 +1465,13 @@ begin
   GetDriverInfo.Formats[58].Extensions := '*.JAM';
   GetDriverInfo.Formats[58].Name := 'Leisure Suite Larry: Magna Cum Laude (*.JAM)';
   GetDriverInfo.Formats[59].Extensions := '*.LUG';
-  GetDriverInfo.Formats[59].Name := 'Fable: The Lost Chapter (*.LUG)|The Movies (*.LUG)';
+  GetDriverInfo.Formats[59].Name := 'Fable: The Lost Chapter (*.LUG)';
   GetDriverInfo.Formats[60].Extensions := '*.STUFF;*.LUG';
   GetDriverInfo.Formats[60].Name := 'Black & White 2 (*.LUG;*.STUFF)';
   GetDriverInfo.Formats[61].Extensions := '*.FPK';
   GetDriverInfo.Formats[61].Name := 'Civilization 4 (*.FPK)';
+  GetDriverInfo.Formats[62].Extensions := '*.LUG;*.BIG';
+  GetDriverInfo.Formats[62].Name := 'The Movies (*.BIG;*.LUG)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
 //  GetDriverInfo.Formats[50].Name := 'Heath: The Unchosen Path (*.PAXX.NRM)'
 //  GetDriverInfo.Formats[41].Extensions := '*.h4r';
@@ -2092,10 +2159,14 @@ begin
   if FHandle > 0 then
   begin
 
+    // We retrieve the full size of the file
     TotFSize := FileSeek(Fhandle,0,2);
     FileSeek(FHandle,0,0);
+
+    // We read the header
     FileRead(FHandle,HDR,SizeOf(HDR));
 
+    // If the ID is "FPK_"
     if (HDR.ID <> 'FPK_') then
     begin
       FileClose(Fhandle);
@@ -2107,42 +2178,77 @@ begin
     else
     begin
 
+      // We store number of entries
       NumE := HDR.NumEntries;
 
+      // We go throught the directory
       for x:= 1 to NumE do
       begin
+
+        // Code to display the progress into Dragon UnPACKer
+        // The If section is done so the update is not done too often
+        // (which slows down everything)
         Per := ROund(((x / NumE)*100));
         if Per >= OldPer + 5 then
         begin
           SetPercent(Per);
           OldPer := Per;
         end;
-        try
-          disp := Strip0(Get32_FPK(FHandle));
-        except
-          disp := inttostr(x);
-        end;
+
+        // We retrieve the filename, which is a Get32 format (32bit for size then the string)
+        // But with an encryption (they added 1 to each char), so Get32_FPK is decrypting "on-the-fly" (lol)
+        disp := Strip0(Get32_FPK(FHandle));
+
+        // We store current offset in directoy
         CurP := FileSeek(FHandle,0,1);
+
+        // We read the entry information
         FileRead(FHandle,ENT,SizeOf(ENT));
+
+        // We also read the 32bit integer of the next Get32 filename as a test number
         FileRead(FHandle,NumTest,4);
+
+        // If the NumTest is more than 0 and less than MAXPATH (255 chars)
+        // If the Offset is between start & end of file
+        // If the Size is lower than whole file size
+        // If the Offset + Size is not going over the end of file
         if (NumTest <= 255) and (NumTest >= 0) and (ENT.Offset > 12) and (ENT.Offset < TotFSize) and (ENT.Size < TotFSize) and (ENT.Offset + ENT.Size <= TotFSize) then
         begin
+
+          // Then the Entry was read correctly so we just seek 4 bytes before (because of the NumTest reading)
           FileSeek(FHandle,-4,1);
+
         end
+        // Else then the entry info is not directly after the filename, we then need
+        // to read one byte with the length of that useless junk and skip that number of bytes
         else
         begin
+
+          // We seek to the stored position
           FileSeek(FHandle,CurP,0);
+
+          // We read how many dummy bytes we need to skip
           FileRead(FHandle,NumDummy,1);
+          // We skip them (minus one because the dummy number is included in it)
           FileSeek(FHandle,NumDummy-1,1);
+
+          // We read the entry info again
           FileRead(FHandle,ENT,SizeOf(ENT));
         end;
+
+        // We store the entry
         FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
+
       end;
 
+      // We return the number of entries found
       Result := NumE;
 
+      // ID is FPK
       DrvInfo.ID := 'FPK';
+      // Directory separator is '\'
       DrvInfo.Sch := '\';
+      // Extraction will be handled by Dragon UnPACKer core
       DrvInfo.FileHandle := FHandle;
       DrvInfo.ExtractInternal := False;
 
@@ -2153,56 +2259,53 @@ begin
 
 end;
 
-function ReadCommandAndConquerGeneralsBIG(src: string): Integer;
+function ReadCommandAndConquerGeneralsBIG: Integer;
 var HDR: BIGHeader;
     ENT: BIGEntry;
     disp: string;
-    NumE, x: integer;
+    NumE, x, OldPer: integer;
     TotFSize: longword;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  TotFSize := FileSeek(Fhandle,0,2);
+  FileSeek(FHandle,0,0);
+  FileRead(FHandle,HDR,SizeOf(HDR));
 
-  if FHandle > 0 then
+  if (HDR.ID <> 'BIGF') or (TotFSize <> HDR.TotFileSize) then
   begin
-
-    TotFSize := FileSeek(Fhandle,0,2);
-    FileSeek(FHandle,0,0);
-    FileRead(FHandle,HDR,SizeOf(HDR));
-
-    if (HDR.ID <> 'BIGF') or (TotFSize <> HDR.TotFileSize) then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'BIGF';
-      ErrInfo.Games := 'Command & Conquer: Generals';
-    end
-    else
-    begin
-
-      NumE := revInt(HDR.NumFiles);
-
-      for x:= 1 to NumE do
-      begin
-        Per := ROund(((x / NumE)*100));
-        SetPercent(Per);
-        FileRead(FHandle,ENT,8);
-        disp := Strip0(Get0(FHandle));
-        FSE_Add(disp,revInt(ENT.Offset),revInt(ENT.Size),0,0);
-      end;
-
-      Result := NumE;
-
-      DrvInfo.ID := 'BIGF';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'BIGF';
+    ErrInfo.Games := 'Command & Conquer: Generals';
   end
   else
-    Result := -2;
+  begin
+
+    NumE := revInt(HDR.NumFiles);
+    OldPer := 0;
+
+    for x:= 1 to NumE do
+    begin
+      Per := ROund(((x / NumE)*100));
+      if Per >= (OldPer + 5) then
+      begin
+        SetPercent(Per);
+        OldPer := Per;
+      end;
+      FileRead(FHandle,ENT,8);
+      disp := Strip0(Get0(FHandle));
+      FSE_Add(disp,revInt(ENT.Offset),revInt(ENT.Size),0,0);
+    end;
+
+    Result := NumE;
+
+    DrvInfo.ID := 'BIGF';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
 
 end;
 
@@ -3048,6 +3151,77 @@ begin
   end
   else
     Result := -2;
+
+end;
+
+// This is experimental, I don't think it is working correctly, but I keep it
+// activated if someone is willing to use it, to figure it out a little bit more
+// There is so many fields I am just skipping...
+function ReadFableTheLostChaptersBIG: Integer;
+var HDR: FBIG_Header;
+    FTR: FBIG_FooterEntry;
+//    UNK: FBIG_EntryUnknown;
+    ENT: FBIG_Entry;
+    base, disp, desc: string;
+    NumE, x, y, z, OldPer, NumFooter, NumDesc, SizeDesc, CurP, Unknown5, Unknown6, UnknownJunkSize, NumUnknownEntries: integer;
+    TotFSize: longword;
+begin
+
+  TotFSize := FileSeek(Fhandle,0,2);
+  FileSeek(FHandle,0,0);
+  FileRead(FHandle,HDR,SizeOf(HDR));
+
+  if (HDR.ID <> 'BIGB') or (TotFSize < HDR.FooterOffset) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'BIGB';
+    ErrInfo.Games := 'Fable: The Lost Chapters';
+  end
+  else
+  begin
+
+    FileSeek(FHandle,HDR.FooterOffset,0);
+    FileRead(FHandle,NumFooter,4);
+
+    NumE := 0;
+
+    for x := 1 to NumFooter do
+    begin
+      base := strip0(get0(FHandle));
+      FileRead(FHandle,FTR,SizeOf(FTR));
+      CurP := FileSeek(FHandle,0,1);
+      FileSeek(FHandle,FTR.Offset,0);
+      FileRead(FHandle,NumUnknownEntries,4);
+      FileSeek(FHandle,NumUnknownEntries*8,1);
+      for y := 1 to FTR.NumEntries do
+      begin
+        FileRead(FHandle,ENT,SizeOf(ENT));
+        disp := Get32(FHandle);
+        FileRead(FHandle,Unknown5,4);
+        FileRead(FHandle,NumDesc,4);
+        for z := 1 to NumDesc do
+        begin
+          FileRead(FHandle,SizeDesc,4);
+          FileSeek(FHandle,SizeDesc,1);
+        end;
+        FileRead(FHandle,UnknownJunkSize,4);
+        FileSeek(Fhandle,UnknownJunkSize,1);
+        FSE_Add(base+'\'+disp,ENT.Offset,ENT.Size,ENT.Unknown2,ENT.Unknown4);
+        inc(NumE);
+      end;
+      FileSeek(FHandle,CurP,0);
+    end;
+
+    Result := NumE;
+
+    DrvInfo.ID := 'BIGB';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
 
 end;
 
@@ -6803,6 +6977,121 @@ begin
 
 end;
 
+function ReadTheMoviesPAK: Integer;
+var HDR: TMPAK_Header;
+    ENT: TMPAK_Entry;
+    disp: string;
+    NumE, x, OldPer, CurP: integer;
+    DirData: TMemoryStream;
+    FilData: THandleStream;
+    tmpData: PByteArray;
+begin
+
+  // We retrieve the total file size
+  TotFSize := FileSeek(FHandle,0,2);
+  FileSeek(Fhandle, 0, 0);
+
+  // We read the header
+  FileRead(FHandle, HDR, SizeOf(HDR));
+
+  // We check that we are really reading a The Movie .PAK file
+  //   ID = 5
+  // And obviously all Offset must be lower than total size
+  if (HDR.ID <> 5) and (HDR.DataOffset <= TotFSize) and (HDR.DirOffset <= TotFSize) and (HDR.DirTableOffset <= TotFSize) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'TMPAK';
+    ErrInfo.Games := 'The Movies';
+  end
+  else
+  begin
+
+    // We are first going to retrieve the directory names chunk
+    // For that we instanciate a MemoryStream which will hold the chunk for future use
+    DirData := TMemoryStream.Create;
+
+    // We keep the offset
+    CurP := FileSeek(FHandle,0,1);
+
+    // We instanciate a stream from the file handle
+    FilData := THandleStream.Create(FHandle);
+
+    try
+
+      // We seek to the offset of the directory chunk
+      FilData.Seek(HDR.DirOffset,soFromBeginning);
+
+      // We copy the chunk to the memory stream
+      DirData.CopyFrom(FilData,HDR.DirSize);
+
+    finally
+
+      // We free the handle stream
+      FilData.Free;
+
+      // We seek to the stored offset
+      FileSeek(FHandle,CurP,0);
+
+    end;
+
+    try
+
+      NumE := HDR.NumEntries;
+      OldPer := 0;
+
+      // For each entry in the file
+      for x:= 1 to NumE do
+      begin
+
+        // Display progress
+        Per := ROund(((x / NumE)*100));
+        if (Per >= OldPer + 5) then
+        begin
+          SetPercent(Per);
+          OldPer := Per;
+        end;
+
+        // We read the entry
+        FileRead(Fhandle,ENT,SizeOf(ENT));
+
+        // We retrieve the directory
+        // The DirPos integer needs to be "decoded"
+        // Only 15 bits are relevant
+        // We seek to that offset in the directory chunk
+        DirData.Seek((ENT.DirPos and $7FFF) shr 1, soFromBeginning);
+
+        // We get the directory (null terminated)
+        disp := Strip0(Get0_Stream(DirData));
+
+        // We concatenate the directory and the entry name
+        disp := disp + strip0(ENT.EntryName);
+
+        // We store the result
+        FSE_Add(disp,ENT.Offset,ENT.UncSize,ENT.CmpSize,0);
+
+      end;
+
+    finally
+
+      // We free the directory chunk
+      DirData.Free;
+
+    end;
+
+    Result := NumE;
+
+    DrvInfo.ID := 'TMPAK';
+    DrvInfo.Sch := '\';
+    // Extraction will be handled by this plugin because it needs some processing (Zlib decompression)
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := True;
+
+  end;
+
+end;
+
 function ReadTheSimsFAR(src: string): Integer;
 var HDR: FARHeader;
     ENT: FAREntry;
@@ -7753,6 +8042,39 @@ begin
 
 end;
 
+function ReadHubBIG(src: String): Integer;
+var ID: array[0..3] of char;
+    res: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileRead(FHandle,ID,4);
+    if ID = 'BIGF' then
+      res := ReadCommandAndConquerGeneralsBIG
+    else if ID = 'BIGB' then
+      res := ReadFableTheLostChaptersBIG
+    else
+      res := -3;
+
+    if res = -3 then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'BIG';
+      ErrInfo.Games := 'Command & Conquer: Generals, Fable: The Lost Chapters';
+    end
+    else
+      Result := res;
+  end
+  else
+    Result := -2;
+
+end;
+
 function ReadHubDAT(src: String): Integer;
 var ID: array[0..7] of char;
     res: integer;
@@ -7844,6 +8166,8 @@ begin
     FileRead(FHandle,Test1,4);
     if ID = 'PACK' then
       res := ReadQuakePAK
+    else if (ID[0] = #5) and (ID[1] = #0) and (ID[2] = #0) and (ID[3] = #0) then
+      res := ReadTheMoviesPAK
     else if (ID[0] = #0) and (ID[1] = #0) and (ID[2] = #0) and (ID[3] = #0) then
       res := ReadZanzarahPAK
     else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
@@ -8194,6 +8518,9 @@ begin
         FileClose(FHandle);
         Result := ReadHitmanContractsPRM(fil);
       end
+      // Fable: The Lost Chapter .BIG file
+      else if (ID4 = 'BIGB') then
+        Result := ReadFableTheLostChaptersBIG
       else if ID8 = 'LiOnHeAd' then
       begin
         FileClose(FHandle);
@@ -8370,10 +8697,7 @@ begin
         Result := ReadVietcongCBF(fil);
       end
       else if (ID4 = ('BIGF')) then
-      begin
-        FileClose(FHandle);
-        Result := ReadCommandAndConquerGeneralsBIG(fil);
-      end
+        Result := ReadCommandAndConquerGeneralsBIG
       else if (ID4 = ('DATA')) then
       begin
         FileClose(FHandle);
@@ -8424,6 +8748,8 @@ begin
       ReadFormat := ReadDune3BAG(fil)
     else if ext = 'BAR' then
       ReadFormat := ReadHubBAR(fil)
+    else if ext = 'BIG' then
+      ReadFormat := ReadHubBIG(fil)
     else if ext = 'BIN' then
       ReadFormat := ReadCyberBykesBIN(fil)
     else if ext = 'BKF' then
@@ -8716,6 +9042,12 @@ begin
       Result := true
     // Hitman: Contracts .PRM file
     else if (ID4[0] = #30) and (ID4[1] = #7) and (ID4[2] = #0) and (ID4[3] = #0) then
+      Result := true
+    // Fable: The Lost Chapter .BIG file
+    else if (ID4 = 'BIGB') then
+      Result := true
+    // The Movies .PAK files
+    else if (ID4[0] = #5) and (ID4[1] = #0) and (ID4[2] = #0) and (ID4[3] = #0) then
       Result := true
     else if ID12 = GRPID then
       Result := true
@@ -10085,6 +10417,7 @@ end;
 function ExtractFileToStream(outputstream: TStream; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
 var ENT: MTFCompress;
     SSA: SSACompress;
+    TMH: TMPAK_CompHeader;
     tbyt,key: byte;
     ID: array[0..2] of char;
 begin
@@ -10114,6 +10447,33 @@ begin
     begin
       BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
     end;
+  end
+  // The Movies .PAK decompression handling
+  else if DrvInfo.ID = 'TMPAK' then
+  begin
+
+    // We go to offset and retrieve the compression header
+    FileSeek(FHandle,Offset,0);
+    FileRead(Fhandle,TMH,SizeOf(TMH));
+
+    // We verify that everything is as expected
+    if (TMH.TotSize = DataX) and (TMH.UncSize = Size) then
+    begin
+
+      // If the file is not compressed we just copy 1:1 starting from offset+16 (without the header)
+      if (TMH.NotCompressed = 1) then
+        BinCopyToStream(FHandle,outputstream,offset+16,Size,BUFFER_SIZE,silent)
+      // Else we decompress the zlib data
+      else
+        DecompressZlibToStream(outputstream, TMH.CmpSize, Size);
+
+    end
+    // If something is not as expected we just copy 1:1
+    else
+    begin
+      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+    end;
+
   end
   else if DrvInfo.ID = 'ADF' then
   begin

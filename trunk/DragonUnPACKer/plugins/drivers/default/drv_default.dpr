@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.18 2005-12-21 18:21:55 elbereth Exp $
+// $Id: drv_default.dpr,v 1.19 2005-12-21 23:59:58 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -148,6 +148,7 @@ type FSE = ^element;
                  Added support for Black & White 2 .LUG files
                  Added support for Civilization 4 .FPK files
                  Added support for Fable: The Lost Chapters .LUG files
+                 Added support for F.E.A.R. .ARCH00 files
                  Added experimental support for Fable: The Lost Chapters .BIG files (this is not in the list of supported files)
                  Added support for The Movies .BIG files
                  Added support for The Movies .LUG files
@@ -242,6 +243,34 @@ type APUKHeader = packed record
        Unknown1: integer;
        Unknown2: integer;
        Filename: array[0..15] of char;
+     end;
+
+type ARCH00_Header = packed record
+       ID: array[0..3] of char;     // LTAR
+       Unknown1: Integer;           // Always 3 ? Version ?
+       NameSize: Integer;
+       NumDirectories: Integer;
+       NumEntries: Integer;
+       Unknown3: Integer;
+       Unknown4: Integer;
+       Unknown5: Integer;
+       Unknown6: Integer;
+       Unknown7: Integer;
+       Unknown8: Integer;
+       Unknown9: Integer;
+     end;
+     ARCH00_Entry = packed record
+       NamePos: Integer;
+       Offset: Int64;
+       Size: Int64;
+       Size2: Int64;       // UncSize ?
+       Dummy: Integer;
+     end;
+     ARCH00_Directory = packed record
+       NamePos: Integer;
+       Unknown1: Integer;
+       Unknown2: Integer;
+       NumEntries: Integer;
      end;
 
 type ARTHeader = packed record
@@ -1271,8 +1300,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20040;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.18 $';
-  CVS_DATE = '$Date: 2005-12-21 18:21:55 $';
+  CVS_REVISION = '$Revision: 1.19 $';
+  CVS_DATE = '$Date: 2005-12-21 23:59:58 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1346,8 +1375,8 @@ begin
   GetDriverInfo.Name := 'Main Driver';
   GetDriverInfo.Author := 'Dragon UnPACKer project team';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 73 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 62;
+  GetDriverInfo.Comment := 'This driver support 74 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.NumFormats := 63;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -1472,6 +1501,8 @@ begin
   GetDriverInfo.Formats[61].Name := 'Civilization 4 (*.FPK)';
   GetDriverInfo.Formats[62].Extensions := '*.LUG;*.BIG';
   GetDriverInfo.Formats[62].Name := 'The Movies (*.BIG;*.LUG)';
+  GetDriverInfo.Formats[63].Extensions := '*.ARCH00';
+  GetDriverInfo.Formats[63].Name := 'F.E.A.R. (*.ARCH00)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
 //  GetDriverInfo.Formats[50].Name := 'Heath: The Unchosen Path (*.PAXX.NRM)'
 //  GetDriverInfo.Formats[41].Extensions := '*.h4r';
@@ -2180,6 +2211,8 @@ begin
 
       // We store number of entries
       NumE := HDR.NumEntries;
+
+      OldPer := 0;
 
       // We go throught the directory
       for x:= 1 to NumE do
@@ -3162,8 +3195,8 @@ var HDR: FBIG_Header;
     FTR: FBIG_FooterEntry;
 //    UNK: FBIG_EntryUnknown;
     ENT: FBIG_Entry;
-    base, disp, desc: string;
-    NumE, x, y, z, OldPer, NumFooter, NumDesc, SizeDesc, CurP, Unknown5, Unknown6, UnknownJunkSize, NumUnknownEntries: integer;
+    base, disp: string;
+    NumE, x, y, z, NumFooter, NumDesc, SizeDesc, CurP, Unknown5, UnknownJunkSize, NumUnknownEntries: integer;
     TotFSize: longword;
 begin
 
@@ -3222,6 +3255,157 @@ begin
     DrvInfo.ExtractInternal := False;
 
   end;
+
+end;
+
+function ReadFearARCH00(src: string): Integer;
+var HDR: ARCH00_Header;
+    ENT: ARCH00_Entry;
+    DIR: ARCH00_Directory;
+    disp, dirname: string;
+    NumE, x, curDir, curP, oldPer: integer;
+    namStream, dirStream: TMemoryStream;
+    filStream: THandleStream;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    // We read the header
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, SizeOf(HDR));
+
+    // If the ID in the header is not LTAR, then this is not a FEAR .ARCH00 file
+    if (HDR.ID <> 'LTAR') then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'LTAR';
+      ErrInfo.Games := 'F.E.A.R.';
+    end
+    else
+    begin
+
+      // We will first store both name chunks and whole directory chunk
+      // in two TMemoryStreams for later use
+      namStream := TMemoryStream.Create;
+      dirStream := TMemoryStream.Create;
+
+      try
+
+        // We will enclose the handle in a THandleStream so we can copy from it
+        filStream := THandleStream.Create(FHandle);
+
+        try
+
+          // We copy the names chunk to the memory stream
+          namStream.CopyFrom(filStream,HDR.NameSize);
+
+          // We store current offset
+          curP := filStream.Seek(0,soFromCurrent);
+
+          // We seek to the directory chunk offset
+          filStream.Seek(HDR.NumEntries*SizeOf(ENT),soFromCurrent);
+
+          // We copy the directory chunk to the memory stream
+          dirStream.CopyFrom(filStream,SizeOf(DIR)*HDR.NumDirectories);
+
+          // We go back to the stored offset
+          filStream.Seek(curP,soFromBeginning);
+
+        finally
+
+          // We free the handle stream
+          filStream.Free;
+
+        end;
+
+        NumE := HDR.NumEntries;
+
+        // This variable will be used to know in which directory we are
+        // we start at -1 in advance for the forced first update
+        curDir := -1;
+
+        // We fill the directory entry variable with zeros to force an update
+        // on first "for" run
+        FillChar(DIR,SizeOf(DIR),0);
+
+        OldPer := 0;
+
+        // We will go through all entries
+        for x := 1 to HDR.NumEntries do
+        begin
+
+          // Display progress
+          Per := ROund(((x / HDR.NumEntries)*100));
+          if (Per >= OldPer + 5) then
+          begin
+            SetPercent(Per);
+            OldPer := Per;
+          end;
+
+          // This is used to retrieve current directory entry
+          // It is enclosed in a while-do structure instead of if structure
+          // because some directory entries have the NumEntries field already
+          // at zero in the file...
+          while (DIR.NumEntries = 0) do
+          begin
+
+            // We go to the next entry
+            inc(curDir);
+            dirStream.Seek(curDir*SizeOf(DIR),soFromBeginning);
+
+            // We read it
+            dirStream.ReadBuffer(DIR,SizeOf(DIR));
+
+            // We retrieve the name
+            namStream.Seek(DIR.NamePos,soFromBeginning);
+            dirname := strip0(get0_Stream(namStream));
+
+            // We include the trailing slash is needed
+            if length(dirname)>0 then
+              dirname := dirname + '\';
+
+          end;
+
+          // We read the entry
+          FileRead(FHandle,ENT,SizeOf(ENT));
+
+          // We retrieve the name
+          namStream.Seek(ENT.NamePos,soFromBeginning);
+          disp := strip0(get0_Stream(namStream));
+
+          // We store the entry
+          FSE_Add(dirname+disp,ENT.Offset,ENT.Size,0,0);
+
+          // We decrease the directory entry counter
+          dec(DIR.NumEntries);
+
+        end;
+
+      finally
+
+        // We free both memory streams
+        namStream.Free;
+        dirStream.Free;
+
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'LTAR';
+      DrvInfo.Sch := '\';
+      // Extraction will be handled by Dragon UnPACKer core
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+  end
+  else
+    Result := -2;
 
 end;
 
@@ -6984,7 +7168,6 @@ var HDR: TMPAK_Header;
     NumE, x, OldPer, CurP: integer;
     DirData: TMemoryStream;
     FilData: THandleStream;
-    tmpData: PByteArray;
 begin
 
   // We retrieve the total file size
@@ -8521,6 +8704,12 @@ begin
       // Fable: The Lost Chapter .BIG file
       else if (ID4 = 'BIGB') then
         Result := ReadFableTheLostChaptersBIG
+      // Fable: The Lost Chapter .BIG file
+      else if (ID4 = 'LTAR') then
+      begin
+        FileClose(FHandle);
+        Result := ReadFearARCH00(fil);
+      end
       else if ID8 = 'LiOnHeAd' then
       begin
         FileClose(FHandle);
@@ -8742,6 +8931,8 @@ begin
       ReadFormat := ReadGTA3ADF(fil)
     else if ext = 'AWF' then
       ReadFormat := ReadQuiVeutGagnerDesMillionsAWF(fil)
+    else if ext = 'ARCH00' then
+      ReadFormat := ReadFearARCH00(fil)
     else if ext = 'ART' then
       ReadFormat := ReadDuke3DART(fil)
     else if ext = 'BAG' then
@@ -9049,6 +9240,9 @@ begin
     // The Movies .PAK files
     else if (ID4[0] = #5) and (ID4[1] = #0) and (ID4[2] = #0) and (ID4[3] = #0) then
       Result := true
+    // FEAR .ARCH00 file
+    else if (ID4 = 'LTAR') then
+      Result := true
     else if ID12 = GRPID then
       Result := true
     else if (ID4[0] = #60) and (ID4[1] = #226) and (ID4[2] = #156) and (ID4[3] = #1) then
@@ -9182,6 +9376,8 @@ begin
     else if ext = 'ADF' then
       IsFormat := True
     else if ext = 'AWF' then
+      IsFormat := True
+    else if ext = 'ARCH00' then
       IsFormat := True
     else if ext = 'ART' then
       IsFormat := True

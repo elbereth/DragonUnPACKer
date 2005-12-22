@@ -1,6 +1,6 @@
 library drv_zip;
 
-// $Id: drv_zip.dpr,v 1.4 2005-12-18 15:01:44 elbereth Exp $
+// $Id: drv_zip.dpr,v 1.5 2005-12-22 21:33:02 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/zip/drv_zip.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -831,7 +831,7 @@ begin
 
 end;
 
-procedure AboutBox(hwnd: Integer; DLNGstr: TLanguageCallBack); stdcall;
+procedure AboutBox; stdcall;
 var msg: string;
 begin
 
@@ -850,7 +850,7 @@ begin
   else
     msg := msg + 'Error (Missing DLL)';
 
-  MessageBoxA(hwnd, PChar(msg), 'About InfoZip''s ZIP Driver...', MB_OK);
+  MessageBoxA(AHandle, PChar(msg), 'About InfoZip''s ZIP Driver...', MB_OK);
 
 end;
 

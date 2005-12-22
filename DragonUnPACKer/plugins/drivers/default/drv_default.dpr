@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.19 2005-12-21 23:59:58 elbereth Exp $
+// $Id: drv_default.dpr,v 1.20 2005-12-22 20:59:07 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -150,6 +150,7 @@ type FSE = ^element;
                  Added support for Fable: The Lost Chapters .LUG files
                  Added support for F.E.A.R. .ARCH00 files
                  Added experimental support for Fable: The Lost Chapters .BIG files (this is not in the list of supported files)
+                 Added support for LEGO Star Wars .DAT file (only SFX.DAT afaik)
                  Added support for The Movies .BIG files
                  Added support for The Movies .LUG files
         TODO --> Added Warrior Kings Battles BCP
@@ -766,6 +767,22 @@ type WADIR_Header = packed record
        Size: integer;
      end;
 
+type LEGODAT_Header = packed record
+       DirOffset: Integer;
+       DirSize: Integer;
+     end;
+     LEGODAT_Entry = packed record
+       Offset: Integer;
+       Size: Integer;
+       Size2: Integer;
+       Unknown: Integer;
+     end;
+     LEGODAT_Directory = packed record
+       Info1: Word;
+       Info2: Word;
+       NamePos: Integer;
+     end;
+
 type DNIHeader = packed record
        ID: array[0..3] of char;
        Version: integer; // &H100
@@ -1300,8 +1317,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20040;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.19 $';
-  CVS_DATE = '$Date: 2005-12-21 23:59:58 $';
+  CVS_REVISION = '$Revision: 1.20 $';
+  CVS_DATE = '$Date: 2005-12-22 20:59:07 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1375,7 +1392,7 @@ begin
   GetDriverInfo.Name := 'Main Driver';
   GetDriverInfo.Author := 'Dragon UnPACKer project team';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 74 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.Comment := 'This driver support 75 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
   GetDriverInfo.NumFormats := 63;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
@@ -1432,7 +1449,7 @@ begin
   GetDriverInfo.Formats[27].Extensions := '*.bkf';
   GetDriverInfo.Formats[27].Name := 'Moto Racer (*.BKF)';
   GetDriverInfo.Formats[28].Extensions := '*.dat';
-  GetDriverInfo.Formats[28].Name := 'Nascar Racing (*.DAT)|Gunlok (*.DAT)';
+  GetDriverInfo.Formats[28].Name := 'Nascar Racing (*.DAT)|Gunlok (*.DAT)|LEGO Star Wars (*.DAT)';
   GetDriverInfo.Formats[29].Extensions := '*.pbo';
   GetDriverInfo.Formats[29].Name := 'Operation Flashpoint (*.PBO)';
   GetDriverInfo.Formats[30].Extensions := '*.awf';
@@ -2181,7 +2198,7 @@ var HDR: FPKHeader;
     disp: string;
     NumE, x, NumTest, CurP: integer;
     NumDummy: byte;
-    TotFSize: longword;
+    TotFSize: integer;
     OldPer: integer;
 begin
 
@@ -2297,7 +2314,7 @@ var HDR: BIGHeader;
     ENT: BIGEntry;
     disp: string;
     NumE, x, OldPer: integer;
-    TotFSize: longword;
+    TotFSize: Integer;
 begin
 
   TotFSize := FileSeek(Fhandle,0,2);
@@ -2474,7 +2491,7 @@ var ENT: BIN_Entry;
     disp: string;
     NumE, x, preval: integer;
     curOffset: int64;
-    TotFSize: longword;
+    TotFSize: integer;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead);
@@ -3197,7 +3214,7 @@ var HDR: FBIG_Header;
     ENT: FBIG_Entry;
     base, disp: string;
     NumE, x, y, z, NumFooter, NumDesc, SizeDesc, CurP, Unknown5, UnknownJunkSize, NumUnknownEntries: integer;
-    TotFSize: longword;
+    TotFSize: integer;
 begin
 
   TotFSize := FileSeek(Fhandle,0,2);
@@ -5106,6 +5123,89 @@ begin
   end
   else
     Result := -2;
+
+end;
+
+function ReadLegoStarWarsDAT: Integer;
+var HDR: LEGODAT_Header;
+    stmNames: TMemoryStream;
+    stmSource: THandleStream;
+    disp: string;
+    x, y, EntrySize, DirTableSize, NamesSize: integer;
+    ENT: array of LEGODAT_Entry;
+    DIR: array of LEGODAT_Directory;
+    dirname: array of string;
+begin
+
+  FileSeek(Fhandle, 0, 0);
+  FileRead(FHandle, HDR, 8);
+
+  FileSeek(FHandle,HDR.DirOffset+4,0);
+  FileRead(FHandle,EntrySize,4);
+
+  setLength(ENT,EntrySize);
+
+  for x := 0 to EntrySize-1 do
+    FileRead(FHandle,ENT[x],16);
+
+  //FileSeek(FHandle,EntrySize*16,1);
+  FileRead(FHandle,DirTableSize,4);
+
+  setLength(DIR,DirTableSize);
+
+  for x := 0 to DirTableSize-1 do
+  begin
+    FileRead(FHandle,DIR[x],8);
+  end;
+
+  FileRead(FHandle,NamesSize,4);
+
+  stmNames := TMemoryStream.Create;
+  stmSource := THandleStream.Create(FHandle);
+
+  try
+
+    stmNames.CopyFrom(stmSource,NamesSize);
+
+  finally
+
+    stmSource.Free;
+
+  end;
+
+  setLength(DirName,DirTableSize);
+
+  for x := 0 to DirTableSize-1 do
+  begin
+    stmNames.Seek(DIR[x].NamePos,soFromBeginning);
+    disp := Strip0(Get0_Stream(stmNames));
+    if length(DirName[x]) = 0 then
+      DirName[x] := disp
+    else
+      DirName[x] := DirName[x] + '\' + disp;
+    if pos('.',disp) = 0 then
+    begin
+      for y := x+1 to DIR[x].Info1 do
+        if pos('.',DirName[y]) = 0 then
+          DirName[y] := DirName[x];
+    end
+    else
+    begin
+      DIR[x].Info1 := (DIR[x].Info1 xor $FFFF) + 1;
+      FSE_Add(DirName[x],ENT[DIR[x].Info1].Offset,ENT[DIR[x].Info1].Size,0,0);
+    end;
+  end;
+
+  setlength(DirName,0);
+  setLength(DIR,0);
+  stmNames.Free;
+
+  Result := EntrySize;
+
+  DrvInfo.ID := 'LEGODAT';
+  DrvInfo.Sch := '\';
+  DrvInfo.FileHandle := FHandle;
+  DrvInfo.ExtractInternal := False;
 
 end;
 
@@ -8260,7 +8360,7 @@ end;
 
 function ReadHubDAT(src: String): Integer;
 var ID: array[0..7] of char;
-    res: integer;
+    res,test1,test2,test3: integer;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead);
@@ -8271,7 +8371,23 @@ begin
     if ID = 'FILECHNK' then
       res := ReadGunlokDAT
     else
-      res := ReadNascarDAT;
+    begin
+      TotFSize := FileSeek(FHandle,0,2);
+      FileSeek(FHandle,0,0);
+      FileRead(FHandle,test1,4);
+      FileRead(FHandle,test2,4);
+      if ((test1+test2) = TotFSize) then
+      begin
+        FileSeek(FHandle,test1,0);
+        FileRead(FHandle,test3,4);
+        if test3 = -1 then
+          res := ReadLegoStarWarsDAT
+        else
+          res := ReadNascarDAT;
+      end
+      else
+        res := ReadNascarDAT;
+    end;
 
     if res = -3 then
     begin
@@ -8279,7 +8395,7 @@ begin
       FHandle := 0;
       ReadHubDAT := -3;
       ErrInfo.Format := 'DAT';
-      ErrInfo.Games := 'Gunlok, Nascar Racing, ..';
+      ErrInfo.Games := 'Gunlok, LEGO Star Wars, Nascar Racing, ..';
     end
     else
       ReadHubDAT := res;
@@ -10005,6 +10121,9 @@ begin
     FileRead(FHandle,DataH[x].doffset,4);
   end;
 
+  oldper := 0;
+  perstep := 5;
+
   for x := 0 to Segments-1 do
   begin
 //    writeln(T,'{HEADI='+inttostr(x+1)+'}');
@@ -10213,6 +10332,8 @@ begin
   BufMem.Clear;
 
   Inc(Offset,chunks*4);
+
+  OldPer := 0;
 
   for x := 1 to chunks do
     begin

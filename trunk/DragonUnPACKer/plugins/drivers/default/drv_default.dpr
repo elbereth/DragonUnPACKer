@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.20 2005-12-22 20:59:07 elbereth Exp $
+// $Id: drv_default.dpr,v 1.21 2005-12-22 21:21:08 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -153,6 +153,7 @@ type FSE = ^element;
                  Added support for LEGO Star Wars .DAT file (only SFX.DAT afaik)
                  Added support for The Movies .BIG files
                  Added support for The Movies .LUG files
+                 Changed a bit the Command & Conquer: Generals .BIG code to support The Lord of the Rings: Battle for Middle Earth .BIG files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1317,8 +1318,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20040;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.20 $';
-  CVS_DATE = '$Date: 2005-12-22 20:59:07 $';
+  CVS_REVISION = '$Revision: 1.21 $';
+  CVS_DATE = '$Date: 2005-12-22 21:21:08 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1495,7 +1496,7 @@ begin
   GetDriverInfo.Formats[50].Extensions := '*.XRS';
   GetDriverInfo.Formats[50].Name := 'Dig It! (*.XRS)';
   GetDriverInfo.Formats[51].Extensions := '*.BIG';
-  GetDriverInfo.Formats[51].Name := 'Command & Conquer: Generals (*.BIG)|Command & Conquer: Generals - Zero Hour (*.BIG)';
+  GetDriverInfo.Formats[51].Name := 'Command & Conquer: Generals (*.BIG)|Command & Conquer: Generals - Zero Hour (*.BIG)|The Lord of the Rings: Battle for Middle Earth (*.BIG)';
   GetDriverInfo.Formats[52].Extensions := '*.PCK';
   GetDriverInfo.Formats[52].Name := 'Commandos 3 (*.PCK)';
   GetDriverInfo.Formats[53].Extensions := '*.SSA';
@@ -2315,25 +2316,28 @@ var HDR: BIGHeader;
     disp: string;
     NumE, x, OldPer: integer;
     TotFSize: Integer;
+    isAntiSlash: Boolean;
 begin
 
   TotFSize := FileSeek(Fhandle,0,2);
   FileSeek(FHandle,0,0);
   FileRead(FHandle,HDR,SizeOf(HDR));
 
-  if (HDR.ID <> 'BIGF') or (TotFSize <> HDR.TotFileSize) then
+  if ((HDR.ID <> 'BIGF') and (HDR.ID <> 'BIG4')) or (TotFSize <> HDR.TotFileSize) then
   begin
     FileClose(Fhandle);
     FHandle := 0;
     Result := -3;
     ErrInfo.Format := 'BIGF';
-    ErrInfo.Games := 'Command & Conquer: Generals';
+    ErrInfo.Games := 'Command & Conquer: Generals, The Lord of the Rings: Battle for Middle Earth';
   end
   else
   begin
 
     NumE := revInt(HDR.NumFiles);
     OldPer := 0;
+
+    isAntiSlash := false;
 
     for x:= 1 to NumE do
     begin
@@ -2345,13 +2349,18 @@ begin
       end;
       FileRead(FHandle,ENT,8);
       disp := Strip0(Get0(FHandle));
+      if not(isAntiSlash) and (pos('/',disp) > 0) then
+        isAntiSlash := true;
       FSE_Add(disp,revInt(ENT.Offset),revInt(ENT.Size),0,0);
     end;
 
     Result := NumE;
 
     DrvInfo.ID := 'BIGF';
-    DrvInfo.Sch := '\';
+    if isAntiSlash then
+      DrvInfo.Sch := '/'
+    else
+      DrvInfo.Sch := '\';
     DrvInfo.FileHandle := FHandle;
     DrvInfo.ExtractInternal := False;
 
@@ -9001,7 +9010,7 @@ begin
         FileClose(FHandle);
         Result := ReadVietcongCBF(fil);
       end
-      else if (ID4 = ('BIGF')) then
+      else if (ID4 = ('BIGF')) or (ID4 = ('BIG4')) then
         Result := ReadCommandAndConquerGeneralsBIG
       else if (ID4 = ('DATA')) then
       begin
@@ -9451,7 +9460,7 @@ begin
       Result := true
 //    else if (ID4 = ('BIGF')) and (ID8[4] = #0) and (ID8[5] = 'Z') and (ID8[6] = 'B') and (ID8[7] = 'L') then
 //      Result := true
-    else if (ID4 = ('BIGF')) then
+    else if (ID4 = ('BIGF')) or (ID4 = ('BIG4')) then
       Result := true
     else if (ID4 = ('DATA')) then
       Result := true

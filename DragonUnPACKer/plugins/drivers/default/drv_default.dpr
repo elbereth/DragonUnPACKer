@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.21 2005-12-22 21:21:08 elbereth Exp $
+// $Id: drv_default.dpr,v 1.22 2005-12-29 20:53:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -154,6 +154,7 @@ type FSE = ^element;
                  Added support for The Movies .BIG files
                  Added support for The Movies .LUG files
                  Changed a bit the Command & Conquer: Generals .BIG code to support The Lord of the Rings: Battle for Middle Earth .BIG files
+    20041        Fixed The Movies .PAK extraction      
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1316,10 +1317,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 20040;
+  DRIVER_VERSION = 20041;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.21 $';
-  CVS_DATE = '$Date: 2005-12-22 21:21:08 $';
+  CVS_REVISION = '$Revision: 1.22 $';
+  CVS_DATE = '$Date: 2005-12-29 20:53:31 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -10743,9 +10744,10 @@ end;
 function ExtractFileToStream(outputstream: TStream; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
 var ENT: MTFCompress;
     SSA: SSACompress;
-    TMH: TMPAK_CompHeader;
+    TMH, TMH2: TMPAK_CompHeader;
     tbyt,key: byte;
     ID: array[0..2] of char;
+    ID4: array[0..3] of char;
 begin
 
   FileSeek(FHandle,Offset,0);
@@ -10788,7 +10790,29 @@ begin
 
       // If the file is not compressed we just copy 1:1 starting from offset+16 (without the header)
       if (TMH.NotCompressed = 1) then
-        BinCopyToStream(FHandle,outputstream,offset+16,Size,BUFFER_SIZE,silent)
+      begin
+
+        // We check if there is a 2nd compression header (which only happens is first one is not compressed afaik)
+        // -- Thanks to the Xentax wiki for the information --
+        FileRead(FHandle,ID4,4);
+
+        if (ID4 = 'zcmp') then
+        begin
+          // Then we read the second header
+          FileRead(FHandle,TMH,SizeOf(TMH));
+
+          // If the file is not compressed we just copy 1:1 starting from offset+16 (without the header)
+          if (TMH.NotCompressed = 1) then
+            BinCopyToStream(FHandle,outputstream,offset+16,Size,BUFFER_SIZE,silent)
+          // Else we decompress the zlib data
+          else
+            DecompressZlibToStream(outputstream, TMH.CmpSize, Size);
+
+        end
+        else
+          BinCopyToStream(FHandle,outputstream,offset+16,Size,BUFFER_SIZE,silent);
+
+      end
       // Else we decompress the zlib data
       else
         DecompressZlibToStream(outputstream, TMH.CmpSize, Size);

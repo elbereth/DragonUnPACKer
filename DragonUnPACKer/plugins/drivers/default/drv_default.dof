@@ -115,7 +115,7 @@ AutoIncBuild=1
 MajorVer=2
 MinorVer=0
 Release=0
-Build=734
+Build=735
 Debug=0
 PreRelease=0
 Special=0
@@ -126,7 +126,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Dragon Software
 FileDescription=Main Driver plugin for Dragon UnPACKer 5
-FileVersion=2.0.0.734
+FileVersion=2.0.0.735
 InternalName=drv_default
 LegalCopyright=(c)2002-2005 Alexandre Devilliers
 LegalTrademarks=

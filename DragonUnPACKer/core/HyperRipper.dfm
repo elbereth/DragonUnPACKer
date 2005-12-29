@@ -1262,7 +1262,7 @@ object frmHyperRipper: TfrmHyperRipper
     Top = 8
     Width = 417
     Height = 297
-    ActivePage = tabSearch
+    ActivePage = tabAdvanced
     TabOrder = 0
     object tabAbout: TTabSheet
       Caption = 'A Propos..'
@@ -5442,6 +5442,22 @@ object frmHyperRipper: TfrmHyperRipper
             AutoSize = False
             Caption = '%h = offset (Hex)'
           end
+          object lblNamingLegL: TLabel
+            Left = 280
+            Top = 64
+            Width = 89
+            Height = 13
+            AutoSize = False
+            Caption = '%l = size (Hex)'
+          end
+          object lblNamingLegS: TLabel
+            Left = 184
+            Top = 64
+            Width = 89
+            Height = 13
+            AutoSize = False
+            Caption = '%s = size (Dec)'
+          end
           object chkNamingAuto: TRadioButton
             Left = 8
             Top = 16
@@ -5473,28 +5489,33 @@ object frmHyperRipper: TfrmHyperRipper
             Text = 'dup5-hrip-%n'
             OnChange = txtNamingChange
           end
-          object panNaming: TPanel
-            Left = 104
-            Top = 80
-            Width = 265
-            Height = 19
-            Alignment = taLeftJustify
-            Caption = ' Example-0001.wav'
-            Font.Charset = DEFAULT_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -11
-            Font.Name = 'MS Sans Serif'
-            Font.Style = [fsBold]
-            ParentFont = False
-            TabOrder = 3
-          end
           object panNamingExemple: TPanel
             Left = 8
             Top = 80
             Width = 89
             Height = 19
             Caption = 'Exemple'
+            TabOrder = 3
+          end
+          object panNaming: TPanel
+            Left = 104
+            Top = 80
+            Width = 265
+            Height = 19
+            Align = alCustom
             TabOrder = 4
+            object txtExample: TEdit
+              Left = 1
+              Top = 1
+              Width = 263
+              Height = 17
+              AutoSize = False
+              BorderStyle = bsNone
+              Color = clInactiveCaptionText
+              ReadOnly = True
+              TabOrder = 0
+              Text = 'txtExample'
+            end
           end
         end
       end

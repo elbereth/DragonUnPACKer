@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.2.0                                      MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    23/12/2005
+Dragon UnPACKer v5.2.0a                                     MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    29/12/2005
 ===============================================================================
 
   ** English Readme (voir lisezmoi.txt pour la version française)
@@ -34,8 +34,8 @@ media for distribution (ex: CD-Rom, FTP, HTTP, etc..). But all text files must
 stay intact, and no files can be added to the zip file.
 
  This program have 2 differents types of releases (same content):
-    SETUP - ~2.2MB - dup520cinthia-setup.exe  - With Install/Uninstall
-       7Z - ~1.9MB - dup520cinthia.7z         - Plain 7-Zip (v4.32) archive
+    SETUP - ~2.2MB - dup520acinthia-setup.exe - With Install/Uninstall
+       7Z - ~1.9MB - dup520acinthia.7z        - Plain 7-Zip (v4.32) archive
 
 
 ===============================================================================
@@ -68,7 +68,7 @@ DrgUnPack5.exe and voila it is installed..
  Here is a list of files you must find in the Dragon UnPACKer distribution:
  (if not go to homepage and download it from there)
 
- drgunpack5.exe    	        2770 KB
+ drgunpack5.exe    	        2771 KB
  drgunpack5.exe.sig            1 KB  PGP Signature of drgunpack5.exe file
  file_id.diz       	           1 KB
  historique.txt    	          30 KB
@@ -95,7 +95,7 @@ DrgUnPack5.exe and voila it is installed..
  
  data\drivers\
  drv_11th.d5d                410 KB  11th Hour driver plugin (v1.0.0 Beta 2)
- drv_default.d5d             219 KB  Main driver plugin (v2.0.0)
+ drv_default.d5d             220 KB  Main driver plugin (v2.0.0a)
  drv_giants.d5d               96 KB  Giants GZP driver plugin (v1.0.2)
  drv_mix.d5d                  64 KB  WestWood MIX driver plugin (v1.1.4 Beta)
                                      By Felix Riemann

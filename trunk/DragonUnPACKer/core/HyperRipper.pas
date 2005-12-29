@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.4 2005-12-13 07:13:56 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.5 2005-12-29 20:07:18 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -127,13 +127,16 @@ type PFormatListElem = ^FormatsListElemEx;
     lblNamingLegO: TLabel;
     lblNamingLegN: TLabel;
     lblNamingLegH: TLabel;
-    panNaming: TPanel;
     panNamingExemple: TPanel;
     Panel2: TPanel;
     strMaxLength: TLabel;
     strCompatible: TLabel;
     lblMaxLength: TLabel;
     lblCompatible: TLabel;
+    lblNamingLegL: TLabel;
+    lblNamingLegS: TLabel;
+    panNaming: TPanel;
+    txtExample: TEdit;
     procedure cmdOkClick(Sender: TObject);
     procedure cmdSearchClick(Sender: TObject);
     procedure cmdBrowseClick(Sender: TObject);
@@ -857,7 +860,11 @@ begin
             hrip.addResult(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%s',DLNGstr('HRLG08'),inttostr(Found.Size)),inttohex(Found.Offset,8)),Found.Ext));
 
             resprefix := ReplaceValue('%o',prefix,IntToStr(Found.Offset));
-            resprefix := ReplaceValue('%h',resprefix,IntToHex(Found.Offset,8));
+            resprefix := ReplaceValue('%h',resprefix,IntToHex(Found.Offset,16));
+            // Feature request 1216790 //
+            resprefix := ReplaceValue('%s',prefix,IntToStr(Found.Size));
+            resprefix := ReplaceValue('%l',resprefix,IntToHex(Found.Size,16));
+            //\ Feature request 1216790 //\
             resprefix := ReplaceValue('%n',resprefix,Fill0(inttostr(numFound)));
 
             FSE.SetListElem(predir+resprefix+'.'+Found.Ext,Found.Offset,Found.Size,0,0);
@@ -1623,10 +1630,15 @@ begin
   res := ReplaceValue('%f',res,'exsounds');
   res := ReplaceValue('%x',res,'pak');
   res := ReplaceValue('%o',res,'9562');
-  res := ReplaceValue('%h',res,'0000255A');
+  res := ReplaceValue('%h',res,'000000000000255A');
+  // Feature request 1216790 //
+  res := ReplaceValue('%s',res,'7890');
+  res := ReplaceValue('%l',res,'0000000000001ED2');
+  //\ Feature request 1216790 //\
   res := ReplaceValue('%n',res,'5');
 
-  panNaming.Caption := ' '+res+'.wav';
+  txtExample.Text := ' '+res+'.wav';
+
 
 end;
 

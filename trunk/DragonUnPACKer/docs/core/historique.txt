@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.2.0                                      MPL 1.1 open source
-par Alexande "Elbereth" Devilliers                                   23/12/2005
+Dragon UnPACKer v5.2.0a                                     MPL 1.1 open source
+par Alexande "Elbereth" Devilliers                                   29/12/2005
 ===============================================================================
 
   ** Français ** (see Whatsnew.txt for english version)
@@ -22,7 +22,7 @@ Version des plugins:
 
 Plugins de Drivers:					                            Version:
 Elbereth's 11th Hour Driver (drv_11th.d5d)              1.0.0.8 Beta 2
-Main Driver (drv_default.d5d)                           2.0.0.734
+Main Driver (drv_default.d5d)                           2.0.0.735 Release A
 Nullpointer's Giants GZP Driver (drv_giants.d5d)        1.0.2.33
 A.Cordero's UT Packages Driver (drv_ut.d5d)             2.3.0.125
 Info-ZIP's ZIP Driver (DLL wrapper) (drv_zip.d5d)       1.1.0.131
@@ -37,6 +37,17 @@ Elbereth's HyperRipper 5 Plugin (hr_default.d5h)        5.0.2.69
 
 -------------------------------------------------------------------------------
 Version du programme principal et historique:
+
+Version 5.2.0.168
+Release A [29/12/2005]
+
+ + Requete d'ajout 1216790: taille du fichier nécessaire.
+ * Main driver v2.0.0 Release A (DUDI v4):
+   ! Correction de l'extraction des fichiers .PAK de The Movies (certains
+     fichiers avaient une seconde entete de compression... allez savoir
+     pourquoi...).
+     Merci au Wiki de XentaX pour l'info.
+
 
 Version 5.2.0.167
 Release [23/12/2005]

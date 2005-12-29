@@ -1,0 +1,65 @@
+Dragon LaNGuage Compiler (DLNGC) v4.0.0 Beta                           Freeware
+(c)Copyright 1999-2003 Alexandre "Elbereth" Devilliers               05-10-2003
+===============================================================================
+
+  What is DLNGC ?
+  ---------------
+
+This program allow you to make .LNG files for Elbereth's programs using
+external language support (ex: Dragon UnPACKer 5). Allowing you if you want to
+make a translation to any language of your choice (your language for example).
+
+
+  How to use DLNGC
+  ----------------
+
+The compiler by itself is very easy to use.
+Just run it with the filename you wish to compile.
+
+Ex: DLNGC example.ls
+
+But the LSF (Language Source file) format can seem strange.
+The only doc you will have is the commented LS file given (english.ls) from
+the Dragon UnPACKer archive.
+It should be enough to understand how to translate the file.
+
+
+  Compatibility list
+  ------------------
+
+DLNGC v4.0 is compiling DLNG files version 4.
+Here is a list of programs supporting this format:
+
+Program Name          ID      Version      (Internal Version)
+Dragon UnPACKer       UP      5.0.0.128+   (7)
+
+DLNGC v4.0 cannot compile DLNG files version 1, 2 or 3, if needed just use
+previous DLNGC versions:
+  v2.0.6 have full version 1 and 2 support
+  v3.0.4 have full version 3 support
+
+
+  Contact
+  -------
+
+For information about DLNG file format:
+http://www.elberethzone.net/index.php?page=dev
+
+You can reach Alex Devilliers:
+
+ By E-Mail: dlng (at) elberethzone (dot) net
+    By ICQ: 1535372 (Elbereth)
+
+
+  What's new?
+  -----------
+
+Version 4.0.0 Beta:
+
+ i Full support for the new DLNG v4.
+   Now uses WideStrings to store the strings (native Unicode support).
+   Added compression ability (Zlib).
+   Now using again a DLNG v2-like structure.
+ i Removed support for DLNG v3 (use DLNGc v3.0.4 for DLNG v3 support).
+
+===============================================================================

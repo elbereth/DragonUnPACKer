@@ -1,6 +1,6 @@
 <?php
 
-// $Id: dus.php,v 1.2 2005-12-17 11:40:53 elbereth Exp $
+// $Id: dus.php,v 1.3 2005-12-30 21:45:57 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dus/dus.php,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,9 +18,9 @@
 //
 
   // CVS variables
-  $CVS_REVISION = '$Revision: 1.2 $';
+  $CVS_REVISION = '$Revision: 1.3 $';
   $CVS_REVISION_DISPLAY = substr($CVS_REVISION,11,strlen($CVS_REVISION)-13);
-  $CVS_DATE = '$Date: 2005-12-17 11:40:53 $';
+  $CVS_DATE = '$Date: 2005-12-30 21:45:57 $';
   $CVS_DATE_DISPLAY = substr($CVS_DATE,7,strlen($CVS_DATE)-9);
 
   // Sending the header
@@ -67,7 +67,7 @@
 
   if ($line = mysql_fetch_array($queryresult, MYSQL_NUM)) {
 
-    $dusbody .= "[core]\nVersion=".$line[0]."\nVersionDisp=".$line[3]."\nURL=".$line[4]."\n\n";
+    $dusbody .= "[core]\nVersion=".$line[0]."\nVersionDisp=".$line[3]."\nUpdateURL=".$line[4]."\n\n";
      	
   }
 
@@ -84,7 +84,7 @@
 
   if ($line = mysql_fetch_array($queryresult, MYSQL_NUM)) {
 
-    $dusbody .= "[corewip]\nVersion=".$line[0]."\nVersionDisp=".$line[3]."\nURL=".$line[4]."\n\n";
+    $dusbody .= "[corewip]\nVersion=".$line[0]."\nVersionDisp=".$line[3]."\nUpdateURL=".$line[4]."\n\n";
      	
   }
 

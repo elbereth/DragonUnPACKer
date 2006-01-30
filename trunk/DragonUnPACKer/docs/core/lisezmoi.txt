@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.2.0a                                     MPL 1.1 open source
-par Alexande "Elbereth" Devilliers                                   29/12/2005
+Dragon UnPACKer v5.2.0b                                     MPL 1.1 open source
+par Alexande "Elbereth" Devilliers                                   30/01/2006
 ===============================================================================
 
   ** Français ** (see Readme.txt for english)
@@ -36,8 +36,8 @@ les fichiers textes doivent rester intact dans le fichier zip, et aucun autre
 fichier ne doit etre rajouté.
 
  Le programme est distribuée sous deux formes (meme contenu):
-    SETUP - ~2.2mo - dup520acinthia-setup.exe - Avec install/desinstall
-       7Z - ~1.9mo - dup520acinthia.7z        - Archive 7-Zip (v4.32)
+    SETUP - ~2.2mo - dup520bcinthia-setup.exe - Avec install/desinstall
+       7Z - ~1.9mo - dup520bcinthia.7z        - Archive 7-Zip (v4.32)
 
 ===============================================================================
  2. DESCRIPTION DU PROGRAMME

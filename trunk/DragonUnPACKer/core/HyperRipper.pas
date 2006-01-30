@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.5 2005-12-29 20:07:18 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.6 2006-01-30 10:35:28 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -862,7 +862,7 @@ begin
             resprefix := ReplaceValue('%o',prefix,IntToStr(Found.Offset));
             resprefix := ReplaceValue('%h',resprefix,IntToHex(Found.Offset,16));
             // Feature request 1216790 //
-            resprefix := ReplaceValue('%s',prefix,IntToStr(Found.Size));
+            resprefix := ReplaceValue('%s',resprefix,IntToStr(Found.Size));
             resprefix := ReplaceValue('%l',resprefix,IntToHex(Found.Size,16));
             //\ Feature request 1216790 //\
             resprefix := ReplaceValue('%n',resprefix,Fill0(inttostr(numFound)));

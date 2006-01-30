@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.2.0a                                     MPL 1.1 open source
-par Alexande "Elbereth" Devilliers                                   29/12/2005
+Dragon UnPACKer v5.2.0b                                     MPL 1.1 open source
+par Alexande "Elbereth" Devilliers                                   30/01/2006
 ===============================================================================
 
   ** Français ** (see Whatsnew.txt for english version)
@@ -37,6 +37,15 @@ Elbereth's HyperRipper 5 Plugin (hr_default.d5h)        5.0.2.69
 
 -------------------------------------------------------------------------------
 Version du programme principal et historique:
+
+Version 5.2.0.169
+Release B [30/01/2006]
+
+ ! Correction bug: En ajoutant la requete 1216790: taille du fichier nécessaire
+   j'avais malheureusement cassé 2 anciens mots clés.
+ ! Correction des traductions espagnoles et anglaise (mot clés OPT203 manquant)
+   Ces fichiers de langue sont compatibles avec les autres version 5.2.0.
+
 
 Version 5.2.0.168
 Release A [29/12/2005]

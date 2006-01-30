@@ -112,10 +112,10 @@ RootDir=
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=1
-MajorVer=1
+MajorVer=2
 MinorVer=0
 Release=0
-Build=40
+Build=42
 Debug=0
 PreRelease=1
 Special=0
@@ -126,13 +126,13 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone
 FileDescription=Dragon UnPACKer 5 Package (D5P) Maker
-FileVersion=1.0.0.40
+FileVersion=2.0.0.42
 InternalName=dpackc
-LegalCopyright=(c)2003/2004 Alexandre "Elbereth" Devilliers
+LegalCopyright=(c)2003-2006 Alexandre "Elbereth" Devilliers
 LegalTrademarks=
 OriginalFilename=dpackc
 ProductName=D5P Maker
-ProductVersion=1.0.0 Beta
+ProductVersion=2.0.0 Beta
 Comments=Allows you to make .D5P files to be installed by Duppi of Dragon UnPACKer 5
 [HistoryLists\hlUnitAliases]
 Count=1
@@ -142,10 +142,10 @@ Count=1
 Item0=H:\Programmation\CVS\drgunpacker\common
 [HistoryLists\hlOutputDirectorry]
 Count=7
-Item0=C:\Developpement
-Item1=C:\Developpement\dup-dev-5.1-compiled\utils
-Item2=C:\Developpement\dup-dev-5.1-compiled\data\drivers
-Item3=H:\Programmation\Compiled\drgunpacker\current\data\drivers
-Item4=C:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
-Item5=C:\Developpement\dup-dev-5.1-compiled\data\convert
-Item6=C:\Developpement\dup-dev-5.1-compiled
+Item0=C:\Developpement\dup-dev-5.1-compiled
+Item1=C:\Developpement
+Item2=C:\Developpement\dup-dev-5.1-compiled\utils
+Item3=C:\Developpement\dup-dev-5.1-compiled\data\drivers
+Item4=H:\Programmation\Compiled\drgunpacker\current\data\drivers
+Item5=C:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
+Item6=C:\Developpement\dup-dev-5.1-compiled\data\convert

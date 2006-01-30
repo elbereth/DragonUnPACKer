@@ -1,6 +1,6 @@
 unit Config;
 
-// $Id: Config.pas,v 1.1.1.1 2004-05-08 10:26:59 elbereth Exp $
+// $Id: Config.pas,v 1.2 2006-01-30 10:49:13 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dpackc/Config.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -34,10 +34,6 @@ type
     optCompDiff: TRadioButton;
     optCompEqual: TRadioButton;
     txtDUP5Version: TEdit;
-    Label1: TLabel;
-    txtVersion: TEdit;
-    Label2: TLabel;
-    lblVersion: TStaticText;
     TabSheet3: TTabSheet;
     Label3: TLabel;
     txtName: TEdit;
@@ -52,6 +48,11 @@ type
     txtImageFile: TEdit;
     butBrowseImage: TButton;
     butOk: TButton;
+    SaveDialog: TSaveDialog;
+    txtVersion: TEdit;
+    Label1: TLabel;
+    Label2: TLabel;
+    lblVersion: TStaticText;
     Label7: TLabel;
     Label8: TLabel;
     Label9: TLabel;
@@ -59,7 +60,6 @@ type
     Label11: TLabel;
     Label12: TLabel;
     Label13: TLabel;
-    SaveDialog: TSaveDialog;
     procedure butOkClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure txtVersionChange(Sender: TObject);

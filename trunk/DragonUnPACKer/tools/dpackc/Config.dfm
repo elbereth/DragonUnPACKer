@@ -1,6 +1,6 @@
 object frmPackCfg: TfrmPackCfg
-  Left = 51
-  Top = 151
+  Left = 803
+  Top = 187
   BorderStyle = bsToolWindow
   Caption = 'Project parameters'
   ClientHeight = 294
@@ -21,7 +21,7 @@ object frmPackCfg: TfrmPackCfg
     Top = 8
     Width = 281
     Height = 249
-    ActivePage = TabSheet1
+    ActivePage = TabSheet4
     TabOrder = 0
     object TabSheet1: TTabSheet
       Caption = 'Version'

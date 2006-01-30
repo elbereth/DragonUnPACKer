@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.1.1.1 2004-05-08 10:27:03 elbereth Exp $
+// $Id: Main.pas,v 1.2 2006-01-30 10:49:13 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dpackc/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -22,7 +22,8 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, zlib,
   Dialogs, ComCtrls, StdCtrls, Menus, ToolWin, ImgList, ExtCtrls,
-  lib_crc, lib_zlib, lib_utils, spec_DUPP, JvComponent, JvSimpleXml, lib_version;
+  lib_crc, lib_zlib, spec_DUPP, JvComponent, JvSimpleXml, lib_version, lib_binutils,
+  JvExStdCtrls, JvButton, JvCtrls, JvRichEdit;
 
 type
      BMPHeader = packed record
@@ -44,35 +45,17 @@ type
        ColorsImportant: integer;
      end;
   TfrmMain = class(TForm)
-    MainMenu: TMainMenu;
-    StatusBar1: TStatusBar;
-    menuFichier: TMenuItem;
-    menuFichier_Ouvrir: TMenuItem;
-    menuFichier_Save: TMenuItem;
-    N1: TMenuItem;
-    menuFichier_Quitter: TMenuItem;
-    N2: TMenuItem;
-    menuFichier_Compiler: TMenuItem;
-    ToolBar: TToolBar;
-    butNew: TToolButton;
-    butOpen: TToolButton;
-    butSave: TToolButton;
-    sep0: TToolButton;
-    butAdd: TToolButton;
-    butDel: TToolButton;
     Dialog: TOpenDialog;
-    sep1: TToolButton;
-    butCompile: TToolButton;
     imgButtons: TImageList;
-    Projet1: TMenuItem;
-    Paramtres1: TMenuItem;
     SaveDialog: TSaveDialog;
     SimpleXML: TJvSimpleXml;
-    menuFichier_New: TMenuItem;
-    N3: TMenuItem;
-    menuAbout: TMenuItem;
-    menuAbout_About: TMenuItem;
-    Panel1: TPanel;
+    PageControl1: TPageControl;
+    TabSheet1: TTabSheet;
+    panPicture: TPanel;
+    imgAbout: TImage;
+    lblVersion: TLabel;
+    lblCompatible: TLabel;
+    TabSheet2: TTabSheet;
     lstFiles: TListView;
     grpInfos: TGroupBox;
     Label1: TLabel;
@@ -85,10 +68,51 @@ type
     txtInstallTo: TComboBox;
     txtInstallDir: TEdit;
     chkRegSvr: TCheckBox;
-    panPicture: TPanel;
-    imgAbout: TImage;
-    lblVersion: TLabel;
-    lblCompatible: TLabel;
+    TabSheet3: TTabSheet;
+    GroupBox1: TGroupBox;
+    txtVersion: TEdit;
+    Label4: TLabel;
+    lblPreviewVersion: TStaticText;
+    Label7: TLabel;
+    Label8: TLabel;
+    Label9: TLabel;
+    Label10: TLabel;
+    Label12: TLabel;
+    Label13: TLabel;
+    GroupBox2: TGroupBox;
+    optCompInf: TRadioButton;
+    optCompSup: TRadioButton;
+    chkDUP5: TCheckBox;
+    optCompEqual: TRadioButton;
+    optCompDiff: TRadioButton;
+    txtDUP5Version: TEdit;
+    GroupBox3: TGroupBox;
+    Label3: TLabel;
+    txtName: TEdit;
+    Label5: TLabel;
+    txtURL: TEdit;
+    Label6: TLabel;
+    txtAuthor: TEdit;
+    Label11: TLabel;
+    txtComment: TEdit;
+    chkImagePerso: TCheckBox;
+    txtImageFile: TEdit;
+    butBrowseImage: TButton;
+    TabSheet4: TTabSheet;
+    JvRichEdit1: TJvRichEdit;
+    ToolBar: TToolBar;
+    butAdd: TToolButton;
+    butDel: TToolButton;
+    ProgressBar1: TProgressBar;
+    Label14: TLabel;
+    Edit1: TEdit;
+    Button2: TButton;
+    GroupBox4: TGroupBox;
+    JvImgBtn1: TJvImgBtn;
+    butOpen: TJvImgBtn;
+    JvImgBtn3: TJvImgBtn;
+    butCompile: TJvImgBtn;
+    butExit: TButton;
     procedure ListBox1DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure ListBox1DragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
@@ -114,9 +138,10 @@ type
     procedure menuFichier_SaveClick(Sender: TObject);
     procedure menuFichier_OuvrirClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure FormResize(Sender: TObject);
-    procedure butOpenClick(Sender: TObject);
-    procedure butSaveClick(Sender: TObject);
+    procedure butExitClick(Sender: TObject);
+    procedure txtVersionChange(Sender: TObject);
+    procedure chkDUP5Click(Sender: TObject);
+    procedure chkImagePersoClick(Sender: TObject);
 //    function convertInstallTo(val: integer): string;
   private
     { Déclarations privées }
@@ -159,7 +184,7 @@ type FileInfo = class
      end;
 
 const DPSVERSION = 1;
-      VERSION = 10011;
+      VERSION = 20011;
 
 {$R *.dfm}
 
@@ -481,7 +506,6 @@ begin
   txtInstallTo.ItemIndex := tmp.InstallTo;
   txtInstallDir.Text := tmp.InstallDir;
 
-  panPicture.Visible := false;
   chkCompress.Checked := tmp.Compress;
   chkUpgradeOnly.Checked := tmp.UpgradeOnly;
   chkUpgradeOnly.Enabled := (tmp.Version > -1);
@@ -490,6 +514,15 @@ begin
   chkHidden.Checked := tmp.Hidden;
   chkRegSvr.Checked := tmp.RegSvr;
   butDel.Enabled := true;
+
+  txtInstallTo.Enabled := false;
+  txtInstallDir.Enabled := false;
+  chkCompress.Enabled := false;
+  chkUpgradeOnly.Enabled := false;
+  chkStoreDateTime.Enabled := false;
+  chkRegSvr.Enabled := false;
+  chkReadOnly.Enabled := false;
+  chkHidden.Enabled := false;
 
   if (uppercase(ExtractFileExt(tmp.Filename)) = '.DLL')
   or (uppercase(ExtractFileExt(tmp.Filename)) = '.OCX')
@@ -598,9 +631,21 @@ procedure TfrmMain.lstFilesChange(Sender: TObject; Item: TListItem;
 begin
 
   if lstFiles.Items.Count > 0 then
+  begin
     butCompile.Enabled := true
+  end
   else
+  begin
     butCompile.Enabled := false;
+    txtInstallTo.Enabled := false;
+    txtInstallDir.Enabled := false;
+    chkCompress.Enabled := false;
+    chkUpgradeOnly.Enabled := false;
+    chkStoreDateTime.Enabled := false;
+    chkRegSvr.Enabled := false;
+    chkReadOnly.Enabled := false;
+    chkHidden.Enabled := false;
+  end;
 
 end;
 
@@ -895,28 +940,49 @@ begin
 
 end;
 
-procedure TfrmMain.FormResize(Sender: TObject);
+procedure TfrmMain.butExitClick(Sender: TObject);
 begin
 
-  panPicture.Width := grpInfos.Width;
-  panPicture.Top := grpInfos.Top;
-
-  if frmMain.Width < 543 then
-    frmMain.Width := 543;
+  Application.Terminate;
 
 end;
 
-procedure TfrmMain.butOpenClick(Sender: TObject);
+procedure TfrmMain.txtVersionChange(Sender: TObject);
 begin
 
-  menuFichier_Ouvrir.Click;
+  lblPreviewVersion.Caption := getVersion(strtoint(txtVersion.Text));
+  PackVersion := StrToInt(txtVersion.Text);
 
 end;
 
-procedure TfrmMain.butSaveClick(Sender: TObject);
+procedure TfrmMain.chkDUP5Click(Sender: TObject);
 begin
 
-  menuFichier_Save.Click;
+  PackDUP5Check := chkDUP5.Checked;
+
+  if (PackDUP5Check) then
+  begin
+    optCompSup.Enabled := true;
+    optCompInf.Enabled := true;
+    optCompdiff.Enabled := true;
+    optCompEqual.Enabled := true;
+    txtDUP5Version.Enabled := true;
+  end
+  else
+  begin
+    optCompSup.Enabled := false;
+    optCompInf.Enabled := false;
+    optCompdiff.Enabled := false;
+    optCompEqual.Enabled := false;
+    txtDUP5Version.Enabled := false;
+  end;
+
+end;
+
+procedure TfrmMain.chkImagePersoClick(Sender: TObject);
+begin
+
+  PackImagePerso := chkImagePerso.Checked;
 
 end;
 

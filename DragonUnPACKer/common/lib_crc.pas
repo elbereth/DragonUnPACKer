@@ -1,6 +1,6 @@
 unit lib_crc;
 
-// $Id: lib_crc.pas,v 1.1.1.1 2004-05-08 10:25:11 elbereth Exp $
+// $Id: lib_crc.pas,v 1.2 2008-03-02 18:29:58 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_crc.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -26,6 +26,7 @@ unit lib_crc;
 
 interface
 function GetStrCRC32(Data: string) : longint;
+function GetBufCRC32(Data: PChar; datalength: integer) : longint;
 
 implementation
 
@@ -65,6 +66,26 @@ function GetStrCRC32(Data: string) : longint;
 var
    crc: longint;
    index, datalength: integer;
+begin
+   if not(tabinit) then
+     fcrctable := crc32gen;
+
+   crc := longint($FFFFFFFF) ;
+
+   datalength := length(data) ;
+   index := 1;
+   while index <= datalength do
+   begin
+      crc := ((crc shr 8) and $FFFFFF) xor fcrctable[(crc xor byte(data[index]) ) and $FF];
+      inc(index) ;
+   end;
+   result := (crc xor Integer($FFFFFFFF) ) ;
+end;
+
+function GetBufCRC32(Data: PChar; datalength: Integer) : longint;
+var
+   crc: longint;
+   index: integer;
 begin
    if not(tabinit) then
      fcrctable := crc32gen;

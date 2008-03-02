@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.6 2005-12-18 15:04:36 elbereth Exp $
+// $Id: Installer.pas,v 1.7 2008-03-02 18:13:26 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -22,8 +22,9 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, lib_binutils, spec_DUPP, zlib, lib_crc, lib_zlib, Registry,
-  ExtCtrls, ShellAPI, lib_language, XPMan, VirtualTrees, HttpProt,
-  JvListView, IniFiles, lib_utils, JvExStdCtrls, JvRichEdit;
+  ExtCtrls, ShellAPI, lib_language, XPMan, VirtualTrees, OverbyteIcsHttpProt,
+  JvListView, IniFiles, lib_utils, JvExStdCtrls, JvRichEdit,
+  OverbyteIcsWndControl;
 
 type
  pvirtualTreeData = ^virtualTreeData;
@@ -109,7 +110,7 @@ type
     linkToWIP: TLabel;
     Shape1: TShape;
     lstTranslations: TListView;
-    procedure parseDUPP_version1(src: integer);
+    procedure parseDUPP_version1to3(src: integer; version: integer);
     function infosDUPP_version1(src: integer): boolean;
     function infosDUPP_version2(src: integer): boolean;
     function isDup5Running(): boolean;
@@ -193,7 +194,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 21040;
+  VERSION: Integer = 22040;
 
 implementation
 
@@ -255,8 +256,9 @@ begin
 
   if (hDupp <> 0) and (NFOLoaded) then
     case HDR.Version of
-      1: parseDUPP_version1(hDupp);
-      2: parseDUPP_version1(hDupp);
+      1: parseDUPP_version1to3(hDupp,HDR.Version);
+      2: parseDUPP_version1to3(hDupp,HDR.Version);
+      3: parseDUPP_version1to3(hDupp,HDR.Version);
     else
       MessageDlg(ReplaceValue('%v',DLNGstr('PI0014'),inttostr(HDR.Version)),mtError, [mbOk],0);
     end;
@@ -270,7 +272,7 @@ begin
 
 end;
 
-procedure TfrmInstaller.parseDUPP_version1(src: integer);
+procedure TfrmInstaller.parseDUPP_version1to3(src: integer; version: integer);
 var ENT: DUP5PACK_File;
     FileName, InstallDir, DestDir: string;
     x, fout, calcCRC, size, destVersion: integer;
@@ -369,12 +371,18 @@ begin
             InputStream.Free
           end;
           List.Items.Add('Calculating CRC32..');
-          calcCRC := getStrCRC32(bufoutstr^);
+          if version = 3 then
+            calcCRC := GetBufCRC32(bufoutstr,ENT.DSize)
+          else
+            calcCRC := getStrCRC32(bufoutstr^);
           List.Items.Add('Buffer: '+IntToHex(calcCRC,8)+' / Compare: '+IntToHex(ENT.CRC,8));
         end
         else
         begin
-          calcCRC := getStrCRC32(buf^);
+          if version = 3 then
+            calcCRC := GetBufCRC32(buf,ENT.DSize)
+          else
+            calcCRC := getStrCRC32(buf^);
           Size := ENT.DSize;
         end;
 
@@ -646,6 +654,7 @@ begin
     case HDR.Version of
       1: result := infosDUPP_version1(hDupp);
       2: result := infosDUPP_version2(hDupp);
+      3: result := infosDUPP_version2(hDupp);
     else
       MessageDlg(ReplaceValue('%v',DLNGstr('PI0014'),inttostr(HDR.Version)),mtError, [mbOk],0);
       result := false;
@@ -883,6 +892,7 @@ begin
 //HttpCli1.URL := 'http://dus.dragonunpacker.com/dup5.dus';   // Old URL
 //HttpCli1.URL := 'http://www.elberethzone.net/dup5.dus';     // 5.0/5.1 URL DUS v2.0
   HttpCli1.URL := 'http://dragonunpacker.sourceforge.net/dus.php?installedbuild='+inttostr(corebuild);     // 5.2+ URL DUS v3.0
+  writeLog(inttostr(corebuild));
   tmpFile := getTempFile('.dus');
   HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
   CurDL := DLNGstr('PII100');

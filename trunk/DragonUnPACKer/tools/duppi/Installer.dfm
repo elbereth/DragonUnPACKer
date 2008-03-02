@@ -1678,6 +1678,7 @@ object frmInstaller: TfrmInstaller
       Top = 40
       Width = 513
       Height = 57
+      AutoSize = False
       HideScrollBars = False
       ReadOnly = True
       ScrollBars = ssVertical
@@ -1774,6 +1775,9 @@ object frmInstaller: TfrmInstaller
     MultiThreaded = False
     RequestVer = '1.0'
     FollowRelocation = True
+    LocationChangeMaxCount = 5
+    ServerAuth = httpAuthNone
+    ProxyAuth = httpAuthNone
     BandwidthLimit = 10000
     BandwidthSampling = 1000
     Options = [httpoNoNTLMAuth]

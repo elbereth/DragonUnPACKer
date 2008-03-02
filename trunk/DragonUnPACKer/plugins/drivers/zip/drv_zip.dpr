@@ -1,6 +1,6 @@
 library drv_zip;
 
-// $Id: drv_zip.dpr,v 1.5 2005-12-22 21:33:02 elbereth Exp $
+// $Id: drv_zip.dpr,v 1.6 2008-03-02 12:15:44 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/zip/drv_zip.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -29,6 +29,9 @@ uses
 {$E d5d}
 
 {$R *.res}
+
+{$Include datetime.inc}
+
 type
    TPercentCallback = procedure (p: byte);
    TLanguageCallback = function (lngid: ShortString): ShortString;
@@ -43,9 +46,10 @@ type
                 Added Doom 3 & Quake 4 .PK4 to the supported file types
                 Added Serious Sam 2 .GRO to the supported file types
                 Added Call of Duty 2 .IWD to the supported file types
+  11140  52040  Added a lot of supported file types thanks to Z0oMiK
 
   /////////////////////////////////////////////////////////////////////////////}
-const DRIVER_VERSION = 11040;
+const DRIVER_VERSION = 11140;
       DUP_VERSION = 52040;
       COMPANY_NAME = 'Info-ZIP';
 
@@ -296,11 +300,11 @@ begin
     GetDriverInfo.Name := 'InfoZip''s ZIP Driver [MISSING UNZIP32.DLL]';
     GetDriverInfo.Version := GetVersion(DRIVER_VERSION)+' (No DLL!)';
   end;
-  GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
-  GetDriverInfo.Comment := 'This Driver is a wrapper to the Info-ZIP UnZip32.DLL. Using UnZip.pas by Gerke Preussner <j3rky@gerke-preussner.de>.';
+  GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth/Piecito)';
+  GetDriverInfo.Comment := 'This Driver is a wrapper to the Info-ZIP UnZip32.DLL. Using UnZip.pas by Gerke Preussner <j3rky@gerke-preussner.de>. Note: Password for Paradise Cracked files is "stereosystem".';
   if DLLStatus then
   begin
-    GetDriverInfo.NumFormats := 13;
+    GetDriverInfo.NumFormats := 49;
     GetDriverInfo.Formats[1].Extensions := '*.pk3';
     GetDriverInfo.Formats[1].Name := 'Call of Duty (*.PK3)|Quake 3 Arena (*.PK3)|Medal of Honor: Allied Assault (*.PK3)|American McGee Alice (*.PK3)|Jedi Knight 2: Jedi Outcast (*.PK3)|Heavy Metal: F.A.K.K.2 (*.PK3)';
     GetDriverInfo.Formats[2].Extensions := '*.rvi;*.rvm;*.rvr';
@@ -308,7 +312,7 @@ begin
     GetDriverInfo.Formats[3].Extensions := '*.crf';
     GetDriverInfo.Formats[3].Name := 'System Shock 2 (*.CRF)|Thief (*.CRF)|Thief 2 (*.CRF)';
     GetDriverInfo.Formats[4].Extensions := '*.nob';
-    GetDriverInfo.Formats[4].Name := 'Vampire: The Masquerade (*.NOB)';
+    GetDriverInfo.Formats[4].Name := 'Vampire: The Masquerade (*.NOB)|Vampire The Masquerade Redemption (*.NOB)';
     GetDriverInfo.Formats[5].Extensions := '*.gro';
     GetDriverInfo.Formats[5].Name := 'Serious Sam (*.GRO)|Serious Sam 2 (*.GRO)';
     GetDriverInfo.Formats[6].Extensions := '*.pac';
@@ -318,15 +322,92 @@ begin
     GetDriverInfo.Formats[8].Extensions := '*.mgz';
     GetDriverInfo.Formats[8].Name := 'Metal Gear Solid (*.MGZ)';
     GetDriverInfo.Formats[9].Extensions := '*.za';
-    GetDriverInfo.Formats[9].Name := 'Line of Sight: Vietnam (*.ZA)';
+    GetDriverInfo.Formats[9].Name := 'Line of Sight: Vietnam (*.ZA)|Deadly Dozen (*.ZA)|Deadly Dozen 2 Pacific Theater (*.ZA)';
     GetDriverInfo.Formats[10].Extensions := '*.mob';
     GetDriverInfo.Formats[10].Name := 'Master of Orion 3 (*.MOB)';
     GetDriverInfo.Formats[11].Extensions := '*.rod';
     GetDriverInfo.Formats[11].Name := 'Hot Rod American Street Drag (*.ROD)';
     GetDriverInfo.Formats[12].Extensions := '*.pk4';
-    GetDriverInfo.Formats[12].Name := 'Doom 3 (*.PK4)|Quake 4 (*.PK4)';
+    GetDriverInfo.Formats[12].Name := 'Doom 3 (*.PK4)|Quake 4 (*.PK4)|Doom 3 Resurrection Of Evil (*.PK4)';
     GetDriverInfo.Formats[13].Extensions := '*.iwd';
     GetDriverInfo.Formats[13].Name := 'Call of Duty 2 (*.IWD)';
+    GetDriverInfo.Formats[14].Extensions := '*.ZIPFS';
+    GetDriverInfo.Formats[14].Name := '18 Wheels Of Steel Across America (*.ZIPFS)';
+    GetDriverInfo.Formats[15].Extensions := '*.CSC';
+    GetDriverInfo.Formats[15].Name := '18 Wheels Of Steel Pedal To The Metal (*.CSC)';
+    GetDriverInfo.Formats[16].Extensions := '*.ABZ';
+    GetDriverInfo.Formats[16].Name := 'Alpha Black Zero (*.ABZ)';
+    GetDriverInfo.Formats[17].Extensions := '*.TEXTUREPACK;*.DATA';
+    GetDriverInfo.Formats[17].Name := 'Arena Wars (*.TEXTUREPACK;*.DATA)';
+    GetDriverInfo.Formats[18].Extensions := '*.CTP';
+    GetDriverInfo.Formats[18].Name := 'Call To Power (*.CTP)';
+    GetDriverInfo.Formats[19].Extensions := '*.BOX';
+    GetDriverInfo.Formats[19].Name := 'Cellblock Squadrons (*.BOX)';
+    GetDriverInfo.Formats[20].Extensions := '*.DAT';
+    GetDriverInfo.Formats[20].Name := 'Against Rome (*.DAT)|Defiance (*.DAT)|Ricochet Lost Worlds Recharged (*.DAT)|Ricochet Xtreme (*.DAT)|Star Wolves (*.DAT)|Uplink (*.DAT)';
+    GetDriverInfo.Formats[21].Extensions := '*.ZTD';
+    GetDriverInfo.Formats[21].Name := 'Dinosaur Digs (*.ZTD)';
+    GetDriverInfo.Formats[22].Extensions := '*.DLU';
+    GetDriverInfo.Formats[22].Name := 'Dirty Little Helper 98(*.DLU)';
+    GetDriverInfo.Formats[23].Extensions := '*.ZIPFS';
+    GetDriverInfo.Formats[23].Name := 'Duke Nukem - Manhattan Project (*.ZIPFS)';
+    GetDriverInfo.Formats[24].Extensions := '*.ARH';
+    GetDriverInfo.Formats[24].Name := 'El Airplane (*.ARH)';
+    GetDriverInfo.Formats[25].Extensions := '*.ZA';
+    GetDriverInfo.Formats[25].Name := 'Elite Warriors (*.ZA)';
+    GetDriverInfo.Formats[26].Extensions := '*.BOS';
+    GetDriverInfo.Formats[26].Name := 'Fallout Tactics (*.BOS)';
+    GetDriverInfo.Formats[27].Extensions := '*.FF';
+    GetDriverInfo.Formats[27].Name := 'Freedom Force (*.FF)|Freedom Force vs The 3rd Reich (*.FF)';
+    GetDriverInfo.Formats[28].Extensions := '*.FLMOD';
+    GetDriverInfo.Formats[28].Name := 'Freelancer (*.FLMOD)';
+    GetDriverInfo.Formats[29].Extensions := '*.A';
+    GetDriverInfo.Formats[29].Name := 'Hellhog XP (*.A)';
+    GetDriverInfo.Formats[30].Extensions := '*.ZIP';
+    GetDriverInfo.Formats[30].Name := 'Dethkarz (*.ZIP)|Battlefield 2 (*.ZIP)|Empire Earth 2 (*.ZIP)|Falcon 4 (*.ZIP)|Fire Starter (*.ZIP)|Freedom Fighters (*.ZIP)|Hitman Contracts (*.ZIP)|Hitman Bloodmoney (*.ZIP)|Hitman 2 Silent Assasin (*.ZIP)|Slave Zero (*.ZIP)';
+    GetDriverInfo.Formats[31].Extensions := '*.POD';
+    GetDriverInfo.Formats[31].Name := 'Hoyle Games 2005 (*.POD)|Terminator 3 (*.POD)';
+    GetDriverInfo.Formats[32].Extensions := '*.SCS';
+    GetDriverInfo.Formats[32].Name := 'Hunting Unlimited 3 (*.SCS)';
+    GetDriverInfo.Formats[33].Extensions := '*.PSH';
+    GetDriverInfo.Formats[33].Name := 'Itch (*.PSH)';
+    GetDriverInfo.Formats[34].Extensions := '*.LZP';
+    GetDriverInfo.Formats[34].Name := 'Law And Order 3 Justice Is Served (*.LZP)';
+    GetDriverInfo.Formats[35].Extensions := '*.ZA';
+    GetDriverInfo.Formats[35].Name := 'Line of Sight Vietnam (*.ZA)';
+    GetDriverInfo.Formats[36].Extensions := '*.ZTD';
+    GetDriverInfo.Formats[36].Name := 'Marine Mania (*.ZTD)';
+    GetDriverInfo.Formats[37].Extensions := '*.CAB';
+    GetDriverInfo.Formats[37].Name := 'Microsoft Flight Simulator 2004 (*.CAB)';
+    //--------------------------------------------------------------------------
+    //NOTE only for Paradise Cracked
+    //The game Paradise Cracked using default ZIP files + password
+    //The password for archives -> stereosystem
+    //--------------------------------------------------------------------------
+    GetDriverInfo.Formats[38].Extensions := '*.PAK';
+    GetDriverInfo.Formats[38].Name := 'Blitzkrieg (*.PAK)|Blitzkrieg Burning Horizon (*.PAK)|Blitzkrieg Rolling Thunder (*.PAK)|Brothers Pilots 4 (*.PAK)|Call of Juarez (*.PAK)|Far Cry (*.PAK)|Maximus XV (*.PAK)|Monte Cristo (*.PAK)|Outfront (*.PAK)|Paradise Cracked (*.PAK)|Perimeter (*.PAK)';
+    GetDriverInfo.Formats[39].Extensions := '*.BND';
+    GetDriverInfo.Formats[39].Name := 'Neighbours From Hell (*.BND)|Neighbours From Hell 2 (*.BND)';
+    GetDriverInfo.Formats[40].Extensions := '*.ARF';
+    GetDriverInfo.Formats[40].Name := 'Packmania 2 (*.ARF)';
+    GetDriverInfo.Formats[41].Extensions := '*.PSH';
+    GetDriverInfo.Formats[41].Name := 'Pusher (*.PSH)';
+    GetDriverInfo.Formats[42].Extensions := '*.RBZ';
+    GetDriverInfo.Formats[42].Name := 'Richard Burns Rally (*.RBZ)';
+    GetDriverInfo.Formats[43].Extensions := '*.SAB';
+    GetDriverInfo.Formats[43].Name := 'Sabotain (*.SAB)';
+    GetDriverInfo.Formats[44].Extensions := '*.FBZ';
+    GetDriverInfo.Formats[44].Name := 'Shadowgrounds (*.FBZ)';
+    GetDriverInfo.Formats[45].Extensions := '*.SXT';
+    GetDriverInfo.Formats[45].Name := 'Singles Flirt Up Your Life (*.SXT)';
+    GetDriverInfo.Formats[46].Extensions := '*.RES';
+    GetDriverInfo.Formats[46].Name := 'Swat 3 Close Quarters Battle (*.RES)';
+    GetDriverInfo.Formats[47].Extensions := '*.BOT';
+    GetDriverInfo.Formats[47].Name := 'Team Factor (*.BOT)';
+    GetDriverInfo.Formats[48].Extensions := '*.BIN';
+    GetDriverInfo.Formats[48].Name := 'X-Men Legends 2 (*.BIN)|XPand Rally (*.BIN)';
+    GetDriverInfo.Formats[49].Extensions := '*.PK1;*.PK2';
+    GetDriverInfo.Formats[49].Name := 'XS Mark (*.PK1;*.PK2)';
   end
   else
     GetDriverInfo.NumFormats := 0;
@@ -477,17 +558,63 @@ begin
     else
       if ext = 'PK3' then
         IsFormat := True
+      else if ext = 'A' then
+        IsFormat := True
+      else if ext = 'ABZ' then
+        IsFormat := True
+      else if ext = 'ARF' then
+        IsFormat := True
+      else if ext = 'ARH' then
+        IsFormat := True
+      else if ext = 'BND' then
+        IsFormat := True
+      else if ext = 'BIN' then
+        IsFormat := True
+      else if ext = 'BOS' then
+        IsFormat := True
+      else if ext = 'BOT' then
+        IsFormat := True
+      else if ext = 'BOX' then
+        IsFormat := True
+      else if ext = 'CAB' then
+        IsFormat := True
       else if ext = 'CRF' then
+        IsFormat := True
+      else if ext = 'CSC' then
+        IsFormat := True
+      else if ext = 'CTP' then
+        IsFormat := True
+      else if ext = 'DATA' then
+        IsFormat := True
+      else if ext = 'DLU' then
+        IsFormat := True
+      else if ext = 'FBZ' then
+        IsFormat := True
+      else if ext = 'FF' then
+        IsFormat := True
+      else if ext = 'FLMOD' then
         IsFormat := True
       else if ext = 'GRO' then
         IsFormat := True
       else if ext = 'IWD' then
         IsFormat := True
+      else if ext = 'LZP' then
+        IsFormat := True
       else if ext = 'MOB' then
         IsFormat := True
       else if ext = 'NOB' then
         IsFormat := True
+      else if ext = 'PAK' then
+        IsFormat := True
+      else if ext = 'PK1' then
+        IsFormat := True
+      else if ext = 'PK2' then
+        IsFormat := True
       else if ext = 'PK4' then
+        IsFormat := True
+      else if ext = 'POD' then
+        IsFormat := True
+      else if ext = 'ROD' then
         IsFormat := True
       else if ext = 'RVI' then
         IsFormat := True
@@ -495,11 +622,21 @@ begin
         IsFormat := True
       else if ext = 'RVR' then
         IsFormat := True
+      else if ext = 'SCS' then
+        IsFormat := True
+      else if ext = 'SXT' then
+        IsFormat := True
+      else if ext = 'TEXTUREPACK' then
+        IsFormat := True
       else if ext = 'VL2' then
         IsFormat := True
       else if ext = 'ZA' then
         IsFormat := True
       else if ext = 'ZIP' then
+        IsFormat := True
+      else if ext = 'ZIPFS' then
+        IsFormat := True
+      else if ext = 'ZTD' then
         IsFormat := True
       else
         IsFormat := False;
@@ -762,11 +899,7 @@ begin
       else
         Result := OpenZIPFile(fil);
     end
-    else
-      if (ext = 'PK3') or (ext = 'CRF') or (ext = 'RVI') or (ext = 'RVM')
-      or (ext = 'RVR') or (ext = 'NOB') or (ext = 'ZIP') or (ext = 'GRO')
-      or (ext = 'VL2') or (ext = 'ZA')  or (ext = 'MOB') or (ext = 'PK4')
-      or (ext = 'IWD') then
+    else if isFormat(fil,false) then
         Result := OpenZIPFile(fil)
       else
         ReadFormat := -1;
@@ -835,8 +968,8 @@ procedure AboutBox; stdcall;
 var msg: string;
 begin
 
-      msg := 'InfoZip''s ZIP Driver v'+getVersion(DRIVER_VERSION)+#10+
-                          '(c)Copyright 2002-2005 Alexandre Devilliers'+#10+#10+
+      msg := 'InfoZip''s ZIP Driver v'+getVersion(DRIVER_VERSION)+' ('+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')'+#10+
+                          'Created by Alexandre Devilliers'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+#10+
                           'This is a wrapper for the Info-ZIP UnZIP32.DLL.'+#10+
                           'Using UnZip.pas by Gerke Preussner <j3rky@gerke-preussner.de>.'+#10+#10+

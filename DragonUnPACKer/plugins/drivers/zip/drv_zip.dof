@@ -90,8 +90,8 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=C:\Developpement\dup-dev-5.1-compiled\data\drivers
-UnitOutputDir=
+OutputDir=E:\Developpement\dup-dev-5.1-compiled\data\drivers
+UnitOutputDir=E:\Developpement\dup-dev-5.1-dcu
 PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=
@@ -101,21 +101,17 @@ DebugSourceDirs=
 UsePackages=0
 [Parameters]
 RunParams=
-HostApplication=C:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
+HostApplication=E:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
 Launcher=
 UseLauncher=0
 DebugCWD=
-[Language]
-ActiveLang=
-ProjectLang=
-RootDir=
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=1
 MinorVer=1
-Release=0
-Build=131
+Release=1
+Build=136
 Debug=0
 PreRelease=0
 Special=0
@@ -126,25 +122,28 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone
 FileDescription=DUP5 - ZIP Driver (Info-ZIP's DLL wrapper)
-FileVersion=1.1.0.131
+FileVersion=1.1.1.136
 InternalName=drv_zip
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=drv_zip.d5d
 ProductName=Dragon UnPACKer 5
-ProductVersion=5.2.0
+ProductVersion=5.4.0
 Comments=DUP5 - ZIP Driver (Info-ZIP's DLL wrapper)
+[HistoryLists\hlConditionals]
+Count=1
+Item0=dyn_unzip32
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlSearchPath]
 Count=1
-Item0=H:\Programmation\CVS\drgunpacker\common
+Item0=E:\Developpement\dup-HEAD-2008\DragonUnPACKer
+[HistoryLists\hlUnitOutputDirectory]
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-dcu
 [HistoryLists\hlOutputDirectorry]
-Count=6
-Item0=C:\Developpement\dup-dev-5.1-compiled\utils
-Item1=C:\Developpement\dup-dev-5.1-compiled\data\drivers
-Item2=H:\Programmation\Compiled\drgunpacker\current\data\drivers
-Item3=C:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
-Item4=C:\Developpement\dup-dev-5.1-compiled\data\convert
-Item5=C:\Developpement\dup-dev-5.1-compiled
+Count=3
+Item0=E:\Developpement\dup-dev-5.1-compiled\data\drivers
+Item1=E:\Developpement\dup-dev-5.1-compiled
+Item2=E:\Developpement\dup-dev-5.1-compiled\utils

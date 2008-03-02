@@ -90,8 +90,8 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=C:\Developpement
-UnitOutputDir=
+OutputDir=E:\Developpement
+UnitOutputDir=E:\Developpement\dup-dev-5.1-dcu
 PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=
@@ -105,19 +105,15 @@ HostApplication=
 Launcher=
 UseLauncher=0
 DebugCWD=
-[Language]
-ActiveLang=
-ProjectLang=
-RootDir=
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=2
 MinorVer=0
 Release=0
-Build=42
+Build=61
 Debug=0
-PreRelease=1
+PreRelease=0
 Special=0
 Private=0
 DLL=0
@@ -126,26 +122,29 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone
 FileDescription=Dragon UnPACKer 5 Package (D5P) Maker
-FileVersion=2.0.0.42
+FileVersion=2.0.0.61
 InternalName=dpackc
-LegalCopyright=(c)2003-2006 Alexandre "Elbereth" Devilliers
+LegalCopyright=(c)2003-2008 Alexandre "Elbereth" Devilliers
 LegalTrademarks=
 OriginalFilename=dpackc
 ProductName=D5P Maker
-ProductVersion=2.0.0 Beta
+ProductVersion=2.0.0
 Comments=Allows you to make .D5P files to be installed by Duppi of Dragon UnPACKer 5
+[HistoryLists\hlConditionals]
+Count=1
+Item0=dyn_unzip32
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlSearchPath]
 Count=1
-Item0=H:\Programmation\CVS\drgunpacker\common
+Item0=E:\Developpement\dup-HEAD-2008\DragonUnPACKer
+[HistoryLists\hlUnitOutputDirectory]
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-dcu
 [HistoryLists\hlOutputDirectorry]
-Count=7
-Item0=C:\Developpement\dup-dev-5.1-compiled
-Item1=C:\Developpement
-Item2=C:\Developpement\dup-dev-5.1-compiled\utils
-Item3=C:\Developpement\dup-dev-5.1-compiled\data\drivers
-Item4=H:\Programmation\Compiled\drgunpacker\current\data\drivers
-Item5=C:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
-Item6=C:\Developpement\dup-dev-5.1-compiled\data\convert
+Count=4
+Item0=E:\Developpement
+Item1=E:\Developpement\dup-dev-5.1-compiled\data\drivers
+Item2=E:\Developpement\dup-dev-5.1-compiled
+Item3=E:\Developpement\dup-dev-5.1-compiled\utils

@@ -1,6 +1,6 @@
 program dpackc;
 
-// $Id: dpackc.dpr,v 1.2 2006-01-30 10:49:13 elbereth Exp $
+// $Id: dpackc.dpr,v 1.3 2008-03-02 18:27:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dpackc/dpackc.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -20,8 +20,6 @@ program dpackc;
 uses
   Forms,
   Main in 'Main.pas' {frmMain},
-  Config in 'Config.pas' {frmPackCfg},
-  Compile in 'Compile.pas' {frmCompile},
   lib_bincopy in '..\..\common\lib_bincopy.pas',
   lib_crc in '..\..\common\lib_crc.pas',
   lib_language in '..\..\common\lib_language.pas',
@@ -38,7 +36,5 @@ begin
   Application.Initialize;
   Application.Title := 'Dragon UnPACKer 5 Package Maker';
   Application.CreateForm(TfrmMain, frmMain);
-  Application.CreateForm(TfrmPackCfg, frmPackCfg);
-  Application.CreateForm(TfrmCompile, frmCompile);
   Application.Run;
 end.

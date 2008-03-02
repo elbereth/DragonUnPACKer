@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.2 2006-01-30 10:49:13 elbereth Exp $
+// $Id: Main.pas,v 1.3 2008-03-02 18:27:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dpackc/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -48,7 +48,6 @@ type
     Dialog: TOpenDialog;
     imgButtons: TImageList;
     SaveDialog: TSaveDialog;
-    SimpleXML: TJvSimpleXml;
     PageControl1: TPageControl;
     TabSheet1: TTabSheet;
     panPicture: TPanel;
@@ -99,20 +98,32 @@ type
     txtImageFile: TEdit;
     butBrowseImage: TButton;
     TabSheet4: TTabSheet;
-    JvRichEdit1: TJvRichEdit;
+    richLog: TJvRichEdit;
     ToolBar: TToolBar;
     butAdd: TToolButton;
     butDel: TToolButton;
-    ProgressBar1: TProgressBar;
+    ProgressBar: TProgressBar;
     Label14: TLabel;
-    Edit1: TEdit;
-    Button2: TButton;
+    txtPackageFile: TEdit;
+    butBrowsePackageFile: TButton;
     GroupBox4: TGroupBox;
     JvImgBtn1: TJvImgBtn;
     butOpen: TJvImgBtn;
     JvImgBtn3: TJvImgBtn;
     butCompile: TJvImgBtn;
     butExit: TButton;
+    lblDUPVersion: TStaticText;
+    butVersionPrev: TButton;
+    butVersionNext: TButton;
+    Label15: TLabel;
+    Label16: TLabel;
+    Label17: TLabel;
+    Label18: TLabel;
+    lblFileVersion: TStaticText;
+    Label19: TLabel;
+    optDUPPv2: TRadioButton;
+    optDUPPv3: TRadioButton;
+    Label20: TLabel;
     procedure ListBox1DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure ListBox1DragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
@@ -129,7 +140,6 @@ type
     procedure chkReadOnlyClick(Sender: TObject);
     procedure chkHiddenClick(Sender: TObject);
     procedure txtInstallToChange(Sender: TObject);
-    procedure Paramtres1Click(Sender: TObject);
     procedure lstFilesChange(Sender: TObject; Item: TListItem;
       Change: TItemChange);
     procedure txtInstallDirChange(Sender: TObject);
@@ -142,6 +152,12 @@ type
     procedure txtVersionChange(Sender: TObject);
     procedure chkDUP5Click(Sender: TObject);
     procedure chkImagePersoClick(Sender: TObject);
+    procedure JvImgBtn1Click(Sender: TObject);
+    procedure txtDUP5VersionChange(Sender: TObject);
+    procedure butVersionPrevClick(Sender: TObject);
+    procedure butVersionNextClick(Sender: TObject);
+    procedure writeLog(text: string);
+    procedure butBrowsePackageFileClick(Sender: TObject);
 //    function convertInstallTo(val: integer): string;
   private
     { Déclarations privées }
@@ -161,13 +177,6 @@ type
     { Déclarations publiques }
   end;
 
-var
-  frmMain: TfrmMain;
-
-implementation
-
-uses Compile, Config;
-
 type FileInfo = class
      public
        Compress: boolean;
@@ -180,11 +189,21 @@ type FileInfo = class
        Version: integer;
        Filename: string;
        InstallDir: string;
+       ForcedDir: boolean;
        constructor Create(Comp, Upg, StoreDT, ReadO, Hide, Reg: boolean; InstTo: integer; Vers: integer; FName, InstallDir: string);
      end;
 
-const DPSVERSION = 1;
-      VERSION = 20011;
+var
+  frmMain: TfrmMain;
+  curFileInfo: FileInfo;
+  curSelectedRow: integer;
+
+implementation
+
+uses Compile, Config;
+
+const DPSVERSION = 2;
+      VERSION = 20040;
 
 {$R *.dfm}
 
@@ -202,6 +221,17 @@ procedure TfrmMain.ListBox1DragOver(Sender, Source: TObject; X, Y: Integer;
 begin
 
   ShowMessage(Source.ClassName);
+
+end;
+
+procedure TfrmMain.writeLog(text: string);
+begin
+
+  if richLog.Lines.Count = 32760 then
+    richLog.Lines.Delete(0);
+
+  richLog.Lines.Add(DateTimeToStr(now)+' : '+text);
+  richLog.Perform(EM_LINESCROLL,0,1);
 
 end;
 
@@ -225,57 +255,82 @@ var HDR: DUP5PACK_Header;
     BMP: BMPHeader;
 begin
 
-   if SaveDialog.Execute then
-   begin
-     fout := FileCreate(SaveDialog.FileName, fmOpenWrite);
+     writeLog('Starting compilation...');
+     ProgressBar.Position := 0;
+
+     fout := FileCreate(txtPackageFile.Text, fmOpenWrite);
+
+     writeLog('+ Filename: '+txtPackageFile.Text);
 
      HDR.ID := 'DUPP';
      HDR.EOF := 26;
-     HDR.Version := 2;
 
-     HDR.NeededVersion := 20240;
+     if (optDUPPv3.Checked) then
+       HDR.Version := 3
+     else
+       HDR.Version := 2;
 
-     for x := 0 to lstFiles.Items.Count-1 do
+     HDR.NeededVersion := 0;
+
+     writeLog('+ Format: DUPP v'+inttostr(HDR.Version));
+
+     if HDR.Version = 2 then
      begin
-       tmp := FileInfo(lstFiles.Items.Item[x].Data);
-       if (tmp.InstallDir <> '') then
+       for x := 0 to lstFiles.Items.Count-1 do
+       begin
+         tmp := FileInfo(lstFiles.Items.Item[x].Data);
+         if (tmp.InstallDir <> '') then
+         begin
+           HDR.NeededVersion := 20240;
+           break;
+         end;
+       end;
+
+       if (chkImagePerso.Checked and FileExists(txtImageFile.Text)) then
        begin
          HDR.NeededVersion := 20240;
-         break;
        end;
-     end;
+     end
+     else if HDR.Version = 3 then
+       HDR.NeededVersion := 22040;
 
-     if (frmPackCfg.chkImagePerso.Checked and FileExists(frmPackCfg.txtImageFile.Text)) then
-     begin
-       HDR.NeededVersion := 20240;
-     end;
+     if (HDR.NeededVersion = 0) then
+       writeLog('+ Compatibility: Full')
+     else
+       writeLog('+ Compatibility: Requires Duppi v'+getVersion(HDR.NeededVersion));
 
+     writeLog('Writing header...');
      FileWrite(fout,HDR,8);
 
-     NFO.NumVer := strtoint(frmPackCfg.txtVersion.text);
-     if (frmPackCfg.chkDUP5.Checked) then
+     ProgressBar.Position := 5;
+
+     writeLog('Computing extended header...');
+
+     NFO.NumVer := strtoint(txtVersion.text);
+     if (chkDUP5.Checked) then
      begin
-       if (frmPackCfg.optCompSup.Checked) then
+       if (optCompSup.Checked) then
          NFO.DUP5VerTest := 1
-       else if (frmPackCfg.optCompInf.Checked) then
+       else if (optCompInf.Checked) then
          NFO.DUP5VerTest := 2
-       else if (frmPackCfg.optCompEqual.Checked) then
+       else if (optCompEqual.Checked) then
          NFO.DUP5VerTest := 0
-       else if (frmPackCfg.optCompDiff.Checked) then
+       else if (optCompDiff.Checked) then
          NFO.DUP5VerTest := 3;
      end
      else
        NFO.DUP5VerTest := -1;
-     NFO.DUP5VerValue := strtoint(frmPackCfg.txtDUP5Version.Text);
+     NFO.DUP5VerValue := strtoint(txtDUP5Version.Text);
      NFO.NumFiles := lstFiles.Items.Count;
 
      FillChar(NFO1,SizeOf(NFO1),0);
      NFO1.PictureCompressed := 0;
      NFO1.PictureCompressedSize := 0;
 
-     if (frmPackCfg.chkImagePerso.Checked and FileExists(frmPackCfg.txtImageFile.Text)) then
+     if (chkImagePerso.Checked and FileExists(txtImageFile.Text)) then
      begin
-       hBAN := FileOpen(frmPackCfg.txtImageFile.Text,fmOpenRead);
+       writeLog('+ Importing image from: '+txtImageFile.Text);
+       hBAN := FileOpen(txtImageFile.Text,fmOpenRead);
        try
          NFO.PictureSize := FileSeek(hBAN,0,2);
          getmem(Buffer,NFO.PictureSize);
@@ -284,24 +339,26 @@ begin
            FileRead(hBAN,BMP,SizeOf(BMP));
            if ((BMP.ID = 'BM') and (BMP.Width = 465) and (BMP.height = 90)) then
            begin
+             writeLog('+ Image is BMP 465x90 as expected... Writing banner ('+inttostr(NFO.PictureSize)+' bytes) & extended header...');
              FileSeek(hBAN,0,0);
              FileRead(hBAN,Buffer^,NFO.PictureSize);
              FileWrite(fout,NFO,20);
              FileWrite(fout,NFO1,SizeOf(NFO1));
-             put8(fout,frmMain.PackName);
-             put8(fout,frmMain.PackURL);
-             put8(fout,frmMain.PackAuthor);
-             put8(fout,frmMain.PackComment);
+             put8(fout,txtName.Text);
+             put8(fout,txtURL.Text);
+             put8(fout,txtAuthor.Text);
+             put8(fout,txtComment.Text);
              FileWrite(fout,Buffer^,NFO.PictureSize);
            end
            else
            begin
+             writeLog('+ Image is NOT BMP 465x90 as expected not using banner... Writing extended header...');
              NFO.PictureSize := 0;
              FileWrite(fout,NFO,20);
-             put8(fout,frmMain.PackName);
-             put8(fout,frmMain.PackURL);
-             put8(fout,frmMain.PackAuthor);
-             put8(fout,frmMain.PackComment);
+             put8(fout,txtName.Text);
+             put8(fout,txtURL.Text);
+             put8(fout,txtAuthor.Text);
+             put8(fout,txtComment.Text);
            end;
          finally
            FreeMem(buffer);
@@ -312,20 +369,26 @@ begin
      end
      else
      begin
+       writeLog('+ Writing extended header...');
        NFO.PictureSize := 0;
        FileWrite(fout,NFO,20);
        FileWrite(fout,NFO1,SizeOf(NFO1));
-       put8(fout,frmMain.PackName);
-       put8(fout,frmMain.PackURL);
-       put8(fout,frmMain.PackAuthor);
-       put8(fout,frmMain.PackComment);
+       put8(fout,txtName.Text);
+       put8(fout,txtURL.Text);
+       put8(fout,txtAuthor.Text);
+       put8(fout,txtComment.Text);
      end;
 
+     ProgressBar.Position := 10;
+
+     writeLog('Adding '+inttostr(lstFiles.Items.Count)+' file(s)...');
      for x := 0 to lstFiles.Items.Count-1 do
      begin
        tmp := FileInfo(lstFiles.Items.Item[x].Data);
+       writeLog('+ File '+inttostr(x+1)+': '+tmp.Filename);
        fin := FileOpen(tmp.Filename,fmOpenRead);
        ENT.DSize := FileSeek(fin,0,2);
+       writeLog('+--+ Size: '+inttostr(ENT.DSize)+' bytes');
        FileSeek(fin,0,0);
        if tmp.StoreDateTime then
          ENT.DateT := FileGetDate(fin)
@@ -353,7 +416,12 @@ begin
 
        GetMem(Buf,ENT.DSize);
        FileRead(fin,buf^,ENT.DSize);
-       ENT.CRC := getStrCRC32(buf^);
+       if HDR.Version = 3 then
+         ENT.CRC := GetBufCRC32(buf,ENT.DSize)
+       else
+         ENT.CRC := GetStrCRC32(buf^);
+
+       writeLog('+--+ CRC: '+inttohex(ENT.CRC,8));
 
        if tmp.Compress then
        begin
@@ -373,13 +441,16 @@ begin
            OutputStream.Read(bufoutstr[1], Length(bufoutstr))
          finally
            OutputStream.Free
-         end
+         end;
+         writeLog('+--+ Compressed size: '+inttostr(ENT.Size)+' bytes');
        end
        else
        begin
          ENT.Size := ENT.DSize;
          ENT.CompressionType := 0;
        end;
+
+       writeLog('+--+ Writing file data...');
 
        FileWrite(fout,ENT.Size,4);
        FileWrite(fout,ENT.DSize,4);
@@ -412,12 +483,16 @@ begin
        FreeMem(Buf);
 
        FileClose(fin);
+
+       ProgressBar.Position := 10 + round(((x+1)/lstFiles.Items.Count)*90);
+
      end;
 
-     FileClose(fout);
-//  frmCompile.Show;
+     ProgressBar.Position := 100;
+     writeLog('Compilation finished!');
+     writeLog('-----------------------------------------------------------------------------------------------------------------------');
 
-  end;
+     FileClose(fout);
 
 end;
 
@@ -445,24 +520,35 @@ begin
       if ext = '.d5d' then
       begin
         tmp.InstallTo := 2;
+        tmp.ForcedDir := true;
         tmp.Version := getPluginVersion(Dialog.Filename);
       end
       else if (ext = '.d5c') then
       begin
         tmp.InstallTo := 0;
+        tmp.ForcedDir := true;
         tmp.Version := getPluginVersion(Dialog.Filename);
       end
       else if (ext = '.d5h') then
       begin
         tmp.InstallTo := 3;
+        tmp.ForcedDir := true;
         tmp.Version := getPluginVersion(Dialog.Filename);
       end
       else if (ext = '.dpal') then
-        tmp.InstallTo := 0
+      begin
+        tmp.InstallTo := 0;
+        tmp.ForcedDir := true;
+      end
       else if (ext = '.dulk') or (ext = '.lng') then
-        tmp.InstallTo := 1
+      begin
+        tmp.InstallTo := 1;
+        tmp.ForcedDir := true;
+      end
       else
+      begin
         tmp.InstallTo := 4;
+      end;
 
       if (tmp.Version = -1) then
         tmp.UpgradeOnly := false;
@@ -498,61 +584,80 @@ end;
 
 procedure TfrmMain.lstFilesSelectItem(Sender: TObject; Item: TListItem;
   Selected: Boolean);
-var tmp: FileInfo;
+//var tmp: FileInfo;
 begin
 
-  tmp := FileInfo(item.data);
+  curSelectedRow := item.Index;
 
-  txtInstallTo.ItemIndex := tmp.InstallTo;
-  txtInstallDir.Text := tmp.InstallDir;
+  curFileInfo := FileInfo(item.data);
 
-  chkCompress.Checked := tmp.Compress;
-  chkUpgradeOnly.Checked := tmp.UpgradeOnly;
-  chkUpgradeOnly.Enabled := (tmp.Version > -1);
-  chkStoreDateTime.Checked := tmp.StoreDateTime;
-  chkReadOnly.Checked := tmp.ReadOnly;
-  chkHidden.Checked := tmp.Hidden;
-  chkRegSvr.Checked := tmp.RegSvr;
-  butDel.Enabled := true;
+  txtInstallTo.ItemIndex := curFileInfo.InstallTo;
+  txtInstallTo.Enabled := not(curFileInfo.ForcedDir);
+  txtInstallDir.Text := curFileInfo.InstallDir;
+  txtInstallDir.Enabled := not(curFileInfo.ForcedDir);
 
-  txtInstallTo.Enabled := false;
-  txtInstallDir.Enabled := false;
-  chkCompress.Enabled := false;
-  chkUpgradeOnly.Enabled := false;
-  chkStoreDateTime.Enabled := false;
-  chkRegSvr.Enabled := false;
-  chkReadOnly.Enabled := false;
-  chkHidden.Enabled := false;
+  chkStoreDateTime.Checked := curFileInfo.StoreDateTime;
+  chkStoreDateTime.Enabled := true;
 
-  if (uppercase(ExtractFileExt(tmp.Filename)) = '.DLL')
-  or (uppercase(ExtractFileExt(tmp.Filename)) = '.OCX')
+  chkRegSvr.Checked := curFileInfo.RegSvr;
+  if (uppercase(ExtractFileExt(curFileInfo.Filename)) = '.DLL')
+  or (uppercase(ExtractFileExt(curFileInfo.Filename)) = '.OCX')
   then
     chkRegSvr.Enabled := true
   else
     chkRegSvr.Enabled := false;
 
+  chkUpgradeOnly.Checked := curFileInfo.UpgradeOnly;
+  chkUpgradeOnly.Enabled := (curFileInfo.Version > -1);
+
+  chkCompress.Checked := curFileInfo.Compress;
+  chkCompress.Enabled := true;
+
+  chkReadOnly.Checked := curFileInfo.ReadOnly;
+  chkReadOnly.Enabled := true;
+  chkHidden.Checked := curFileInfo.Hidden;
+  chkHidden.Enabled := true;
+
+  if curFileInfo.Version <> -1 then
+    lblFileVersion.Caption := getVersion(curFileInfo.Version)
+  else
+    lblFileVersion.Caption := '';
+
+  butDel.Enabled := true;
+
 end;
 
 procedure TfrmMain.chkCompressClick(Sender: TObject);
-var tmp: FileInfo;
+//var tmp: FileInfo;
 begin
 
-  tmp := FileInfo(lstFiles.Selected.Data);
-  tmp.Compress := chkCompress.Checked;
+//  tmp := FileInfo(lstFiles.Selected.Data);
+  curFileInfo.Compress := chkCompress.Checked;
 
 end;
 
 procedure TfrmMain.butDelClick(Sender: TObject);
 begin
 
-     lstFiles.Items.Delete(lstFiles.Selected.Index);
+  if (lstFiles.SelCount > 0) then
+  begin
+    lstFiles.Items.Delete(lstFiles.Selected.Index);
+    curSelectedRow := -1;
+  end;
 
-     if (lstFiles.SelCount = 0) then
-     begin
-       butDel.Enabled := false;
-     end;
+  butDel.Enabled := false;
 
-     PanPicture.Visible := true;
+  txtInstallTo.Enabled := false;
+  txtInstallTo.ItemIndex := 4;
+  txtInstallDir.Enabled := false;
+  txtInstallDir.Text := '';
+  chkCompress.Enabled := false;
+  chkUpgradeOnly.Enabled := false;
+  chkStoreDateTime.Enabled := false;
+  chkRegSvr.Enabled := false;
+  chkReadOnly.Enabled := false;
+  chkHidden.Enabled := false;
+  lblFileVersion.Caption := '';
 
 end;
 
@@ -571,58 +676,53 @@ begin
   Version := Vers;
   FileName := FName;
 
+  ForcedDir := false;
+
 end;
 
 procedure TfrmMain.chkUpgradeOnlyClick(Sender: TObject);
-var tmp: FileInfo;
+//var tmp: FileInfo;
 begin
 
-  tmp := FileInfo(lstFiles.Selected.Data);
-  tmp.UpgradeOnly := chkUpgradeOnly.Checked;
+//  tmp := FileInfo(lstFiles.Selected.Data);
+  curFileInfo.UpgradeOnly := chkUpgradeOnly.Checked;
 
 end;
 
 procedure TfrmMain.chkStoreDateTimeClick(Sender: TObject);
-var tmp: FileInfo;
+//var tmp: FileInfo;
 begin
 
-  tmp := FileInfo(lstFiles.Selected.Data);
-  tmp.StoreDateTime := chkStoreDateTime.Checked;
+//  tmp := FileInfo(lstFiles.Selected.Data);
+  curFileInfo.StoreDateTime := chkStoreDateTime.Checked;
 
 end;
 
 procedure TfrmMain.chkReadOnlyClick(Sender: TObject);
-var tmp: FileInfo;
+//var tmp: FileInfo;
 begin
 
-  tmp := FileInfo(lstFiles.Selected.Data);
-  tmp.ReadOnly := chkReadOnly.Checked;
+//  tmp := FileInfo(lstFiles.Selected.Data);
+  curFileInfo.ReadOnly := chkReadOnly.Checked;
 
 end;
 
 procedure TfrmMain.chkHiddenClick(Sender: TObject);
-var tmp: FileInfo;
+//var tmp: FileInfo;
 begin
 
-  tmp := FileInfo(lstFiles.Selected.Data);
-  tmp.Hidden := chkHidden.checked;
+//  tmp := FileInfo(lstFiles.Selected.Data);
+  curFileInfo.Hidden := chkHidden.checked;
 
 end;
 
 procedure TfrmMain.txtInstallToChange(Sender: TObject);
-var tmp: FileInfo;
+//var tmp: FileInfo;
 begin
 
-  tmp := FileInfo(lstFiles.Selected.Data);
-  tmp.InstallTo := txtInstallTo.ItemIndex;
+//  tmp := FileInfo(lstFiles.Selected.Data);
+  curFileInfo.InstallTo := txtInstallTo.ItemIndex;
   refreshSelectedInstallTo;
-
-end;
-
-procedure TfrmMain.Paramtres1Click(Sender: TObject);
-begin
-
-     frmPackCfg.ShowModal();
 
 end;
 
@@ -668,7 +768,7 @@ begin
     @DUCIVer := GetProcAddress(Handle, 'DUCIVersion');
     @DUHIVer := GetProcAddress(Handle, 'DUHIVersion');
 
-    if ((@DUDIVer <> Nil) and ((DUDIVer = 1) or (DUDIVer = 2))) then
+    if ((@DUDIVer <> Nil) and ((DUDIVer = 1) or (DUDIVer = 2) or (DUDIVer = 3) or (DUDIVer = 4))) then
     begin
       @GetNumVer := GetProcAddress(Handle, 'GetNumVersion');
 
@@ -677,7 +777,7 @@ begin
       else
         result := GetNumVer;
     end
-    else if ((@DUCIVer <> Nil) and (DUCIVer = 1)) then
+    else if ((@DUCIVer <> Nil) and ((DUCIVer = 1) or (DUCIVer = 2) or (DUCIVer = 3))) then
     begin
       @GetConvertVer := GetProcAddress(Handle, 'VersionInfo');
 
@@ -686,7 +786,7 @@ begin
       else
         result := GetConvertVer.VerID;
     end
-    else if ((@DUHIVer <> Nil) and (DUHIVer = 1)) then
+    else if ((@DUHIVer <> Nil) and ((DUHIVer = 1) or (DUHIVer = 2) or (DUHIVer = 3))) then
     begin
       @GetHRVer := GetProcAddress(Handle, 'GetVersionInfo');
 
@@ -706,23 +806,23 @@ begin
 end;
 
 procedure TfrmMain.txtInstallDirChange(Sender: TObject);
-var tmp: FileInfo;
+//var tmp: FileInfo;
 begin
 
-  tmp := FileInfo(lstFiles.Selected.Data);
-  tmp.InstallDir := txtInstallDir.Text;
+//  tmp := FileInfo(lstFiles.Selected.Data);
+  curFileInfo.InstallDir := txtInstallDir.Text;
   refreshSelectedInstallTo;
 
 end;
 
 procedure TfrmMain.refreshSelectedInstallTo;
-var tmp: FileInfo;
 begin
 
-  if txtInstallDir.Text = '' then
-    lstFiles.Selected.SubItems.Strings[2] := txtInstallTo.Items.Strings[tmp.InstallTo]
-  else
-    lstFiles.Selected.SubItems.Strings[2] := txtInstallTo.Items.Strings[tmp.InstallTo] + '\' + txtInstallDir.Text ;
+  if curSelectedRow <> -1 then
+    if txtInstallDir.Text = '' then
+      lstFiles.Items.Item[curSelectedRow].SubItems.Strings[2] := txtInstallTo.Items.Strings[curFileInfo.InstallTo]
+    else
+      lstFiles.Items.Item[curSelectedRow].SubItems.Strings[2] := txtInstallTo.Items.Strings[curFileInfo.InstallTo] + '\' + curFileInfo.InstallDir;
 
 end;
 
@@ -734,11 +834,11 @@ begin
 end;
 
 procedure TfrmMain.chkRegSvrClick(Sender: TObject);
-var tmp: FileInfo;
+//var tmp: FileInfo;
 begin
 
-  tmp := FileInfo(lstFiles.Selected.Data);
-  tmp.RegSvr := chkRegSvr.Checked;
+//  tmp := FileInfo(lstFiles.Selected.Data);
+  curFileInfo.RegSvr := chkRegSvr.Checked;
 
 end;
 
@@ -747,13 +847,16 @@ var head: TJvSimpleXMLElem;
     sub, sub2: TJvSimpleXMLElem;
     tmp: FileInfo;
     x: integer;
+    SimpleXML: TJvSimpleXML;
 begin
 
   SaveDialog.Title := 'Save project...';
-  SaveDialog.Filter := 'Dragon UnPACKer 5 Package Project (*.DPS)|*.DPS';
+  SaveDialog.Filter := 'Dragon UnPACKer 5 Package Project (*.D5PP)|*.D5PP';
 
   if SaveDialog.Execute then
   begin
+
+    SimpleXML := TJvSimpleXML.Create(self);
 
     SimpleXML.Root.Create(nil);
     SimpleXML.Root.Name := 'DPS';
@@ -762,33 +865,39 @@ begin
 
     head := SimpleXML.Root.Items.Add('HEAD');
     sub := head.Items.Add('NAME');
-    sub.Value := frmMain.PackName;
+    sub.Value := txtName.Text;
     sub := head.Items.Add('URL');
-    sub.Value := frmMain.PackURL;
+    sub.Value := txtURL.Text;
     sub := head.Items.Add('AUTHOR');
-    sub.Value := frmMain.PackAuthor;
+    sub.Value := txtAuthor.Text;
     sub := head.Items.Add('COMMENT');
-    sub.Value := frmMain.PackComment;
+    sub.Value := txtComment.Text;
     sub := head.Items.Add('VERSION');
-    sub.Value := frmPackCfg.txtVersion.text;
+    sub.Value := txtVersion.text;
+    sub := head.Items.Add('PACKFILENAME');
+    sub.Value := txtPackageFile.Text;
+    if optDUPPv3.Checked then
+      sub.Properties.Add('duppversion',3)
+    else
+      sub.Properties.Add('duppversion',2);
     sub := head.Items.Add('CHECKDUP5VERSION');
-    sub.Value := frmPackCfg.txtDUP5Version.Text;
+    sub.Value := txtDUP5Version.Text;
 
-    sub.Properties.Add('use',frmPackCfg.chkDUP5.Checked);
+    sub.Properties.Add('use',chkDUP5.Checked);
 
-    if (frmPackCfg.optCompSup.Checked) then
+    if (optCompSup.Checked) then
       sub.Properties.Add('op',1)
-    else if (frmPackCfg.optCompInf.Checked) then
+    else if (optCompInf.Checked) then
       sub.Properties.Add('op',2)
-    else if (frmPackCfg.optCompEqual.Checked) then
+    else if (optCompEqual.Checked) then
       sub.Properties.Add('op',0)
     else
       sub.Properties.Add('op',3);
 
     sub := head.Items.Add('THEME');
-    sub.Value := frmPackCfg.txtImageFile.Text;
+    sub.Value := txtImageFile.Text;
 
-    sub.Properties.Add('use',frmPackCfg.chkImagePerso.Checked);
+    sub.Properties.Add('use',chkImagePerso.Checked);
 
     head := SimpleXML.Root.Items.Add('FILES');
 
@@ -818,6 +927,7 @@ begin
     end;
 
     SimpleXML.SaveToFile(SaveDialog.FileName);
+    SimpleXML.Destroy;
 
   end;
 
@@ -831,45 +941,62 @@ var head: TJvSimpleXMLElem;
     itmx: TListItem;
     ext: string;
     Handle: THandle;
+    SimpleXML: TJvSimpleXML;
 begin
 
   Dialog.Title := 'Open project...';
-  Dialog.Filter := 'Dragon UnPACKer 5 Package Project (*.DPS)|*.DPS';
+  Dialog.Filter := 'Dragon UnPACKer 5 Package Project (*.D5PP)|*.D5PP';
+
+  if Dialog.FileName <> '' then
+    Dialog.FileName := ExtractFilePath(Dialog.FileName);
 
   if Dialog.Execute then
   begin
 
    try
 
+    SimpleXML := TJvSimpleXML.Create(self);
     SimpleXML.LoadFromFile(Dialog.FileName);
 
     head := SimpleXML.Root.Items.ItemNamed['HEAD'];
-    if SimpleXML.Root.Properties.IntValue('version') <> DPSVERSION then
+
+    if (SimpleXML.Root.Properties.IntValue('version') <> DPSVERSION) and
+       (SimpleXML.Root.Properties.IntValue('version') <> 1) then
     begin
 
-      ShowMessage('Error: Project file must be version '+inttostr(DPSVERSION)+'.');
+      ShowMessage('Error: Project file must be version '+inttostr(DPSVERSION)+' (v1 are also supported).');
 
     end
     else
     begin
 
-      frmPackCfg.txtName.Text := head.Items.ItemNamed['NAME'].Value;
-      frmPackCfg.txtURL.Text := head.Items.ItemNamed['URL'].Value;
-      frmPackCfg.txtAuthor.Text := head.Items.ItemNamed['AUTHOR'].Value;
-      frmPackCfg.txtComment.Text := head.Items.ItemNamed['COMMENT'].Value;
-      frmPackCfg.txtVersion.Text := head.Items.ItemNamed['VERSION'].Value;
-      frmPackCfg.txtDUP5Version.Text := head.Items.ItemNamed['CHECKDUP5VERSION'].Value;
-      frmPackCfg.chkDUP5.Checked := head.Items.ItemNamed['CHECKDUP5VERSION'].Properties.BoolValue('use',false);
+      txtName.Text := head.Items.ItemNamed['NAME'].Value;
+      txtURL.Text := head.Items.ItemNamed['URL'].Value;
+      txtAuthor.Text := head.Items.ItemNamed['AUTHOR'].Value;
+      txtComment.Text := head.Items.ItemNamed['COMMENT'].Value;
+      txtVersion.Text := head.Items.ItemNamed['VERSION'].Value;
+      if head.Items.IndexOf('PACKFILENAME') <> -1 then
+      begin
+        txtPackageFile.Text := head.Items.ItemNamed['PACKFILENAME'].Value;
+        case head.Items.ItemNamed['PACKFILENAME'].Properties.IntValue('duppversion',0) of
+          2: optDUPPv2.Checked := true;
+          3: optDUPPv3.Checked := true;
+        else
+          optDUPPv3.Checked := true;
+        end;
+      end;
+      txtDUP5Version.Text := head.Items.ItemNamed['CHECKDUP5VERSION'].Value;
+      chkDUP5.Checked := head.Items.ItemNamed['CHECKDUP5VERSION'].Properties.BoolValue('use',false);
       case head.Items.ItemNamed['CHECKDUP5VERSION'].Properties.IntValue('op',0) of
-        1: frmPackCfg.optCompSup.Checked := true;
-        2: frmPackCfg.optCompInf.Checked := true;
-        3: frmPackCfg.optCompEqual.Checked := true;
+        1: optCompSup.Checked := true;
+        2: optCompInf.Checked := true;
+        3: optCompEqual.Checked := true;
       else
-        frmPackCfg.optCompDiff.Checked := true;
+        optCompDiff.Checked := true;
       end;
 
-      frmPackCfg.txtImageFile.Text := head.Items.ItemNamed['THEME'].Value;
-      frmPackCfg.chkImagePerso.Checked := head.Items.ItemNamed['THEME'].Properties.BoolValue('use',false);
+      txtImageFile.Text := head.Items.ItemNamed['THEME'].Value;
+      chkImagePerso.Checked := head.Items.ItemNamed['THEME'].Properties.BoolValue('use',false);
 
       head := SimpleXML.Root.Items.ItemNamed['FILES'];
 
@@ -897,7 +1024,7 @@ begin
             sub.Items.ItemNamed['OPTIONS'].Properties.BoolValue('regsvr',false),
             sub.Items.ItemNamed['INSTALLDIR'].Properties.IntValue('basedir',0),
             -1,
-            sub.Items.ItemNamed['INSTALLNAME'].Value,
+            sub.Items.ItemNamed['PATH'].Value,
             sub.Items.ItemNamed['INSTALLDIR'].Value
           );
 
@@ -923,6 +1050,8 @@ begin
       end;
     end;
 
+    SimpleXML.Destroy;
+
    except
      ShowMessage('Error: Could not load project file.');
    end;
@@ -934,7 +1063,7 @@ end;
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
 
-  frmMain.Caption := 'Dragon UnPACKer 5 (DUP5) Package Maker v'+getVersion(VERSION);
+  frmMain.Caption := 'Dragon UnPACKer 5 (D5P) Package Maker v'+getVersion(VERSION);
   lblVersion.Caption := 'Version '+getVersion(VERSION);
   lblCompatible.Caption := 'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime);
 
@@ -967,6 +1096,8 @@ begin
     optCompdiff.Enabled := true;
     optCompEqual.Enabled := true;
     txtDUP5Version.Enabled := true;
+    butVersionPrev.Enabled := true;
+    butVersionNext.Enabled := true;
   end
   else
   begin
@@ -975,6 +1106,8 @@ begin
     optCompdiff.Enabled := false;
     optCompEqual.Enabled := false;
     txtDUP5Version.Enabled := false;
+    butVersionPrev.Enabled := false;
+    butVersionNext.Enabled := false;
   end;
 
 end;
@@ -983,6 +1116,224 @@ procedure TfrmMain.chkImagePersoClick(Sender: TObject);
 begin
 
   PackImagePerso := chkImagePerso.Checked;
+
+end;
+
+procedure TfrmMain.JvImgBtn1Click(Sender: TObject);
+begin
+
+  txtVersion.Text := '10000';
+  PackVersion := 10000;
+  txtName.Text := '';
+  txtURL.Text := '';
+  txtAuthor.Text := '';
+  txtComment.Text := '';
+  txtImageFile.Text := '';
+  chkImagePerso.Checked := false;
+  txtImageFile.Enabled := false;
+  butBrowseImage.Enabled := false;
+  chkDUP5.Checked := false;
+  optCompSup.Checked := true;
+  txtDUP5Version.Text := '169';
+  txtDUP5Version.Enabled := false;
+
+  lstFiles.Clear;
+
+  txtInstallTo.Enabled := false;
+  txtInstallDir.Enabled := false;
+  chkCompress.Enabled := false;
+  chkUpgradeOnly.Enabled := false;
+  chkStoreDateTime.Enabled := false;
+  chkRegSvr.Enabled := false;
+  chkReadOnly.Enabled := false;
+  chkHidden.Enabled := false;
+
+  butDel.Enabled := false;
+
+end;
+
+procedure TfrmMain.txtDUP5VersionChange(Sender: TObject);
+var checkBuild: integer;
+begin
+
+  try
+    checkBuild := strToint(txtDUP5Version.Text);
+    case checkBuild of
+       2: lblDUPVersion.Caption := 'v5.0.0 Preview';
+       3: lblDUPVersion.Caption := 'v5.0.0 Pre-Alpha 1';
+       5: lblDUPVersion.Caption := 'v5.0.0 Pre-Alpha 2';
+       7: lblDUPVersion.Caption := 'v5.0.0 Pre-Alpha 3';
+       8: lblDUPVersion.Caption := 'v5.0.0 Pre-Alpha 4';
+       9: lblDUPVersion.Caption := 'v5.0.0 Pre-Alpha 5';
+       10: lblDUPVersion.Caption := 'v5.0.0 Pre-Alpha 6';
+       12: lblDUPVersion.Caption := 'v5.0.0 Pre-Alpha 7';
+       13: lblDUPVersion.Caption := 'v5.0.0 Pre-Alpha 8';
+       17: lblDUPVersion.Caption := 'v5.0.0 Pre-Alpha 9';
+       23: lblDUPVersion.Caption := 'v5.0.0 Alpha 1';
+       27: lblDUPVersion.Caption := 'v5.0.0 Alpha 2';
+       29: lblDUPVersion.Caption := 'v5.0.0 Alpha 3';
+       36: lblDUPVersion.Caption := 'v5.0.0 Alpha 4';
+       39: lblDUPVersion.Caption := 'v5.0.0 Alpha 5';
+       40: lblDUPVersion.Caption := 'v5.0.0 Alpha 6';
+       43: lblDUPVersion.Caption := 'v5.0.0 Alpha 7';
+       45: lblDUPVersion.Caption := 'v5.0.0 Alpha 8';
+       48: lblDUPVersion.Caption := 'v5.0.0 Alpha 9';
+       50: lblDUPVersion.Caption := 'v5.0.0 Alpha 10';
+       51: lblDUPVersion.Caption := 'v5.0.0 Alpha 10.1';
+       55: lblDUPVersion.Caption := 'v5.0.0 Alpha 11';
+       56: lblDUPVersion.Caption := 'v5.0.0 Alpha 11.1';
+       60: lblDUPVersion.Caption := 'v5.0.0 Beta 1';
+       77: lblDUPVersion.Caption := 'v5.0.0 Beta 2';
+       86: lblDUPVersion.Caption := 'v5.0.0 Beta 3';
+       95: lblDUPVersion.Caption := 'v5.0.0 Beta 4';
+      109: lblDUPVersion.Caption := 'v5.0.0 RC1';
+      119: lblDUPVersion.Caption := 'v5.0.0 RC2';
+      127: lblDUPVersion.Caption := 'v5.0.0 RC3';
+      129: lblDUPVersion.Caption := 'v5.0.0 RC4';
+      134: lblDUPVersion.Caption := 'v5.0.0';
+      144: lblDUPVersion.Caption := 'v5.1.0 WIP';
+      149: lblDUPVersion.Caption := 'v5.1.1 WIP';
+      163: lblDUPVersion.Caption := 'v5.1.2 WIP';
+      165: lblDUPVersion.Caption := 'v5.2.0 RC1';
+      167: lblDUPVersion.Caption := 'v5.2.0';
+      168: lblDUPVersion.Caption := 'v5.2.0a';
+      169: lblDUPVersion.Caption := 'v5.2.0b';
+    else
+      lblDUPVersion.Caption := '???';
+    end;
+  except
+    on EConvertError do
+      lblDUPVersion.Caption := '???';
+  end;
+
+end;
+
+procedure TfrmMain.butVersionPrevClick(Sender: TObject);
+var oldValue: integer;
+begin
+
+  try
+    oldValue := strToint(txtDUP5Version.Text);
+    if (oldValue <= 3) then
+      txtDUP5Version.Text := '2'
+    else
+      case oldValue of
+       5: txtDUP5Version.Text := '3';
+       7: txtDUP5Version.Text := '5';
+       8: txtDUP5Version.Text := '7';
+       9: txtDUP5Version.Text := '8';
+       10: txtDUP5Version.Text := '9';
+       12: txtDUP5Version.Text := '10';
+       13: txtDUP5Version.Text := '12';
+       17: txtDUP5Version.Text := '13';
+       23: txtDUP5Version.Text := '17';
+       27: txtDUP5Version.Text := '23';
+       29: txtDUP5Version.Text := '27';
+       36: txtDUP5Version.Text := '29';
+       39: txtDUP5Version.Text := '36';
+       40: txtDUP5Version.Text := '39';
+       43: txtDUP5Version.Text := '40';
+       45: txtDUP5Version.Text := '43';
+       48: txtDUP5Version.Text := '45';
+       50: txtDUP5Version.Text := '48';
+       51: txtDUP5Version.Text := '50';
+       55: txtDUP5Version.Text := '51';
+       56: txtDUP5Version.Text := '55';
+       60: txtDUP5Version.Text := '56';
+       77: txtDUP5Version.Text := '60';
+       86: txtDUP5Version.Text := '77';
+       95: txtDUP5Version.Text := '86';
+      109: txtDUP5Version.Text := '95';
+      119: txtDUP5Version.Text := '109';
+      127: txtDUP5Version.Text := '119';
+      129: txtDUP5Version.Text := '127';
+      134: txtDUP5Version.Text := '129';
+      144: txtDUP5Version.Text := '134';
+      149: txtDUP5Version.Text := '144';
+      163: txtDUP5Version.Text := '149';
+      165: txtDUP5Version.Text := '163';
+      167: txtDUP5Version.Text := '165';
+      168: txtDUP5Version.Text := '167';
+      169: txtDUP5Version.Text := '168';
+    else
+      txtDUP5Version.Text := inttostr(oldValue-1);
+    end;
+  except
+    on EConvertError do
+      txtDUP5Version.Text := '2';
+  end;
+
+end;
+
+procedure TfrmMain.butVersionNextClick(Sender: TObject);
+var oldValue: integer;
+begin
+
+  try
+    oldValue := strToint(txtDUP5Version.Text);
+    if (oldValue < 2) then
+      txtDUP5Version.Text := '2'
+    else
+      case oldValue of
+       2: txtDUP5Version.Text := '3';
+       3: txtDUP5Version.Text := '5';
+       5: txtDUP5Version.Text := '7';
+       7: txtDUP5Version.Text := '8';
+       8: txtDUP5Version.Text := '9';
+       9: txtDUP5Version.Text := '10';
+       10: txtDUP5Version.Text := '12';
+       12: txtDUP5Version.Text := '13';
+       13: txtDUP5Version.Text := '17';
+       17: txtDUP5Version.Text := '23';
+       23: txtDUP5Version.Text := '27';
+       27: txtDUP5Version.Text := '29';
+       29: txtDUP5Version.Text := '36';
+       36: txtDUP5Version.Text := '39';
+       39: txtDUP5Version.Text := '40';
+       40: txtDUP5Version.Text := '43';
+       43: txtDUP5Version.Text := '45';
+       45: txtDUP5Version.Text := '48';
+       48: txtDUP5Version.Text := '50';
+       50: txtDUP5Version.Text := '51';
+       51: txtDUP5Version.Text := '55';
+       55: txtDUP5Version.Text := '56';
+       56: txtDUP5Version.Text := '60';
+       60: txtDUP5Version.Text := '77';
+       77: txtDUP5Version.Text := '86';
+       86: txtDUP5Version.Text := '95';
+       95: txtDUP5Version.Text := '109';
+      109: txtDUP5Version.Text := '119';
+      119: txtDUP5Version.Text := '127';
+      127: txtDUP5Version.Text := '129';
+      129: txtDUP5Version.Text := '134';
+      134: txtDUP5Version.Text := '144';
+      144: txtDUP5Version.Text := '149';
+      149: txtDUP5Version.Text := '163';
+      163: txtDUP5Version.Text := '165';
+      165: txtDUP5Version.Text := '167';
+      167: txtDUP5Version.Text := '168';
+      168: txtDUP5Version.Text := '169';
+    else
+      txtDUP5Version.Text := inttostr(oldValue+1);
+    end;
+  except
+    on EConvertError do
+      txtDUP5Version.Text := '169';
+  end;
+
+end;
+
+procedure TfrmMain.butBrowsePackageFileClick(Sender: TObject);
+begin
+
+
+  SaveDialog.Title := 'Packge filename...';
+  SaveDialog.Filter := 'Dragon UnPACKer 5 Package (*.D5P)|*.D5P';
+
+  if SaveDialog.Execute then
+  begin
+    txtPackageFile.Text := SaveDialog.Filename;
+  end;
 
 end;
 

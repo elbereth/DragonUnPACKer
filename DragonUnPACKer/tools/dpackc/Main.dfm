@@ -1,8 +1,8 @@
 object frmMain: TfrmMain
-  Left = 412
-  Top = 300
+  Left = 199
+  Top = 332
   BorderStyle = bsSingle
-  Caption = 'DUP5 Package (D5P) Maker v1.0.0 Pre-Alpha 2'
+  Caption = 'DUP5 Package (D5P) Maker v2.0.0'
   ClientHeight = 378
   ClientWidth = 537
   Color = clBtnFace
@@ -136,10 +136,63 @@ object frmMain: TfrmMain
     Top = 56
     Width = 537
     Height = 321
-    ActivePage = TabSheet3
+    ActivePage = TabSheet1
     TabOrder = 0
     object TabSheet1: TTabSheet
       Caption = 'About...'
+      object Label15: TLabel
+        Left = 48
+        Top = 192
+        Width = 409
+        Height = 33
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 
+          'This tool allows you to create D5P (Dragon UnPACKer 5 Package) f' +
+          'iles to easily install plugins and patches for Dragon UnPACKer 5' +
+          ' by using the Duppi tool.'
+        WordWrap = True
+      end
+      object Label16: TLabel
+        Left = 48
+        Top = 232
+        Width = 409
+        Height = 17
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 
+          'This version will create fully compliant DUPP v2 and v3 files (D' +
+          '5P for Duppi)'
+        WordWrap = True
+      end
+      object Label17: TLabel
+        Left = 48
+        Top = 256
+        Width = 409
+        Height = 17
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'Created by Alexandre Devilliers'
+        WordWrap = True
+      end
+      object Label18: TLabel
+        Left = 184
+        Top = 272
+        Width = 137
+        Height = 13
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'http://www.elberethzone.net'
+        Color = clBtnFace
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlue
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsUnderline]
+        ParentColor = False
+        ParentFont = False
+        WordWrap = True
+      end
       object panPicture: TPanel
         Left = 4
         Top = 4
@@ -8861,8 +8914,8 @@ object frmMain: TfrmMain
           Caption = 'x = Major version (0 to 10000)'
         end
         object Label8: TLabel
-          Left = 192
-          Top = 40
+          Left = 8
+          Top = 56
           Width = 177
           Height = 13
           AutoSize = False
@@ -8870,7 +8923,7 @@ object frmMain: TfrmMain
         end
         object Label9: TLabel
           Left = 192
-          Top = 56
+          Top = 40
           Width = 177
           Height = 13
           AutoSize = False
@@ -8897,7 +8950,7 @@ object frmMain: TfrmMain
         object Label13: TLabel
           Left = 8
           Top = 104
-          Width = 241
+          Width = 177
           Height = 13
           AutoSize = False
           Caption = 'r = Release number (0 to 9)'
@@ -8932,8 +8985,8 @@ object frmMain: TfrmMain
         Caption = 'Dragon UnPACKer'
         TabOrder = 1
         object optCompInf: TRadioButton
-          Left = 24
-          Top = 72
+          Left = 72
+          Top = 48
           Width = 33
           Height = 17
           Caption = '<'
@@ -8941,7 +8994,7 @@ object frmMain: TfrmMain
           TabOrder = 0
         end
         object optCompSup: TRadioButton
-          Left = 24
+          Left = 8
           Top = 48
           Width = 33
           Height = 17
@@ -8961,7 +9014,7 @@ object frmMain: TfrmMain
           OnClick = chkDUP5Click
         end
         object optCompEqual: TRadioButton
-          Left = 64
+          Left = 40
           Top = 48
           Width = 33
           Height = 17
@@ -8970,8 +9023,8 @@ object frmMain: TfrmMain
           TabOrder = 3
         end
         object optCompDiff: TRadioButton
-          Left = 64
-          Top = 72
+          Left = 104
+          Top = 48
           Width = 33
           Height = 17
           Caption = '<>'
@@ -8979,13 +9032,47 @@ object frmMain: TfrmMain
           TabOrder = 4
         end
         object txtDUP5Version: TEdit
-          Left = 8
-          Top = 96
-          Width = 129
+          Left = 56
+          Top = 72
+          Width = 33
           Height = 21
           Enabled = False
+          MaxLength = 4
           TabOrder = 5
-          Text = '55'
+          Text = '169'
+          OnChange = txtDUP5VersionChange
+        end
+        object lblDUPVersion: TStaticText
+          Left = 8
+          Top = 104
+          Width = 129
+          Height = 17
+          Alignment = taCenter
+          AutoSize = False
+          BevelInner = bvNone
+          BevelKind = bkFlat
+          Caption = 'v5.2.0b'
+          TabOrder = 6
+        end
+        object butVersionPrev: TButton
+          Left = 8
+          Top = 72
+          Width = 41
+          Height = 21
+          Caption = 'Prev'
+          Enabled = False
+          TabOrder = 7
+          OnClick = butVersionPrevClick
+        end
+        object butVersionNext: TButton
+          Left = 96
+          Top = 72
+          Width = 41
+          Height = 21
+          Caption = 'Next'
+          Enabled = False
+          TabOrder = 8
+          OnClick = butVersionNextClick
         end
       end
       object GroupBox3: TGroupBox
@@ -9034,29 +9121,33 @@ object frmMain: TfrmMain
         object txtName: TEdit
           Left = 160
           Top = 16
-          Width = 361
+          Width = 329
           Height = 21
+          MaxLength = 255
           TabOrder = 0
         end
         object txtURL: TEdit
           Left = 160
           Top = 40
-          Width = 361
+          Width = 329
           Height = 21
+          MaxLength = 255
           TabOrder = 1
         end
         object txtAuthor: TEdit
           Left = 160
           Top = 64
-          Width = 361
+          Width = 329
           Height = 21
+          MaxLength = 255
           TabOrder = 2
         end
         object txtComment: TEdit
           Left = 160
           Top = 88
-          Width = 361
+          Width = 329
           Height = 21
+          MaxLength = 255
           TabOrder = 3
         end
         object chkImagePerso: TCheckBox
@@ -9116,6 +9207,7 @@ object frmMain: TfrmMain
             Width = 180
           end>
         HideSelection = False
+        ReadOnly = True
         RowSelect = True
         TabOrder = 0
         ViewStyle = vsReport
@@ -9145,10 +9237,17 @@ object frmMain: TfrmMain
           AutoSize = False
           Caption = 'Sub-directory:'
         end
+        object Label19: TLabel
+          Left = 256
+          Top = 64
+          Width = 84
+          Height = 13
+          Caption = 'Detected version:'
+        end
         object chkCompress: TCheckBox
           Left = 8
           Top = 56
-          Width = 265
+          Width = 233
           Height = 17
           Caption = 'Compress with Zlib (recommended)'
           Checked = True
@@ -9160,7 +9259,7 @@ object frmMain: TfrmMain
         object chkUpgradeOnly: TCheckBox
           Left = 8
           Top = 72
-          Width = 265
+          Width = 233
           Height = 17
           Caption = 'Do not install if a newer version already exist'
           Checked = True
@@ -9172,7 +9271,7 @@ object frmMain: TfrmMain
         object chkStoreDateTime: TCheckBox
           Left = 8
           Top = 88
-          Width = 265
+          Width = 225
           Height = 17
           Caption = 'Store date and time of the file'
           Checked = True
@@ -9182,9 +9281,9 @@ object frmMain: TfrmMain
           OnClick = chkStoreDateTimeClick
         end
         object chkReadOnly: TCheckBox
-          Left = 272
+          Left = 360
           Top = 72
-          Width = 249
+          Width = 161
           Height = 17
           Caption = 'Read only'
           Enabled = False
@@ -9192,9 +9291,9 @@ object frmMain: TfrmMain
           OnClick = chkReadOnlyClick
         end
         object chkHidden: TCheckBox
-          Left = 272
-          Top = 88
-          Width = 249
+          Left = 360
+          Top = 56
+          Width = 161
           Height = 17
           Caption = 'Hidden'
           Enabled = False
@@ -9224,18 +9323,36 @@ object frmMain: TfrmMain
           Width = 249
           Height = 21
           Enabled = False
+          MaxLength = 255
           TabOrder = 6
           OnChange = txtInstallDirChange
         end
         object chkRegSvr: TCheckBox
-          Left = 272
-          Top = 56
-          Width = 249
+          Left = 360
+          Top = 88
+          Width = 161
           Height = 17
           Caption = 'Register (ActiveX OCX/DLL)'
           Enabled = False
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          Font.Style = []
+          ParentFont = False
           TabOrder = 7
           OnClick = chkRegSvrClick
+        end
+        object lblFileVersion: TStaticText
+          Left = 240
+          Top = 80
+          Width = 113
+          Height = 17
+          Alignment = taCenter
+          AutoSize = False
+          BevelInner = bvNone
+          BevelKind = bkFlat
+          TabOrder = 8
         end
       end
       object ToolBar: TToolBar
@@ -9274,48 +9391,58 @@ object frmMain: TfrmMain
       ImageIndex = 3
       object Label14: TLabel
         Left = 8
-        Top = 18
+        Top = 10
         Width = 145
         Height = 13
         Alignment = taRightJustify
         AutoSize = False
         Caption = 'Package filename and path:'
       end
-      object JvRichEdit1: TJvRichEdit
+      object Label20: TLabel
+        Left = 0
+        Top = 41
+        Width = 57
+        Height = 13
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'DUPP:'
+      end
+      object richLog: TJvRichEdit
         Left = 0
         Top = 104
         Width = 529
         Height = 185
+        AutoSize = False
+        ReadOnly = True
         TabOrder = 0
       end
-      object ProgressBar1: TProgressBar
+      object ProgressBar: TProgressBar
         Left = 0
         Top = 80
         Width = 529
         Height = 16
         TabOrder = 1
       end
-      object Edit1: TEdit
+      object txtPackageFile: TEdit
         Left = 160
-        Top = 16
+        Top = 8
         Width = 337
         Height = 21
-        Enabled = False
         TabOrder = 2
       end
-      object Button2: TButton
+      object butBrowsePackageFile: TButton
         Left = 496
-        Top = 16
+        Top = 8
         Width = 21
         Height = 21
         Caption = '+'
-        Enabled = False
         TabOrder = 3
+        OnClick = butBrowsePackageFileClick
       end
       object butCompile: TJvImgBtn
-        Left = 160
-        Top = 48
-        Width = 201
+        Left = 376
+        Top = 40
+        Width = 137
         Height = 25
         Caption = 'Compile D5P file'
         TabOrder = 4
@@ -9327,6 +9454,24 @@ object frmMain: TfrmMain
         HotTrackFont.Style = []
         Images = imgButtons
         ImageIndex = 2
+      end
+      object optDUPPv2: TRadioButton
+        Left = 64
+        Top = 40
+        Width = 305
+        Height = 17
+        Caption = 'v2 (wrong CRC verification but fully compatible)'
+        TabOrder = 5
+      end
+      object optDUPPv3: TRadioButton
+        Left = 64
+        Top = 56
+        Width = 305
+        Height = 17
+        Caption = 'v3 (good CRC but compatible with Duppi v2.2.0+ only)'
+        Checked = True
+        TabOrder = 6
+        TabStop = True
       end
     end
   end
@@ -9344,6 +9489,7 @@ object frmMain: TfrmMain
       Height = 25
       Caption = 'New'
       TabOrder = 0
+      OnClick = JvImgBtn1Click
       HotTrackFont.Charset = DEFAULT_CHARSET
       HotTrackFont.Color = clWindowText
       HotTrackFont.Height = -11
@@ -9807,11 +9953,6 @@ object frmMain: TfrmMain
   end
   object SaveDialog: TSaveDialog
     Left = 440
-    Top = 8
-  end
-  object SimpleXML: TJvSimpleXML
-    IndentString = '  '
-    Left = 408
     Top = 8
   end
 end

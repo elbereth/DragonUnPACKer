@@ -1,6 +1,6 @@
 program drgunpack5;
 
-// $Id: drgunpack5.dpr,v 1.4 2005-12-13 07:13:56 elbereth Exp $
+// $Id: drgunpack5.dpr,v 1.5 2008-03-03 07:06:07 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/drgunpack5.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -69,7 +69,6 @@ begin
 
   result := FileExists(ExtractFilePath(Application.ExeName)+'data\default.dulk');
 //  result := result and FileExists(ExtractFilePath(Application.ExeName)+'data\drivers\drv_default.d5d');
-//  CheckImportantFiles := FileExists(ExtractFilePath(Application.ExeName)+'data\default.dulk') and FileExists(ExtractFilePath(Application.ExeName)+'data\drivers\drv_giants.dup5');
 
 end;
 
@@ -170,51 +169,36 @@ begin
   begin
     MessageDlg('Needed file not found:'+#10+'\data\default.dulk'+#10+#10+'Please reinstall Dragon UnPACKer 5.',mtError,[mbOk],0);
     DoTest := False;
-  end
-{  else if Not(FileExists(ExtractFilePath(Application.ExeName)+'data\drivers\drv_default.d5d')) then
-  begin
-    MessageDlg('Needed file not found:'+#10+'\data\drivers\drv_default.d5d'+#10+#10+'Please reinstall Dragon UnPACKer 5.',mtError,[mbOk],0);
-    DoTest := False;
-  end;}
+  end;
 
 end;
 
 var hwnd : word = 0;
     x: integer;
     res: boolean;
-//    T: TextFile;
+    hProcess: THandle;
 begin
 
-{  AssignFile(T, 'debug.txt');
-  if FileExists('debug.txt') then
-    Reset(T)
-  else
-    Rewrite(T);
-
-  writeln(T,DateTimeToStr(Now)+' - Starting DUP5...');  }
+  // Set CPU affinity to first processor only
+  // This fixes the problem with 1686603 (Problem with AMD Dual Core CPU's)
+  hProcess := OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessID() );
+  SetProcessAffinityMask(hProcess,1);
 
   if CheckOneOnly then
     hwnd := FindWindow('Tdup5Main', nil)
   else
     hwnd := 0;
 
-//  writeln(T,DateTimeToStr(Now)+' - hwnd='+inttostr(hwnd));
-
   if hwnd<>0 then
   begin
-//    writeln(T,DateTimeToStr(Now)+' - ParamStr(1)='+paramstr(1)+' / '+inttostr(length(paramstr(1))));
     for x:=1 to length(ParamStr(1)) do
     begin
       PostMessage(hwnd, wm_User, ord(ParamStr(1)[x]), 0);
-      //Showmessage(IntTostr(ord(ParamStr(1)[x])));
     end;
     PostMessage(hwnd, wm_User, 0, 0);
-//    writeln(T,DateTimeToStr(Now)+' - Message posted to old instance');
   end
   else begin
-//    writeln(T,DateTimeToStr(Now)+' - Creating MUTEX');
     CreateMutex(nil, False, 'DragonUnPACKer5');
-//    writeln(T,DateTimeToStr(Now)+' - Creating Splash window');
     with TfrmSplash.Create(nil) do
     try
       if CheckByPass then
@@ -229,57 +213,26 @@ begin
           imgBeta.Visible := true;
         If (pos('Alpha',CurEdit) > 0) then
           imgAlpha.Visible := true;
-//        writeln(T,DateTimeToStr(Now)+' - Visible - Show()');
         Show;
-//        writeln(T,DateTimeToStr(Now)+' - Visible - Update()');
         Update;
-//        writeln(T,DateTimeToStr(Now)+' - Visible - Done!');
       end;
-//      writeln(T,DateTimeToStr(Now)+' - Testing...');
       res := DoTest;
-//      writeln(T,DateTimeToStr(Now)+' - Testing... '+booltostr(res,true));
-{      if CheckByPass then
-      begin
-        TimerBlend.Enabled := False;
-        TimerLoad.Enabled := True;
-        frmSplash.Visible := False;
-      end
-      else
-        TimerBlend.Enabled := True;
- }
       if res then
       begin
-//        writeln(T,DateTimeToStr(Now)+' - Application.Initialize');
         Application.Initialize;
-//        writeln(T,DateTimeToStr(Now)+' - Application.Title');
         Application.Title := 'Dragon UnPACKer 5';
-      //Application.CreateForm(TfrmSplash, frmSplash);
-      //Application.CreateForm(TfrmSelectLanguage, frmSelectLanguage);
-//        writeln(T,DateTimeToStr(Now)+' - Application.CreateForm(Tdu5main)');
         Application.CreateForm(Tdup5Main, dup5Main);
-  //      writeln(T,DateTimeToStr(Now)+' - Application.CreateForm(TAbout)');
         Application.CreateForm(TfrmAbout, frmAbout);
-    //    writeln(T,DateTimeToStr(Now)+' - Application.CreateForm(TfrmSearch)');
         Application.CreateForm(TfrmSearch, frmSearch);
-      //  writeln(T,DateTimeToStr(Now)+' - Application.CreateForm(TfrmDrvInfo)');
         Application.CreateForm(TfrmDrvInfo, frmDrvInfo);
-        //writeln(T,DateTimeToStr(Now)+' - Application.CreateForm(TfrmConfig)');
         Application.CreateForm(TfrmConfig, frmConfig);
-        //writeln(T,DateTimeToStr(Now)+' - Application.CreateForm(TfrmDirSelect)');
-        //Application.CreateForm(TfrmDirSelect, frmDirSelect);
-        //writeln(T,DateTimeToStr(Now)+' - Application.CreateForm(TfrmHyperRipper)');
         Application.CreateForm(TfrmHyperRipper, frmHyperRipper);
-        //writeln(T,DateTimeToStr(Now)+' - Application.CreateForm(TfrmList)');
         Application.CreateForm(TfrmList, frmList);
-        //writeln(T,DateTimeToStr(Now)+' - Application.CreateForm(TfrmError)');
         Application.CreateForm(TfrmError, frmError);
       end;
     finally
-      //writeln(T,DateTimeToStr(Now)+' - Enabling TimerClose');
       TimerClose.Enabled := true;
     end;
-//    writeln(T,DateTimeToStr(Now)+' - '+booltostr(res)+' RUN');
-  //  CloseFile(T);
     if res then
     begin
       Application.Run;

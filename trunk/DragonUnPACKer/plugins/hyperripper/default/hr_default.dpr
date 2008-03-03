@@ -438,9 +438,10 @@ var Percent: TPercentCallback;
   * 50240 Now using DUHI v3
   *       Added support for very big files
   *       Fixed bug #1118661 (Very big files failure)
+  * 50340 Fixed bug #1428079 (missing bytes EOF on WAV files)
   * }
 
-const DRIVER_VERSION = 50240;
+const DRIVER_VERSION = 50340;
       HR_VERSION = 50043;
 
 function BigToLittle2(src: array of byte): word;
@@ -877,7 +878,7 @@ begin
             if (buf1 = 'RIFF') and (buf2 = 'WAVE') then
             begin
                 result.Offset := offset;
-                result.Size := Size+4;
+                result.Size := Size+8;
                 result.Ext := 'wav';
                 result.GenType := HR_TYPE_AUDIO;
             end;
@@ -1738,7 +1739,7 @@ procedure AboutBox; stdcall;
 begin
 
   MessageBoxA(AHandle, PChar('Elbereth''s HyperRipper plugin v'+getVersion(DRIVER_VERSION)+#10+
-                          '(c)Copyright 2002-2005 Alexandre Devilliers'+#10+#10+
+                          '(c)Copyright 2002-2008 Alexandre Devilliers'+#10+#10+
                           'Designed for HyperRipper v'+getVersion(HR_VERSION)
                           )
                         , 'About Elbereth''s HyperRipper plugin...', MB_OK);

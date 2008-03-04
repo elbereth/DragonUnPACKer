@@ -1,0 +1,189 @@
+HyperRipper File Format (HRF) v3.0 for HyperRipper v5.0                Freeware
+(c)Copyright 1999-2002 Alex Devilliers                       rel.A / 14-09-2002
+===============================================================================
+
+  What is HyperRipper File Format ?
+  ---------------------------------
+  
+This file format is the format used by the Dragon UnPACKer's HyperRipper to
+store Offsets/Size/Filenames of found data.
+
+Ex: If the HyperRipper found a RIFF/WAVE 'file' into Example.Dat at offset 32
+    and size of 32560.
+    The .HRF file will store this offset/size in order that the user will be
+    able to reopen this file (Example.Dat) in Dragon UnPACKer without having to
+    redo the HyperRipper search by opening the .hrf file instead.
+
+Here is version history for this file format:
+HRF version 0    First version ever
+HRF version 1    Introduced in Dragon UnPACKer v4.00.38 Beta
+HRF version 2    Introduced in Dragon UnPACKer v4.13.74
+HRF version 3.0  Introduced in Dragon UnPACKer v5.0.0 Beta 2
+
+Dragon UnPACKer Support for different versions:
+(Full = Read/Write support    - = Unsupported)
+Version of DUP                        v0     v1     v2     v3.0
+Dragon UnPACKer v4.00.38 Beta         Full   Full   -      -
+Dragon UnPACKer v4.13.74              Full   Full   Full   -
+Dragon UnPACKer v5.0.0 Beta 1         Read   Read   Read   -
+Dragon UnPACKer v5.0.0 Beta 2         Read   Full   Full   Full
+
+If you need information about the 3 first versions (0, 1 and 2) you can get the
+specification from the Developer section on the Elbereth Zone homepage:
+http://www.elberethzone.net/
+
+Version 3.0 was needed because the HyperRipper introduced in DUP5 is a
+completly new code based on a new approach (plugin based). Because of that the
+integer based way of identifiyng files was no more usuable.
+
+
+  Some information:
+  -----------------
+  
+  Please note that this file format uses 64bits integers to store offset and
+sizes in order to support really big files.
+  
+      byte is a 1 Byte long unsigned value (0 to 255)
+  shortint is a 2 Bytes long signed value (-32k to 32k)
+   integer is a 4 Bytes long signed value (-2M to 2M)
+     int64 is a 8 Bytes long signed value (really huge)
+
+
+  Global file format:
+  -------------------
+
+  Version 3.0 of the file format is organized as follow:
+  
+  Header
+  Information chunk (optional)
+  Index of entries
+  
+
+  Header of the file:
+  -------------------
+  
+  Offset  Size  Description
+   0000      5  Magic ID always 'HRFi'+#26
+   0005      1  Major version (Here 3)
+   0006      1  Minor version (Here 0)
+   0007      4  Program version used to create the file [should at least
+                be 50040 (v5.0) if program ID is 1 (HyperRipper)]
+                Check Developer page on http://www.elberethzone.net to see how
+                the version can be decoded.
+   000B      1  Program ID used to create the file
+                Only valid values is 1 for HyperRipper and 0 for Anonymous.
+                If your program makes HRF v3 files you should ask a Program ID
+                value (or take a new one yourself and send the value to Alex
+                Devilliers).
+   000C      1  Attributes:
+                0x0001 Information chunk is present
+                All others bits must be unset (in v3.0)
+   000D    255  Filename of the companion file (where data is to be read)
+   010C      8  Size in bytes of the companion file (used for verification)
+   0114      4  Number of entries in the index
+   0118      4  Offset to index of files
+  
+  Delphi record:
+  
+  type HRF3_Header = packed record
+     ID: array[1..5] of char;
+     MajorVersion: byte;
+     MinorVersion: byte;
+     PrgVersion: integer;
+     PrgID: byte;
+     Attribs: byte;
+     Filename: array[1..255] of char;
+     Filesize: int64;
+     NumEntries: integer;
+     OffsetIndex: integer;
+  end;
+  
+  
+  Information chunk:
+  ------------------
+
+  Relative
+    Offset  Size  Description
+     0000      1  Type of information chunk
+                  Should be 0
+     0001     64  Author of the file (Char array 0 terminated)
+     0041    128  URL of the author (Char array 0 terminated)
+     00C1     64  Title of the file (Char array 0 terminated)
+  
+  Delphi record:
+  
+  type HRF3_Info = packed record
+     InfoType: byte;
+     Author: array[1..64] of char;
+     URL: array[1..128] of char;
+     Title: array[1..64] of char;
+  end;
+  
+
+  Index of entries:
+  -----------------
+
+  The following structure is repeated NumEntries times (see Header):
+
+  Relative
+    Offset  Size  Description
+     0000    255  Full filename of the entry (can have directory with \ path
+                  separator, ex: sounds\test00.wav)
+                  0 terminated
+     00FF      4  General Type of the file (see types below)
+     0107      8  Offset in companion file of this entry
+     010B      8  Size in companion file of this entry
+  
+  Delphi record:
+  
+  type HRF3_Index = packed record
+     Filename: array[1..255] of char;
+     GenType: integer;
+     Offset: int64;
+     Size: int64;
+  end;
+
+
+  General File Types:
+  -------------------
+  
+  Value           Description
+      0           Unknown (this should only be used if you don't check type of
+                  file)
+      1           Audio file type
+      2           Video file type
+      3           Image file type
+   9999           Other file type (this should be the value if none of the
+                  others defined values correspond)
+
+  Delphi constants declaration:
+      
+  const
+      HR_TYPE_UNKNOWN = 0;
+      HR_TYPE_AUDIO = 1;
+      HR_TYPE_VIDEO = 2;
+      HR_TYPE_IMAGE = 3;
+      HR_TYPE_OTHER = 9999;
+
+
+  Contact
+  -------
+
+If there is something I don't explained well please contact me.
+If there is something wrong in MY specs of MY format please ask also!! :)
+
+See Developer section on Elbereth Zone internet page at:
+http://www.elberethzone.net
+
+You can reach Alex Devilliers:
+
+ By E-Mail: support@dragonunpacker.com
+    By ICQ: 1535372 (Elbereth)
+
+
+  What's new?
+  -----------
+
+Release A: First version ever (dropped all infos about v0, v1 and v2).
+
+===============================================================================

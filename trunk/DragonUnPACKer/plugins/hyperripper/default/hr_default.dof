@@ -107,11 +107,11 @@ UseLauncher=0
 DebugCWD=
 [Version Info]
 IncludeVerInfo=1
-AutoIncBuild=0
+AutoIncBuild=1
 MajorVer=5
-MinorVer=0
-Release=3
-Build=69
+MinorVer=1
+Release=0
+Build=85
 Debug=0
 PreRelease=0
 Special=0
@@ -122,13 +122,13 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=
 FileDescription=Elbereth's HyperRipper Plugin
-FileVersion=5.0.3.69
+FileVersion=5.1.0.85
 InternalName=hr_default
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=hr_default.d5h
 ProductName=Dragon UnPACKer - HyperRipper
-ProductVersion=5.0c
+ProductVersion=5.5
 Comments=Elbereth's HyperRipper Plugin
 [HistoryLists\hlUnitAliases]
 Count=1
@@ -138,6 +138,5 @@ Count=2
 Item0=E:\Developpement\dup-dev-5.1-dcu
 Item1=E:\Developpement\dup-dev-5.1-dsu
 [HistoryLists\hlOutputDirectorry]
-Count=2
-Item0=E:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
-Item1=E:\Developpement\dup-dev-5.1-compiled\utils
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-compiled\utils

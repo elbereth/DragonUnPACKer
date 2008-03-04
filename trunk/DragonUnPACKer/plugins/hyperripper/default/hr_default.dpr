@@ -3,14 +3,15 @@ library hr_default;
 uses
   Forms,
   Math,
-//  JvJCLUtils,
   StrUtils,
   SysUtils,
   Registry,
   Windows,
   Classes,
+  U_IntList in '..\..\..\common\U_IntList.pas',
   lib_version in '..\..\..\common\lib_version.pas',
-  MpegAudioOptions in 'MpegAudioOptions.pas' {frmOptMPEGa};
+  MpegAudioOptions in 'MpegAudioOptions.pas' {frmOptMPEGa},
+  spec_DDS in '..\..\..\common\spec_DDS.pas';
 
 {$E d5h}
 
@@ -439,10 +440,13 @@ var Percent: TPercentCallback;
   *       Added support for very big files
   *       Fixed bug #1118661 (Very big files failure)
   * 50340 Fixed bug #1428079 (missing bytes EOF on WAV files)
+  * 51011 Working on bug #1729410 (extraction of mp3 subfiles creates incomplete files)
+  *       Now using DUHI v4, need HyperRipper v5.5 (Dragon UnPACKer v5.3+)
+  *       Added support for DDS file format (Feature Request #1639688)
   * }
 
-const DRIVER_VERSION = 50340;
-      HR_VERSION = 50043;
+const DRIVER_VERSION = 51011;
+      HR_VERSION = 55040;
 
 function BigToLittle2(src: array of byte): word;
 begin
@@ -577,13 +581,13 @@ end;
 
 function DUHIVersion: Byte; stdcall;
 begin
-  Result := 3;
+  Result := 4;
 end;
 
 function GetVersionInfo(): VersionInfo; stdcall;
 begin
 
-  result.Name := 'Elbereth''s HyperRipper 5 plugin';
+  result.Name := 'Elbereth''s HyperRipper 5.5 plugin';
   result.Version := DRIVER_VERSION;
   result.Author := 'Alexandre Devilliers (aka Elbereth)';
   result.Comment := 'Can search all file formats that were available in HyperRipper v4.2 (Dragon UnPACKer 4.22a).'+#10+'More reliable and efficient than HyperRipper 4.';
@@ -598,7 +602,7 @@ begin
   lngEXIMG := DLNGstr('HRTIMG');
   lngEXVID := DLNGstr('HRTVID');
 
-  result.NumFormats := 21;
+  result.NumFormats := 22;
   result.FormatsList[1].GenType := HR_TYPE_AUDIO;
   result.FormatsList[1].Format := 'WAVE';
   result.FormatsList[1].Desc := 'Wave/RIFF';
@@ -706,99 +710,386 @@ begin
   result.FormatsList[15].Desc := 'JPEG/JFIF';
   result.FormatsList[15].ID := 3006;
   result.FormatsList[15].IsConfig := False;
+  result.FormatsList[22].GenType := HR_TYPE_IMAGE;
+  result.FormatsList[22].Format := 'DDS';
+  result.FormatsList[22].Desc := 'DirectX Texture';
+  result.FormatsList[22].ID := 3007;
+  result.FormatsList[22].IsConfig := False;
 
 end;
 
-function posBuf(st: String; buffer: PByteArray; bufSize: integer; startpos: integer = 0): integer;
-var x, lenst: integer;
-    memBuf: TMemoryStream;
-    buf: array[1..24] of Char;
-    test: string;
+function BMFind(szSubStr: PChar; buf: PByteArray; iBufSize: integer; iOffset: integer = 0): integer;
+{ Returns -1 if substring not found,
+  or zero-based index into buffer if substring found
+  Function copied from Mailing archives, mail from ianhinson}
+var iSubStrLen: integer;
+    skip: array [char] of integer;
+    found: boolean;
+    iMaxSubStrIdx: integer;
+    iSubStrIdx: integer;
+    iBufIdx: integer;
+    iScanSubStr: integer;
+    mismatch: boolean;
+    iBufScanStart: integer;
+    ch: char;
 begin
 
-  lenst := length(st);
+  { Initialisations }
+  found := False;
+  Result := -1;
 
-  result := -1;
+  { Check if trivial scan for empty string }
+  iSubStrLen := StrLen(szSubStr);
+  if iSubStrLen = 0 then
+  begin
+    Result := 0;
+    Exit
+  end;
 
-  memBuf := TMemoryStream.create();
-  try
-    memBuf.Write(buffer^,bufSize);
-    for x := startpos to bufSize-1-lenst do
+  iMaxSubStrIdx := iOffset + iSubStrLen - 1;
+  { Initialise the skip table }
+  for ch := Low(skip) to High(skip) do skip[ch] := iSubStrLen;
+  for iSubStrIdx := 0 to (iMaxSubStrIdx - 1) do
+    skip[szSubStr[iSubStrIdx]] := iMaxSubStrIdx - iSubStrIdx;
+
+  { Scan the buffer, starting comparisons at the end of the substring }
+  iBufScanStart := iMaxSubStrIdx;
+  while (not found) and (iBufScanStart < iBufSize) do
+  begin
+    iBufIdx := iBufScanStart;
+    iScanSubStr := iMaxSubStrIdx;
+    repeat
+      mismatch := (szSubStr[iScanSubStr] <> char(buf[iBufIdx]));
+      if not mismatch then
+        if iScanSubStr > 0 then
+        begin // more characters to scan
+          Dec(iBufIdx); Dec(iScanSubStr)
+        end
+        else
+          found := True;
+    until mismatch or found;
+    if found then
+      Result := iBufIdx
+    else
+      iBufScanStart := iBufScanStart + skip[char(buf[iBufScanStart])];
+  end;
+
+end;
+
+// DUHI v4: SearchBufferEx(tended) that will retrieve ALL instances of selected
+// format found in the buffer and not only the first one
+function SearchBufferEx(format: Integer; buffer: PByteArray; bufSize: integer): TIntList; stdcall;
+var tmpRes,tmpPos1,tmpPos2,tmpPosMax: integer;
+//    memBuf: TMemoryStream;
+    szFind: array [0..255] of char;
+begin
+
+  result := TIntList.Create;
+//  memBuf := TMemoryStream.create();
+//  try
+//    memBuf.Write(buffer^,bufSize);
+
+    tmpRes := 0;
+
+    while (tmpRes <> -1) and (tmpRes <= bufSize) do
     begin
-      memBuf.Position := x;
-      memBuf.ReadBuffer(buf,lenst);
-      test := LeftStr(buf,lenst);
-      if test = st then
-      begin
-        result := x;
-        break;
+
+      case format of
+        1000: begin
+                strPCopy(szFind,'RIFF');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                strPCopy(szFind,'WAVE');
+                if (tmpRes <> -1) and (BMFind(szFind,buffer,bufSize,tmpRes+8) = (tmpRes + 8)) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 12 bytes after the one found
+                  inc(tmpRes,12);
+                end
+                else
+                  tmpRes := -1
+              end;
+        1001: begin
+                strPCopy(szFind,'Creative Voice File'+chr(26));
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 19 bytes after the one found
+                  inc(tmpRes,19);
+                end;
+              end;
+        1002: begin
+                strPCopy(szFind,'MThd');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                  if (buffer[tmpRes+4] = 0) and
+                     (buffer[tmpRes+5] = 0) and
+                     (buffer[tmpRes+6] = 0) and
+                     (buffer[tmpRes+7] = 6) then
+                  begin
+                    // Add found offset to the list
+                    result.Add(tmpRes);
+                    // Next searchable offset is 8 bytes after the one found
+                    inc(tmpRes,8);
+                  end
+                  else
+                    // Next searchable offset is 4 bytes after the one found
+                    inc(tmpRes,4);
+              end;
+        1003: begin
+                strPCopy(szFind,'if');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 2 bytes after the one found
+                  inc(tmpRes,2);
+                end;
+              end;
+        1004: begin
+                strPCopy(szFind,'JN');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 2 bytes after the one found
+                  inc(tmpRes,2);
+                end;
+              end;
+        1005: begin
+                strPCopy(szFind,'Extended Module: ');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 17 bytes after the one found
+                  inc(tmpRes,17);
+                end;
+              end;
+        1006: begin
+                strPCopy(szFind,char(255));
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 1 byte after the one found
+                  inc(tmpRes);
+                end;
+              end;
+        1007: begin
+                strPCopy(szFind,'SCRM');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 4 bytes after the one found
+                  inc(tmpRes,4);
+                end;
+              end;
+        1008: begin
+                strPCopy(szFind,'IMPM');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 4 bytes after the one found
+                  inc(tmpRes,4);
+                end;
+              end;
+        1009: begin
+                strPCopy(szFind,'OggS');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                  if (buffer[tmpRes+4] = 0) then
+                  begin
+                    // Add found offset to the list
+                    result.Add(tmpRes);
+                    // Next searchable offset is 5 bytes after the one found
+                    inc(tmpRes,5);
+                  end
+                  else
+                    // Next searchable offset is 4 bytes after the one found
+                    inc(tmpRes,4);
+              end;
+
+        2000: begin
+                strPCopy(szFind,'RIFF');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                strPCopy(szFind,'AVI ');
+                if (tmpRes <> -1) then
+                  if (BMFind(szFind,buffer,bufSize,tmpRes+8) = (tmpRes + 8)) then
+                  begin
+                    // Add found offset to the list
+                    result.Add(tmpRes);
+                    // Next searchable offset is 12 bytes after the one found
+                    inc(tmpRes,12);
+                  end
+                  else
+                    inc(tmpRes,4);
+              end;
+        2001: begin
+                strPCopy(szFind,'moov');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 4 bytes after the one found
+                  inc(tmpRes,4);
+                end;
+              end;
+        2002: begin
+                strPCopy(szFind,'BIK');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 3 bytes after the one found
+                  inc(tmpRes,3);
+                end;
+              end;
+        2003: begin
+                strPCopy(szFind,#17+#175);
+                tmpPos1 := BMFind(szFind,buffer,bufSize,tmpRes);
+                strPCopy(szFind,#18+#175);
+                tmpPos2 := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpPos1 = -1) or ((tmpPos2 > -1) and (tmpPos2 < tmpPos1)) then
+                  tmpPos1 := tmpPos2;
+                tmpPosMax := max(tmpPos1,tmpPos2);
+                strPCopy(szFind,#48+#175);
+                tmpPos2 := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpPos1 = -1) or ((tmpPos2 > -1) and (tmpPos2 < tmpPos1)) then
+                  tmpPos1 := tmpPos2;
+                tmpPosMax := max(tmpPosMax,tmpPos2);
+                strPCopy(szFind,#68+#175);
+                tmpPos2 := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpPos2 > -1) and (tmpPos2 < tmpPos1) then
+                  tmpPos1 := tmpPos2;
+                tmpPosMax := max(tmpPosMax,tmpPos2);
+
+                if tmpPos1 <> -1 then
+                begin
+                  result.Add(tmpPos1);
+
+                  inc(tmpRes,tmpPosMax+2);
+                end
+                else
+                  tmpRes := -1;
+
+              end;
+
+        3000: begin
+                strPCopy(szFind,'BM');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 2 bytes after the one found
+                  inc(tmpRes,2);
+                end;
+              end;
+        3001: begin
+                strPCopy(szFind,' EMF');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 4 bytes after the one found
+                  inc(tmpRes,4);
+                end;
+              end;
+        3002: begin
+                strPCopy(szFind,'×ÍÆš');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 4 bytes after the one found
+                  inc(tmpRes,4);
+                end;
+              end;
+        3003: begin
+                strPCopy(szFind,#137 + #80 + #78 + #71 + #13 + #10 + #26 + #10);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 8 bytes after the one found
+                  inc(tmpRes,8);
+                end;
+              end;
+        3004: begin
+                strPCopy(szFind,'GIF8');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 4 bytes after the one found
+                  inc(tmpRes,4);
+                end;
+              end;
+        3005: begin
+                strPCopy(szFind,'FORM');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                strPCopy(szFind,'ILBM');
+                if (tmpRes <> -1) then
+                  if (BMFind(szFind,buffer,bufSize,tmpRes+8) = (tmpRes + 8)) then
+                  begin
+                    // Add found offset to the list
+                    result.Add(tmpRes);
+                    // Next searchable offset is 12 bytes after the one found
+                    inc(tmpRes,12);
+                  end
+                  else
+                    inc(tmpRes,4);
+              end;
+        3006: begin
+                strPCopy(szFind,#255+#216+#255+#224);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                strPCopy(szFind,'JFIF');
+                if (tmpRes <> -1) then
+                  if (BMFind(szFind,buffer,bufSize,tmpRes+8) = (tmpRes + 6)) then
+                  begin
+                    // Add found offset to the list
+                    result.Add(tmpRes);
+                    // Next searchable offset is 10 bytes after the one found
+                    inc(tmpRes,10);
+                  end
+                  else
+                    inc(tmpRes,4);
+              end;
+        3007: begin
+                strPCopy(szFind,'DDS ');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 4 bytes after the one found
+                  inc(tmpRes,4);
+                end;
+              end;
       end;
+
     end;
-  finally
-    memBuf.free;
-  end;
 
-end;
-
-function SearchBuffer(format: integer; buffer: PByteArray; bufSize: integer): integer; stdcall;
-var tmpRes: integer;
-begin
-
-  case format of
-    1000: begin
-            result := posBuf('RIFF',buffer, bufSize);
-            if (result <> -1) and not(posBuf('WAVE',buffer,bufSize,result+8) = (result + 8)) then
-              result := -1;
-          end;
-    1001: result := posBuf('Creative Voice File'+chr(26),buffer, bufSize);
-    1002: result := posBuf('MThd'+chr(0)+chr(0)+chr(0)+chr(6),buffer, bufSize);
-    1003: result := posBuf('if',buffer, bufSize);
-    1004: result := posBuf('JN',buffer, bufSize);
-    1005: result := posBuf('Extended Module: ',buffer, bufSize);
-    1006: result := posBuf(#255,buffer, bufSize);
-    1007: result := posBuf('SCRM',buffer, bufSize);
-    1008: result := posBuf('IMPM',buffer, bufSize);
-    1009: result := posBuf('OggS'+chr(0),buffer, bufSize);
-
-    2000: begin
-            result := posBuf('RIFF',buffer, bufSize);
-            if (result <> -1) and not(posBuf('AVI ',buffer,bufSize,result+8) = (result + 8)) then
-              result := -1;
-          end;
-    2001: result := posBuf('moov',buffer, bufSize);
-    2002: result := posBuf('BIK',buffer, bufSize);
-    2003: begin
-            result := posBuf(#17+#175,buffer,bufSize);
-            tmpRes := posBuf(#18+#175,buffer,bufSize);
-            if (result = -1) or ((tmpRes > -1) and (tmpRes < result)) then
-              result := tmpRes;
-            tmpRes := posBuf(#48+#175,buffer,bufSize);
-            if (result = -1) or ((tmpRes > -1) and (tmpRes < result)) then
-              result := tmpRes;
-            tmpRes := posBuf(#68+#175,buffer,bufSize);
-            if (tmpRes > -1) and (tmpRes < result) then
-              result := tmpRes;
-          end;
-
-    3000: result := posBuf('BM',buffer, bufSize);
-    3001: result := posBuf(' EMF',buffer, bufSize);
-    3002: result := posBuf('×ÍÆš',buffer, bufSize);
-    3003: result := posBuf(#137 + #80 + #78 + #71 + #13 + #10 + #26 + #10,buffer,bufSize);
-    3004: result := posBuf('GIF8',buffer, bufSize);
-    3005: begin
-            result := posBuf('FORM',buffer, bufSize);
-            if (result <> -1) and not(posBuf('ILBM',buffer,bufSize,result+8) = (result + 8)) then
-              result := -1;
-          end;
-    3006: begin
-            result := posBuf(#255+#216+#255+#224,buffer, bufSize);
-            if (result <> -1) and not(posBuf('JFIF'+chr(0),buffer,bufSize,result+6) = (result + 6)) then
-              result := -1;
-          end;
-
-  else
-    result := -1;
-  end;
+//  finally
+//    memBuf.free;
+//  end;
 
 end;
 
@@ -807,7 +1098,7 @@ var buf1, buf2: array[1..4] of char;
     buf3: array[1..3] of char;
     tByte, tByte2: byte;
     tWord: word;
-    tInteger, x, y: integer;
+    tInteger, x, y, curH, curW, minSize: integer;
     tChars: array[0..7] of char;
     tBytes4, tBytes4a: array[0..3] of byte;
     size, size2, offset2, COffset, CSize: int64;
@@ -861,7 +1152,12 @@ var buf1, buf2: array[1..4] of char;
     ITS: ITSample;
     MaxPointer: longword;
 
+    DDSH: DDSHeader;
+
     mustBeStart: boolean;
+
+    szFind: array [0..255] of char;
+
 begin
 
   result.Offset := -1;
@@ -1641,6 +1937,7 @@ begin
                 Size := 4 + BigToLittle2(JPGH.Length);
                 GetMem(PBuf,16384);
                 try
+                  strPCopy(szFind,#255+#217);
                   while (offset+Size < totSize) do
                   begin
                     FileSeek(handle,offset+size,0);
@@ -1649,7 +1946,7 @@ begin
                     else
                       bufsize := 16384;
                     FileRead(handle,PBuf^,bufsize);
-                    JPEGResult := PosBuf(#255+#217,PBuf,bufsize);
+                    JPEGResult := BMFind(szFind,PBuf,bufSize);
                     if (JPEGResult > -1) then
                     begin
                       Inc(Size,JPEGResult+2);
@@ -1673,6 +1970,48 @@ begin
                 result.GenType := HR_TYPE_IMAGE;
               end;
             end;
+          end;
+    3007: begin
+            FileSeek(handle,offset,0);
+            FileRead(handle,DDSH,SizeOf(DDSHeader));
+            if (DDSH.ID = 'DDS ') and (DDSH.SurfaceDesc.dwSize = 124) and (DDSH.SurfaceDesc.ddpfPixelFormat.dwSize = 32) then
+              if (DDSH.SurfaceDesc.dwFlags AND DDSD_LINEARSIZE) = DDSD_LINEARSIZE then
+              begin
+                Size := SizeOf(DDSHeader)+DDSH.SurfaceDesc.dwPitchOrLinearSize;
+                if (leftstr(DDSH.SurfaceDesc.ddpfPixelFormat.dwFourCC,3) = 'DXT') or (leftstr(DDSH.SurfaceDesc.ddpfPixelFormat.dwFourCC,3) = 'ATI') then
+                begin
+                  if DDSH.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] = '1' then
+                    MinSize := 8
+                  else
+                    MinSize := 16;
+                end
+                else
+                  MinSize := 0;
+                CurH := DDSH.SurfaceDesc.dwPitchOrLinearSize;
+                for x := 1 to DDSH.SurfaceDesc.dwMipMapCount-1 do
+                begin
+                  CurH := CurH div 4;
+                  Inc(Size,Max(MinSize,CurH));
+                end;
+                result.Offset := offset;
+                result.Size := Size;
+                result.Ext := 'dds';
+                result.GenType := HR_TYPE_IMAGE;
+              end
+              else if (DDSH.SurfaceDesc.dwFlags AND DDSD_PITCH) = DDSD_PITCH then
+              begin
+                Size := SizeOf(DDSHeader)+DDSH.SurfaceDesc.dwPitchOrLinearSize*DDSH.SurfaceDesc.dwHeight;
+                CurH := DDSH.SurfaceDesc.dwPitchOrLinearSize*DDSH.SurfaceDesc.dwHeight;
+                for x := 1 to DDSH.SurfaceDesc.dwMipMapCount-1 do
+                begin
+                  CurH := CurH div 4;
+                  Inc(Size,Max(MinSize,CurH));
+                end;
+                result.Offset := offset;
+                result.Size := Size;
+                result.Ext := 'dds';
+                result.GenType := HR_TYPE_IMAGE;
+              end;
           end;
 
   else
@@ -1748,7 +2087,8 @@ end;
 
 exports
   DUHIVersion,
-  SearchBuffer,
+//  SearchBuffer, // Not used in DUDI v4
+  SearchBufferEx,
   SearchFile64,
   GetSearchFormats,
   GetVersionInfo,

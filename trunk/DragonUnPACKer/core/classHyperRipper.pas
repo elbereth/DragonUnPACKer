@@ -1,6 +1,6 @@
 unit classHyperRipper;
 
-// $Id: classHyperRipper.pas,v 1.3 2005-12-16 20:15:47 elbereth Exp $
+// $Id: classHyperRipper.pas,v 1.4 2008-03-04 06:06:54 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classHyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -20,9 +20,10 @@ unit classHyperRipper;
 // classConvert unit / This unit manages the HiperRipper plugins (loading, use
 //                   / and freeing)
 // ----------------------------------------------------------------------------
-// Current DUHI (Dragon UnPACKer HyperRipper Interface): v3
+// Current DUHI (Dragon UnPACKer HyperRipper Interface): v4
 // History:
 //   v3 - Added support for 64bits SearchFile (very big files)
+//   v4 - Search reliability enhanced
 // ============================================================================
 
 interface
@@ -37,6 +38,7 @@ uses
   Windows,
   Main,
   Graphics,
+  U_IntList,
   SysUtils;
 
 type FormatsListElem = record
@@ -87,6 +89,7 @@ type
   TLanguageCallback = function (lngid: ShortString): ShortString;
   TGetSearchFormats = function(): SearchFormatsList; stdcall;
   TSearchBuffer = function(format: integer; buffer: PByteArray; bufSize: integer): integer; stdcall;
+  TSearchBufferEx = function(format: Integer; buffer: PByteArray; bufSize: integer): TIntList; stdcall;
   TSearchFile = function(format: integer; handle: integer; offset: integer): FoundInfo; stdcall;
   TSearchFile64 = function(format: integer; handle: integer; offset: int64): FoundInfo64; stdcall;
   TInitPlugin = procedure(percent: TPercentCallback; dlngstr: TLanguageCallback; dup5pth: shortstring); stdcall;
@@ -106,6 +109,7 @@ type HRPlugin = record
    Handle : THandle;
    GetList : TGetSearchFormats;
    SearchBuffer : TSearchBuffer;
+   SearchBufferEx : TSearchBufferEx;
    SearchFile : TSearchFile;
    SearchFile64 : TSearchFile64;
    Init : TInitPlugin;
@@ -132,6 +136,7 @@ type THRPlugins = class
     procedure SetOwner(AOwner: TComponent);
     procedure showAboutBox(hwnd: integer; drvnum: integer);
     procedure showConfigBox(hwnd: integer; drvnum: integer);
+    function searchBuffer(driverNumber, format: Integer; buffer: PByteArray; bufSize: integer): TIntList;
     function searchFile(driverNumber: integer; format: integer; handle: integer; offset: int64): FoundInfo64;
   private
     Percent: TPercentCallback;
@@ -210,7 +215,7 @@ begin
       begin
         @DUHIVer := GetProcAddress(Handle, 'DUHIVersion');
 
-        if (@DUHIVer <> Nil) and ((DUHIVer = 1) or (DUHIVer = 2) or (DUHIVer = 3)) then
+        if (@DUHIVer <> Nil) and ((DUHIVer = 1) or (DUHIVer = 2) or (DUHIVer = 3) or (DUHIVer = 4)) then
         begin
           if IsConsole then
             write('IsDUHI... ')
@@ -220,7 +225,6 @@ begin
 
           Plugins[NumPlugins].DUHIVersion := DUHIVer;
           @Plugins[NumPlugins].GetList := GetProcAddress(Handle, 'GetSearchFormats');
-          @Plugins[NumPlugins].SearchBuffer := GetProcAddress(Handle, 'SearchBuffer');
 
           if (DUHIVer = 1) then
           begin
@@ -228,6 +232,7 @@ begin
             @Plugins[NumPlugins].ShowAboutBox := GetProcAddress(Handle, 'AboutBox');
             @Plugins[NumPlugins].ShowConfigBox := GetProcAddress(Handle, 'ConfigBox');
             @Plugins[NumPlugins].SearchFile := GetProcAddress(Handle, 'SearchFile');
+            @Plugins[NumPlugins].SearchBuffer := GetProcAddress(Handle, 'SearchBuffer');
           end
           else if (DUHIVer = 2) then
           begin
@@ -235,6 +240,7 @@ begin
             @Plugins[NumPlugins].ShowAboutBox2 := GetProcAddress(Handle, 'AboutBox');
             @Plugins[NumPlugins].ShowConfigBox2 := GetProcAddress(Handle, 'ConfigBox');
             @Plugins[NumPlugins].SearchFile := GetProcAddress(Handle, 'SearchFile');
+            @Plugins[NumPlugins].SearchBuffer := GetProcAddress(Handle, 'SearchBuffer');
           end
           else if (DUHIVer = 3) then
           begin
@@ -242,17 +248,27 @@ begin
             @Plugins[NumPlugins].ShowAboutBox2 := GetProcAddress(Handle, 'AboutBox');
             @Plugins[NumPlugins].ShowConfigBox2 := GetProcAddress(Handle, 'ConfigBox');
             @Plugins[NumPlugins].SearchFile64 := GetProcAddress(Handle, 'SearchFile64');
+            @Plugins[NumPlugins].SearchBuffer := GetProcAddress(Handle, 'SearchBuffer');
+          end
+          else if (DUHIVer = 4) then
+          begin
+            @Plugins[NumPlugins].Init2 := GetProcAddress(Handle, 'InitPlugin');
+            @Plugins[NumPlugins].ShowAboutBox2 := GetProcAddress(Handle, 'AboutBox');
+            @Plugins[NumPlugins].ShowConfigBox2 := GetProcAddress(Handle, 'ConfigBox');
+            @Plugins[NumPlugins].SearchFile64 := GetProcAddress(Handle, 'SearchFile64');
+            @Plugins[NumPlugins].SearchBufferEx := GetProcAddress(Handle, 'SearchBufferEx');
           end;
 
           @Plugins[NumPlugins].Version := GetProcAddress(Handle, 'GetVersionInfo');
           @Plugins[NumPlugins].ShowOptionPanel := GetProcAddress(Handle, 'ShowOptionPanel');
 
           if (@Plugins[NumPlugins].GetList = Nil)
-          or (@Plugins[NumPlugins].SearchBuffer = Nil)
+          or ((DUHIVer <> 4) and (@Plugins[NumPlugins].SearchBuffer = Nil))
           or (((DUHIVer = 1) or (DUHIVer = 2)) and (@Plugins[NumPlugins].SearchFile = Nil))
           or ((DUHIVer = 1) and (@Plugins[NumPlugins].Init = Nil))
           or ((DUHIVer = 2) and (@Plugins[NumPlugins].Init2 = Nil))
           or ((DUHIVer = 3) and (@Plugins[NumPlugins].SearchFile64 = Nil))
+          or ((DUHIVer = 4) and (@Plugins[NumPlugins].SearchBufferEx = Nil))
           or (@Plugins[NumPlugins].Version = Nil)
           then
           begin
@@ -320,7 +336,8 @@ begin
 
   if ((driverNumber > 0) and (driverNumber <= NumPlugins)) then
   begin
-    if (Plugins[driverNumber].DUHIVersion = 3) then
+    if (Plugins[driverNumber].DUHIVersion = 3)
+    or (Plugins[driverNumber].DUHIVersion = 4) then
     begin
       result := Plugins[driverNumber].searchFile64(format,handle,offset);
     end
@@ -383,7 +400,7 @@ begin
   begin
     Plugins[drvnum].ShowAboutBox(hwnd,language);
   end
-  else if (Plugins[drvnum].DUHIVersion = 2) or (Plugins[drvnum].DUHIVersion = 3) then
+  else if (Plugins[drvnum].DUHIVersion = 2) or (Plugins[drvnum].DUHIVersion = 3) or (Plugins[drvnum].DUHIVersion = 4) then
   begin
     Plugins[drvnum].ShowAboutBox2;
   end;
@@ -397,9 +414,39 @@ begin
   begin
     Plugins[drvnum].ShowConfigBox(hwnd,language);
   end
-  else if (Plugins[drvnum].DUHIVersion = 2) or (Plugins[drvnum].DUHIVersion = 3) then
+  else if (Plugins[drvnum].DUHIVersion = 2) or (Plugins[drvnum].DUHIVersion = 3) or (Plugins[drvnum].DUHIVersion = 4) then
   begin
     Plugins[drvnum].ShowConfigBox2;
+  end;
+
+end;
+
+// Function to encapsulate call to searchBuffer
+// This allow to manage old plugins that do not support support the more reliable
+// searchBufferEx
+function THRPlugins.searchBuffer(driverNumber, format: Integer; buffer: PByteArray; bufSize: integer): TIntList;
+var tmpRes: Integer;
+begin
+
+  if ((driverNumber > 0) and (driverNumber <= NumPlugins)) then
+  begin
+    if (Plugins[driverNumber].DUHIVersion = 4) then
+    begin
+      result := Plugins[driverNumber].SearchBufferEx(format,buffer,bufSize);
+    end
+    else
+    begin
+      result := TIntList.Create;
+      tmpRes := Plugins[driverNumber].SearchBuffer(format,buffer,bufSize);
+      if tmpRes > -1 then
+        result.Add(tmpRes);
+    end;
+  end
+  else
+  begin
+
+    raise EDUHIUnknownPluginIdentifier.Create(ReplaceValue('%i',DLNGStr('ERRH04'),inttostr(driverNumber)));
+
   end;
 
 end;

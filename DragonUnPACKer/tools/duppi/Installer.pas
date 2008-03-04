@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.7 2008-03-02 18:13:26 elbereth Exp $
+// $Id: Installer.pas,v 1.8 2008-03-04 20:12:11 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -892,7 +892,6 @@ begin
 //HttpCli1.URL := 'http://dus.dragonunpacker.com/dup5.dus';   // Old URL
 //HttpCli1.URL := 'http://www.elberethzone.net/dup5.dus';     // 5.0/5.1 URL DUS v2.0
   HttpCli1.URL := 'http://dragonunpacker.sourceforge.net/dus.php?installedbuild='+inttostr(corebuild);     // 5.2+ URL DUS v3.0
-  writeLog(inttostr(corebuild));
   tmpFile := getTempFile('.dus');
   HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
   CurDL := DLNGstr('PII100');

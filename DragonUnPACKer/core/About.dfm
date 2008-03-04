@@ -842,9 +842,9 @@ object frmAbout: TfrmAbout
   object Label1: TLabel
     Left = 8
     Top = 296
-    Width = 205
+    Width = 252
     Height = 13
-    Caption = '(c)Copyright 1997-2008 Alexandre Devilliers'
+    Caption = 'Created by Alexandre Devilliers (aka Elbereth/Piecito)'
   end
   object Shape1: TShape
     Left = 8

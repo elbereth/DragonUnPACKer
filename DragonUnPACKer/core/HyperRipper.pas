@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.6 2006-01-30 10:35:28 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.7 2008-03-04 06:12:51 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -23,7 +23,7 @@ uses
   Dialogs, StdCtrls, ComCtrls, declFSE, lib_language, Registry,
   ExtCtrls, classHyperRipper, lib_utils, classFSE, spec_HRF,
   DateUtils, Spin, JvComponent, JvCtrls, JvExControls, JvLabel,
-  translation;
+  translation, U_IntList;
 
 type PFormatListElem = ^FormatsListElemEx;
      SearchItem = record
@@ -720,6 +720,8 @@ var hSRC, x: integer;
     lastTimer: TDateTime;
     hrfver: byte;
     intTmp1,intTmp2,absoluteOffset: int64;
+    foundOffsets: TIntList;
+    iNumOffset: Integer;
 begin
 
   cancel := false;
@@ -745,6 +747,9 @@ begin
 
   startTime := GetTickCount;
 
+  // For 5.3.0 WIP fix buffer to 8K, the advanced options will be removed afterwards
+  MAXSIZE := 8192;
+
   if MAXSIZE < 1024 then
     hrip.lblBufferLength.Caption := inttostr(MAXSIZE) +'B'
   else if MAXSIZE < 1048576 then
@@ -764,6 +769,9 @@ begin
     RollBack := MAXSIZE div 4
   else if hrip.chkRollback3.Checked then
     RollBack := MAXSIZE div 2;
+
+  // For 5.3.0 WIP fix buffer rollback to 128 bytes, the advanced options will be removed afterwards
+  rollback := 128;
 
   if rollback < 1024 then
     hrip.lblRollback.Caption := inttostr(rollback) +'B'
@@ -808,17 +816,20 @@ begin
         flist.Clear;
         for x := 1 to slist.num do
         begin
-          foundOffset := HPlug.plugins[slist.items[x].DriverNum].SearchBuffer(slist.items[x].ID,buffer,bufsize);
-          if (foundOffset > -1) then
+          foundOffsets := HPlug.searchBuffer(slist.items[x].DriverNum,slist.items[x].ID,buffer,bufsize);
+          if (foundOffsets.Count > 0) then
           begin
-            new(fitem);
-            fitem^.Offset := foundOffset;
-            fitem^.Index := x;
-            flist.Add(fitem);
+            for iNumOffset := 0 to foundOffsets.Count - 1 do
+            begin
+              new(fitem);
+              fitem^.Offset := foundOffsets.Integers[iNumOffset];
+              fitem^.Index := x;
+              flist.Add(fitem);
+            end;
           end;
         end;
 
-        if (flist.Count > 0) then                
+        if (flist.Count > 0) then
           flist.sort(@FListCompare);
 
         SomeThingFound := false;
@@ -894,7 +905,7 @@ begin
 
         if Not(SomethingFound) then
         begin
-          CurPos := CurPos + bufsize;             
+          CurPos := CurPos + bufsize;
           if (bufsize = MAXSIZE) then
             Dec(CurPos,rollback);
         end;

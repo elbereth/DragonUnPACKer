@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.5 2005-12-16 20:15:47 elbereth Exp $
+// $Id: classFSE.pas,v 1.6 2008-03-04 06:10:16 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -642,7 +642,7 @@ begin
 
   SaveTitle;
   SetTitle(ReplaceValue('%f',DLNGstr('TLD001'),ExtractFilename(pth)));
-  result := dlError;
+  //result := dlError;
 
   if (FileExists(pth)) then
   begin

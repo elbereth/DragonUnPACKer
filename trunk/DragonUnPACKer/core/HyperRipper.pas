@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.7 2008-03-04 06:12:51 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.8 2008-03-04 19:46:48 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -265,7 +265,8 @@ begin
   begin
     if numChecked > 0 then
     begin
-//      Dup5Main.closeCurrent;
+      if (Dup5Main.menuFichier_Fermer.Enabled) then
+        Dup5Main.closeCurrent;
       RunSearch(txtSource.text, slist);
     end
     else
@@ -450,6 +451,7 @@ begin
   if (lstResults.Items.Count = 5) then
     lstResults.Items.Delete(0);
   lstResults.Items.Add(st);
+  dup5Main.writeLog(st);
 
 end;
 
@@ -827,6 +829,7 @@ begin
               flist.Add(fitem);
             end;
           end;
+          foundOffsets.Free;
         end;
 
         if (flist.Count > 0) then

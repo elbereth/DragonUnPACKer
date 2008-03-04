@@ -1,6 +1,6 @@
 program drgunpack5;
 
-// $Id: drgunpack5.dpr,v 1.5 2008-03-03 07:06:07 elbereth Exp $
+// $Id: drgunpack5.dpr,v 1.6 2008-03-04 06:16:34 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/drgunpack5.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -55,7 +55,8 @@ uses
   spec_DULK in '..\common\spec_DULK.pas',
   Translation in 'Translation.pas',
   spec_HRF in '..\common\spec_HRF.pas',
-  commonTypes in '..\common\commonTypes.pas';
+  commonTypes in '..\common\commonTypes.pas',
+  U_IntList in '..\common\U_IntList.pas';
 
 {$R *.res}
 
@@ -222,14 +223,14 @@ begin
         Application.Initialize;
         Application.Title := 'Dragon UnPACKer 5';
         Application.CreateForm(Tdup5Main, dup5Main);
-        Application.CreateForm(TfrmAbout, frmAbout);
-        Application.CreateForm(TfrmSearch, frmSearch);
-        Application.CreateForm(TfrmDrvInfo, frmDrvInfo);
-        Application.CreateForm(TfrmConfig, frmConfig);
-        Application.CreateForm(TfrmHyperRipper, frmHyperRipper);
-        Application.CreateForm(TfrmList, frmList);
-        Application.CreateForm(TfrmError, frmError);
-      end;
+  Application.CreateForm(TfrmAbout, frmAbout);
+  Application.CreateForm(TfrmSearch, frmSearch);
+  Application.CreateForm(TfrmDrvInfo, frmDrvInfo);
+  Application.CreateForm(TfrmConfig, frmConfig);
+  Application.CreateForm(TfrmHyperRipper, frmHyperRipper);
+  Application.CreateForm(TfrmList, frmList);
+  Application.CreateForm(TfrmError, frmError);
+  end;
     finally
       TimerClose.Enabled := true;
     end;

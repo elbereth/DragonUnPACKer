@@ -5283,6 +5283,7 @@ object frmHyperRipper: TfrmHyperRipper
           Height = 17
           Caption = 'No Rollback (not recommended)'
           Checked = True
+          Enabled = False
           TabOrder = 0
           TabStop = True
           OnClick = chkRollback0Click
@@ -5293,6 +5294,7 @@ object frmHyperRipper: TfrmHyperRipper
           Width = 233
           Height = 17
           Caption = 'Default Rollback (128bytes)'
+          Enabled = False
           TabOrder = 1
           OnClick = chkRollback1Click
         end
@@ -5302,6 +5304,7 @@ object frmHyperRipper: TfrmHyperRipper
           Width = 233
           Height = 17
           Caption = 'Big Rollback (1/4 of the Buffer)'
+          Enabled = False
           TabOrder = 2
           OnClick = chkRollback2Click
         end
@@ -5311,6 +5314,7 @@ object frmHyperRipper: TfrmHyperRipper
           Width = 233
           Height = 17
           Caption = 'Huge Rollback (1/2 of the Buffer)'
+          Enabled = False
           TabOrder = 3
           OnClick = chkRollback3Click
         end
@@ -5337,6 +5341,7 @@ object frmHyperRipper: TfrmHyperRipper
           Height = 17
           Caption = '32Kbytes'
           Checked = True
+          Enabled = False
           TabOrder = 0
           TabStop = True
           OnClick = chkBuffer32KClick
@@ -5347,6 +5352,7 @@ object frmHyperRipper: TfrmHyperRipper
           Width = 105
           Height = 17
           Caption = '64Kbytes'
+          Enabled = False
           TabOrder = 1
           OnClick = chkBuffer64KClick
         end
@@ -5356,6 +5362,7 @@ object frmHyperRipper: TfrmHyperRipper
           Width = 105
           Height = 17
           Caption = '128Kbytes'
+          Enabled = False
           TabOrder = 2
           OnClick = chkBuffer128KClick
         end
@@ -5364,6 +5371,7 @@ object frmHyperRipper: TfrmHyperRipper
           Top = 64
           Width = 17
           Height = 17
+          Enabled = False
           TabOrder = 3
           OnClick = chkBufferUDClick
         end
@@ -5372,6 +5380,7 @@ object frmHyperRipper: TfrmHyperRipper
           Top = 64
           Width = 65
           Height = 22
+          Enabled = False
           Increment = 128
           MaxValue = 16777216
           MinValue = 256

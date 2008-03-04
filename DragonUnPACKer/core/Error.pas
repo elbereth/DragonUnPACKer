@@ -1,6 +1,6 @@
 unit Error;
 
-// $Id: Error.pas,v 1.2 2005-12-13 07:13:56 elbereth Exp $
+// $Id: Error.pas,v 1.3 2008-03-04 19:45:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Error.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -111,15 +111,20 @@ txtError.Lines.Add('__________ Computer status: __________');
 txtError.Lines.Add('');
 txtError.Lines.Add(OSInfo.WinVersion);
 
-for x := 1 to cxCpu.ProcessorCount.Available.AsNumber do
-begin
-  txtError.Lines.Add('CPU '+inttostr(x)+': '+cxCpu.Processors[x-1].Name.AsString );
+cxCpu := TcxCpu.Create;
+try
+  for x := 1 to cxCpu.ProcessorCount.Available.AsNumber do
+  begin
+    txtError.Lines.Add('CPU '+inttostr(x)+': '+cxCpu.Processors[x-1].Name.AsString );
+  end;
+finally
+  cxCPU.Free;
 end;
 
 txtError.Lines.Add('Memory: Free='+inttostr(OSInfo.MemAvailable div 1048576)+'MB / Total='+inttostr(OSInfo.MemTotal div 1048576)+'MB');
 txtError.Lines.Add('');
 
-{ txtError.Lines.Add('__________ Program status: __________');
+{txtError.Lines.Add('__________ Program status: __________');
 txtError.Lines.Add('');
 txtError.Lines.Add('Loaded file: '+FSE.GetFileName+' ('+inttostr(FSE.GetFileSize)+' bytes)');
 txtError.Lines.Add('Detected type: '+FSE.DriverID);
@@ -145,7 +150,7 @@ txtError.Lines.Add('Loaded HyperRipper plugins:');
 for x := 1 to HPlug.NumPlugins do
   txtError.Lines.Add('['+inttostr(x)+'] '+HPlug.Plugins[x].FileName+' : '+HPlug.Plugins[x].Version.Name+' <'+HPlug.Plugins[x].Version.Author+'> ('+inttostr(HPlug.Plugins[x].Version.Version)+')');
 
-txtError.Lines.Add(' Total='+inttostr(Hplug.NumPlugins)); }
+txtError.Lines.Add(' Total='+inttostr(Hplug.NumPlugins));}
 
 txtError.SelectAll;
 txtError.SelLength := 0;

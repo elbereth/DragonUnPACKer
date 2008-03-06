@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.8 2008-03-04 19:46:48 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.9 2008-03-06 19:38:58 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -201,6 +201,7 @@ type PFormatListElem = ^FormatsListElemEx;
     hrip: TfrmHyperRipper;
     cancel: boolean;
     function normalizePrefix(prefix: string): string;
+    procedure doSearch;
   protected
     procedure Execute; override;
   public
@@ -702,6 +703,13 @@ begin
 end;
 
 procedure THRipSearch.Execute;
+begin
+
+  Synchronize(doSearch);
+
+end;
+
+procedure THRipSearch.doSearch;
 var hSRC, x: integer;
     totsize,curpos: int64;
     buffer: PByteArray;
@@ -729,6 +737,7 @@ begin
   cancel := false;
 
   hrip.addResult(ReplaceValue('%f',DLNGstr('HRLG03'),ExtractFileName(filename)));
+
 
   hSRC := FileOpen(filename,fmOpenRead or fmShareExclusive);
 
@@ -956,7 +965,7 @@ begin
       hrip.LastResult(DLNGstr('HRLG15')+' '+DLNGstr('HRLG04'));
      except
       hrip.AddResult(DLNGstr('HRLG16'));
-      Synchronize(hrip.stopSearch);
+      hrip.stopSearch;
      end;
     finally
       hrip.AddResult(DLNGstr('HRLG17'));
@@ -966,13 +975,13 @@ begin
       freemem(Buffer);
 //      FileClose(hSRC);
       hrip.LastResult(DLNGstr('HRLG17')+' '+DLNGstr('HRLG04'));
-      Synchronize(hrip.stopSearch);
+      hrip.stopSearch;
     end;
   end
   else
   begin
     hrip.LastResult(ReplaceValue('%f',DLNGstr('HRLG03'),ExtractFileName(filename))+' '+DLNGstr('HRLG18')+' ('+inttostr(hSRC)+')');
-    Synchronize(hrip.stopSearch);
+    hrip.stopSearch;
   end;
 
 end;

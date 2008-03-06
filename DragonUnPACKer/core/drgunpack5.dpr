@@ -1,6 +1,6 @@
 program drgunpack5;
 
-// $Id: drgunpack5.dpr,v 1.6 2008-03-04 06:16:34 elbereth Exp $
+// $Id: drgunpack5.dpr,v 1.7 2008-03-06 19:40:19 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/drgunpack5.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -180,11 +180,12 @@ var hwnd : word = 0;
     hProcess: THandle;
 begin
 
+  { Removed because I fixed the root of the problem in the thread execution stuff
   // Set CPU affinity to first processor only
   // This fixes the problem with 1686603 (Problem with AMD Dual Core CPU's)
   hProcess := OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessID() );
   SetProcessAffinityMask(hProcess,1);
-
+  }
   if CheckOneOnly then
     hwnd := FindWindow('Tdup5Main', nil)
   else

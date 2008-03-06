@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.23 2008-03-06 19:36:01 elbereth Exp $
+// $Id: drv_default.dpr,v 1.24 2008-03-06 21:01:55 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -155,7 +155,8 @@ type FSE = ^element;
                  Added support for The Movies .LUG files
                  Changed a bit the Command & Conquer: Generals .BIG code to support The Lord of the Rings: Battle for Middle Earth .BIG files
     20041        Fixed The Movies .PAK extraction
-    20140  52040 Added suppot for Assassin's Creed .FORGE files but not activated because looks strange...
+    20140  52040 Added support for Assassin's Creed .FORGE files but not activated because looks strange...
+                 Added support for The Elder Scroll 4: Oblivion .BSA files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1320,8 +1321,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20140;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.23 $';
-  CVS_DATE = '$Date: 2008-03-06 19:36:01 $';
+  CVS_REVISION = '$Revision: 1.24 $';
+  CVS_DATE = '$Date: 2008-03-06 21:01:55 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1393,8 +1394,8 @@ end;
 function GetDriverInfo: DriverInfo; stdcall;
 begin
 
-  GetDriverInfo.Name := 'Main Driver';
-  GetDriverInfo.Author := 'Dragon UnPACKer project team';
+  GetDriverInfo.Name := 'Elbereth''s Main Driver';
+  GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
   GetDriverInfo.Comment := 'This driver support 76 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
   GetDriverInfo.NumFormats := 64;
@@ -1524,6 +1525,8 @@ begin
   GetDriverInfo.Formats[62].Name := 'The Movies (*.BIG;*.LUG)';
   GetDriverInfo.Formats[63].Extensions := '*.ARCH00';
   GetDriverInfo.Formats[63].Name := 'F.E.A.R. (*.ARCH00)';
+  GetDriverInfo.Formats[64].Extensions := '*.BSA';
+  GetDriverInfo.Formats[64].Name := 'The Elder Scrolls 4: Oblivion (*.BSA)';
 //  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
 //  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -7390,6 +7393,129 @@ begin
 
 end;
 
+type TES4BSAHeader = packed record
+        Field: array[0..3] of char; // 'BSA' + #0
+        Version: cardinal;          // 103
+        Offset: cardinal;
+        ArchiveFlags: integer;      // 0x01 Archive has names for directories
+                                    // 0x02 Archive has names for files
+                                    // 0x04 Files are by default compressed
+        FolderCount: cardinal;
+        FileCount: cardinal;
+        TotalFolderNameLength: cardinal;
+        TotalFileNameLength: cardinal;
+        FileFlags: cardinal;
+     end;
+     TES4BSAFolderRecord = packed record
+        NameHash: int64;
+        Count: cardinal;            // Amount of files in this folder
+        Offset: integer;            // Offset to Folder name + File Records
+                                    // (To get actual offset from start of file: Offset - TES4BSAHeader.TotalFileNameLength)
+     end;
+     TES4BSAFileRecord = packed record
+        NameHash: int64;
+        Size: integer;
+        Offset: integer;
+     end;
+
+function ReadTheElderScrolls4OblivionBSA(src: string): integer;
+var HDR: TES4BSAHeader;
+    FolderENT: TES4BSAFolderRecord;
+    FileENT: TES4BSAFileRecord;
+    curDir: string;
+    NumE, x, y, CurOffset, OffsetToNames: integer;
+    DefaultCompressed: boolean;
+    FileNames: TStringList;
+    Buffer: TMemoryStream;
+    SHandle: THandleStream;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, Sizeof(TES4BSAHeader));
+
+    if (LeftStr(HDR.Field,3) <> 'BSA') or (HDR.Field[3] <> #0) or (HDR.Version <> 103) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'BSA';
+      ErrInfo.Games := 'The Elder Scrolls 4: Oblivion';
+    end
+    else
+    begin
+
+      NumE := 0;
+
+      DefaultCompressed := (HDR.ArchiveFlags AND 4) = 4;
+
+      OffsetToNames := HDR.Offset + HDR.FolderCount * (SizeOf(TES4BSAFolderRecord)+1) + HDR.FileCount * Sizeof(TES4BSAFileRecord) + HDR.TotalFolderNameLength;
+//      FileSeek(FHandle,OffsetToNames,0);
+
+      FileNames := TStringList.Create;
+
+      try
+
+        // Speed up filename reading
+        // 1. Reads all block to memory
+        Buffer := TMemoryStream.Create;
+        SHandle := THandleStream.Create(FHandle);
+        SHandle.Seek(OffsetToNames,0);
+        Buffer.CopyFrom(SHandle,HDR.TotalFileNameLength);
+        Buffer.Seek(0,0);
+        SHandle.Free;
+
+        // 2. Parse filenames to the TStringList
+        for x := 1 to HDR.FileCount do
+        begin
+          FileNames.Add(strip0(Get0_Stream(Buffer)));
+        end;
+
+        // 3. Free the buffer as we don't need it anymore
+        Buffer.Free;
+
+        for x := 1 to HDR.FolderCount do
+        begin
+
+          FileSeek(FHandle,HDR.Offset+(x-1)*SizeOf(TES4BSAFolderRecord),0);
+          FileRead(FHandle,FolderENT,Sizeof(TES4BSAFolderRecord));
+          FileSeek(FHandle,FolderENT.Offset - HdR.TotalFileNameLength,0);
+          curDir := strip0(get8(FHandle));
+
+          for y := 1 to FolderENT.Count do
+          begin
+            FileRead(FHandle,FileENT,Sizeof(TES4BSAFileRecord));
+            if DefaultCompressed then
+              FSE_Add(curDir+'\'+FileNames.Strings[NumE],FileENT.Offset,FileENT.Size,1,0)
+            else
+              FSE_Add(curDir+'\'+FileNames.Strings[NumE],FileENT.Offset,FileENT.Size,0,0);
+            Inc(NumE);
+          end;
+
+        end;
+
+      finally
+        FileNames.Free;
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'BSA';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
 function ReadTheMoviesPAK: Integer;
 var HDR: TMPAK_Header;
     ENT: TMPAK_Entry;
@@ -9164,6 +9290,11 @@ begin
         FileClose(FHandle);
         Result := ReadHitmanContractsTEX(fil);
       end
+      else if (ID4[0] = 'B') and (ID4[1] = 'S') and (ID4[2] = 'A') and (ID4[3] = #0) then
+      begin
+        FileClose(FHandle);
+        ReadFormat := ReadTheElderScrolls4OblivionBSA(fil)
+      end
       else
       begin
         Result := 0;
@@ -9198,6 +9329,8 @@ begin
       ReadFormat := ReadMotoRacerBKF(fil)
     else if ext = 'BOX' then
       ReadFormat := ReadLemmingsRevolutionBOX(fil)
+    else if ext = 'BSA' then
+      ReadFormat := ReadTheElderScrolls4OblivionBSA(fil)
     else if ext = 'BUN' then
       ReadFormat := ReadMonkeyIsland3BUN(fil)
     else if ext = 'CBF' then
@@ -9582,6 +9715,8 @@ begin
       Result := true
     else if ID4 = ('&YA1') then
       Result := true
+    else if (ID4[0] = 'B') and (ID4[1] = 'S') and (ID4[2] = 'A') and (ID4[3] = #0) then
+      Result := true
     else if (ID4[0] = 'D') and (ID4[1] = 'H') and (ID4[2] = 'F') then
       Result := true
     else if ID36 = DRSID then
@@ -9648,6 +9783,8 @@ begin
     else if ext = 'BIN' then
       IsFormat := True
     else if ext = 'BOX' then
+      IsFormat := True
+    else if ext = 'BSA' then
       IsFormat := True
     else if ext = 'BUN' then
       IsFormat := True
@@ -10601,7 +10738,9 @@ begin
                           'Darkstone MTF decompression code based on infos by: Guy Ratajczak'+#10+
                           'GTA3 IMG/DIR support based on specs and infos by: Dan Strandberg of Game-Editing.net'+#10+
                           'Spellforce PAK and Eve Online STUFF support based on infos by: DaReverse'+#10+
-                          'Painkiller PAK support partially based on infos by: MrMouse'
+                          'Painkiller PAK support partially based on infos by: MrMouse'+#10+
+                          'The Elder Scrolls 4: Oblivion BSA support based on infos found on:'+#10+
+                          'http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format'
                           )
                         , 'About Main Driver plugin...', MB_OK);
 
@@ -10898,6 +11037,17 @@ begin
     end;
   end
   else if DrvInfo.ID = '007' then
+  begin
+    if (DataX = 1) then
+    begin
+      DecompressZlibToStream(outputstream, DataY, Size);
+    end
+    else
+    begin
+      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+    end;
+  end
+  else if DrvInfo.ID = 'BSA' then
   begin
     if (DataX = 1) then
     begin

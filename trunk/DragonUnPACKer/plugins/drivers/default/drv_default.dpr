@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.22 2005-12-29 20:53:31 elbereth Exp $
+// $Id: drv_default.dpr,v 1.23 2008-03-06 19:36:01 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -154,7 +154,8 @@ type FSE = ^element;
                  Added support for The Movies .BIG files
                  Added support for The Movies .LUG files
                  Changed a bit the Command & Conquer: Generals .BIG code to support The Lord of the Rings: Battle for Middle Earth .BIG files
-    20041        Fixed The Movies .PAK extraction      
+    20041        Fixed The Movies .PAK extraction
+    20140  52040 Added suppot for Assassin's Creed .FORGE files but not activated because looks strange...
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1317,10 +1318,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 20041;
+  DRIVER_VERSION = 20140;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.22 $';
-  CVS_DATE = '$Date: 2005-12-29 20:53:31 $';
+  CVS_REVISION = '$Revision: 1.23 $';
+  CVS_DATE = '$Date: 2008-03-06 19:36:01 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1333,6 +1334,7 @@ const
   NRMID : String = 'PakkaByRCL^DPL2000';
   FARID : String = 'FAR!';
   SLFID : array[0..11] of char = #255+#255+#0+#2+#1+#0+#0+#0+#0+#0+#0+#0;
+  FORGEID : array[0..9] of char = 'scimitar'+#0;
 
   PKDECKEY : array[0..4] of integer = (-2, -1, 0, 1 ,2);
 
@@ -1394,8 +1396,8 @@ begin
   GetDriverInfo.Name := 'Main Driver';
   GetDriverInfo.Author := 'Dragon UnPACKer project team';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 75 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 63;
+  GetDriverInfo.Comment := 'This driver support 76 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.NumFormats := 64;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -1522,6 +1524,8 @@ begin
   GetDriverInfo.Formats[62].Name := 'The Movies (*.BIG;*.LUG)';
   GetDriverInfo.Formats[63].Extensions := '*.ARCH00';
   GetDriverInfo.Formats[63].Name := 'F.E.A.R. (*.ARCH00)';
+//  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
+//  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
 //  GetDriverInfo.Formats[50].Name := 'Heath: The Unchosen Path (*.PAXX.NRM)'
 //  GetDriverInfo.Formats[41].Extensions := '*.h4r';
@@ -2060,6 +2064,121 @@ begin
 
       DrvInfo.ID := 'CPR';
       DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+  end
+  else
+    Result := -2;
+
+end;
+
+type FORGEHeader = packed record
+        MagicID: array[0..8] of char; // 'scimitar' + #0
+        Unknown1: integer;
+        OffsetToEntries: int64;
+        Unknown2: integer;        // Always 0x10 ?
+        Unknown3: integer;        // Alwars 0x1 ?
+     end;
+     FORGEHashHeader = packed record
+        NumberOfEntries: integer;
+        Unknown1: integer;
+        Unknown200: integer;      // Always 0x00 00 00 00 ?
+        Unknown300: integer;      // Always 0x00 00 00 00 ?
+        Unknown4FF: integer;      // Always 0xFF FF FF FF ?
+        Unknown5FF: integer;      // Always 0xFF FF FF FF ?
+        Unknown6: integer;
+        Unknown7: integer;
+        Unknown8Offset: int64;
+        NumberOfEntries2: integer;
+        Unknown9: integer;
+        OffsetToHashEntries: int64;
+        Unknown10FF: integer;      // Always 0xFF FF FF FF ?
+        Unknown11FF: integer;      // Always 0xFF FF FF FF ?
+        Unknown1200: integer;      // Always 0x00 00 00 00 ?
+        Unknown13: integer;
+        OffsetToEntries: int64;
+        Unknown14Offset: int64;    // Offset to somewhere after the Entries, but there do not seem to be anything interessant there...
+     end;
+     FORGEHashEntry = packed record
+        OffsetToFileData: int64;
+        EntryHash: integer;       // Entry Hash?
+        SizeOfFileData: integer;
+     end;
+     FORGEEntry = packed record
+        EntrySize: integer;
+        Unknown2: integer;
+        Unknown3: integer;
+        UnknownEmpty1: integer;                  // Always 0 ?
+        UnknownEmpty2: integer;                  // Always 0 ?
+        UnknownEmpty3: integer;                  // Always 0 ?
+        UnknownEmpty4: integer;                  // Always 0 ?
+        EntryIndex1: integer;                    // Starts at 0 then 1, 2, 3, .. ,last entry is -1
+        EntryIndex2: integer;                    // Starts at -1 then 0, 1, 2, .. ,last entry is NumberofEntries-2
+        UnknownEmpty5: integer;                  // Always 0 ?
+        EntryFileTime: integer;                  // t_time structure 32bits
+        EntryName: array[0..127] of char;        // #0 terminated
+        Unknown12: integer;
+        Unknown13: integer;
+        Unknown14: integer;
+        Unknown15: integer;
+     end;
+     // 13CEE       EE 3C 01 00
+     // 1C1800      00 18 1C 00
+     // 03 38 21 E0     E0 21 38 03         54010336
+
+function ReadAssassinsCreedFORGE(src: string): Integer;
+var HDR: FORGEHeader;
+    HashHDR: FORGEHashHeader;
+    HashENT: FORGEHashEntry;
+    ENT: FORGEEntry;
+    disp: string;
+    NumE, x: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    FileSeek(Fhandle,0,0);
+    FileRead(FHandle,HDR,SizeOf(FORGEHeader));
+
+    if (LeftStr(HDR.MagicID,8) <> LeftStr(FORGEID,8))
+    or (HDR.MagicID[8] <> FORGEID[8]) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'FORGE';
+      ErrInfo.Games := 'Assassin''s Creed';
+    end
+    else
+    begin
+
+      FileSeek(Fhandle,HDR.OffsetToEntries,0);
+      FileRead(Fhandle,HashHDR,SizeOf(FORGEHashHeader));
+
+      NumE := HashHDR.NumberOfEntries2;
+
+      for x:= 1 to NumE do
+      begin
+        Per := ROund(((x / NumE)*100));
+        SetPercent(Per);
+        FileSeek(Fhandle,HashHDR.OffsetToHashEntries+(x-1)*SizeOf(FORGEHashEntry),0);
+        FileRead(FHandle,HashENT,SizeOf(FORGEHashEntry));
+        FileSeek(Fhandle,HashHDR.OffsetToEntries+(x-1)*SizeOf(FORGEEntry),0);
+        FileRead(FHandle,ENT,SizeOf(FORGEEntry));
+        disp := strip0(ENT.EntryName);
+
+        FSE_Add(disp,HashENT.OffsetToFileData,HashENT.SizeOfFileData,HashENT.EntryHash,0);
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'FORGE';
+      DrvInfo.Sch := '';
       DrvInfo.FileHandle := FHandle;
       DrvInfo.ExtractInternal := False;
 
@@ -9032,6 +9151,12 @@ begin
         FileClose(FHandle);
         Result := ReadAscaronCPR(fil);
       end
+{      else if (LeftStr(ID8,8) = 'scimitar')
+          and (ID127[8] = #0) then
+      begin
+        FileClose(FHandle);
+        Result := ReadAssassinsCreedFORGE(fil);
+      end} // Deactivated Assissin's Creed .FORGE support due to incompleteness (usefullness?)
       // Hitman: Contracts - TEX
       else if (ID127[8] = #3) and (ID127[9] = #0) and (ID127[10] = #0) and (ID127[11] = #0)
           and (ID127[12] = #4) and (ID127[13] = #0) and (ID127[14] = #0) and (ID127[15] = #0) then
@@ -9093,6 +9218,8 @@ begin
       ReadFormat := ReadTheSimsFAR(fil)
     else if ext = 'FFL' then
       ReadFormat := ReadAvPRFFL(fil)
+//    else if ext = 'FORGE' then
+//      ReadFormat := ReadAssassinsCreedFORGE(fil)
     else if ext = 'FPK' then
       Result := ReadCivilization4FPK(fil)
     else if ext = 'GL' then
@@ -9471,6 +9598,9 @@ begin
       Result := true
     else if (Strip0(ID36)) = 'ASCARON_ARCHIVE V0.9' then
       Result := true
+//    else if (LeftStr(ID8,8) = 'scimitar')
+//          and (ID127[8] = #0) then
+//      Result := true
     // Hitman: Contracts - TEX file
     else if (ID127[8] = #3) and (ID127[9] = #0) and (ID127[10] = #0) and (ID127[11] = #0)
         and (ID127[12] = #4) and (ID127[13] = #0) and (ID127[14] = #0) and (ID127[15] = #0) then
@@ -9541,6 +9671,8 @@ begin
       IsFormat := True
     else if ext = 'FFL' then
       IsFormat := True
+//    else if ext = 'FORGE' then
+//      IsFormat := True
     else if ext = 'FPK' then   // Civilization 4
       IsFormat := True
     else if ext = 'GL' then
@@ -10453,8 +10585,8 @@ end;
 procedure AboutBox; stdcall;
 begin
 
-  MessageBoxA(AHandle, PChar('Main Driver plugin v'+getVersion(DRIVER_VERSION)+#10+
-                          '(c)Copyright 2002-2006 Alexandre Devilliers'+#10+#10+
+  MessageBoxA(AHandle, PChar('Elbereth''s Main Driver plugin v'+getVersion(DRIVER_VERSION)+#10+
+                          'Created by Alexandre Devilliers (aka Elbereth/Piecito)'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
                           'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+
                           'Based on CVS rev '+getCVSRevision(CVS_REVISION)+' ('+getCVSDate(CVS_DATE)+')'+#10+#10+
@@ -10744,7 +10876,7 @@ end;
 function ExtractFileToStream(outputstream: TStream; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
 var ENT: MTFCompress;
     SSA: SSACompress;
-    TMH, TMH2: TMPAK_CompHeader;
+    TMH: TMPAK_CompHeader;
     tbyt,key: byte;
     ID: array[0..2] of char;
     ID4: array[0..3] of char;

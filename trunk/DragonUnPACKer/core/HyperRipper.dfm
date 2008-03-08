@@ -1,6 +1,6 @@
 object frmHyperRipper: TfrmHyperRipper
-  Left = 230
-  Top = 377
+  Left = 431
+  Top = 589
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'HyperRipper'
@@ -5276,6 +5276,7 @@ object frmHyperRipper: TfrmHyperRipper
         Height = 89
         Caption = 'Buffer Rollback'
         TabOrder = 0
+        Visible = False
         object chkRollback0: TRadioButton
           Left = 8
           Top = 16
@@ -5326,6 +5327,7 @@ object frmHyperRipper: TfrmHyperRipper
         Height = 89
         Caption = 'Buffer'
         TabOrder = 1
+        Visible = False
         object lblBufferUD: TLabel
           Left = 96
           Top = 67
@@ -5391,7 +5393,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object grpFormatting: TGroupBox
         Left = 8
-        Top = 104
+        Top = 8
         Width = 393
         Height = 153
         Caption = 'Entries formatting'

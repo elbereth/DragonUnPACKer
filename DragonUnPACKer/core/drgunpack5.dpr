@@ -1,6 +1,6 @@
 program drgunpack5;
 
-// $Id: drgunpack5.dpr,v 1.7 2008-03-06 19:40:19 elbereth Exp $
+// $Id: drgunpack5.dpr,v 1.8 2008-03-08 21:53:28 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/drgunpack5.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -177,7 +177,7 @@ end;
 var hwnd : word = 0;
     x: integer;
     res: boolean;
-    hProcess: THandle;
+//    hProcess: THandle;
 begin
 
   { Removed because I fixed the root of the problem in the thread execution stuff

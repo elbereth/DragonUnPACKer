@@ -443,10 +443,11 @@ var Percent: TPercentCallback;
   * 51011 Working on bug #1729410 (extraction of mp3 subfiles creates incomplete files)
   *       Now using DUHI v4, need HyperRipper v5.5 (Dragon UnPACKer v5.3+)
   *       Added support for DDS file format (Feature Request #1639688)
+  * 51012 Fixed MPEG Audio search (using posbuf again instead of BMFind)
   * }
 
-const DRIVER_VERSION = 51011;
-      HR_VERSION = 55040;
+const DRIVER_VERSION = 51012;
+      HR_VERSION = 55041;
 
 function BigToLittle2(src: array of byte): word;
 begin
@@ -718,6 +719,23 @@ begin
 
 end;
 
+function posBuf(search: byte; buffer: PByteArray; bufSize: integer; startpos: integer = 0): integer;
+var x: integer;
+    testvalue: byte;
+begin
+
+  result := -1;
+  for x := startpos to bufSize do
+  begin
+    if buffer^[x] = search then
+    begin
+      result := x;
+      break;
+    end;
+  end;
+
+end;
+
 function BMFind(szSubStr: PChar; buf: PByteArray; iBufSize: integer; iOffset: integer = 0): integer;
 { Returns -1 if substring not found,
   or zero-based index into buffer if substring found
@@ -872,12 +890,16 @@ begin
                 end;
               end;
         1006: begin
-                strPCopy(szFind,char(255));
-                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                //strPCopy(szFind,char(255));
+                //tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                tmpRes := posBuf(255,buffer,bufsize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
-                  // Add found offset to the list
-                  result.Add(tmpRes);
+                  if ((tmpRes < (bufsize - 1))
+                  and ((buffer^[tmpRes+1] and 224) = 224))
+                  or (tmpRes = (bufsize - 1)) then
+                    // Add found offset to the list
+                    result.Add(tmpRes);
                   // Next searchable offset is 1 byte after the one found
                   inc(tmpRes);
                 end;

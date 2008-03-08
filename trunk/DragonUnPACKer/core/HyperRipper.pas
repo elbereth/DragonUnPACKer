@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.9 2008-03-06 19:38:58 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.10 2008-03-08 21:56:20 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -726,12 +726,13 @@ var hSRC, x: integer;
     loadTime: integer;
     prgid: byte;
     prgver: integer;
-    prefix, resprefix, fext, predir: string;
+    prefix, resprefix, fext, predir, prespeedcalc: string;
     lastTimer: TDateTime;
     hrfver: byte;
     intTmp1,intTmp2,absoluteOffset: int64;
     foundOffsets: TIntList;
     iNumOffset: Integer;
+    tmpspeedcalc: single;
 begin
 
   cancel := false;
@@ -897,6 +898,8 @@ begin
           end;
         end;
 
+        Application.ProcessMessages;
+
         if (Per >= (OldPer + 1)) or (SecondsBetween(lastTimer,now) > 1) then
         begin
           hrip.Progress.Position := Round(Per);
@@ -907,10 +910,27 @@ begin
             hrip.lblHexDump.Caption := hrip.lblHexDump.Caption + IntToHex(buffer[x],2)+' ';
           OldPer := Per;
           if (GetTickCount - StartTime) > 0 then
-            SpeedCalc := Round((CurPos / ((GetTickCount - StartTime) / 1000)) / 1024)
+          begin
+            tmpspeedcalc := (CurPos / ((GetTickCount - StartTime) / 1000));
+            if (tmpspeedcalc > 1048576) then
+            begin
+              SpeedCalc := Round(tmpspeedcalc / 1048576);
+              prespeedcalc := 'M';
+            end
+            else if (tmpspeedcalc > 1024) then
+            begin
+              SpeedCalc := Round(tmpspeedcalc / 1024);
+              prespeedcalc := 'K';
+            end
+            else
+            begin
+              SpeedCalc := Round(tmpspeedcalc);
+              prespeedcalc := '';
+            end
+          end
           else
             SpeedCalc := 0;
-          hrip.lblSpeed.Caption := IntToStr(SpeedCalc)+'KB/s';
+          hrip.lblSpeed.Caption := IntToStr(SpeedCalc)+prespeedcalc+'B/s';
           hrip.Refresh;
           lastTimer := now;
         end;

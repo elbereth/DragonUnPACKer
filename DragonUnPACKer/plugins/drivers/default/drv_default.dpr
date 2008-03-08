@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.24 2008-03-06 21:01:55 elbereth Exp $
+// $Id: drv_default.dpr,v 1.25 2008-03-08 08:26:43 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -1321,8 +1321,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20140;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.24 $';
-  CVS_DATE = '$Date: 2008-03-06 21:01:55 $';
+  CVS_REVISION = '$Revision: 1.25 $';
+  CVS_DATE = '$Date: 2008-03-08 08:26:43 $';
   BUFFER_SIZE = 4096;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -7417,14 +7417,16 @@ type TES4BSAHeader = packed record
         Size: integer;
         Offset: integer;
      end;
+const TES4BSA_FILECOMPRESSED: integer = $40000000;
+      TES4BSA_SIZEMASK: integer = $3FFFFFFF;
 
 function ReadTheElderScrolls4OblivionBSA(src: string): integer;
 var HDR: TES4BSAHeader;
     FolderENT: TES4BSAFolderRecord;
     FileENT: TES4BSAFileRecord;
     curDir: string;
-    NumE, x, y, CurOffset, OffsetToNames: integer;
-    DefaultCompressed: boolean;
+    NumE, x, y, CurOffset, OffsetToNames, originalsize, perc, oldperc: integer;
+    DefaultCompressed, FileCompressed: boolean;
     FileNames: TStringList;
     Buffer: TMemoryStream;
     SHandle: THandleStream;
@@ -7477,22 +7479,60 @@ begin
         // 3. Free the buffer as we don't need it anymore
         Buffer.Free;
 
+        perc := 0;
+
+        // Go throw the Folder records
         for x := 1 to HDR.FolderCount do
         begin
 
+          // We seek each time to the offset of the folder record
           FileSeek(FHandle,HDR.Offset+(x-1)*SizeOf(TES4BSAFolderRecord),0);
+          // We read the Folder Record
           FileRead(FHandle,FolderENT,Sizeof(TES4BSAFolderRecord));
+          // We go read the Folder name
           FileSeek(FHandle,FolderENT.Offset - HdR.TotalFileNameLength,0);
           curDir := strip0(get8(FHandle));
 
+          // We go throw the File records of the folder
           for y := 1 to FolderENT.Count do
           begin
+
+            // We seek each time to the offset of the file record
+            FileSeek(FHandle,FolderENT.Offset - HdR.TotalFileNameLength +((y-1)*SizeOf(TES4BSAFileRecord))+Length(curDir)+2,0);
+            // We read the file record
             FileRead(FHandle,FileENT,Sizeof(TES4BSAFileRecord));
-            if DefaultCompressed then
-              FSE_Add(curDir+'\'+FileNames.Strings[NumE],FileENT.Offset,FileENT.Size,1,0)
+            // We verify the compression flag (bit 30 of the file size)
+            FileCompressed := FileENT.Size AND TES4BSA_FILECOMPRESSED = TES4BSA_FILECOMPRESSED;
+            // We remove bit 30-32 from size
+            FileENT.Size := FileENT.Size AND TES4BSA_SIZEMASK;
+
+            // If the archive is compressed and the file compression flag is NOT set
+            // of if the archive is not compressed and the file compression flag is set
+            // that means the file data is compressed
+            if (DefaultCompressed and Not(FileCompressed))
+            or (Not(DefaultCompressed) and FileCompressed) then
+            begin
+              // We go to the file data offset
+              FileSeek(FHandle,FileENT.Offset,0);
+              // We read the original size of the file
+              FileRead(FHandle,OriginalSize,4);
+              // We add to FSE the file we just found, specifying it is compressed (DataX = 1 and DataY is compressed size)
+              FSE_Add(curDir+'\'+FileNames.Strings[NumE],FileENT.Offset+4,OriginalSize,1,FileENT.Size-4)
+            end
             else
+              // If the file is not compressed we only add it to FSE, specifying it is NOT compressed (DataX = 0)
               FSE_Add(curDir+'\'+FileNames.Strings[NumE],FileENT.Offset,FileENT.Size,0,0);
+
             Inc(NumE);
+
+            // Progress display (can be slow to read throw a compressed archive
+            perc := round((NumE / HDR.FileCount)*100);
+            if (perc = oldperc + 5) then
+            begin
+              SetPercent(perc);
+              OldPerc := perc;
+            end;
+
           end;
 
         end;
@@ -7503,10 +7543,12 @@ begin
 
       Result := NumE;
 
+      // Driver ID is BSA, directories are using \ in their names
+      // and we need to handle extraction in the plugin because of compression
       DrvInfo.ID := 'BSA';
       DrvInfo.Sch := '\';
       DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
+      DrvInfo.ExtractInternal := True;
 
     end;
 
@@ -11051,6 +11093,7 @@ begin
   begin
     if (DataX = 1) then
     begin
+      FileSeek(FHandle,Offset,0);
       DecompressZlibToStream(outputstream, DataY, Size);
     end
     else

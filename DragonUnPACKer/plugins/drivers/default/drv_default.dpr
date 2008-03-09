@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.25 2008-03-08 08:26:43 elbereth Exp $
+// $Id: drv_default.dpr,v 1.26 2008-03-09 21:26:24 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -157,6 +157,7 @@ type FSE = ^element;
     20041        Fixed The Movies .PAK extraction
     20140  52040 Added support for Assassin's Creed .FORGE files but not activated because looks strange...
                  Added support for The Elder Scroll 4: Oblivion .BSA files
+                 Added support for UFO: Aftermath .VFS files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1321,9 +1322,9 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20140;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.25 $';
-  CVS_DATE = '$Date: 2008-03-08 08:26:43 $';
-  BUFFER_SIZE = 4096;
+  CVS_REVISION = '$Revision: 1.26 $';
+  CVS_DATE = '$Date: 2008-03-09 21:26:24 $';
+  BUFFER_SIZE = 8192;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
   REZID : String = #13+#10+'RezMgr Version 1 Copyright (C) 1995 MONOLITH INC.           '+#13+#10+'LithTech Resource File                                      '+#13+#10+#26;
@@ -1345,6 +1346,7 @@ var DataBloc: FSE;
     CurFormat: Integer = 0;
     DrvInfo: CurrentDriverInfo;
     TotFSize: Integer = 0;
+    CompressionWindow: Integer = 0; // For UFO Aftermath VFS only at the moment
     ErrInfo: ErrorInfo;
     SetPercent: TPercentCallback;
     Per: Byte = 0;
@@ -1397,8 +1399,8 @@ begin
   GetDriverInfo.Name := 'Elbereth''s Main Driver';
   GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 76 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 64;
+  GetDriverInfo.Comment := 'This driver support 77 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.NumFormats := 65;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -1527,6 +1529,8 @@ begin
   GetDriverInfo.Formats[63].Name := 'F.E.A.R. (*.ARCH00)';
   GetDriverInfo.Formats[64].Extensions := '*.BSA';
   GetDriverInfo.Formats[64].Name := 'The Elder Scrolls 4: Oblivion (*.BSA)';
+  GetDriverInfo.Formats[65].Extensions := '*.VFS';
+  GetDriverInfo.Formats[65].Name := 'UFO: Aftermath (*.VFS)';
 //  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
 //  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -7924,7 +7928,7 @@ begin
       end;
 
       NumFSE := 0;
-      
+
       GetMem(Buffer,HDR.DirectorySize);
       GetMem(BufEmpty,20);
       try
@@ -7961,6 +7965,201 @@ begin
       DrvInfo.FileHandle := FHandle;
       DrvInfo.ExtractInternal := True;
 
+    end;
+  end
+  else
+    Result := -2;
+
+end;
+
+type VFSHeader = packed record     // Some of the info from http://wiki.xentax.com --> WATTO <-- (Thanks!)
+       VersionID: Single;          // $0000803F
+       BlockSize: Cardinal;        // Block size for padding (ex: 160 bytes / 4096 bytes)
+       PlacementEntries: integer;  // Position in file of first entry (PlacementEntries * 8 + SizeOf(VFSHeader)
+       FirstNumberOfEntries: integer;   // Number of file entries in first block
+       Unknown01Null: integer;          // $00000000
+       MaximumFilenameLength: integer;  // Always $00000040 = 64?
+       CompressionWindow: integer;      // Always 50000? (Compression windows from Wiki) - Files are compressed by this original size blocks
+       MD5Hash: array[0..15] of byte;   // MD5 Hash of File Header?
+       ExtraInfoSize: integer;          // Size of extra info
+     end;
+     // Read ExtraInfoSize bytes (usually a null terminated string)
+     // Read number of file pre-entries
+     //VFSFilePreEntry = packed record
+     //  RelativeOffset: Integer;           // Relative Offset (by number of blocks (see VFSHeader.BlockSize)
+     //  Size: integer;                     // Size (in bytes)
+     //end;
+
+     VFSFileEntry = packed record
+       Filename: array[0..63] of char;    // Null terminated filename
+       Unknown1: integer;
+       EntryType: integer;                // Type of entry:
+                                          // $00000001 = File
+                                          // $00000002 = Directory
+                                          // $00000009 = Compressed file
+                                          // Maybe this should be read as flags:
+                                          // $00000001 = File
+                                          // $00000002 = Directory
+                                          // $00000008 = Compressed data?
+                                          // Therefore compressed file would be $00000009
+       Unknown2FF: integer;               // Always $FFFFFFFF (-1)
+       RelativeOffset: Integer;           // Relative Offset (by number of blocks (see VFSHeader.BlockSize)
+       Size: integer;                     // Size (in bytes)
+       OriginalSize: integer;             // Original Size (in bytes) <--> Uncompressed size
+     end;
+
+// UFO: Aftermath .VFS
+// Auxiliary recursive function to deal with nested directories
+//      BlockSize is the HDR.BlockSize (needed to calculate Offsets)
+//    StartOffset is the calculated Starting offset from all header information (also needed to calculate Offsets)
+//      EntrySize is the number of entries in the current directory
+//         curDir is a string representing current directory path (ex: share\textures)
+//         Offset is current offset
+function ReadUFOAftermathVFS_aux(BlockSize, StartOffset, EntrySize: integer; curDir: string; offset: integer): integer;
+var ENT: VFSFileEntry;
+    newDir: string;
+    x, numFSE: integer;
+begin
+
+  // If curDir is empty then this is the first recursion (from root directory)
+  // therefore we don't add trailing slash else we do..
+  if length(curDir) = 0 then
+    newDir := ''
+  else
+    newDir := curDir + '\';
+
+  NumFSE := 0;
+
+  // We parse the directory
+  for x := 1 to EntrySize do
+  begin
+
+    // We seek into position, we need to it every loop because we could have
+    // gone into recursion
+    FileSeek(Fhandle,Offset+(x-1)*SizeOf(VFSFileEntry),0);
+
+    // We read that entry
+    FileRead(FHandle,ENT,SizeOf(VFSFileEntry));
+
+    // Three options for that entry (actually 4, sort of):
+    // Either it is a plain non-compressed file
+    //   In that case we just calculate the Offset and add it to FSE list and increment the file counter
+    if (ENT.EntryType = 1) then
+    begin
+      FSE_Add(newDir+strip0(ENT.Filename),StartOffset + ((ENT.RelativeOffset-1)*BlockSize),ENT.Size,0,0);
+      Inc(NumFSE);
+    end
+    // Or it is a directory
+    //   In that case we calculate the Offset and recurse into that directory
+    else if (ENT.EntryType = 2) then
+    begin
+      Inc(NumFSE,ReadUFOAftermathVFS_aux(BlockSize,StartOffset,ENT.Size div SizeOf(VFSFileEntry),newDir+strip0(ENT.Filename),StartOffset + ((ENT.RelativeOffset-1)*BlockSize)));
+    end
+    // Or it is a Zlib-compressed file
+    //   In that case we calculate the Offset and add it to FSE list indicating it is compressed and the compressed size, then increment the file counter
+    else if (ENT.EntryType = 9) then
+    begin
+      FSE_Add(newDir+strip0(ENT.Filename),StartOffset + ((ENT.RelativeOffset-1)*BlockSize),ENT.OriginalSize,1,ENT.Size);
+      Inc(NumFSE);
+    end
+    else  // Finally this is needed to avoid wrong entries, we get out of the loop in any other case
+          // The problem is real unhandled/unknown entry types will also break processing of the current directory
+      break;
+  end;
+
+  Result := NumFSE;
+
+end;
+
+// UFO: Aftermath .VFS
+// Main parse function
+//   This took a lot of research to finally be able to read and extract data!!
+//   Information found there helped to start (thanks WATTO):
+//     http://wiki.xentax.com/index.php?title=UFO_Aftershock
+//   Unfortunately that was not enough to be able to understand everything!
+//   I wonder if it is because Aftermath is the prequel of Aftershock? ;)
+//   Well here it is! Check auxiliary function for comments!
+function ReadUFOAftermathVFS(src: string): Integer;
+var HDR: VFSHeader;
+    ENT: VFSFileEntry;
+    curDir: string;
+    RootOffset, StartOffset, x, numFSE, numChunks: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    // We read the header
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, SizeOf(VFSHeader));
+
+    // We check this looks like a genuine VFS file format that we can handle
+    //   MaximumFilenameLength must be 64, the code was not made to handle other values
+    //   Could be done, but I found no file that had another value so why bother.. ;)
+    if (HDR.VersionID = 1.0) and (HDR.Unknown01Null = 0) and (HDR.MaximumFilenameLength = 64) then
+    begin
+
+      // We calculate the RootOffset (where the Root directory file entries are)
+      //   This was the hardest to find! Grrr...
+      RootOffset := (HDR.PlacementEntries * 8) + SizeOf(VFSHeader) + HDR.ExtraInfoSize + 4;
+
+      // We calculate the StartOffset (where the first "normal" block starts)
+      //   This was required because the first block is not the same size than
+      //   other blocks, only god knows why...
+      StartOffset := RootOffset + (HDR.FirstNumberOfEntries * SizeOf(VFSFileEntry));
+
+      NumFSE := 0;
+
+      // We store CompressionWindow to be able to decompress bigger than <CompressionWindow> bytes
+      // files. The only value I found in that field is 50000. But the plugin can deal
+      // with any value!
+      // Compressed files are break into data chunks of <CompressionWindow> bytes then Zlib compressed
+      // Check DecompressZlibVFSChunksToStream function for more details on how to decompress files
+      CompressionWindow := HDR.CompressionWindow;
+
+      // We parse the root directory
+      // This is identical to auxiliary function so check there for comments ;)
+      for x := 1 to HDR.FirstNumberOfEntries do
+      begin
+        FileSeek(Fhandle,RootOffset+(x-1)*SizeOf(VFSFileEntry),0);
+        FileRead(FHandle,ENT,SizeOf(VFSFileEntry));
+        if (ENT.EntryType = 1) then
+        begin
+          FSE_Add(strip0(ENT.Filename),StartOffset + ((ENT.RelativeOffset-1)*HDR.BlockSize),ENT.Size,0,0);
+          Inc(NumFSE);
+        end
+        else if (ENT.EntryType = 2) then
+        begin
+          Inc(NumFSE,ReadUFOAftermathVFS_aux(HDR.BlockSize,StartOffset,ENT.Size div SizeOf(VFSFileEntry),Strip0(ENT.Filename),StartOffset + ((ENT.RelativeOffset-1)*HDR.BlockSize)));
+        end
+        else if (ENT.EntryType = 9) then
+        begin
+          FSE_Add(strip0(ENT.Filename),StartOffset + ((ENT.RelativeOffset-1)*HDR.BlockSize),ENT.OriginalSize,1,ENT.Size);
+          Inc(NumFSE);
+        end
+        else
+          break;
+      end;
+
+      // We return the number of files found
+      Result := NumFSE;
+
+      DrvInfo.ID := 'VFS';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      // Extraction is handled by plugin because of compression used by some files
+      DrvInfo.ExtractInternal := True;
+
+    end
+    else
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'VFS';
+      ErrInfo.Games := 'UFO: Aftermath';
     end;
   end
   else
@@ -9337,6 +9536,11 @@ begin
         FileClose(FHandle);
         ReadFormat := ReadTheElderScrolls4OblivionBSA(fil)
       end
+      else if (ID4[0] = #0) and (ID4[1] = #0) and (ID4[2] = #128) and (ID4[3] = #63) then
+      begin
+        FileClose(FHandle);
+        ReadFormat := ReadUFOAftermathVFS(fil);
+      end
       else
       begin
         Result := 0;
@@ -9472,6 +9676,8 @@ begin
       ReadFormat := ReadHitmanContractsTEX(fil)
     else if ext = 'TLK' then
       ReadFormat := ReadHubPAK(fil)
+    else if ext = 'VFS' then
+      ReadFormat := ReadUFOAftermathVFS(fil)
     else if ext = 'VOL' then
       ReadFormat := ReadEarthSiege2VOL(fil)
     else if ext = 'VP' then
@@ -9503,7 +9709,8 @@ begin
     FileClose(FHandle);
 
   FHandle := 0;
-
+  CompressionWindow := 0;
+  
 end;
 
 type
@@ -9757,6 +9964,8 @@ begin
       Result := true
     else if ID4 = ('&YA1') then
       Result := true
+    else if (ID4[0] = #0) and (ID4[1] = #0) and (ID4[2] = #128) and (ID4[3] = #63) then
+      Result := true
     else if (ID4[0] = 'B') and (ID4[1] = 'S') and (ID4[2] = 'A') and (ID4[3] = #0) then
       Result := true
     else if (ID4[0] = 'D') and (ID4[1] = 'H') and (ID4[2] = 'F') then
@@ -9930,6 +10139,8 @@ begin
     else if ext = 'TLK' then
       IsFormat := True
     else if ext = 'UFO' then
+      IsFormat := True
+    else if ext = 'VFS' then
       IsFormat := True
     else if ext = 'VOL' then
       IsFormat := True
@@ -10556,6 +10767,89 @@ begin
 
 End;
 
+
+// UFO: Aftermath .VFS
+// Decompression function
+//   Compressed file data in UFO: Aftermath .VFS file is break down into chunks
+//   So we just go through that chunks decompressing each one separatly
+//   But we skip the 8 bytes chunks which purpose is unknown and occurs every
+//   2 "normal" compressed chunks
+//   Here is the process for a 3 chunks entry:
+//     Read ChunkSize (Integer)
+//     Read ChunkZlibData array[1..ChunkSize] of Byte
+//       Decompress ChunkZlibData (original size of the chunk is CompressionWindow [usually 50000, check header of VFS])
+//       Decrease still to be read data by Chunksize + 4
+//       Decrease still to be decompressed original data by CompressionWindow
+//     Read ChunkSize (Integer)
+//     Read ChunkZlibData array[1..ChunkSize] of Byte
+//       Decompress ChunkZlibData (original size of the chunk is CompressionWindow [usually 50000, check header of VFS])
+//       Decrease still to be read data by Chunksize + 4
+//       Decrease still to be decompressed original data by CompressionWindow
+//     Read ChunkSize (Integer) [8 bytes]
+//     Read Unknown1 (Integer)
+//     Read Unknown2 (Integer)
+//       Decrease still to be read data by Chunksize + 4
+//     Read ChunkSize (Integer)
+//     Read ChunkZlibData array[1..ChunkSize] of Byte
+//       Decompress ChunkZlibData (original size of the chunk is still to be decompressed size)
+//       Decrease still to be read data by Chunksize + 4
+//       Decrease still to be decompressed original data by CompressionWindow
+// Enjoy... ;)
+function DecompressZlibVFSChunksToStream(OutputStream: TStream; Offset: Int64; Size:  Int64; OSize: Int64) : Boolean;
+var
+  Buf: PChar;
+  InputStream: TMemoryStream;
+  DStream: TDecompressionStream;
+  FinalSize, x, chunkSize,checkValue: integer;
+begin
+
+  GetMem(Buf,Size);
+  try
+
+      FileSeek(FHandle,Offset,0);
+
+      repeat
+        FileRead(FHandle,chunkSize,4);
+        if (chunkSize = 8) then
+        begin
+          FileRead(Fhandle,checkValue,4);
+          FileRead(Fhandle,checkValue,4);
+        end
+        else
+        begin
+          FileRead(FHandle,Buf^,chunkSize);
+          InputStream := TMemoryStream.Create;
+          try
+            InputStream.Write(Buf^,chunkSize);
+            InputStream.Seek(0, soFromBeginning);
+
+            DStream := TDecompressionStream.Create(InputStream);
+            try
+              if (OSize < CompressionWindow) then
+                FinalSize := OutputStream.CopyFrom(DStream,OSize)
+              else
+                FinalSize := OutputStream.CopyFrom(DStream,CompressionWindow);
+            finally
+              DStream.Free;
+            end
+
+          finally
+            InputStream.Free;
+          end;
+
+          Dec(OSize,CompressionWindow);
+
+        end;
+        Dec(Size,chunkSize+4);
+      until Size = 0;
+  finally
+    FreeMem(Buf);
+  end;
+
+  Result := FinalSize = OSize;
+
+End;
+
 function DecompressLZ77(outbuf: PByteArray; inbuf: PByteArray; len: integer): integer;
 var x,outbufptr,mask,tag,inptr,outptr,count,inbufptr: integer;
     Window: array[0..4095] of byte;
@@ -10782,9 +11076,11 @@ begin
                           'Spellforce PAK and Eve Online STUFF support based on infos by: DaReverse'+#10+
                           'Painkiller PAK support partially based on infos by: MrMouse'+#10+
                           'The Elder Scrolls 4: Oblivion BSA support based on infos found on:'+#10+
-                          'http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format'
+                          'http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format'+#10+
+                          'Some file formats support based on info found on:'+#10+
+                          'http://wiki.xentax.com'
                           )
-                        , 'About Main Driver plugin...', MB_OK);
+                        , 'About Elbereth''s Main Driver plugin...', MB_OK);
 
 end;
 
@@ -11061,6 +11357,7 @@ var ENT: MTFCompress;
     tbyt,key: byte;
     ID: array[0..2] of char;
     ID4: array[0..3] of char;
+    CSize,OSize,x: integer;
 begin
 
   FileSeek(FHandle,Offset,0);
@@ -11095,6 +11392,17 @@ begin
     begin
       FileSeek(FHandle,Offset,0);
       DecompressZlibToStream(outputstream, DataY, Size);
+    end
+    else
+    begin
+      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+    end;
+  end
+  else if DrvInfo.ID = 'VFS' then
+  begin
+    if (DataX > 0) then
+    begin
+      DecompressZlibVFSChunksToStream(outputstream,offset,DataY,Size);
     end
     else
     begin

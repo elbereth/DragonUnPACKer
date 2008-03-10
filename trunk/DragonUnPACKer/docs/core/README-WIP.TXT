@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.3.0 WIP                                  MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    04/03/2008
+Dragon UnPACKer v5.3.1 WIP                                  MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    10/03/2008
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build, use it at your own risk. Might
@@ -16,6 +16,36 @@ by Alexande "Elbereth" Devilliers                                    04/03/2008
 
 -------------------------------------------------------------------------------
 Main program version and versions history:
+
+Version 5.3.1.174 WIP
+Release [10/03/2008]
+
+ * HyperRipper v5.5a:
+   ! Fixed the threading bug (1686603), once and for all!
+     This was due to bad threaded programming done by me (setting methods &
+     properties of the main thread from the Execute procedure of a thread).
+   i The good news (sort of) is that now I just thought of a multi-threaded
+     search feature for the HyperRipper.
+   ! Fixed responsiveness, it is now possible to cancel search.
+ * Elbereth's Main Driver v2.0.1:
+   + Added support for The Elder Scrolls 4: Oblivion .BSA files.
+     Thanks to http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format
+     Please check there if you need to create this type of archives, there are
+     free tools for that!
+   + Added support for UFO: Aftermath, UFO: Aftershock and UFO: Afterlight .VFS
+     files (which are all 3 the same format).
+     Started research by using info on XentaX's Wiki:
+     http://wiki.xentax.com/index.php?title=UFO_Aftershock
+     But it took me the weekend to figure out missing parts!!
+     Anyway, it works. ;) Check the sources for details on the file format.
+ * Elbereth's HyperRipper 5.5 plugin v5.1.0 Beta 2
+   ! Fixed MPEG Audio search not working in 5.1.0 Beta 1.
+   * Improved MPEG Audio search speed (twice faster most of the time).
+     Still slow on my computer but better than nothing. ;)
+ i I hope to have improved stability of Dragon UnPACKer. It is now very stable
+   and everything seems to be working as expected. For next WIP version I will
+   focus on new features as this 5.3.1 was mainly bug fixing.
+     
 
 Version 5.3.0.173 WIP
 Release [04/03/2008]

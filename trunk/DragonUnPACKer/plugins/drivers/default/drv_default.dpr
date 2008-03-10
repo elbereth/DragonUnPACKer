@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.26 2008-03-09 21:26:24 elbereth Exp $
+// $Id: drv_default.dpr,v 1.27 2008-03-10 20:33:20 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -157,7 +157,7 @@ type FSE = ^element;
     20041        Fixed The Movies .PAK extraction
     20140  52040 Added support for Assassin's Creed .FORGE files but not activated because looks strange...
                  Added support for The Elder Scroll 4: Oblivion .BSA files
-                 Added support for UFO: Aftermath .VFS files
+                 Added support for UFO: Aftermath/Aftershock/Afterlight .VFS files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1322,8 +1322,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20140;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.26 $';
-  CVS_DATE = '$Date: 2008-03-09 21:26:24 $';
+  CVS_REVISION = '$Revision: 1.27 $';
+  CVS_DATE = '$Date: 2008-03-10 20:33:20 $';
   BUFFER_SIZE = 8192;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1530,7 +1530,7 @@ begin
   GetDriverInfo.Formats[64].Extensions := '*.BSA';
   GetDriverInfo.Formats[64].Name := 'The Elder Scrolls 4: Oblivion (*.BSA)';
   GetDriverInfo.Formats[65].Extensions := '*.VFS';
-  GetDriverInfo.Formats[65].Name := 'UFO: Aftermath (*.VFS)';
+  GetDriverInfo.Formats[65].Name := 'UFO: Aftermath (*.VFS)|UFO: Aftershock (*.VFS)|UFO: Afterlight (*.VFS)';
 //  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
 //  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -8008,7 +8008,7 @@ type VFSHeader = packed record     // Some of the info from http://wiki.xentax.c
        OriginalSize: integer;             // Original Size (in bytes) <--> Uncompressed size
      end;
 
-// UFO: Aftermath .VFS
+// UFO: Aftermath/Aftershock/Afterlight .VFS
 // Auxiliary recursive function to deal with nested directories
 //      BlockSize is the HDR.BlockSize (needed to calculate Offsets)
 //    StartOffset is the calculated Starting offset from all header information (also needed to calculate Offsets)
@@ -8071,7 +8071,7 @@ begin
 
 end;
 
-// UFO: Aftermath .VFS
+// UFO: Aftermath/Aftershock/Afterlight .VFS
 // Main parse function
 //   This took a lot of research to finally be able to read and extract data!!
 //   Information found there helped to start (thanks WATTO):
@@ -8159,7 +8159,7 @@ begin
       FHandle := 0;
       Result := -3;
       ErrInfo.Format := 'VFS';
-      ErrInfo.Games := 'UFO: Aftermath';
+      ErrInfo.Games := 'UFO: Aftermath, UFO: Aftershock, UFO: Afterlight';
     end;
   end
   else
@@ -10768,9 +10768,9 @@ begin
 End;
 
 
-// UFO: Aftermath .VFS
+// UFO: Aftermath/Aftershock/Afterlight .VFS
 // Decompression function
-//   Compressed file data in UFO: Aftermath .VFS file is break down into chunks
+//   Compressed file data in UFO: Aftermath/Aftershock/Afterlight .VFS file is break down into chunks
 //   So we just go through that chunks decompressing each one separatly
 //   But we skip the 8 bytes chunks which purpose is unknown and occurs every
 //   2 "normal" compressed chunks

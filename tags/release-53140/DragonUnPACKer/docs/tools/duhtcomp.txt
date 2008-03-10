@@ -1,0 +1,135 @@
+Dragon UnPACKer HTML Template Compiler (DUTHComp) v2.0.3 Beta          Freeware
+(c)Copyright 2000-2003 Alex Devilliers                               07-04-2003
+===============================================================================
+
+  What is DUHTComp ?
+  ------------------
+
+This program allow you to make .UHT files for Dragon UnPACKer 5.
+Allowing you if you want to make a HTML Template for the HTML List feature of
+Dragon UnPACKer.
+
+
+  How to use DUHTComp
+  -------------------
+
+The compiler by itself is very easy to use.
+Just run it with the filename you wish to compile.
+
+Ex: DUHTComp example.ts
+
+But the TSF (Template Source file) format can seem strange.
+The only doc you will have is the commented TS files given in the examples
+(ex-*.zip files).
+
+You can find those examples in the files:
+  ex-homepage.zip       Dragon UnPACKer 4 HTML Style v1.1c
+  ex-text.zip           Text Database v1.0b
+  ex-xml.zip            XML Database v1.0b
+
+It should be enough to understand how to make a template.
+
+But here is the list of macros to know:
+(H = Header, F = Footer and V = Variable)
+
+                  HFV
+  $$FILE$$          X  File (ex: VERSION.TXT)
+  $$FILE0$$         X  File without extension (ex: VERSION)
+  $$FILEEXT$$       X  File extension (ex: TXT)
+  $$FILENAME$$    XXX  Filename of the currently opened file in Dragon UnPACKer
+  $$FORMAT$$      XX   Format of the currently opened file in Dragon UnPACKer
+  $$DESC$$          X  Description
+  $$DIRECTORY$$   XXX  Current directory in main file
+  $$DUPVER$$      XX   Dragon UnPACKer version (displayed #.##.##)
+  $$DUPEDIT$$     XX   Dragon UnPACKer release (displayed ###, ex: Beta)
+  $$DUPURL$$      XX   Dragon UnPACKer Web page URL
+  $$LNG<??????>$$ XX   Dragon UnPACKer Language keyword "??????"
+  $$OFFSET$$        X  Offset
+  $$HOFFSET$$       X  Offset (In Hexa, ex: 0009AD01)
+  $$SIZE$$          X  Size
+  $$HSIZE$$         X  Size (In Hexa, ex: 0009AD01)
+  $$TOTNUMBYTES$$  X   Number of bytes in file
+  $$TOTNUMFILES$$  X   Number of files in file
+
+  Compatibility list
+  ------------------
+
+DUHTComp is compiling DUHT files version 2 (Revision 11/03/2003).
+Here is a list of programs supporting this format:
+
+Dragon UnPACKer v5.0.0.86 Beta 3 and earlier versions
+
+Please note that files compiled using older versions of DUHTComp cannot be used
+with v5.x of Dragon UnPACKer. Files compiled with this version cannot be used
+with v4.x of Dragon UnPACKer.
+
+
+  Contact
+  -------
+
+Elbereth Zone is available on the internet at:
+http://www.elberethzone.net
+
+You can reach Alex Devilliers:
+
+ By E-Mail: dup5templates (at) dragonunpacker (dot) com
+    By ICQ: 1535372 (Elbereth)
+
+
+  What's new?
+  -----------
+
+Version 2.0.3 Beta:
+
+ i Public release (Dragon UnPACKer v5.0.0 Beta 3) with DUHT v2 (rev 11/03/2003)
+   support (only features used by Dragon UnPACKer v5.0.0 Beta 3).
+ i Please note that preview picture (JPEG) isn't verified as a valid JPEG file.
+   If you don't use a valid JPEG file DUP5 will certainly crash when you will
+   select your template.
+
+Version 2.0.2 Beta:
+
+ i Internal release with preliminary DUHT v2 (rev 11/03/2003) support.
+   Added new EXT and EXTINFO infos support to DUHT v2 files.
+
+Version 2.0.1 Alpha:
+
+ i Internal release with preliminary DUHT v2 (rev 17/11/2002) support.
+   Developped from scratch in Delphi. Console program.
+ - Removed support for DUHT v1 files.
+ + Added preliminary DUHT v2 support.
+   Specs of DUHT v2:               Status  Missing
+   Header                            100%
+   Extended Header v1                 99%  Option to disable Extended Header
+   Entry encryption                    0%
+   Entry compression (Zlib)          100%
+   Entry CRC-32                      100%  (Untested)
+   Extra Information                 100%
+   Image entry IM                    100%
+   Normal entry HD                   100%
+   Normal entry FT                   100%
+   Normal entry VR                   100%
+   Preview entry PV                   90%  Verify it is a JPEG file
+   Special entry HR                    0%  (Experimental in spec)
+   Special entry FR                    0%  (Experimental in spec)
+
+Version 1.2.1:
+
+ + Added verifications (check if files exist).
+ - Removed the need of having cmctl32.ocx.
+ ! Removed a debug msgbox.
+
+Version 1.1.6:
+
+ + Added IncludeFile (IM) to the UHT file format.
+   Maximum number of IncludeFile: 100
+ + Added Preview (PV) to the UHT file format.
+ ! Fixed many bugs..
+
+Version 1.0.6:
+
+ i First working version ever.
+ i Updated documentation on 04/11/2000.
+   Now included in the Dragon UnPACKer archive.
+
+===============================================================================

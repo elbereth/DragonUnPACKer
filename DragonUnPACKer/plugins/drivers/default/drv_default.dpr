@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.27 2008-03-10 20:33:20 elbereth Exp $
+// $Id: drv_default.dpr,v 1.28 2008-03-20 05:22:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -155,9 +155,10 @@ type FSE = ^element;
                  Added support for The Movies .LUG files
                  Changed a bit the Command & Conquer: Generals .BIG code to support The Lord of the Rings: Battle for Middle Earth .BIG files
     20041        Fixed The Movies .PAK extraction
-    20140  52040 Added support for Assassin's Creed .FORGE files but not activated because looks strange...
+    20140        Added support for Assassin's Creed .FORGE files but not activated because looks strange...
                  Added support for The Elder Scroll 4: Oblivion .BSA files
                  Added support for UFO: Aftermath/Aftershock/Afterlight .VFS files
+    20240        Added support for Act of War .DAT files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1320,10 +1321,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 20140;
+  DRIVER_VERSION = 20240;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.27 $';
-  CVS_DATE = '$Date: 2008-03-10 20:33:20 $';
+  CVS_REVISION = '$Revision: 1.28 $';
+  CVS_DATE = '$Date: 2008-03-20 05:22:56 $';
   BUFFER_SIZE = 8192;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1399,7 +1400,7 @@ begin
   GetDriverInfo.Name := 'Elbereth''s Main Driver';
   GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 77 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.Comment := 'This driver support 78 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
   GetDriverInfo.NumFormats := 65;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
@@ -1456,7 +1457,7 @@ begin
   GetDriverInfo.Formats[27].Extensions := '*.bkf';
   GetDriverInfo.Formats[27].Name := 'Moto Racer (*.BKF)';
   GetDriverInfo.Formats[28].Extensions := '*.dat';
-  GetDriverInfo.Formats[28].Name := 'Nascar Racing (*.DAT)|Gunlok (*.DAT)|LEGO Star Wars (*.DAT)';
+  GetDriverInfo.Formats[28].Name := 'Nascar Racing (*.DAT)|Gunlok (*.DAT)|LEGO Star Wars (*.DAT)|Act of War (*.DAT)';
   GetDriverInfo.Formats[29].Extensions := '*.pbo';
   GetDriverInfo.Formats[29].Name := 'Operation Flashpoint (*.PBO)';
   GetDriverInfo.Formats[30].Extensions := '*.awf';
@@ -2006,6 +2007,159 @@ begin
   end
   else
     ReadAoe2DRS := -2;
+
+end;
+
+// Act of War .DAT
+// Support added thanks to the Xentax wiki page:
+// http://wiki.xentax.com/index.php?title=GRAF:Act_Of_War_DAT
+type AOWHeader = packed record
+       ID: array[0..3] of char;                // edat
+       Version: integer;                       // Always 0x12?
+       CreationDate: integer;                  // Date in a weird format: yyyymmdd (ex: 20050204 --> 0x0131F11C)
+       Unknown1Null: integer;                  // Always 0?
+       Unknown2Null: integer;                  // Always 0?
+       Unknown3_65K: integer;                  // Always 65536?
+       Unknown4Null: byte;                     // Always 0?
+       DirOffset: integer;                     // Offset to entries directory
+       DirSize: integer;                       // Size of directory entries
+     end;
+     AOWFileInfo = packed record
+       LastFileIndicator: integer;
+       Offset: integer;
+       Size: integer;
+       Unknown1Null: byte;
+     end;
+
+function ReadActOfWarDAT_aux(dirBuffer: TMemoryStream; EndOffset: Integer; curgroup: string): integer;
+var FIL: AOWFileInfo;
+    disp: string;
+    indicator, groupSize, curOffset, oldOffset: integer;
+begin
+
+  result := 0;
+
+  if (dirBuffer.Seek(0,1) < EndOffset) then
+  repeat
+
+    oldOffset := dirBuffer.Seek(0,1);
+    dirBuffer.ReadBuffer(indicator,4);
+
+    // This is a group
+    if (indicator > 0) then
+    begin
+      dirBuffer.ReadBuffer(groupSize,4);
+      disp := strip0(get0_stream(dirBuffer));
+      if odd(length(disp)+1) then
+        dirBuffer.Seek(1,1);
+      inc(result,ReadActOfWarDAT_aux(dirBuffer,dirBuffer.seek(0,1)+groupSize,curgroup+disp));
+    end
+    // This is a file
+    else if (indicator = 0) then
+    begin
+
+      // We read the file info structure
+      dirBuffer.ReadBuffer(FIL,SizeOf(AOWFileInfo));
+
+      // Retrieve the filename
+      disp := strip0(get0_stream(dirBuffer));
+
+      // If the length of the file is odd we skip one byte
+      if odd(length(disp)+2) then
+        dirBuffer.Seek(1,1);
+
+      // Add the file to the list
+      FSE_Add(curGroup+disp,FIL.Offset,FIL.Size,0,0);
+      inc(result);
+
+      // If the indicator is 0 then we get out of the group
+      if (FIL.LastFileIndicator = 0) then
+        break;
+    end
+    // This is a file re-using a previous filename
+    else
+    begin
+      // We read the file info structure
+      dirBuffer.ReadBuffer(FIL,SizeOf(AOWFileInfo));
+
+      // Skip 1 bytes (padding)
+      dirBuffer.Seek(1,1);
+
+      // Store current offset
+      curOffset := dirBuffer.Seek(0,1);
+
+      // Seek to filename position (back in buffer)
+      dirBuffer.Seek(oldOffset+indicator,0);
+
+      // Retrieve the filename
+      disp := strip0(get0_stream(dirBuffer));
+
+      // Add the file to the list
+      FSE_Add(curGroup+disp,FIL.Offset,FIL.Size,0,0);
+      inc(result);
+
+      // Go back to current offset
+      dirBuffer.Seek(curOffset,0);
+
+      // If the indicator is 0 then we get out of the group
+      if (FIL.LastFileIndicator = 0) then
+        break;
+
+    end;
+
+  until (dirBuffer.Seek(0,1) >= EndOffset);
+
+end;
+
+function ReadActOfWarDAT(): Integer;
+var HDR: AOWHeader;
+    TotSize: Int64;
+    handle_stm: THandleStream;
+    dirBuffer: TMemoryStream;
+begin
+
+  TotSize := FileSeek(Fhandle, 0, 2);
+  FileSeek(Fhandle,0,0);
+  FileRead(FHandle, HDR, SizeOf(AOWHeader));
+
+  // Some verifications of the header to be sure it is an Act of War .DAT file
+  if (HDR.ID <> 'edat') or (HDR.Version <> $12) or (HDR.DirOffset > TotSize) or ((HDR.DirOffset + HDR.DirSize) <> TotSize) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'EDAT';
+    ErrInfo.Games := 'Act of War';
+  end
+  else
+  begin
+
+    // Create a HandleStream from the source file
+    handle_stm := THandleStream.Create(Fhandle);
+
+    // Seek to the Directory Offset
+    handle_stm.Seek(HDR.DirOffset,soFromBeginning);
+
+    // Create the Directory buffer stream
+    dirBuffer := TMemoryStream.Create;
+
+    // Read the complete directory to the buffer
+    dirBuffer.CopyFrom(handle_stm,HDR.DirSize);
+
+    // Free the HandleStream as we don't need it anymore
+    handle_stm.Free;
+
+    // Seek to the start of the buffer
+    dirBuffer.Seek(0,soFromBeginning);
+
+    Result := ReadActOfWarDAT_aux(dirBuffer,HDR.DirSize,'');
+
+    DrvInfo.ID := 'EDAT';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
 
 end;
 
@@ -8866,6 +9020,8 @@ begin
     FileRead(FHandle,ID,8);
     if ID = 'FILECHNK' then
       res := ReadGunlokDAT
+    else if leftstr(ID,4) = 'edat' then
+      res := ReadActOfWarDAT
     else
     begin
       TotFSize := FileSeek(FHandle,0,2);
@@ -9467,6 +9623,8 @@ begin
       end
       else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
         Result := ReadSpellforcePAK
+      else if ID4 = ('edat') then
+        Result := ReadActOfWarDAT
       else if ID4 = ('SAK ') then
       begin
         FileClose(FHandle);
@@ -9921,6 +10079,8 @@ begin
     else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
       Result := true
     else if ID4 = ('PACK') then
+      Result := true
+    else if ID4 = ('edat') then
       Result := true
     else if ID4 = ('POD3') then
       Result := true

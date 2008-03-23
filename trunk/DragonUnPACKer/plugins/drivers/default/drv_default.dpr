@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.28 2008-03-20 05:22:56 elbereth Exp $
+// $Id: drv_default.dpr,v 1.29 2008-03-23 16:30:42 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -159,6 +159,7 @@ type FSE = ^element;
                  Added support for The Elder Scroll 4: Oblivion .BSA files
                  Added support for UFO: Aftermath/Aftershock/Afterlight .VFS files
     20240        Added support for Act of War .DAT files
+                 Added support for Dreamfall - The Longest Journey .PAK files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1323,8 +1324,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20240;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.28 $';
-  CVS_DATE = '$Date: 2008-03-20 05:22:56 $';
+  CVS_REVISION = '$Revision: 1.29 $';
+  CVS_DATE = '$Date: 2008-03-23 16:30:42 $';
   BUFFER_SIZE = 8192;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1403,7 +1404,7 @@ begin
   GetDriverInfo.Comment := 'This driver support 78 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
   GetDriverInfo.NumFormats := 65;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
-  GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)';
+  GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
   GetDriverInfo.Formats[2].Name := 'Monkey Island 3 (*.BUN)';
   GetDriverInfo.Formats[3].Extensions := '*.grp;*.art';
@@ -2976,6 +2977,121 @@ begin
   end
   else
     ReadDescentHOG := -2;
+
+end;
+
+type HDRDreamfallTLJPAK = packed record
+       ID: array[0..11] of char;
+       NumberOfEntries: integer;
+       Unknown2: integer;
+       Unknown3: integer;
+     end;
+     ENTDreamfallTLJPAK = packed record
+       Offset: integer;
+       Size: integer;
+       Unknown1: integer;
+       Unknown2: integer;
+       Unknown3: integer;
+     end;
+
+function ReadDreamfallTLJPAK(filename: string): integer;
+var HDR: HDRDreamfallTLJPAK;
+    ENT: ENTDreamfallTLJPAK;
+    x, NumE, tmpInt, MaxLength: integer;
+    ENTBuffer: TMemoryStream;
+    TmpBuffer: THandleStream;
+    Disp, DispPre, DispFill: String;
+begin
+
+  FileSeek(Fhandle, 0, 0);
+  FileRead(Fhandle, HDR, Sizeof(HDRDreamfallTLJPAK));
+
+  if HDR.ID <> 'tlj_pack0001' then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'TLJPAK';
+    ErrInfo.Games := 'Dreamfall: The Longest Journey';
+  end
+  else
+  begin
+
+    TmpBuffer := THandleStream.Create(FHandle);
+    ENTBuffer := TMemoryStream.Create;
+    ENTBuffer.CopyFrom(TmpBuffer,HDR.NumberOfEntries * SizeOf(ENTDreamfallTLJPAK));
+    ENTBuffer.Seek(0,0);
+    TmpBuffer.Free;
+
+    NumE := 0;
+    DispPre := ExtractFileExt(filename);
+    if (length(DispPre) > 1) then
+      DispPre := '_'+rightstr(DispPre,length(DispPre)-1)
+    else
+      DispPre := '';
+    DispPre := ChangeFileExt(ExtractFileName(filename),DispPre);
+
+    MaxLength := length(inttostr(HDR.NumberOfEntries));
+    DispFill := stringofchar('0',MaxLength);
+
+    for x:= 1 to HDR.NumberOfEntries do
+    begin
+
+      Per := ROund(((x / HDR.NumberOfEntries)*100));
+      SetPercent(Per);
+
+      ENTBuffer.ReadBuffer(ENT,Sizeof(ENTDreamfallTLJPAK));
+
+      if (ENT.Size > 0) then
+      begin
+        FileSeek(FHandle,ENT.Offset,0);
+        FileRead(FHandle,tmpInt,4);
+        if (tmpInt = $20534444) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.dds'
+        else if ((tmpInt and $E0FF) = $E0FF) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.mp3'
+        else if (tmpInt = $73760A0D) or (tmpInt = $312E7376) or (tmpInt = $31157376) or (tmpInt = $315F7376) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.vs1'
+        else if (tmpInt = $322E7376) or (tmpInt = $6E69203B) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.vs2'
+        else if (tmpInt = $0A0D2F2F) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.vsc'
+        else if (tmpInt = $312E7370) or (tmpInt = $696C203B) or (tmpInt = $6576203B) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.ps1'
+        else if (tmpInt = $322E7370) or (tmpInt = $6170203B) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.ps2'
+        else if (tmpInt = $615F7376) or (tmpInt = $332E7370) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.ps3'
+        else if (tmpInt = $5367674F) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.ogg'
+        else if (tmpInt = $626A6C74) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.tljbone2d'
+        else if (tmpInt = $55465453) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.stfu'
+        else if (tmpInt = $72616873) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.shark3d'
+        else if (tmpInt = $46464952) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.wav'
+        else
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.unk'+inttohex(tmpInt,8);
+        // This below I used to identify more easily the file types
+        // inttohex(x,8)+'-'+inttohex(ENT.Unknown1,8)+'-'+inttohex(ENT.Unknown2,8)+'-'+inttohex(ENT.Unknown3,8)+ '.'+inttohex(tmpInt,8);
+        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
+        Inc(NumE);
+      end;
+
+    end;
+
+    ENTBuffer.Free;
+
+    Result := NumE;
+
+    DrvInfo.ID := 'TLJPAK';
+    DrvInfo.Sch := '/';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
 
 end;
 
@@ -9095,6 +9211,7 @@ end;
 
 function ReadHubPAK(src: String): Integer;
 var ID: array[0..3] of char;
+    ID12: array[0..11] of char;
     ID21P4: array[0..20] of char;
     res,Test1,testpko,FSize: integer;
     Test2: Word;
@@ -9109,6 +9226,9 @@ begin
     FSize := FileSeek(FHandle,0,2);
     FileSeek(FHandle,0,4);
     FileRead(FHandle,ID21P4,21);
+    // Check if Dreamfall: TLJ .PAK
+    FileSeek(Fhandle,0,0);
+    FileRead(FHandle,ID12,12);
     FileSeek(FHandle,0,0);
     FileRead(Fhandle,testpk,1);
     FileRead(Fhandle,testpko,4);
@@ -9117,6 +9237,8 @@ begin
     FileRead(FHandle,Test1,4);
     if ID = 'PACK' then
       res := ReadQuakePAK
+    else if ID12 = 'tlj_pack0001' then
+      res := ReadDreamfallTLJPAK(src)
     else if (ID[0] = #5) and (ID[1] = #0) and (ID[2] = #0) and (ID[3] = #0) then
       res := ReadTheMoviesPAK
     else if (ID[0] = #0) and (ID[1] = #0) and (ID[2] = #0) and (ID[3] = #0) then
@@ -9477,6 +9599,11 @@ begin
       begin
         FileClose(FHandle);
         Result := ReadFearARCH00(fil);
+      end
+      // Dreamfall: The Longest Journey
+      else if ID12 = 'tlj_pack0001' then
+      begin
+        Result := ReadDreamfallTLJPAK(fil);
       end
       else if ID8 = 'LiOnHeAd' then
       begin
@@ -10037,6 +10164,9 @@ begin
     else if (ID4 = 'LTAR') then
       Result := true
     else if ID12 = GRPID then
+      Result := true
+    // Dreamfall: The Longest Journey
+    else if ID12 = 'tlj_pack0001' then
       Result := true
     else if (ID4[0] = #60) and (ID4[1] = #226) and (ID4[2] = #156) and (ID4[3] = #1) then
       Result := true

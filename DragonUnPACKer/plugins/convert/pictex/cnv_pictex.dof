@@ -90,7 +90,7 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=C:\Developpement\dup-dev-5.1-compiled\data\convert
+OutputDir=E:\Developpement\dup-dev-5.1-compiled\data\convert
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
@@ -101,23 +101,19 @@ DebugSourceDirs=
 UsePackages=0
 [Parameters]
 RunParams=
-HostApplication=C:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
+HostApplication=E:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
 Launcher=
 UseLauncher=0
 DebugCWD=
-[Language]
-ActiveLang=
-ProjectLang=
-RootDir=
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=2
-MinorVer=0
+MinorVer=1
 Release=0
-Build=110
+Build=112
 Debug=0
-PreRelease=0
+PreRelease=1
 Special=0
 Private=0
 DLL=1
@@ -126,9 +122,9 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=DUP5 - Picture/Textures Convert Plugin
-FileVersion=2.0.0.110
+FileVersion=2.1.0.112
 InternalName=cnv_pictex
-LegalCopyright=(c)2003-2005 Alexandre "Elbereth" Devilliers
+LegalCopyright=Created by Alexandre Devilliers (aka Elbereth)
 LegalTrademarks=
 OriginalFilename=cnv_pictex.d5c
 ProductName=Dragon UnPACKer 5
@@ -137,14 +133,10 @@ Comments=Convert between file formats in DUP5
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlSearchPath]
-Count=1
-Item0=H:\Programmation\CVS\drgunpacker\common
+[HistoryLists\hlUnitOutputDirectory]
+Count=2
+Item0=E:\Developpement\dup-dev-5.1-dcu
+Item1=E:\Developpement\dup-dev-5.1-dsu
 [HistoryLists\hlOutputDirectorry]
-Count=6
-Item0=C:\Developpement\dup-dev-5.1-compiled\data\drivers
-Item1=H:\Programmation\Compiled\drgunpacker\current\data\drivers
-Item2=C:\Developpement\dup-dev-5.1-compiled\utils
-Item3=C:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
-Item4=C:\Developpement\dup-dev-5.1-compiled\data\convert
-Item5=C:\Developpement\dup-dev-5.1-compiled
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-compiled\utils

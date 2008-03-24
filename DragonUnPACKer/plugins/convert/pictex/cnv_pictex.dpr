@@ -1,6 +1,6 @@
 library cnv_pictex;
 
-// $Id: cnv_pictex.dpr,v 1.6 2005-12-13 07:13:56 elbereth Exp $
+// $Id: cnv_pictex.dpr,v 1.7 2008-03-24 14:18:45 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/cnv_pictex.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -24,6 +24,7 @@ uses
   Classes,
   Registry,
   Controls,
+  ImagingTypes, Imaging,     // Vampyre Imaging Library
   class_Images in 'class_Images.pas',
   Convert in 'Convert.pas' {frmConvert},
   lib_version in '..\..\..\common\lib_version.pas',
@@ -63,7 +64,7 @@ var Percent: TPercentCallback;
     AHandle: THandle;
     AOwner: TComponent;
 
-const DRIVER_VERSION = 20140;
+const DRIVER_VERSION = 21010;
 const DUP_VERSION = 52040;
 
 { * Version History:
@@ -82,6 +83,8 @@ const DUP_VERSION = 52040;
   * v2.0.0 Beta  (20010): Updated to DUCI v3 (Streams support)
   * v2.0.1 Beta  (20110): Fixed some bugs
   * v2.0.1       (20140): Removed beta status for 5.2.0 release
+  * v2.1.0 Beta  (21010): Using Imaging Lib now
+  *                       Added DirectX Texture DDS support
   * }
 
 function DUCIVersion: Byte; stdcall;
@@ -94,7 +97,7 @@ begin
 
   result.Name := 'Picture/Textures Convert Plugin';
   result.Version := getVersion(DRIVER_VERSION);
-  result.Author := 'Dragon UnPACKer project team';
+  result.Author := 'Alexandre Devilliers (aka Elbereth)';
   result.Comment := 'Converting pictures and textures? Yeah!';
   result.VerID := DRIVER_VERSION;
 
@@ -126,12 +129,16 @@ begin
        or  (uppercase(extractfileext(nam)) = '.DXT3')) then
     result := true
   else if (fmt = 'ART') then
+    result := true
+  else if (uppercase(extractfileext(nam)) = '.DDS') then
     result := true;
 
 end;
 
 function GetFileConvert(nam: ShortString; Offset, Size: Int64; fmt: ShortString; DataX, DataY: Integer): ConvertList; stdcall;
 begin
+
+  result.NumFormats := 0;
 
   if (fmt = 'WAD2') or (fmt = 'WAD3') then
   begin
@@ -263,7 +270,15 @@ begin
     result.List[3].Display := 'TGA - Targa (24bpp)';
     result.List[3].Ext := 'TGA';
     result.List[3].ID := 'TGA24';
-  end;
+  end
+  else
+    if (uppercase(extractfileext(nam)) = '.DDS') then
+    begin
+      inc(result.NumFormats);
+      result.List[result.NumFormats].Display := 'TGA - Targa (24bpp)';
+      result.List[result.NumFormats].Ext := 'TGA';
+      result.List[result.NumFormats].ID := 'TGA24';
+    end;
 
 end;
 
@@ -333,43 +348,6 @@ begin
 
 end;
 
-function ConvertART(src, dst, pal: string; w, h: integer; cnv: String): integer;
-var Img: TSaveImage;
-    hSRC,x,y: integer;
-    Buffer: PByteArray;
-begin
-
-  result := 0;
-
-  img := TSaveImage.Create;
-  try
-    img.LoadPAL(pal);
-    hSRC := FileOpen(src,fmOpenRead or fmShareDenyWrite);
-    GetMem(Buffer,W*H);
-    try
-      img.SetSize(W,H);
-      FileRead(hSRC,Buffer^,W*H);
-      for y := 0 to H-1 do
-        for x := 0 to W-1 do
-          img.Pixels[x][y] := Buffer[x*H+y];
-      if cnv = 'BMP' then
-        img.SaveToBMP(dst)
-//      else if cnv = 'PCX' then
-//        img.SaveToPCX(dst)
-      else if cnv = 'TGA8' then
-        img.SaveToTGA8(dst)
-      else if cnv = 'TGA24' then
-        img.SaveToTGA24(dst);
-    finally
-      FreeMem(Buffer);
-      FileClose(hSRC);
-    end;
-  finally
-    img.Free;
-  end;
-
-end;
-
 function ConvertWAD242Stream(src, dst: TStream; pal, cnv: String): integer;
 var Img: TSaveImage;
     W,H,x,y: integer;
@@ -403,22 +381,6 @@ begin
       img.SaveToTGA24Stream(dst);
   finally
     img.Free;
-  end;
-
-end;
-
-function ConvertWAD242(src, dst, pal, cnv: String): integer;
-var src_stm, dst_stm: TFileStream;
-begin
-
-  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
-  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
-
-  try
-    result := ConvertWAD242Stream(src_stm, dst_stm, pal, cnv);
-  finally
-    src_stm.Free;
-    dst_stm.Free;
   end;
 
 end;
@@ -506,22 +468,6 @@ begin
 
 end;
 
-function ConvertWAD343(src, dst, cnv: String): integer;
-var src_stm, dst_stm: TFileStream;
-begin
-
-  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
-  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
-
-  try
-    result := ConvertWAD343Stream(src_stm, dst_stm, cnv);
-  finally
-    src_stm.Free;
-    dst_stm.Free;
-  end;
-
-end;
-
 function ConvertWAD244Stream(src, dst: TStream; pal, cnv: String): integer;
 var Img: TSaveImage;
     W,H,x,y: integer;
@@ -591,22 +537,6 @@ begin
 
 end;
 
-function ConvertWAD244(src, dst, pal, cnv: String): integer;
-var src_stm, dst_stm: TFileStream;
-begin
-
-  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
-  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
-
-  try
-    result := ConvertWAD244Stream(src_stm, dst_stm, pal, cnv);
-  finally
-    src_stm.Free;
-    dst_stm.Free;
-  end;
-
-end;
-
 function ConvertWAD245Stream(src, dst: TStream; pal, cnv: String): integer;
 var Img: TSaveImage;
     W,H,x,y: integer;
@@ -656,22 +586,6 @@ begin
 
 end;
 
-function ConvertWAD245(src, dst, pal, cnv: String): integer;
-var src_stm, dst_stm: TFileStream;
-begin
-
-  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
-  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
-
-  try
-    result := ConvertWAD245Stream(src_stm, dst_stm, pal, cnv);
-  finally
-    src_stm.Free;
-    dst_stm.Free;
-  end;
-
-end;
-
 function ConvertPOD3TEXStream(src, dst: TStream; cnv: String): integer;
 var Img: TSaveImage;
     W,H,x,y: integer;
@@ -717,22 +631,6 @@ begin
 
 end;
 
-function ConvertPOD3TEX(src, dst, cnv: String): integer;
-var src_stm, dst_stm: TFileStream;
-begin
-
-  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
-  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
-
-  try
-    result := ConvertPOD3TEXStream(src_stm, dst_stm, cnv);
-  finally
-    src_stm.Free;
-    dst_stm.Free;
-  end;
-
-end;
-
 function ConvertHMC_TEX_RGBAStream(texFile, dst: TStream): integer;
 var x, y, W, H, fsize: integer;
     img: TSaveImage32;
@@ -772,22 +670,6 @@ begin
     img.SaveToTGA32Stream(dst);
   finally
     img.Free;
-  end;
-
-end;
-
-function ConvertHMC_TEX_RGBA(src, dst: String): integer;
-var src_stm, dst_stm: TFileStream;
-begin
-
-  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
-  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
-
-  try
-    result := ConvertHMC_TEX_RGBAStream(src_stm, dst_stm);
-  finally
-    src_stm.Free;
-    dst_stm.Free;
   end;
 
 end;
@@ -840,22 +722,6 @@ begin
 
 end;
 
-function ConvertHMC_TEX_DXT(src, dst: string; dxtchar: char): integer;
-var src_stm, dst_stm: TFileStream;
-begin
-
-  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
-  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
-
-  try
-    result := ConvertHMC_TEX_DXTStream(src_stm, dst_stm, dxtchar);
-  finally
-    src_stm.Free;
-    dst_stm.Free;
-  end;
-
-end;
-
 function ConvertHMC_TEX_PALNStream(texFile, dst: TStream): integer;
 var x, y, W, H, fsize: integer;
     img8: TSaveImage;
@@ -901,22 +767,6 @@ begin
   finally
     FreeMem(Buffer);
     img8.free;
-  end;
-
-end;
-
-function ConvertHMC_TEX_PALN(src, dst: string): integer;
-var src_stm, dst_stm: TFileStream;
-begin
-
-  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
-  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
-
-  try
-    result := ConvertHMC_TEX_PALNStream(src_stm, dst_stm);
-  finally
-    src_stm.Free;
-    dst_stm.Free;
   end;
 
 end;
@@ -1100,74 +950,21 @@ begin
 
 end;
 
+  // Obsolete Convert, so we wrap it to the ConvertStream version
 function Convert(src, dst, nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer; stdcall;
 var Size: int64;
     hTMP: integer;
+    src_stm, dst_stm: TFileStream;
 begin
 
-  result := 0;
+  src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
+  dst_stm := TFileStream.Create(dst,fmCreate or fmShareDenyWrite);
 
-  if (fmt = 'WAD2') or (fmt = 'WAD3') then
-  begin
-    case DataX of
-      66: begin
-            if not(Silent) or (palfil = '') then
-              palfil := SelectPal;
-            result := ConvertWAD242(src,dst,palfil,cnv);
-          end;
-      67: result := ConvertWAD343(src,dst,cnv);
-      68: begin
-            hTMP := FileOpen(src,fmOpenRead);
-            try
-              Size := FileSeek(hTMP,0,2);
-            finally
-              FileClose(hTMP);
-            end;
-            if ((fmt = 'WAD2') and (Uppercase(LeftStr(nam,8))='CONCHARS') and (Size = 16384)) then
-            begin
-              if not(Silent) or (palfil = '') then
-                palfil := SelectPal;
-              result := ConvertWAD245(src,dst,palfil,cnv);
-            end
-            else
-            begin
-              if not(Silent) or (palfil = '') then
-                palfil := SelectPal;
-              result := ConvertWAD244(src,dst,palfil,cnv);
-            end;
-          end;
-      69: begin
-            if not(Silent) or (palfil = '') then
-              palfil := SelectPal;
-            result := ConvertWAD245(src,dst,palfil,cnv);
-          end;
-    end;
-  end
-  else if (fmt = 'POD3') and (uppercase(extractfileext(nam)) = '.TEX') then
-  begin
-    result := ConvertPOD3TEX(src,dst,cnv);
-  end
-  else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.RGBA') then
-  begin
-    result := ConvertHMC_TEX_RGBA(src,dst);
-  end
-  else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.PALN') then
-  begin
-    result := ConvertHMC_TEX_PALN(src,dst);
-  end
-  else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.DXT1') then
-  begin
-    result := ConvertHMC_TEX_DXT(src,dst,'1');
-  end
-  else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.DXT3') then
-  begin
-    result := ConvertHMC_TEX_DXT(src,dst,'3');
-  end
-  else if (fmt = 'ART') then
-  begin
-    if not(Silent) or (palfil = '') then
-      palfil := SelectPal;
-    result := ConvertART(src,dst,palfil,DataX,DataY,cnv);
+  try
+    result := ConvertStream(src_stm, dst_stm,nam,fmt,cnv,Offset,DataX,DataY,Silent);
+  finally
+    src_stm.Free;
+    dst_stm.Free;
   end;
 
 end;
@@ -1187,7 +984,8 @@ procedure AboutBox; stdcall;
 begin
 
   MessageBoxA(AHandle, PChar('Picture/Textures Convert Plugin v'+getVersion(DRIVER_VERSION)+#10+
-                          '(c)Copyright 2002-2005 Alexandre "Elbereth" Devilliers'+#10+#10+
+                          'Created by Alexandre Devilliers (aka Elbereth)'+#10+
+                          'Uses Vampyre Imaging Library v0.24.2 by Marek Mauder'+#10+'http://imaginglib.sourceforge.net'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+#10+
                           DLNGStr('CNV010')
                           )

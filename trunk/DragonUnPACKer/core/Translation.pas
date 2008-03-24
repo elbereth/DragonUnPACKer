@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.5 2005-12-16 20:15:47 elbereth Exp $
+// $Id: Translation.pas,v 1.6 2008-03-24 14:06:57 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -523,16 +523,16 @@ begin
 
     tabAdvanced.Caption := DLNGstr('HR4000');
     tabAdvanced.Font.Name := getFont();
-    grpBuffer.Caption := DLNGstr('HR4010');
-    grpBuffer.Font.Name := getFont();
-    chkBuffer32K.Caption := '256 '+DLNGstr('HR4012');
-    chkBuffer32K.Font.Name := getFont();
-    chkBuffer64K.Caption := '512 '+DLNGstr('HR4012');
-    chkBuffer64K.Font.Name := getFont();
-    chkBuffer128K.Caption := '1024 '+DLNGstr('HR4012');
-    chkBuffer128K.Font.Name := getFont();
-    lblBufferUD.Caption := DLNGstr('HR4012');
-    lblBufferUD.Font.Name := getFont();
+//    grpBuffer.Caption := DLNGstr('HR4010');
+//    grpBuffer.Font.Name := getFont();
+//    chkBuffer32K.Caption := '256 '+DLNGstr('HR4012');
+//    chkBuffer32K.Font.Name := getFont();
+//    chkBuffer64K.Caption := '512 '+DLNGstr('HR4012');
+//    chkBuffer64K.Font.Name := getFont();
+//    chkBuffer128K.Caption := '1024 '+DLNGstr('HR4012');
+//    chkBuffer128K.Font.Name := getFont();
+//    lblBufferUD.Caption := DLNGstr('HR4012');
+//    lblBufferUD.Font.Name := getFont();
     grpRollback.Caption := DLNGstr('HR4020');
     grpRollback.Font.Name := getFont();
     chkRollback0.Caption := DLNGstr('HR4021');

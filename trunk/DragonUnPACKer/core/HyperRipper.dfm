@@ -1262,7 +1262,7 @@ object frmHyperRipper: TfrmHyperRipper
     Top = 8
     Width = 417
     Height = 297
-    ActivePage = tabAbout
+    ActivePage = tabAdvanced
     TabOrder = 0
     object tabAbout: TTabSheet
       Caption = 'A Propos..'
@@ -4807,7 +4807,7 @@ object frmHyperRipper: TfrmHyperRipper
         Left = 8
         Top = 108
         Width = 393
-        Height = 81
+        Height = 77
         ItemHeight = 13
         TabOrder = 0
       end
@@ -4932,6 +4932,25 @@ object frmHyperRipper: TfrmHyperRipper
           Height = 13
           AutoSize = False
           Caption = '0'
+        end
+        object strNumThreads: TLabel
+          Left = 8
+          Top = 56
+          Width = 121
+          Height = 13
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'Number of threads'
+          Visible = False
+        end
+        object lblNumThreads: TLabel
+          Left = 136
+          Top = 56
+          Width = 49
+          Height = 13
+          AutoSize = False
+          Caption = '0'
+          Visible = False
         end
       end
       object panHRF: TPanel
@@ -5320,75 +5339,33 @@ object frmHyperRipper: TfrmHyperRipper
           OnClick = chkRollback3Click
         end
       end
-      object grpBuffer: TGroupBox
+      object grpMultithreading: TGroupBox
         Left = 8
-        Top = 8
-        Width = 137
+        Top = 168
+        Width = 169
         Height = 89
-        Caption = 'Buffer'
+        Caption = 'Multithreading'
         TabOrder = 1
         Visible = False
-        object lblBufferUD: TLabel
-          Left = 96
-          Top = 67
-          Width = 33
-          Height = 13
+        object lblMTValue: TLabel
+          Left = 8
+          Top = 56
+          Width = 153
+          Height = 17
+          Alignment = taCenter
           AutoSize = False
           Caption = 'bytes'
         end
-        object chkBuffer32K: TRadioButton
+        object sliderMT: TJvxSlider
           Left = 8
           Top = 16
-          Width = 121
-          Height = 17
-          Caption = '32Kbytes'
-          Checked = True
+          Width = 150
+          Height = 41
           Enabled = False
+          Increment = 1
+          MaxValue = 8
           TabOrder = 0
-          TabStop = True
-          OnClick = chkBuffer32KClick
-        end
-        object chkBuffer64K: TRadioButton
-          Left = 8
-          Top = 32
-          Width = 105
-          Height = 17
-          Caption = '64Kbytes'
-          Enabled = False
-          TabOrder = 1
-          OnClick = chkBuffer64KClick
-        end
-        object chkBuffer128K: TRadioButton
-          Left = 8
-          Top = 48
-          Width = 105
-          Height = 17
-          Caption = '128Kbytes'
-          Enabled = False
-          TabOrder = 2
-          OnClick = chkBuffer128KClick
-        end
-        object chkBufferUD: TRadioButton
-          Left = 8
-          Top = 64
-          Width = 17
-          Height = 17
-          Enabled = False
-          TabOrder = 3
-          OnClick = chkBufferUDClick
-        end
-        object spinBufferUD: TSpinEdit
-          Left = 24
-          Top = 64
-          Width = 65
-          Height = 22
-          Enabled = False
-          Increment = 128
-          MaxValue = 16777216
-          MinValue = 256
-          TabOrder = 4
-          Value = 8192
-          OnChange = spinBufferUDChange
+          OnChange = sliderMTChange
         end
       end
       object grpFormatting: TGroupBox

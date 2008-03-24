@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.10 2008-03-08 21:56:20 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.11 2008-03-24 14:06:57 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -23,7 +23,7 @@ uses
   Dialogs, StdCtrls, ComCtrls, declFSE, lib_language, Registry,
   ExtCtrls, classHyperRipper, lib_utils, classFSE, spec_HRF,
   DateUtils, Spin, JvComponent, JvCtrls, JvExControls, JvLabel,
-  translation, U_IntList;
+  translation, U_IntList, cxCPU40, JvxSlider, SyncObjs;
 
 type PFormatListElem = ^FormatsListElemEx;
      SearchItem = record
@@ -70,12 +70,8 @@ type PFormatListElem = ^FormatsListElemEx;
     chkRollback1: TRadioButton;
     chkRollback2: TRadioButton;
     chkRollback3: TRadioButton;
-    grpBuffer: TGroupBox;
-    chkBuffer32K: TRadioButton;
-    chkBuffer64K: TRadioButton;
-    chkBuffer128K: TRadioButton;
-    chkBufferUD: TRadioButton;
-    lblBufferUD: TLabel;
+    grpMultithreading: TGroupBox;
+    lblMTValue: TLabel;
     strRollBack: TLabel;
     lblRollback: TLabel;
     cmdCancel: TButton;
@@ -113,7 +109,6 @@ type PFormatListElem = ^FormatsListElemEx;
     chkNamingAuto: TRadioButton;
     chkNamingCustom: TRadioButton;
     txtNaming: TEdit;
-    spinBufferUD: TSpinEdit;
     lblAboutInfo: TLabel;
     lblAboutBeware: TLabel;
     cmdConfig: TButton;
@@ -137,6 +132,9 @@ type PFormatListElem = ^FormatsListElemEx;
     lblNamingLegS: TLabel;
     panNaming: TPanel;
     txtExample: TEdit;
+    sliderMT: TJvxSlider;
+    strNumThreads: TLabel;
+    lblNumThreads: TLabel;
     procedure cmdOkClick(Sender: TObject);
     procedure cmdSearchClick(Sender: TObject);
     procedure cmdBrowseClick(Sender: TObject);
@@ -144,10 +142,6 @@ type PFormatListElem = ^FormatsListElemEx;
     procedure FormShow(Sender: TObject);
     procedure addResult(st: String);
     procedure lastResult(st: String);
-    procedure chkBufferUDClick(Sender: TObject);
-    procedure chkBuffer128KClick(Sender: TObject);
-    procedure chkBuffer64KClick(Sender: TObject);
-    procedure chkBuffer32KClick(Sender: TObject);
     procedure saveSettings();
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure chkRollback0Click(Sender: TObject);
@@ -169,7 +163,6 @@ type PFormatListElem = ^FormatsListElemEx;
     procedure chkNamingCustomClick(Sender: TObject);
     procedure chkNamingAutoClick(Sender: TObject);
     procedure txtNamingChange(Sender: TObject);
-    procedure spinBufferUDChange(Sender: TObject);
     procedure lstFormatsChange(Sender: TObject; Item: TListItem;
       Change: TItemChange);
     procedure cmdConfigClick(Sender: TObject);
@@ -183,11 +176,13 @@ type PFormatListElem = ^FormatsListElemEx;
     procedure radiov30Click(Sender: TObject);
     procedure radiov20Click(Sender: TObject);
     procedure radiov10Click(Sender: TObject);
+    procedure sliderMTChange(Sender: TObject);
   private
     SearchThread: TThread;
     SortType: integer;
     SortMode: boolean;
     procedure showExample(st: string);
+    procedure refreshMTText;
   public
     function getInfo(): DriverInfo;
     procedure stopSearch();
@@ -196,6 +191,7 @@ type PFormatListElem = ^FormatsListElemEx;
   THRipSearch = class(TThread)
   private
     MAXSIZE: integer;
+    numThreads: Integer;
     filename: string;
     slist: SearchList;
     hrip: TfrmHyperRipper;
@@ -205,9 +201,23 @@ type PFormatListElem = ^FormatsListElemEx;
   protected
     procedure Execute; override;
   public
-    procedure setSearch(filnam: String; sl: SearchList; hr: TfrmHyperRipper; bufSize: integer);
+    procedure setSearch(filnam: String; sl: SearchList; hr: TfrmHyperRipper; nThreads: integer);
     constructor Create(CreateSuspended: Boolean);
     procedure cancelSearch();
+  end;
+  THRipSearchBuffer = class(TThread)
+  private
+    Buffer: PByteArray;
+    BufferSize: integer;
+    slist: SearchList;
+    Found: TList;
+    procedure doBufferSearch;
+  protected
+    procedure Execute; override;
+  public
+    procedure setBufferSearch(buf: PByteArray; sl: SearchList; bufSize: integer);
+    function getBufferSearchResult: TList;
+    constructor Create();
   end;
 
 var
@@ -223,6 +233,10 @@ var prefix: string;
     numWAV: Integer;
     Loading: Boolean = True;
     numChecked: Integer;
+    counterMTOver: integer;
+    csMT: TCriticalSection;
+    MTWaitEvent: TEvent;
+    MultiRead: TMultiReadExclusiveWriteSynchronizer;
 
 procedure TfrmHyperRipper.cmdOkClick(Sender: TObject);
 begin
@@ -249,6 +263,8 @@ begin
   prefix := ExtractFileName(txtSource.Text);
   lstResults.Items.Clear;
 
+  multiRead.BeginWrite;
+
   for x := 0 to lstFormats.Items.Count-1 do
   begin
     if (lstFormats.Items.Item[x].Checked) then
@@ -261,6 +277,8 @@ begin
   end;
 
   slist.num := numChecked;
+
+  multiRead.EndWrite;
 
   if FileExists(txtSource.Text) then
   begin
@@ -340,36 +358,9 @@ begin
         txtSource.Text := Reg.ReadString('Source');
         txtHRF.text := ChangeFileExt(txtSource.Text,'.hrf');
       end;
-      if Reg.ValueExists('BufferUserDefined') then
-        spinBufferUD.value := Reg.ReadInteger('BufferUserDefined');
-      if Reg.ValueExists('Buffer') then
-        case Reg.ReadInteger('Buffer') of
-          32: begin
-                chkBufferUD.Checked := true;
-                spinBufferUD.Value := 32768;
-              end;
-          64: begin
-                chkBufferUD.Checked := true;
-                spinBufferUD.Value := 65536;
-              end;
-         128: begin
-                chkBufferUD.Checked := true;
-                spinBufferUD.Value := 131072;
-              end;
-         256: chkBuffer32K.Checked := true;
-         512: chkBuffer64K.Checked := true;
-        1024: chkBuffer128K.Checked := true;
-        else
-          chkBufferUD.Checked := true;
-        end;
-      if Reg.ValueExists('BufferRollback') then
-        case Reg.ReadInteger('BufferRollback') of
-           0: chkRollback0.Checked := true;
-           2: chkRollback2.Checked := true;
-           3: chkRollback3.Checked := true;
-        else
-          chkRollback1.Checked := true;
-        end;
+      if Reg.ValueExists('NumThreads') then
+        sliderMT.value := Reg.ReadInteger('NumThreads');
+      refreshMTText;
       if Reg.ValueExists('CreateHRF') then
         chkHRF.Checked := Reg.ReadBool('CreateHRF');
       if Reg.ValueExists('HRF3_NoPRGID') then
@@ -457,115 +448,26 @@ begin
 end;
 
 procedure TfrmHyperRipper.RunSearch(filename: String; slist: SearchList);
-var bufSize: integer;
+var NumThreads: integer;
+    cxCPU: TcxCPU;
 begin
 
-  bufSize := 256;
-
-  if (chkBuffer32K.Checked) then
-    bufSize := 256
-  else if (chkBuffer64K.Checked) then
-    bufSize := 512
-  else if (chkBuffer128K.Checked) then
-    bufSize := 1024
-  else if (chkBufferUD.Checked) then
-  begin
-    bufSize := spinBufferUD.value;
-    if bufSize < 256 then
-      bufSize := 256;
+  cxCPU := TcxCPU.Create;
+  try
+    if (sliderMT.Value = 0) then
+      NumThreads := cxCpu.ProcessorCount.Available.AsNumber
+    else
+      NumThreads := sliderMT.Value;
+  finally
+    cxCPU.Free;
   end;
 
   SearchThread := THripSearch.Create(true);
-  (SearchThread as THripSearch).setSearch(filename,slist,Self,bufSize);
+  (SearchThread as THripSearch).setSearch(filename,slist,Self,1);
   cmdOk.Enabled := false;
   cmdSearch.Visible := false;
   cmdCancel.Visible := true;
   SearchThread.Resume;
-
-end;
-
-procedure TfrmHyperRipper.chkBufferUDClick(Sender: TObject);
-var Reg: TRegistry;
-begin
-
-  spinBufferUD.Enabled := true;
-  Reg := TRegistry.Create;
-  Try
-    Reg.RootKey := HKEY_CURRENT_USER;
-    if Not(Reg.KeyExists('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper')) then
-      Reg.CreateKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper');
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
-    begin
-      Reg.WriteInteger('Buffer',0);
-      Reg.WriteInteger('BufferUserDefined',spinBufferUD.Value);
-      Reg.CloseKey;
-    end;
-  Finally
-    Reg.Free;
-  end;
-
-end;
-
-procedure TfrmHyperRipper.chkBuffer128KClick(Sender: TObject);
-var Reg: TRegistry;
-begin
-
-  spinBufferUD.Enabled := false;
-  Reg := TRegistry.Create;
-  Try
-    Reg.RootKey := HKEY_CURRENT_USER;
-    if Not(Reg.KeyExists('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper')) then
-      Reg.CreateKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper');
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
-    begin
-      Reg.WriteInteger('Buffer',1024);
-      Reg.CloseKey;
-    end;
-  Finally
-    Reg.Free;
-  end;
-
-end;
-
-procedure TfrmHyperRipper.chkBuffer64KClick(Sender: TObject);
-var Reg: TRegistry;
-begin
-
-  spinBufferUD.Enabled := false;
-  Reg := TRegistry.Create;
-  Try
-    Reg.RootKey := HKEY_CURRENT_USER;
-    if Not(Reg.KeyExists('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper')) then
-      Reg.CreateKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper');
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
-    begin
-      Reg.WriteInteger('Buffer',512);
-      Reg.CloseKey;
-    end;
-  Finally
-    Reg.Free;
-  end;
-
-end;
-
-procedure TfrmHyperRipper.chkBuffer32KClick(Sender: TObject);
-var Reg: TRegistry;
-begin
-
-  spinBufferUD.Enabled := false;
-  Reg := TRegistry.Create;
-  Try
-    Reg.RootKey := HKEY_CURRENT_USER;
-    if Not(Reg.KeyExists('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper')) then
-      Reg.CreateKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper');
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
-    begin
-      Reg.WriteInteger('Buffer',256);
-      Reg.CloseKey;
-    end;
-  Finally
-    Reg.Free;
-  end;
 
 end;
 
@@ -711,15 +613,17 @@ end;
 
 procedure THRipSearch.doSearch;
 var hSRC, x: integer;
-    totsize,curpos: int64;
-    buffer: PByteArray;
-    bufsize,testsize: integer;
+    totsize,curpos,curposbuf: int64;
+    buffer: array of PByteArray;
+    bufsize: array of integer;
+    testsize: integer;
     per, oldper: real;
     SomethingFound: Boolean;
     foundOffset: integer;
     found: FoundInfo64;
     numFound, rollback: integer;
-    flist: TList;
+    flist: array of TList;
+    flisttot: TList;
     fitem: PFoundItem;
     startTime: Cardinal;
     speedcalc: Integer;
@@ -729,16 +633,18 @@ var hSRC, x: integer;
     prefix, resprefix, fext, predir, prespeedcalc: string;
     lastTimer: TDateTime;
     hrfver: byte;
-    intTmp1,intTmp2,absoluteOffset: int64;
+    intTmp1,intTmp2,absoluteOffset,lastOffset: int64;
+    bufferOffset: array of int64;
     foundOffsets: TIntList;
-    iNumOffset: Integer;
+    iNumOffset, iThreads: Integer;
     tmpspeedcalc: single;
+    bufSearchThread: array of THRipSearchBuffer;
+    ThreadExec: array of boolean;
 begin
 
   cancel := false;
 
   hrip.addResult(ReplaceValue('%f',DLNGstr('HRLG03'),ExtractFileName(filename)));
-
 
   hSRC := FileOpen(filename,fmOpenRead or fmShareExclusive);
 
@@ -759,8 +665,8 @@ begin
 
   startTime := GetTickCount;
 
-  // For 5.3.0 WIP fix buffer to 8K, the advanced options will be removed afterwards
-  MAXSIZE := 8192;
+  // Best speed achieved with 128k (4x better than 8k)
+  MAXSIZE := 131072;
 
   if MAXSIZE < 1024 then
     hrip.lblBufferLength.Caption := inttostr(MAXSIZE) +'B'
@@ -773,17 +679,8 @@ begin
   OldPer := 0;
   numFound := 0;
 
-  RollBack := 0;
-
-  if hrip.chkRollback1.Checked then
-    RollBack := 128
-  else if hrip.chkRollback2.Checked then
-    RollBack := MAXSIZE div 4
-  else if hrip.chkRollback3.Checked then
-    RollBack := MAXSIZE div 2;
-
-  // For 5.3.0 WIP fix buffer rollback to 128 bytes, the advanced options will be removed afterwards
-  rollback := 128;
+  // Rollback to 32bytes, 128bytes was too high (no format needs more than 12 bytes actually...)
+  rollback := 32;
 
   if rollback < 1024 then
     hrip.lblRollback.Caption := inttostr(rollback) +'B'
@@ -794,18 +691,33 @@ begin
 
   hrip.lblFound.Caption := IntTostr(numFound);
 
+  // Number of threads to use for buffer search
+  //if (numThreads = 0) or (numThreads > 16) then
+  numThreads := 1; // Always use single threaded, multi-threading just don't work yet..
+
+  hrip.lblNumThreads.Caption := inttostr(numThreads);
+
   if hSRC >= 0 then
   begin
+
     hrip.LastResult(ReplaceValue('%f',DLNGstr('HRLG03'),ExtractFileName(filename))+' '+DLNGstr('HRLG04'));
     hrip.AddResult(DLNGstr('HRLG05'));
-    flist := TList.Create;
+
+    SetLength(buffer,numThreads);
+    SetLength(bufsize,numThreads);
+    SetLength(bufSearchThread,numThreads);
+    SetLength(FList,numThreads);
+    SetLength(ThreadExec,numThreads);
+    SetLength(bufferOffset,numThreads);
+
+    flisttot := TList.Create;
+    for iThreads := 0 to numThreads - 1 do
+      flist[iThreads] := TList.Create;
+
     curPos := 0;
     totsize := FileSeek(hSRC,curPos,2);
-    if totsize > MAXSIZE then
-      bufsize := MAXSIZE
-    else
-      bufsize := totsize;
-    getmem(Buffer,bufsize);
+    for iThreads := 0 to numThreads - 1 do
+      getmem(Buffer[iThreads],MAXSIZE);
     try
      try
       FSE.PrepareHyperRipper(frmHyperRipper.getInfo);
@@ -813,23 +725,108 @@ begin
       lastTimer := now;
       hrip.LastResult(DLNGstr('HRLG05')+' '+DLNGstr('HRLG04'));
       hrip.AddResult(DLNGstr('HRLG06'));
+
+      SomeThingFound := false;
+
       while (CurPos < TotSize) and not(cancel) do
       begin
-        FileSeek(hSRC,CurPos,0);
-        TestSize := FileRead(hSRC,buffer^,bufsize);
-        if (TestSize <> bufsize) then
-          raise Exception.create(ReplaceValue('%b',DLNGstr('HRLG07'),inttostr(bufsize-TestSize)));
+        curPosBuf := 0;
+        for iThreads := 0 to numThreads - 1 do
+        begin
+
+          // If this is the first buffer from the file
+          // We do not do rollback
+          if curPos = 0 then
+            curposbuf := 0
+          else if not(SomethingFound) then
+            // We do rollback ONLY if the last buffer used is MAXSIZE bytes
+            if ((iThreads = 0) and (bufsize[numThreads-1] = MAXSIZE))
+            or ((iThreads > 0) and (bufsize[iThreads-1] = MAXSIZE)) then
+              dec(curPosBuf,rollback);
+            // If last buffer not MAXSIZE then we reached end of file
+
+          // Size of the buffer is:
+          //   TotalSize of file - CurrentPosition in file - Previous Buffers
+          bufsize[iThreads] := (TotSize - CurPos - CurPosBuf);
+
+          // If the buffer size exceeds the maximum buffer size, we use MAXSIZE instead
+          if bufsize[iThreads] > MAXSIZE then
+            bufsize[iThreads] := MAXSIZE;
+
+          // Only read buffer if there is still bytes to read
+          if bufsize[iThreads] > 0 then
+          begin
+            // We seek into location
+            // That is Current position in file + Current Buffer
+            FileSeek(hSRC,CurPos+CurPosBuf,0);
+
+            // We store the relative offset to buffer position for absolute offset calculation afterwards
+            bufferOffset[iThreads] := curPosBuf;
+
+            // We read the buffer
+            TestSize := FileRead(hSRC,buffer[iThreads]^,bufsize[iThreads]);
+            if (TestSize <> bufsize[iThreads]) then
+              raise Exception.create(ReplaceValue('%b',DLNGstr('HRLG07'),inttostr(bufsize[iThreads]-TestSize)));
+
+            // We increase the Previous Buffers size with current buffer size
+            inc(CurPosBuf,bufsize[iThreads]);
+          end;
+
+        end;
 
         per := (CurPos / TotSize);
         per := per * 100;
 
-        for x := 0 to flist.Count-1 do
-          Dispose(flist.Items[x]);
-        flist.Clear;
-        for x := 1 to slist.num do
+        for iThreads := 0 to numThreads - 1 do
         begin
-          foundOffsets := HPlug.searchBuffer(slist.items[x].DriverNum,slist.items[x].ID,buffer,bufsize);
-          if (foundOffsets.Count > 0) then
+          for x := 0 to flist[iThreads].Count-1 do
+            Dispose(flist[iThreads].Items[x]);
+          flist[iThreads].Clear;
+        end;
+        flisttot.Clear;
+//        for x := 1 to slist.num do
+//        begin
+        MTWaitEvent.ResetEvent;
+        counterMTOver := numThreads;
+        for iThreads := 0 to numThreads - 1 do
+        begin
+          if bufsize[iThreads] > 0 then
+          begin
+            bufSearchThread[iThreads] := THRipSearchBuffer.Create;
+            try
+              bufSearchThread[iThreads].setBufferSearch(buffer[iThreads],slist,bufsize[iThreads]);
+              bufSearchThread[iThreads].Resume;
+            except
+              on ex: Exception do
+              begin
+                hrip.addResult(ex.ClassName + ': '+ex.Message);
+                break;
+              end;
+            end;
+            ThreadExec[iThreads] := true;
+          end
+          else
+          begin
+            csMT.Acquire;
+            Dec(counterMTOver);
+            csMT.Release;
+            ThreadExec[iThreads] := false;
+          end;
+        end;
+
+        if MTWaitEvent.WaitFor(3600000) <> wrSignaled then
+          raise Exception.Create('Threads were not answering...'+inttostr(counterMTOver));
+
+        for iThreads := 0 to numThreads - 1 do
+          //if ThreadExec[iThreads] and (bufSearchThread[iThreads].WaitFor <> 0) then
+          begin
+            flist[iThreads] := bufSearchThread[iThreads].getBufferSearchResult;
+
+            bufSearchThread[iThreads].Free;
+          end;
+
+//          foundOffsets := HPlug.searchBuffer(slist.items[x].DriverNum,slist.items[x].ID,buffer,bufsize);
+{          if (foundOffsets is TIntList) and (foundOffsets.Count > 0) then
           begin
             for iNumOffset := 0 to foundOffsets.Count - 1 do
             begin
@@ -839,62 +836,75 @@ begin
               flist.Add(fitem);
             end;
           end;
-          foundOffsets.Free;
-        end;
+          foundOffsets.Free;}
+//        end;
 
-        if (flist.Count > 0) then
-          flist.sort(@FListCompare);
+        for iThreads := 0 to numThreads - 1 do
+          for x := 0 to flist[iThreads].Count-1 do
+          begin
+            fitem := flist[iThreads].Items[x];
+            inc(fitem^.offset,bufferOffset[iThreads]);
+            flisttot.Add(fitem);
+          end;
+
+        if (flisttot.Count > 0) then
+          flisttot.sort(@FListCompare);
 
         SomeThingFound := false;
+        LastOffset := -1;
 
-        for x := 0 to flist.Count-1 do
+        for x := 0 to flisttot.Count-1 do
         begin
-          fitem := flist.Items[x];
+          fitem := flisttot.Items[x];
           absoluteOffset := fitem^.offset;
           absoluteOffset := absoluteOffset + curPos;
-          try
-            Found := HPlug.searchFile(slist.items[fitem^.Index].DriverNum,slist.items[fitem^.Index].ID,hSRC,absoluteOffset);
-          except
-            on ex: Exception do
-            begin
-              hrip.addResult(ex.ClassName + ': '+ex.Message);
-              break; 
-            end;
-          end;
-//          Found := HPlug.plugins[slist.items[fitem^.Index].DriverNum].SearchFile(slist.items[fitem^.Index].ID,hSRC,curPos+fitem^.Offset);
-          if (Found.GenType <> HR_TYPE_ERROR) and (Found.Size > 0) then
+          if LastOffset <> absoluteOffset then
           begin
-            if (hrip.chkMakeDirs.Checked) then
+            LastOffset := absoluteOffset;
+            try
+              Found := HPlug.searchFile(slist.items[fitem^.Index].DriverNum,slist.items[fitem^.Index].ID,hSRC,absoluteOffset);
+            except
+              on ex: Exception do
+              begin
+                hrip.addResult(ex.ClassName + ': '+ex.Message);
+                break;
+              end;
+            end;
+//          Found := HPlug.plugins[slist.items[fitem^.Index].DriverNum].SearchFile(slist.items[fitem^.Index].ID,hSRC,curPos+fitem^.Offset);
+            if (Found.GenType <> HR_TYPE_ERROR) and (Found.Size > 0) then
             begin
-              if Found.GenType = HR_TYPE_UNKNOWN then
-                predir := 'Unknown\'
-              else if Found.GenType = HR_TYPE_AUDIO then
-                predir := 'Audio\'
-              else if Found.GenType = HR_TYPE_VIDEO then
-                predir := 'Video\'
-              else if Found.GenType = HR_TYPE_IMAGE then
-                predir := 'Image\'
+              if (hrip.chkMakeDirs.Checked) then
+              begin
+                if Found.GenType = HR_TYPE_UNKNOWN then
+                  predir := 'Unknown\'
+                else if Found.GenType = HR_TYPE_AUDIO then
+                  predir := 'Audio\'
+                else if Found.GenType = HR_TYPE_VIDEO then
+                  predir := 'Video\'
+                else if Found.GenType = HR_TYPE_IMAGE then
+                  predir := 'Image\'
+                else
+                  predir := '';
+              end
               else
                 predir := '';
-            end
-            else
-              predir := '';
 
-            inc(numFound);
-            hrip.addResult(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%s',DLNGstr('HRLG08'),inttostr(Found.Size)),inttohex(Found.Offset,8)),Found.Ext));
+              inc(numFound);
+              hrip.addResult(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%s',DLNGstr('HRLG08'),inttostr(Found.Size)),inttohex(Found.Offset,8)),Found.Ext));
 
-            resprefix := ReplaceValue('%o',prefix,IntToStr(Found.Offset));
-            resprefix := ReplaceValue('%h',resprefix,IntToHex(Found.Offset,16));
-            // Feature request 1216790 //
-            resprefix := ReplaceValue('%s',resprefix,IntToStr(Found.Size));
-            resprefix := ReplaceValue('%l',resprefix,IntToHex(Found.Size,16));
-            //\ Feature request 1216790 //\
-            resprefix := ReplaceValue('%n',resprefix,Fill0(inttostr(numFound)));
+              resprefix := ReplaceValue('%o',prefix,IntToStr(Found.Offset));
+              resprefix := ReplaceValue('%h',resprefix,IntToHex(Found.Offset,16));
+              // Feature request 1216790 //
+              resprefix := ReplaceValue('%s',resprefix,IntToStr(Found.Size));
+              resprefix := ReplaceValue('%l',resprefix,IntToHex(Found.Size,16));
+              //\ Feature request 1216790 //\
+              resprefix := ReplaceValue('%n',resprefix,Fill0(inttostr(numFound)));
 
-            FSE.SetListElem(predir+resprefix+'.'+Found.Ext,Found.Offset,Found.Size,0,0);
-            curPos := Found.Offset+Found.Size;
-            SomethingFound := true;
-            break;
+              FSE.SetListElem(predir+resprefix+'.'+Found.Ext,Found.Offset,Found.Size,0,0);
+              curPos := Found.Offset+Found.Size;
+              SomethingFound := true;
+              break;
+            end;
           end;
         end;
 
@@ -907,7 +917,7 @@ begin
           hrip.lblFound.Caption := IntTostr(numFound);
           hrip.lblHexDump.Caption := '';
           for x := 0 to 17 do
-            hrip.lblHexDump.Caption := hrip.lblHexDump.Caption + IntToHex(buffer[x],2)+' ';
+            hrip.lblHexDump.Caption := hrip.lblHexDump.Caption + IntToHex(buffer[0][x],2)+' ';
           OldPer := Per;
           if (GetTickCount - StartTime) > 0 then
           begin
@@ -937,12 +947,12 @@ begin
 
         if Not(SomethingFound) then
         begin
-          CurPos := CurPos + bufsize;
-          if (bufsize = MAXSIZE) then
-            Dec(CurPos,rollback);
+          Inc(CurPos,CurPosBuf);
+//          if (CurPosBuf = (MAXSIZE*NumThreads)) then
+//            Dec(CurPos,rollback);
         end;
-        if (totsize - CurPos) < MAXSIZE then
-          bufsize := (totsize - CurPos);
+//        if (totsize - CurPos) < MAXSIZE then
+//          bufsize := (totsize - CurPos);
 
       end;
 
@@ -989,10 +999,11 @@ begin
      end;
     finally
       hrip.AddResult(DLNGstr('HRLG17'));
-      for x := 0 to flist.Count-1 do
-        Dispose(flist.Items[x]);
-      flist.Free;
-      freemem(Buffer);
+      for x := 0 to flisttot.Count-1 do
+        Dispose(flisttot.Items[x]);
+      flisttot.Free;
+      for iThreads := 0 to numThreads - 1 do
+        freemem(Buffer[iThreads]);
 //      FileClose(hSRC);
       hrip.LastResult(DLNGstr('HRLG17')+' '+DLNGstr('HRLG04'));
       hrip.stopSearch;
@@ -1034,13 +1045,13 @@ begin
 
 end;
 
-procedure THRipSearch.setSearch(filnam: String; sl: SearchList; hr: TfrmHyperRipper; bufSize: integer);
+procedure THRipSearch.setSearch(filnam: String; sl: SearchList; hr: TfrmHyperRipper; nThreads: integer);
 begin
 
   filename := filnam;
   slist := sl;
   hrip := hr;
-  MAXSIZE := bufSize;
+  numThreads := nThreads;
 
 end;
 
@@ -1362,32 +1373,6 @@ begin
 
 end;
 
-procedure TfrmHyperRipper.spinBufferUDChange(Sender: TObject);
-var Reg: TRegistry;
-begin
-
-  if not(loading) then
-  begin
-
-    Reg := TRegistry.Create;
-    Try
-      Reg.RootKey := HKEY_CURRENT_USER;
-      if Not(Reg.KeyExists('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper')) then
-        Reg.CreateKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper');
-      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
-      begin
-        Reg.WriteInteger('Buffer',spinBufferUD.Value);
-        Reg.WriteInteger('BufferUserDefined',spinBufferUD.Value);
-        Reg.CloseKey;
-      end;
-    Finally
-      Reg.Free;
-    end;
-
-  end;
-
-end;
-
 procedure TfrmHyperRipper.lstFormatsChange(Sender: TObject;
   Item: TListItem; Change: TItemChange);
 var cformat: PFormatListElem;
@@ -1682,7 +1667,134 @@ begin
 
   txtExample.Text := ' '+res+'.wav';
 
+end;
+
+constructor THRipSearchBuffer.Create();
+begin
+  inherited Create(true);
+  Priority := tpNormal;
+  FreeOnTerminate := False;
+  Found := TList.create;
+end;
+
+procedure THRipSearchBuffer.Execute;
+begin
+
+  doBufferSearch;
+
+  ReturnValue := 1;
+
+  csMT.Acquire;
+  Dec(counterMTOver);
+  if counterMTOver = 0 then
+    MTWaitEvent.SetEvent;
+  csMT.Release;
 
 end;
+
+procedure THRipSearchBuffer.doBufferSearch;
+var x, iNumOffset, slistID, slistDriverNum: integer;
+    foundOffsets: TIntList;
+    fitem: PFoundItem;
+begin
+
+
+  for x := 1 to slist.num do
+  begin
+
+    multiRead.BeginRead;
+
+    slistID := slist.items[x].ID;
+    slistDriverNum := slist.items[x].DriverNum;
+
+    multiRead.EndRead;
+
+    foundOffsets := HPlug.searchBuffer(slistDriverNum,slistID,buffer,buffersize);
+    if (foundOffsets is TIntList) and (foundOffsets.Count > 0) then
+    begin
+      for iNumOffset := 0 to foundOffsets.Count - 1 do
+      begin
+        new(fitem);
+        fitem^.Offset := foundOffsets.Integers[iNumOffset];
+        fitem^.Index := x;
+        Found.Add(fitem);
+      end;
+    end;
+    foundOffsets.Free;
+  end;
+
+end;
+
+procedure THRipSearchBuffer.setBufferSearch(buf: PByteArray; sl: SearchList; bufSize: integer);
+begin
+
+  Buffer := Buf;
+  Slist := sl;
+  BufferSize := bufSize;
+  if Found is TList Then
+     Found.Clear;
+
+end;
+
+function THRipSearchBuffer.getBufferSearchResult: TList;
+begin
+
+  result := Found;
+
+end;
+
+procedure TfrmHyperRipper.refreshMTText;
+var cxCPU: TcxCPU;
+begin
+
+  if sliderMT.Value = 0 then
+  begin
+    cxCPU := TcxCPU.Create;
+    try
+      lblMTValue.Caption := 'Auto ('+inttostr(cxCpu.ProcessorCount.Available.AsNumber)+' threads)';
+    finally
+      cxCPU.Free;
+    end;
+  end
+  else if sliderMT.Value = 1 then
+    lblMTValue.Caption := 'No (Single thread)'
+  else
+    lblMTValue.Caption := inttostr(sliderMT.Value)+' threads';
+
+end;
+
+procedure TfrmHyperRipper.sliderMTChange(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  refreshMTText;
+
+  if not(loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Not(Reg.KeyExists('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper')) then
+        Reg.CreateKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper');
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
+      begin
+        Reg.WriteInteger('NumThreads',sliderMT.Value);
+        Reg.CloseKey;
+      end;
+    Finally
+      Reg.Free;
+    end;
+
+  end;
+
+
+end;
+
+begin
+
+ csMT := TCriticalSection.Create;
+ MTWaitEvent := TEvent.Create(nil,false,false,'DragonUnPACKerHyperRipperMT');
+ multiRead := TMultiReadExclusiveWriteSynchronizer.Create;
 
 end.

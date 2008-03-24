@@ -293,6 +293,7 @@ object dup5Main: Tdup5Main
       Width = 667
       Height = 82
       Align = alClient
+      AutoSize = False
       HideScrollBars = False
       PopupMenu = Popup_Log
       ReadOnly = True
@@ -4349,11 +4350,6 @@ object dup5Main: Tdup5Main
   object DropFileSource: TDropFileSource
     DragTypes = [dtMove]
     OnDrop = DropFileSourceDrop
-    ImageIndex = 0
-    ShowImage = False
-    ImageHotSpotX = 16
-    ImageHotSpotY = 16
-    AllowAsyncTransfer = False
     Left = 520
     Top = 136
   end

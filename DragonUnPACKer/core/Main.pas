@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.5 2005-12-16 20:15:47 elbereth Exp $
+// $Id: Main.pas,v 1.6 2008-03-24 14:32:43 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -897,6 +897,8 @@ var Reg: TRegistry;
     x: integer;
 begin
 
+  WindowState := wsNormal;
+
   if (CurFile > 0) then
     CloseCurrent;
 
@@ -905,6 +907,10 @@ begin
     Reg.RootKey := HKEY_CURRENT_USER;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Windows',True) then
     begin
+      if WindowState = wsMaximized then
+        Reg.WriteInteger('Main_M',1)
+      else
+        Reg.WriteInteger('Main_M',0);
       Reg.WriteInteger('Main_X',Left);
       Reg.WriteInteger('Main_Y',Top);
       Reg.WriteInteger('Main_H',Height);
@@ -1076,6 +1082,12 @@ begin
           panBottom.Height := bottomHeight
         else
           panBottom.Height := status.Height;
+      end;
+      if Reg.ValueExists('Main_M') then
+      begin
+        tmpi := Reg.ReadInteger('Main_M');
+        if tmpi = 1  then
+          WindowState := wsMaximized;
       end;
       if Reg.ValueExists('lstContent_0') then
       begin

@@ -16,6 +16,7 @@ uses
 {$E d5h}
 
 {$R *.res}
+{$R-}
 
 const HR_TYPE_ERROR = -1;
       HR_TYPE_UNKNOWN = 0;
@@ -444,10 +445,11 @@ var Percent: TPercentCallback;
   *       Now using DUHI v4, need HyperRipper v5.5 (Dragon UnPACKer v5.3+)
   *       Added support for DDS file format (Feature Request #1639688)
   * 51012 Fixed MPEG Audio search (using posbuf again instead of BMFind)
+  * 51013 Fixed possible error in BMFind function
   * }
 
-const DRIVER_VERSION = 51012;
-      HR_VERSION = 55041;
+const DRIVER_VERSION = 51013;
+      HR_VERSION = 55042;
 
 function BigToLittle2(src: array of byte): word;
 begin
@@ -767,21 +769,21 @@ begin
   iMaxSubStrIdx := iOffset + iSubStrLen - 1;
   { Initialise the skip table }
   for ch := Low(skip) to High(skip) do skip[ch] := iSubStrLen;
-  for iSubStrIdx := 0 to (iMaxSubStrIdx - 1) do
-    skip[szSubStr[iSubStrIdx]] := iMaxSubStrIdx - iSubStrIdx;
+  for iSubStrIdx := 0 to iSubStrLen-1 do
+    skip[szSubStr[iSubStrIdx]] := iMaxSubStrIdx+1 - iSubStrIdx;
 
   { Scan the buffer, starting comparisons at the end of the substring }
   iBufScanStart := iMaxSubStrIdx;
   while (not found) and (iBufScanStart < iBufSize) do
   begin
     iBufIdx := iBufScanStart;
-    iScanSubStr := iMaxSubStrIdx;
+    iScanSubStr := iSubStrLen-1;
     repeat
       mismatch := (szSubStr[iScanSubStr] <> char(buf[iBufIdx]));
       if not mismatch then
         if iScanSubStr > 0 then
         begin // more characters to scan
-          Dec(iBufIdx); Dec(iScanSubStr)
+          Dec(iBufIdx); Dec(iScanSubStr);
         end
         else
           found := True;
@@ -802,7 +804,7 @@ var tmpRes,tmpPos1,tmpPos2,tmpPosMax: integer;
     szFind: array [0..255] of char;
 begin
 
-  result := TIntList.Create;
+    result := TIntList.Create;
 //  memBuf := TMemoryStream.create();
 //  try
 //    memBuf.Write(buffer^,bufSize);

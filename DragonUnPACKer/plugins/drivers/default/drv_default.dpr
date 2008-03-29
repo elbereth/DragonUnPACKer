@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.29 2008-03-23 16:30:42 elbereth Exp $
+// $Id: drv_default.dpr,v 1.30 2008-03-29 07:19:35 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -160,6 +160,7 @@ type FSE = ^element;
                  Added support for UFO: Aftermath/Aftershock/Afterlight .VFS files
     20240        Added support for Act of War .DAT files
                  Added support for Dreamfall - The Longest Journey .PAK files
+                 Added support for Sinking Island/L'Ile Noyée .OPK files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1324,8 +1325,8 @@ type SYN_Header = packed record
 const
   DRIVER_VERSION = 20240;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.29 $';
-  CVS_DATE = '$Date: 2008-03-23 16:30:42 $';
+  CVS_REVISION = '$Revision: 1.30 $';
+  CVS_DATE = '$Date: 2008-03-29 07:19:35 $';
   BUFFER_SIZE = 8192;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1401,8 +1402,8 @@ begin
   GetDriverInfo.Name := 'Elbereth''s Main Driver';
   GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 78 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 65;
+  GetDriverInfo.Comment := 'This driver support 79 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.NumFormats := 66;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -1533,6 +1534,8 @@ begin
   GetDriverInfo.Formats[64].Name := 'The Elder Scrolls 4: Oblivion (*.BSA)';
   GetDriverInfo.Formats[65].Extensions := '*.VFS';
   GetDriverInfo.Formats[65].Name := 'UFO: Aftermath (*.VFS)|UFO: Aftershock (*.VFS)|UFO: Afterlight (*.VFS)';
+  GetDriverInfo.Formats[66].Extensions := '*.OPK';
+  GetDriverInfo.Formats[66].Name := 'Sinking Island (*.OPK)|L''Ile Noyée (*.OPK)';
 //  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
 //  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -7613,6 +7616,112 @@ begin
 
 end;
 
+
+// Sinking Island/L'Ile Noyée .OPK support
+// Very easy format:
+//   Header (see below OPKHeader structure)
+//   N times: (N times entries as stated in the Header)
+//     Entry header
+//     Null terminated string representing filename
+//     Padding (compute it with Entry header "EntrySize" and substracting the size of entry header and null terminated string)
+//   Data
+
+type OPKHeader = packed record
+       ID: array[0..3] of char;           // 'PAK '
+       NumEntries: integer;
+       SizeOfDir: integer;                // SizeOf(OPKHeader) + OPKHeader.SizeOfDir = Start of Data
+       Unknown: integer;                  // Always 0?
+     end;
+     OPKEntry = packed record
+       Offset: integer;                   // Absolute offset
+       Size: integer;
+       EntrySizeNoFilename: integer;      // Size of the entry in directory (without filename) --> Always 32?
+       EntrySize: integer;                // Size of the entry in directory (filename included)
+       FileTime: TFileTime;               // Date/File of entry (Windows FiLETIME structure)
+     end;
+
+function ReadsinkingIslandOPK(src: string): Integer;
+var HDR: OPKHeader;
+    ENT: OPKEntry;
+    disp: string;
+    NumE, x, per, oldper: integer;
+    rest: longword;
+begin
+
+  // Open the file for reading
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    // Read the header
+    FileRead(Fhandle, HDR, SizeOf(OPKHeader));
+
+    // If the header ID is not the one expected
+    // Execution stops with error -3
+    if HDR.ID <> 'PAK ' then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'OPK';
+      ErrInfo.Games := 'Sinking Island, L''Ile Noyée';
+    end
+    else
+    begin
+
+      // Progress indicator
+      OldPer := 0;
+
+      // For each entry in the file
+      for x:= 1 to HDR.NumEntries do
+      begin
+
+        // Calculates current progress
+        Per := ROund(((x / HDR.NumEntries)*100));
+        if (Per > (OldPer+1)) then
+        begin
+          SetPercent(Per);
+          OldPer := Per;
+        end;
+
+        // Read the file entry
+        FileRead(Fhandle, ENT, SizeOf(OPKEntry));
+
+        // Retrieve the filename
+        disp := get0(Fhandle);
+
+        // Calculates padding size to skip for next entry
+        rest := ENT.EntrySize - (length(disp) + SizeOf(OPKEntry));
+
+        // If padding is more than 0 bytes we skip that many bytes
+        if rest > 0 then
+          FileSeek(Fhandle,rest,1);
+
+        // Add entry to the list
+        FSE_Add(Strip0(disp),ENT.Offset,ENT.Size,0,0);
+
+      end;
+
+      // Entries found (return Header info)
+      Result := HDR.NumEntries;
+
+      // Driver ID is OPK
+      // Directories parsing is '\'
+      // Extraction is dealed by Dragon UnPACKer 
+      DrvInfo.ID := 'OPK';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
 function ReadTerminalVelocityPOD(): Integer;
 var HDR: PODHeader;
     ENT: PODEntry;
@@ -9623,6 +9732,12 @@ begin
       end
       else if ID4 = ('GOB ') then
         Result := ReadIndianaJones3dGOB
+      // Sinking Island/L'Ile Noyée .OPK
+      else if ID4 = ('PAK ') then
+      begin
+        FileClose(FHandle);
+        Result := ReadSinkingIslandOPK(fil);
+      end
       else if ID4 = ('PACK') then
         Result := ReadQuakePAK
       else if ID4 = ('POD2') then
@@ -9915,6 +10030,9 @@ begin
       ReadFormat := ReadDarkstoneMTF(fil)
 {    else if ext = 'NRM' then
       ReadFormat := ReadHeathNRM(fil)}
+    // Sinking Island/L'Ile Noyée .OPK
+    else if ext = 'OPK' then
+      Result := ReadSinkingIslandOPK(fil)
     else if ext = 'PBO' then
       ReadFormat := ReadOperationFlashpointPBO(fil)
     else if ext = 'PCK' then
@@ -10208,6 +10326,9 @@ begin
       Result := true
     else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
       Result := true
+    // Sinking Island/L'Ile Noyée .OPK
+    else if ID4 = ('PAK ') then
+      Result := true
     else if ID4 = ('PACK') then
       Result := true
     else if ID4 = ('edat') then
@@ -10381,6 +10502,9 @@ begin
       IsFormat := True
 //    else if ext = 'NRM' then
 //      IsFormat := True
+    // Sinking Island/L'Ile Noyée .OPK
+    else if ext = 'OPK' then
+      IsFormat := True
     else if ext = 'PBO' then
       IsFormat := True
     else if ext = 'PCK' then

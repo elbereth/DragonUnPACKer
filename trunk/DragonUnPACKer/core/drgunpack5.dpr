@@ -1,6 +1,6 @@
 program drgunpack5;
 
-// $Id: drgunpack5.dpr,v 1.8 2008-03-08 21:53:28 elbereth Exp $
+// $Id: drgunpack5.dpr,v 1.9 2008-04-04 19:08:13 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/drgunpack5.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -237,6 +237,7 @@ begin
     end;
     if res then
     begin
+      Application.OnException := frmError.OnAppliException;
       Application.Run;
     end;
   end;

@@ -1,6 +1,6 @@
 unit Error;
 
-// $Id: Error.pas,v 1.3 2008-03-04 19:45:31 elbereth Exp $
+// $Id: Error.pas,v 1.4 2008-04-04 19:08:13 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Error.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -58,6 +58,7 @@ type
     details: TStrings;
     procedure FillTxtError(E: Exception; from, subfrom: String);
     procedure PrepareError();
+    procedure OnAppliException (Sender: TObject; E: Exception);
   end;
 
 var
@@ -247,6 +248,19 @@ destructor TfrmError.destroy;
 begin
   if details <> nil then details.Free;
   inherited;
+end;
+
+procedure TfrmError.OnAppliException(Sender: TObject; E: Exception);
+var
+ ErrorText : String;
+ lpMemoryStatus : _MEMORYSTATUS;
+begin
+ Try
+   prepareError;
+   fillTxtError(E, Screen.ActiveForm.Name,Screen.ActiveControl.Name);
+ Except
+   Application.ShowException(E);
+ End;
 end;
 
 end.

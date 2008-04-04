@@ -1,6 +1,6 @@
 object dup5Main: Tdup5Main
-  Left = 441
-  Top = 113
+  Left = 283
+  Top = 221
   HelpContext = 1
   AlphaBlendValue = 128
   AutoScroll = False
@@ -83,6 +83,15 @@ object dup5Main: Tdup5Main
     AutoSnap = False
     MinSize = 100
   end
+  object SplitterPreview: TSplitter
+    Left = 469
+    Top = 30
+    Height = 177
+    HelpContext = 2
+    Align = alRight
+    MinSize = 20
+    Visible = False
+  end
   object ctrlBar: TControlBar
     Left = 0
     Top = 0
@@ -158,7 +167,7 @@ object dup5Main: Tdup5Main
   object lstContent: TVirtualStringTree
     Left = 116
     Top = 30
-    Width = 551
+    Width = 353
     Height = 177
     HelpContext = 11
     Align = alClient
@@ -300,6 +309,23 @@ object dup5Main: Tdup5Main
       ScrollBars = ssVertical
       TabOrder = 1
       WordWrap = False
+    end
+  end
+  object panPreview: TPanel
+    Left = 472
+    Top = 30
+    Width = 195
+    Height = 177
+    Align = alRight
+    BevelOuter = bvLowered
+    TabOrder = 5
+    Visible = False
+    object imgPreview: TImage
+      Left = 1
+      Top = 1
+      Width = 193
+      Height = 175
+      Align = alClient
     end
   end
   object OpenDialog: TOpenDialog

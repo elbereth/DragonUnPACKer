@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.6 2008-03-24 14:32:43 elbereth Exp $
+// $Id: Main.pas,v 1.7 2008-04-04 19:09:00 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -105,6 +105,9 @@ type
     N3: TMenuItem;
     menuLog_Clear: TMenuItem;
     richLog: TJvRichEdit;
+    SplitterPreview: TSplitter;
+    panPreview: TPanel;
+    imgPreview: TImage;
     procedure FormResize(Sender: TObject);
     procedure menuFichier_QuitterClick(Sender: TObject);
     procedure menuAbout_AboutClick(Sender: TObject);

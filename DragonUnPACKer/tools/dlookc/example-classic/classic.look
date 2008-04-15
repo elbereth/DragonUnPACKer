@@ -1,0 +1,124 @@
+{LOOK}
+{HEADER}
+# Dragon UnPACKer 5 LooK (DULK) source [v1.1]
+# =============================================================================
+#  Version: 5.0.0 Beta 2
+# Compiler: 1.1.0 Beta
+#
+# -----------------------------------------------------------------------------
+#
+# Name:
+# This is the name that will be displayed in the select Look listbox.
+#
+Name=Classic look
+#
+# Author:
+# Your name or nickname.
+#
+Author=Alexandre Devilliers
+#
+# Email:
+# Your email.
+#
+Email=looks@drgsoft.com
+#
+# Comment:
+# Any comment you wish (ex: URL, informations about Look file).
+#
+Comment=Default Dragon UnPACKer 5 style.
+#
+# XP:
+# Change the look of the menus, toolbars and popups in Dragon UnPACKer 5.
+# Possible values:  true = Office XP like menus
+#                  false = Classic menus
+#
+XP=false
+#
+# Outfile:
+# File that will be created by DLOOKC.
+#
+Outfile=classic.dulk
+{/HEADER}
+#
+# In the body each line is for a BitMaP.
+# Don't add or remove lines or your .dulk file won't be recognized by Dragon
+# UnPACKer 5. Only change the right part of the lines.
+# Keywords order is not important.
+#
+# Format of pictures:
+# 16x16 Windows BitMaPs (RGB or RLE encoding) (Any color depth)
+#
+# Transparent color:
+# Lime - R:0 G:255 B:0 (#00FF00)
+#
+# Bouton Keywords:
+# CLOS is the bitmap used for the Close button
+# OPTN is the bitmap used for the Options button
+# OPEN is the bitmap used for the Open button
+# EXTR is the bitmap used for Extract files
+#
+# Folder keywords:
+# FCLO is the bitmap used for closed folder icon
+# FOPN is the bitmap used for opened folder icon
+# FROT is the bitmap used for root folder icon
+#
+{BODY}
+CLOS=bouton_fermer.bmp
+OPTN=bouton_options.bmp
+OPEN=bouton_ouvrir.bmp
+EXTR=bouton_extract.bmp
+LDET=bar_list_detailed.bmp
+LLAR=bar_list_large.bmp
+LLST=bar_list_list.bmp
+LSMA=bar_list_small.bmp
+FCLO=folder_closed.bmp
+FOPN=folder_open.bmp
+FROT=type_default.bmp
+TANI=type_anim.bmp
+TBIN=type_bin.bmp
+TBMP=type_bmp.bmp
+TBSP=type_bsp.bmp
+TCFG=type_cfg.bmp
+TFNT=type_font.bmp
+TGIF=type_gif.bmp
+TIFF=type_iff.bmp
+TJPG=type_jpg.bmp
+TM3D=type_model3d.bmp
+TMUS=type_musique.bmp
+TNON=type_none.bmp
+TPCX=type_pcx.bmp
+TPNG=type_png.bmp
+TPSD=type_psd.bmp
+TSPR=type_sprite.bmp
+TTEX=type_tex.bmp
+TTXT=type_text.bmp
+TTGA=type_tga.bmp
+TTIF=type_tif.bmp
+TWAL=type_wal.bmp
+TWAV=type_wave.bmp
+TZIP=type_zip.bmp
+BANI=big_type_anim.bmp
+BBIN=big_type_bin.bmp
+BBMP=big_type_bmp.bmp
+BBSP=big_type_bsp.bmp
+BCFG=big_type_cfg.bmp
+BFNT=big_type_font.bmp
+BGIF=big_type_gif.bmp
+BIFF=big_type_iff.bmp
+BJPG=big_type_jpg.bmp
+BM3D=big_type_model3d.bmp
+BMUS=big_type_musique.bmp
+BNON=big_type_none.bmp
+BPCX=big_type_pcx.bmp
+BPNG=big_type_png.bmp
+BPSD=big_type_psd.bmp
+BSPR=big_type_sprite.bmp
+BTEX=big_type_tex.bmp
+BTXT=big_type_text.bmp
+BTGA=big_type_tga.bmp
+BTIF=big_type_tif.bmp
+BWAL=big_type_wal.bmp
+BWAV=big_type_wave.bmp
+BZIP=big_type_zip.bmp
+{/BODY}
+{/LOOK}

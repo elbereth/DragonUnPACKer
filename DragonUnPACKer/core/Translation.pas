@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.6 2008-03-24 14:06:57 elbereth Exp $
+// $Id: Translation.pas,v 1.7 2008-04-16 21:07:51 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -226,13 +226,13 @@ begin
     treeConfig.Font.Name := GetFont();
 
     treeConfig.Items.Item[0].Text := DLNGStr('OPT100');
-    treeConfig.Items.Item[1].Text := DLNGStr('OPT600');
-    treeConfig.Items.Item[2].Text := DLNGStr('OPT500');
-    treeConfig.Items.Item[3].Text := DLNGStr('OPT200');
-    treeConfig.Items.Item[4].Text := 'HyperRipper';
-    treeConfig.Items.Item[5].Text := DLNGStr('OPT300');
-    treeConfig.Items.Item[6].Text := DLNGStr('OPT800');
-    treeConfig.Items.Item[7].Text := DLNGStr('OPT400');
+    treeConfig.Items.Item[2].Text := DLNGStr('OPT800');
+    treeConfig.Items.Item[3].Text := DLNGStr('OPT600');
+    treeConfig.Items.Item[4].Text := DLNGStr('OPT500');
+    treeConfig.Items.Item[5].Text := DLNGStr('OPT200');
+    treeConfig.Items.Item[6].Text := 'HyperRipper';
+    treeConfig.Items.Item[7].Text := DLNGStr('OPT300');
+    treeConfig.Items.Item[8].Text := DLNGStr('OPT400');
 
     grpLanguage.Caption := DLNGStr('OPT110');
     grpLanguage.Font.Name := GetFont();

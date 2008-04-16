@@ -1,6 +1,6 @@
 unit lib_look;
 
-// $Id: lib_look.pas,v 1.1.1.1 2004-05-08 10:25:48 elbereth Exp $
+// $Id: lib_look.pas,v 1.2 2008-04-16 21:07:16 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/lib_look.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -129,6 +129,16 @@ begin
           else if ENT.ID = 'EXTR' then
           begin
             imgt := 14;
+            imgl := 0;
+          end
+          else if ENT.ID = 'MOGA' then
+          begin
+            imgt := 15;
+            imgl := 0;
+          end
+          else if ENT.ID = 'MOGL' then
+          begin
+            imgt := 16;
             imgl := 0;
           end
           else if ENT.ID = 'FOPN' then

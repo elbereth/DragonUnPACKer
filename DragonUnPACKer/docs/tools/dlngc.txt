@@ -1,5 +1,5 @@
-Dragon LaNGuage Compiler (DLNGC) v4.0.0 Beta                           Freeware
-(c)Copyright 1999-2003 Alexandre "Elbereth" Devilliers               05-10-2003
+Dragon LaNGuage Compiler (DLNGC) v4.1.0                                Freeware
+Created by Alexandre "Elbereth" Devilliers                           16-04-2008
 ===============================================================================
 
   What is DLNGC ?
@@ -27,13 +27,17 @@ It should be enough to understand how to translate the file.
   Compatibility list
   ------------------
 
-DLNGC v4.0 is compiling DLNG files version 4.
+DLNGC v4.1 is compiling DLNG files version 4.
 Here is a list of programs supporting this format:
 
 Program Name          ID      Version      (Internal Version)
 Dragon UnPACKer       UP      5.0.0.128+   (7)
+Dragon UnPACKer       UP      5.1.0        (7)
+Dragon UnPACKer       UP      5.1.2        (8)
+Dragon UnPACKer       UP      5.2.0        (9)
+Dragon UnPACKer       UP      5.3.2        (10)
 
-DLNGC v4.0 cannot compile DLNG files version 1, 2 or 3, if needed just use
+DLNGC v4.1 cannot compile DLNG files version 1, 2 or 3, if needed just use
 previous DLNGC versions:
   v2.0.6 have full version 1 and 2 support
   v3.0.4 have full version 3 support
@@ -53,6 +57,17 @@ You can reach Alex Devilliers:
 
   What's new?
   -----------
+
+Version 4.1.0:
+
+ i Removed beta status (worked fine for 5 years now..).
+   Still need to add comment to the code...
+ + Added /il /internal option. This will create:
+   lib_language_internal.pas file instead of a DLNG v4 file.
+   This is for Dragon UnPACKer 5 compilation. So unless you want to compile it
+   this new option is useless for you. :p
+   I added it so I can have a common editing format for all languages: internal
+   or not.
 
 Version 4.0.0 Beta:
 

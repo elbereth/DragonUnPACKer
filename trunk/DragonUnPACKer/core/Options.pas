@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.4 2005-12-16 20:15:47 elbereth Exp $
+// $Id: Options.pas,v 1.5 2008-04-16 21:06:38 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -21,7 +21,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ComCtrls, ImgList, StdCtrls, ExtCtrls, Registry, declFSE,
-  CheckLst, Main, lib_look;
+  CheckLst, Main, lib_look, JvExCheckLst, JvCheckListBox;
 
 type
   TfrmConfig = class(TForm)
@@ -65,13 +65,6 @@ type
     strLookList: TLabel;
     tabAssoc: TGroupBox;
     grpAssoc1: TGroupBox;
-    cmdTypesAll: TButton;
-    cmdTypesNone: TButton;
-    GroupBox2: TGroupBox;
-    grpAssoc2: TGroupBox;
-    imgAssocIcon: TImage;
-    Edit1: TEdit;
-    lstTypes: TCheckListBox;
     ChkOneInstance: TCheckBox;
     ChkSmartOpen: TCheckBox;
     tabConvert: TPanel;
@@ -123,7 +116,6 @@ type
     lblHIntVer: TLabel;
     txtDUHI: TStaticText;
     txtHIntVer: TStaticText;
-    trkAssocIcon: TTrackBar;
     tabLog: TPanel;
     grpLogVerbose: TGroupBox;
     grpLogOptions: TGroupBox;
@@ -131,6 +123,41 @@ type
     trackbarVerbose: TTrackBar;
     lblVerbose: TLabel;
     chkLog: TCheckBox;
+    tabAdvanced: TPanel;
+    grpAdvOpenFile: TGroupBox;
+    grpAdvTemp: TGroupBox;
+    chkTmpDefault: TCheckBox;
+    grpAdvBufferSize: TGroupBox;
+    Label3: TLabel;
+    Label4: TLabel;
+    trackBufferSize: TTrackBar;
+    CheckBox2: TCheckBox;
+    txtTmpDir: TEdit;
+    butTmpDirSelect: TButton;
+    cmdTypesNone: TButton;
+    cmdTypesAll: TButton;
+    CheckBox1: TCheckBox;
+    imgAssocIcon: TImage;
+    Edit1: TEdit;
+    CheckBox3: TCheckBox;
+    CheckBox4: TCheckBox;
+    CheckBox5: TCheckBox;
+    Edit2: TEdit;
+    Label1: TLabel;
+    Label2: TLabel;
+    imgAssocIcon16: TImage;
+    lstTypes: TJvCheckListBox;
+    tabPluginsInfos: TPanel;
+    GroupBox2: TGroupBox;
+    lblPluginsConvert: TLabel;
+    panPluginsConvert: TPanel;
+    lblPluginsConvertInfo: TLabel;
+    Label5: TLabel;
+    Panel6: TPanel;
+    Label6: TLabel;
+    Label7: TLabel;
+    Panel7: TPanel;
+    Label8: TLabel;
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cmdOkClick(Sender: TObject);
@@ -446,6 +473,8 @@ begin
   frmConfig.lstLookClick(Self);
   TYPEList;
 
+  treeConfig.Images := dup5Main.imgLook;
+
   Loading := False;
 
   treeConfig.Items.Item[TabSelect].Selected := True;
@@ -692,6 +721,8 @@ procedure TfrmConfig.treeConfigChange(Sender: TObject; Node: TTreeNode);
 begin
 
   tabBasic.Visible := False;
+  tabAdvanced.Visible := False;
+  tabPluginsInfos.Visible := False;
   tabPlugins.Visible := False;
   tabLook.Visible := False;
   tabAssoc.Visible := False;
@@ -705,13 +736,14 @@ begin
          LNGList;
          frmConfig.lstLanguesSelect(Self);
        end;
-    1: tabPlugins.Visible := True;
-    2: tabConvert.Visible := True;
-    3: tabPlugins.Visible := True;
-    4: tabHyperRipper.Visible := True;
-    5: tabLook.Visible := True;
-    6: tabLog.Visible := True;
-    7: tabAssoc.Visible := True;
+    1: tabAdvanced.Visible := True;
+    2: tabLog.Visible := True;
+    3: tabPluginsInfos.Visible := True;
+    4: tabConvert.Visible := True;
+    5: tabPlugins.Visible := True;
+    6: tabHyperRipper.Visible := True;
+    7: tabLook.Visible := True;
+    8: tabAssoc.Visible := True;
   end;
 
 end;

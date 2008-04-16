@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.7 2008-04-04 19:09:00 elbereth Exp $
+// $Id: Main.pas,v 1.8 2008-04-16 21:06:38 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -66,7 +66,7 @@ type
     N12: TMenuItem;
     menuFichier_Quitter: TMenuItem;
     menuTools_List: TMenuItem;
-    menuOptions_Basic: TMenuItem;
+    menuOptions_Sub: TMenuItem;
     menuOptions_Plugins: TMenuItem;
     menuOptions_Assoc: TMenuItem;
     menuOptions_Look: TMenuItem;
@@ -108,6 +108,9 @@ type
     SplitterPreview: TSplitter;
     panPreview: TPanel;
     imgPreview: TImage;
+    menuOption_Advanced: TMenuItem;
+    menuOptions_Log: TMenuItem;
+    menuOptions_Basic: TMenuItem;
     procedure FormResize(Sender: TObject);
     procedure menuFichier_QuitterClick(Sender: TObject);
     procedure menuAbout_AboutClick(Sender: TObject);
@@ -121,7 +124,7 @@ type
     procedure menuIndex_InfosClick(Sender: TObject);
     procedure menuIndex_ExtractAllClick(Sender: TObject);
     procedure menuIndex_ExtractDirsClick(Sender: TObject);
-    procedure menuOptions_BasicClick(Sender: TObject);
+    procedure menuOptions_SubClick(Sender: TObject);
     procedure FormHide(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Bouton_OptionsClick(Sender: TObject);
@@ -201,6 +204,8 @@ type
     procedure menuLog_HideClick(Sender: TObject);
     procedure Popup_LogPopup(Sender: TObject);
     procedure menuLog_ClearClick(Sender: TObject);
+    procedure menuOption_AdvancedClick(Sender: TObject);
+    procedure menuOptions_LogClick(Sender: TObject);
   private
     verboseLevel: integer;
     AlreadyDragging: boolean;
@@ -885,7 +890,7 @@ begin
 
 end;
 
-procedure Tdup5Main.menuOptions_BasicClick(Sender: TObject);
+procedure Tdup5Main.menuOptions_SubClick(Sender: TObject);
 begin
 
   InitOptions;
@@ -1229,7 +1234,7 @@ procedure Tdup5Main.menuOptions_DriversClick(Sender: TObject);
 begin
 
   InitOptions;
-  TabSelect := 3;
+  TabSelect := 5;
   frmConfig.ShowModal;
 
 end;
@@ -1238,7 +1243,7 @@ procedure Tdup5Main.MenuOptions_LookClick(Sender: TObject);
 begin
 
   InitOptions;
-  TabSelect := 5;
+  TabSelect := 7;
   frmConfig.ShowModal;
 
 end;
@@ -1280,7 +1285,7 @@ procedure Tdup5Main.menuOptions_AssocClick(Sender: TObject);
 begin
 
   InitOptions;
-  TabSelect := 7;
+  TabSelect := 8;
   frmConfig.ShowModal;
 
 end;
@@ -1594,7 +1599,7 @@ procedure Tdup5Main.menuOptions_ConvertClick(Sender: TObject);
 begin
 
   InitOptions;
-  TabSelect := 2;
+  TabSelect := 4;
   frmConfig.ShowModal;
 
 end;
@@ -2136,7 +2141,7 @@ procedure Tdup5Main.TDup5PluginsHRExecute(Sender: TObject);
 begin
 
   InitOptions;
-  TabSelect := 4;
+  TabSelect := 6;
   frmConfig.ShowModal;
 
 end;
@@ -2580,6 +2585,24 @@ procedure Tdup5Main.setVerboseLevel(verbLevel: integer);
 begin
 
   verboseLevel := verbLevel;
+
+end;
+
+procedure Tdup5Main.menuOption_AdvancedClick(Sender: TObject);
+begin
+
+  InitOptions;
+  TabSelect := 1;
+  frmConfig.ShowModal;
+
+end;
+
+procedure Tdup5Main.menuOptions_LogClick(Sender: TObject);
+begin
+
+  InitOptions;
+  TabSelect := 2;
+  frmConfig.ShowModal;
 
 end;
 

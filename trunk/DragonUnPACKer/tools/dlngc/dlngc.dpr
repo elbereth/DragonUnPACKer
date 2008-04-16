@@ -2,7 +2,7 @@ program dlngc;
 
 {$APPTYPE CONSOLE}
 
-// $Id: dlngc.dpr,v 1.1.1.1 2004-05-08 10:26:55 elbereth Exp $
+// $Id: dlngc.dpr,v 1.2 2008-04-16 21:08:46 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dlngc/dlngc.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -26,10 +26,10 @@ uses
   Zlib,
   spec_DLNG in '..\..\common\spec_DLNG.pas';
 
-const AppVersion : string = '4.0.0';
-      AppEdit : string = 'Beta';
+const AppVersion : string = '4.1.0';
+      AppEdit : string = '';
       DLNG_Version : Byte = 4;
-      DLNG_Manufacturer : Byte = 40;
+      DLNG_Manufacturer : Byte = 41;
 
 {CRC32}
 type
@@ -109,14 +109,14 @@ begin
       result := result + ' ';
 end;
 
-procedure Compile(sin: string; NoCRC, NoIcon: boolean);
+procedure Compile(sin: string; NoCRC, NoIcon, PascalOutput: boolean);
 var hin: TextFile;
     tmps,keyw,valu,outfil,iconfil: String;
     idx: array[1..2000] of DLNG_IndexEntry_v4;
     str: array[1..2000] of WideString;
     IsHeader, IsBody, IsLSF, IsError: Boolean;
     Cline, Uline, poseq, NumIDX, x,tsize: integer;
-    ErrInfo: string;
+    ErrInfo, strTmp: string;
     HDR: DLNG_Header_v4;
     HDRX: DLNG_ExtendedHeader;
     tbyt : byte;
@@ -275,18 +275,53 @@ begin
     begin
       writeln('Unknown compression type ['+inttostr(HDR.Compression)+']. Valid values are:');
       writeln('    0 : No compression (Default and Fastest)');
-      writeln('   99 : ZLib compression [level 9]'); 
+      writeln('   99 : ZLib compression [level 9]');
     end
     else
     begin
       writeln('OK ['+IntToStr(Cline)+' lines - '+IntToStr(ULine)+' used]');
       writeln(' - Writing file..... '+outfil);
 
+      if PascalOutput then
+        outfil := ExtractFilePath(outfil)+'lib_language_internal.pas';
+
       outFileStm := TFileStream.Create(outfil, fmCreate);
 //      ofil := FileCreate(outfil);
 
       if outFileStm.Handle <> 0 then
       begin
+
+        if PascalOutput then
+        begin
+
+          write('   Entries.......... ');
+
+          strTmp := '// ============================================================================='+#13+#10+'//    WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING'+#13+#10+'// ============================================================================='+#13+#10+'//  This file was created automatically from:'+#13+#10+'//  '+sin+#13+#10+'//  With Dragon Language Compiler v'+AppVersion+' '+AppEdit+#13+#10+'//'+#13+#10+'// DO NOT CHANGE THIS FILE MANUALLY, EDIT THE SOURCE FILE AND RECOMPILE IT WITH'+#13+#10+'// DLOOKC <file> /IL'+#13+#10+'//'+#13+#10+'// -----------------------------------------------------------------------------'+#13+#10+#13+#10+'unit lib_language_internal;'+#13+#10+#13+#10+'interface'+#13+#10+#13+#10+'function DLNGInternalStr(sch: string): string;'+#13+#10+#13+#10+'implementation'+#13+#10+#13+#10+'function DLNGInternalStr(sch: string): string;'+#13+#10+'var res: string;'+#13+#10+'begin'+#13+#10+#13+#10;
+          outFileStm.WriteBuffer(strTmp[1],length(strTmp));
+
+          for x := 1 to NumIdx do
+          begin
+            if x = 1 then
+              strTmp := '  if sch = '+QuotedStr(TrimRight(idx[x].ID))+' then'+#13+#10+'    result := '+QuotedStr(str[x])+#13+#10
+            else
+              strTmp := '  else if sch = '+QuotedStr(TrimRight(idx[x].ID))+' then'+#13+#10+'    result := '+QuotedStr(str[x])+#13+#10;
+            outFileStm.WriteBuffer(strTmp[1],length(strTmp));
+          end;
+
+          strTmp := '  else'+#13+#10+'    result := '+QuotedStr('--Non défini--')+#13+#10+#13+#10+'end;'+#13+#10+#13+#10+'end.'+#13+#10;
+          outFileStm.WriteBuffer(strTmp[1],length(strTmp));
+
+          writeln('OK ['+InttoStr(NumIdx)+' entries]');
+          tsize := outFileStm.Size;
+
+//        FileClose(ofil);
+          etime := now;
+
+          writeln(' - Compiled successfully! ['+inttostr(tsize)+' bytes] ['+Format('%3.3f',[MillisecondsBetween(etime, stime)/1000])+' secs]');
+
+        end
+        else
+        begin
 
         HDR.ID[0] := 'D';
         HDR.ID[1] := 'L';
@@ -510,6 +545,7 @@ begin
         etime := now;
 
         writeln(' - Compiled successfully! ['+inttostr(tsize)+' bytes] ['+Format('%3.3f',[MillisecondsBetween(etime, stime)/1000])+' secs]');
+        end
       end
     else
       writeln('   Error could not create/open the file.. Aborting!');
@@ -521,12 +557,12 @@ begin
 end;
 
 var xp: integer;
-var NoCRC,NoIcon: boolean;
+var NoCRC,NoIcon,PascalOutput: boolean;
 begin
   { TODO -oUser -cConsole Main : placez le code ici }
 
    writeln('Dragon Language Compiler                Version: '+AppVersion+' '+AppEdit);
-   writeln('(c)Copyright 2003 Alexandre Devilliers      URL: http://www.dragonunpacker.com/');
+   writeln('Created by Alexandre Devilliers             URL: http://www.elberethzone.net');
    writeln;
 
    if ParamCount = 0 then
@@ -537,15 +573,18 @@ begin
      writeln(' Usage: dlngc <sourcefile.ls> [options]');
      writeln;
      writeln(' Output format: DLNG version 4');
+     writeln('      Optional: DLNG version 4 for Delphi inclusion');
      writeln;
      writeln(' Options:  /nocrc or /nc       Don''t compute CRCs');
      writeln('           /noicon or /ni      Force no icon in DLNG');
+     writeln('           /internal or /il    Output Delphi inclusion code');
    end
    else
    begin
      NoCRC := false;
 //     NoDisplay := false;
      NoIcon := false;
+     PascalOutput := false;
      writeln(' Parsing parameters...');
      xp := 2;
      while (xp <= ParamCount) do
@@ -554,11 +593,13 @@ begin
          NoCRC := true;
        if (lowercase(ParamStr(xp)) = '/ni') or (lowercase(ParamStr(xp)) = '/noicon') then
          NoIcon := true;
-       writeln('  - Unknown parameter: ' + ParamStr(xp));
+       if (lowercase(ParamStr(xp)) = '/il') or (lowercase(ParamStr(xp)) = '/internal') then
+         PascalOutput := true;
+       writeln(' - Unknown parameter: ' + ParamStr(xp));
        xp := xp + 1;
      end;
      fcrctable := crc32gen;
-     Compile(ParamStr(1),NoCRC,NoIcon);
+     Compile(ParamStr(1),NoCRC,NoIcon,PascalOutput);
    end;
 
 end.

@@ -2,7 +2,7 @@ program dlookd;
 
 {$APPTYPE CONSOLE}
 
-// $Id: dlookd.dpr,v 1.1 2008-04-15 18:53:54 elbereth Exp $
+// $Id: dlookd.dpr,v 1.2 2008-04-17 19:18:08 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dlookd/dlookd.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -249,7 +249,7 @@ end;
 var xp: integer;
 begin
 
-   writeln('Dragon Software - DUP5 LOOK Decompiler     Version: '+AppVersion+' '+AppEdit);
+   writeln('Dragon UnPACKer 5 LOOK Decompiler          Version: '+AppVersion+' '+AppEdit);
    writeln('Created by Alexandre Devilliers                URL: http://www.elberethzone.net');
    writeln;
 

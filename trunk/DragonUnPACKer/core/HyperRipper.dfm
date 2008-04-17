@@ -1262,7 +1262,7 @@ object frmHyperRipper: TfrmHyperRipper
     Top = 8
     Width = 417
     Height = 297
-    ActivePage = tabAdvanced
+    ActivePage = tabAbout
     TabOrder = 0
     object tabAbout: TTabSheet
       Caption = 'A Propos..'

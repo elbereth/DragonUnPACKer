@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.11 2008-03-24 14:06:57 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.12 2008-04-17 19:22:19 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -239,7 +239,22 @@ var prefix: string;
     MultiRead: TMultiReadExclusiveWriteSynchronizer;
 
 procedure TfrmHyperRipper.cmdOkClick(Sender: TObject);
+var Reg: TRegistry;
 begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Not(Reg.KeyExists('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper')) then
+      Reg.CreateKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper');
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
+    begin
+      Reg.WriteInteger('LastActiveTab',PageControl.ActivePageIndex);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
 
   frmHyperRipper.Close;
 
@@ -361,6 +376,10 @@ begin
       if Reg.ValueExists('NumThreads') then
         sliderMT.value := Reg.ReadInteger('NumThreads');
       refreshMTText;
+      if Reg.ValueExists('LastActiveTab') then
+        PageControl.ActivePageIndex := Reg.ReadInteger('LastActiveTab')
+      else
+        PageControl.ActivePageIndex := 0;
       if Reg.ValueExists('CreateHRF') then
         chkHRF.Checked := Reg.ReadBool('CreateHRF');
       if Reg.ValueExists('HRF3_NoPRGID') then

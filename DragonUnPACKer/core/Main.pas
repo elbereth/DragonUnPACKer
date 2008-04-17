@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.8 2008-04-16 21:06:38 elbereth Exp $
+// $Id: Main.pas,v 1.9 2008-04-17 19:15:53 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -1145,6 +1145,12 @@ begin
         if tmpi > 0 then
           Percent.Left := tmpi;
       end;
+      Reg.CloseKey;
+    end;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
+    begin
+      if Reg.ValueExists('CheckStartup') and Reg.ReadBool('CheckStartup') then
+        SetRegistryDUP5;
       Reg.CloseKey;
     end;
   Finally

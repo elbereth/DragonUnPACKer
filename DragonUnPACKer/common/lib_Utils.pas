@@ -1,6 +1,6 @@
 unit lib_Utils;
 
-// $Id: lib_Utils.pas,v 1.5 2005-12-16 20:17:42 elbereth Exp $
+// $Id: lib_Utils.pas,v 1.6 2008-04-17 19:12:03 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_Utils.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -298,24 +298,100 @@ begin
 end;
 
 procedure SetRegistryDUP5();
-var reg: TRegistry;
+var reg: TRegistry;     // Used to set info in registry
+    readReg: TRegistry; // Used to retrieve info in registry
+    // External icon & alternate descriptions handling
+    extIcon, altText: String;
+    UseExtIcon, UseAltText: Boolean;
 begin
 
   Reg := TRegistry.Create;
+  readReg := TRegistry.Create;
   Try
     Reg.RootKey := HKEY_CLASSES_ROOT;
+    readReg.RootKey := HKEY_CURRENT_USER;
+    // Retrieve options in registry (use open with extension)
+    if readReg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
+    begin
+      if readReg.ValueExists('UseOpenWith') and readReg.ReadBool('UseOpenWith') then
+      begin
+        if Reg.OpenKey('*\shell\DrgUnPack5',True) then
+        begin
+          Reg.WriteString('',DLNGStr('OPT451'));
+          Reg.CloseKey;
+        end;
+        if Reg.OpenKey('*\shell\DrgUnPack5\command',True) then
+        begin
+          Reg.WriteString('','"'+Application.ExeName+'" "%1"');
+          Reg.CloseKey;
+        end;
+      end
+      else if Reg.KeyExists('*\shell\DrgUnPack5\command') then
+      begin
+        Reg.DeleteKey('*\shell\DrgUnPack5\command');
+        Reg.DeleteKey('*\shell\DrgUnPack5');
+      end;
+      readReg.CloseKey;
+    end;
+
     if Not(Reg.KeyExists('DUP5.Files\DefaultIcon')) then
       Reg.CreateKey('DUP5.Files\DefaultIcon');
     if Not(Reg.KeyExists('DUP5.Files\shell\open\command')) then
       Reg.CreateKey('DUP5.Files\shell\open\command');
     if Reg.OpenKey('DUP5.Files\DefaultIcon',True) then
     begin
-      Reg.WriteString('',chr(34)+Application.ExeName+chr(34)+',1');
+
+      // By default to external icon
+      extIcon := '';
+      UseExtIcon := false;
+
+      // Retrieve options in registry (use external icon)
+      if readReg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
+      begin
+        if readReg.ValueExists('ExternalIconFile') then
+          extIcon := readReg.ReadString('ExternalIconFile');
+        if readReg.ValueExists('UseExternalIcon') then
+          UseExtIcon := readReg.ReadBool('UseExternalIcon');
+        readReg.CloseKey;
+      end;
+
+      // If the option is checked & the external icon exists set the association
+      if useExtIcon and (extIcon <> '') and FileExists(extIcon) then
+      begin
+        Reg.WriteString('',chr(34)+extIcon+chr(34)+',0');
+      end
+      else // Use the default icon (in EXE file)
+      begin
+        Reg.WriteString('',chr(34)+Application.ExeName+chr(34)+',1');
+      end;
       Reg.CloseKey;
     end;
     if Reg.OpenKey('DUP5.Files',True) then
     begin
-      Reg.WriteString('','Dragon UnPACKer 5 Archive');
+
+      UseAltText := false;
+      altText := 'Dragon UnPACKer 5 Archive';
+
+      // Retrieve options in registry (use alternate description)
+      if readReg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
+      begin
+        if readReg.ValueExists('AlternateDescription') then
+          altText := readReg.ReadString('AlternateDescription');
+        if readReg.ValueExists('UseAlternateDescription') then
+          UseAltText := readReg.ReadBool('UseAlternateDescription');
+        readReg.CloseKey;
+      end;
+
+      // If the option is checked & the alternate description is not empty set the association
+      if UseAltText and (altText <> '') then
+      begin
+        Reg.WriteString('',altText);
+      end
+      else
+      begin
+        Reg.WriteString('','Dragon UnPACKer 5 Archive');
+      end;
+
       Reg.CloseKey;
     end;
     if Reg.OpenKey('DUP5.Files\shell',True) then
@@ -330,6 +406,7 @@ begin
     end;
   Finally
     Reg.Free;
+    readReg.Free;
   end;
 
 end;

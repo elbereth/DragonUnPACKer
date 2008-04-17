@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.5 2008-04-16 21:06:38 elbereth Exp $
+// $Id: Options.pas,v 1.6 2008-04-17 19:15:53 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -64,7 +64,6 @@ type
     strDriversList: TLabel;
     strLookList: TLabel;
     tabAssoc: TGroupBox;
-    grpAssoc1: TGroupBox;
     ChkOneInstance: TCheckBox;
     ChkSmartOpen: TCheckBox;
     tabConvert: TPanel;
@@ -136,28 +135,29 @@ type
     butTmpDirSelect: TButton;
     cmdTypesNone: TButton;
     cmdTypesAll: TButton;
-    CheckBox1: TCheckBox;
+    chkAssocOpenWith: TCheckBox;
     imgAssocIcon: TImage;
-    Edit1: TEdit;
-    CheckBox3: TCheckBox;
-    CheckBox4: TCheckBox;
-    CheckBox5: TCheckBox;
-    Edit2: TEdit;
-    Label1: TLabel;
-    Label2: TLabel;
+    txtAssocText: TEdit;
+    chkAssocText: TCheckBox;
+    chkAssocCheckStartup: TCheckBox;
+    chkAssocExtIcon: TCheckBox;
+    txtAssocExtIcon: TEdit;
+    lblAssocInfo: TLabel;
+    lblAssocCurIcon: TLabel;
     imgAssocIcon16: TImage;
     lstTypes: TJvCheckListBox;
     tabPluginsInfos: TPanel;
-    GroupBox2: TGroupBox;
+    grpPluginsInfo: TGroupBox;
     lblPluginsConvert: TLabel;
     panPluginsConvert: TPanel;
     lblPluginsConvertInfo: TLabel;
-    Label5: TLabel;
-    Panel6: TPanel;
-    Label6: TLabel;
-    Label7: TLabel;
-    Panel7: TPanel;
-    Label8: TLabel;
+    lblPluginsDrivers: TLabel;
+    panPluginsDrivers: TPanel;
+    lblPluginsDriversInfo: TLabel;
+    lblPluginsHyperRipper: TLabel;
+    panPluginsHyperRipper: TPanel;
+    lblPluginsHyperRipperInfo: TLabel;
+    butAssocExtIconBrowse: TButton;
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cmdOkClick(Sender: TObject);
@@ -192,10 +192,18 @@ type
       Change: TItemChange);
     procedure chkLogClick(Sender: TObject);
     procedure trackbarVerboseChange(Sender: TObject);
+    procedure chkAssocExtIconClick(Sender: TObject);
+    procedure butAssocExtIconBrowseClick(Sender: TObject);
+    procedure txtAssocExtIconChange(Sender: TObject);
+    procedure chkAssocTextClick(Sender: TObject);
+    procedure txtAssocTextChange(Sender: TObject);
+    procedure chkAssocOpenWithClick(Sender: TObject);
+    procedure chkAssocCheckStartupClick(Sender: TObject);
   private
     { Déclarations privées }
   public
     procedure trackbarVerboseUpdateHint;
+    procedure updateAssocIcon;
     { Déclarations publiques }
   end;
 
@@ -423,6 +431,8 @@ procedure TfrmConfig.FormShow(Sender: TObject);
 var Reg: TRegistry;
 begin
 
+  Loading := True;
+
   Reg := TRegistry.Create;
   Try
     Reg.RootKey := HKEY_CURRENT_USER;
@@ -457,11 +467,37 @@ begin
         ChkUseHyperRipper.Checked := true;
       Reg.CloseKey;
     end;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
+    begin
+      if Reg.ValueExists('ExternalIconFile') then
+        txtAssocExtIcon.Text := Reg.ReadString('ExternalIconFile')
+      else
+        txtAssocExtIcon.Text := '';
+      if Reg.ValueExists('UseExternalIcon') then
+        chkAssocExtIcon.Checked := Reg.ReadBool('UseExternalIcon')
+      else
+        chkAssocExtIcon.Checked := false;
+      if Reg.ValueExists('AlternateDescription') then
+        txtAssocText.Text := Reg.ReadString('AlternateDescription')
+      else
+        txtAssocText.Text := 'Dragon UnPACKer 5 Archive';
+      if Reg.ValueExists('UseAlternateDescription') then
+        chkAssocText.Checked := Reg.ReadBool('UseAlternateDescription')
+      else
+        chkAssocText.Checked := false;
+      if Reg.ValueExists('UseOpenWith') then
+        chkAssocOpenWith.Checked := Reg.ReadBool('UseOpenWith')
+      else
+        chkAssocOpenWith.Checked := false;
+      if Reg.ValueExists('CheckStartup') then
+        chkAssocCheckStartup.Checked := Reg.ReadBool('CheckStartup')
+      else
+        chkAssocCheckStartup.Checked := false;
+      Reg.CloseKey;
+    end;
   Finally
     Reg.Free;
   end;
-
-  Loading := True;
 
   trackbarVerbose.Position := dup5Main.getVerboseLevel;
   trackbarVerboseUpdateHint;
@@ -643,6 +679,7 @@ procedure TfrmConfig.cmdTypesAllClick(Sender: TObject);
 var x : integer;
 begin
 
+  SetRegistryDUP5;
   for x := 0 to lstTypes.Count - 1 do
   begin
     lstTypes.Checked[x] := True;
@@ -743,7 +780,10 @@ begin
     5: tabPlugins.Visible := True;
     6: tabHyperRipper.Visible := True;
     7: tabLook.Visible := True;
-    8: tabAssoc.Visible := True;
+    8: begin
+         tabAssoc.Visible := True;
+         updateAssocIcon;
+       end;
   end;
 
 end;
@@ -955,6 +995,190 @@ begin
   trackbarVerboseUpdateHint;
 
   dup5Main.setVerboseLevel(trackbarVerbose.Position);
+
+end;
+
+procedure TfrmConfig.updateAssocIcon();
+var icnLarge, icnSmall: TIcon;
+begin
+
+  icnLarge := TIcon.Create;
+  icnSmall := TIcon.Create;
+
+  try
+    if chkAssocExtIcon.Checked and FileExists(txtAssocExtIcon.Text) then
+    begin
+      GetLargeIconFromFile(txtAssocExtIcon.Text,0,icnLarge);
+      GetSmallIconFromFile(txtAssocExtIcon.Text,0,icnSmall);
+    end
+    else
+    begin
+      GetLargeIconFromFile(Application.ExeName,1,icnLarge);
+      GetSmallIconFromFile(Application.ExeName,1,icnSmall);
+    end;
+
+    imgAssocIcon.Picture.Icon := icnLarge;
+    imgAssocIcon16.Picture.Icon := icnSmall;
+    imgAssocIcon.Visible := true;
+    imgAssocIcon16.Visible := true;
+  except
+    on E: Exception do
+    begin
+      imgAssocIcon.Visible := false;
+      imgAssocIcon16.Visible := false;
+    end;
+  end;
+  icnLarge.Free;
+  icnSmall.Free;
+
+end;
+
+procedure TfrmConfig.chkAssocExtIconClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
+    begin
+      Reg.WriteBool('UseExternalIcon',chkAssocExtIcon.Checked);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
+
+  txtAssocExtIcon.Enabled := chkAssocExtIcon.Checked;
+  butAssocExtIconBrowse.Enabled := chkAssocExtIcon.Checked;
+  updateAssocIcon;
+  SetRegistryDUP5;
+
+end;
+
+procedure TfrmConfig.butAssocExtIconBrowseClick(Sender: TObject);
+var diagOpen: TOpenDialog;
+begin
+
+  diagOpen := TOpenDialog.Create(Self);
+  try
+    diagOpen.Title := DLNGStr('OPT431');
+    diagOpen.Filter := DLNGStr('OPT432')+' (*.ICO)|*.ico';
+    if diagOpen.Execute then
+      txtAssocExtIcon.Text := diagOpen.FileName;
+  finally
+    diagOpen.Free;
+  end;
+
+end;
+
+procedure TfrmConfig.txtAssocExtIconChange(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
+      begin
+        Reg.WriteString('ExternalIconFile',txtAssocExtIcon.Text);
+        Reg.CloseKey;
+      end;
+    Finally
+      Reg.Free;
+    end;
+
+    updateAssocIcon;
+    SetRegistryDUP5;
+
+  end;
+
+end;
+
+procedure TfrmConfig.chkAssocTextClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
+    begin
+      Reg.WriteBool('UseAlternateDescription',chkAssocText.Checked);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
+
+  txtAssocText.Enabled := chkAssocText.Checked;
+  SetRegistryDUP5;
+
+end;
+
+procedure TfrmConfig.txtAssocTextChange(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
+      begin
+        Reg.WriteString('AlternateDescription',txtAssocText.Text);
+        Reg.CloseKey;
+      end;
+    Finally
+      Reg.Free;
+    end;
+
+    SetRegistryDUP5;
+
+  end;
+  
+end;
+
+procedure TfrmConfig.chkAssocOpenWithClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
+    begin
+      Reg.WriteBool('UseOpenWith',chkAssocOpenWith.Checked);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
+
+  SetRegistryDUP5;
+
+end;
+
+procedure TfrmConfig.chkAssocCheckStartupClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
+    begin
+      Reg.WriteBool('CheckStartup',chkAssocCheckStartup.Checked);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
 
 end;
 

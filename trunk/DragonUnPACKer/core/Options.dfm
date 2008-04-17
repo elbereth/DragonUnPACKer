@@ -17,6 +17,131 @@ object frmConfig: TfrmConfig
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
+  object tabPluginsInfos: TPanel
+    Left = 184
+    Top = 8
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 10
+    Visible = False
+    object grpPluginsInfo: TGroupBox
+      Left = 0
+      Top = 0
+      Width = 441
+      Height = 281
+      Caption = 'Plugins'
+      TabOrder = 0
+      object lblPluginsConvert: TLabel
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 13
+        AutoSize = False
+        Caption = 'Convert plugins:'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsUnderline]
+        ParentFont = False
+      end
+      object lblPluginsDrivers: TLabel
+        Left = 8
+        Top = 112
+        Width = 425
+        Height = 13
+        AutoSize = False
+        Caption = 'Drivers plugins:'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsUnderline]
+        ParentFont = False
+      end
+      object lblPluginsHyperRipper: TLabel
+        Left = 8
+        Top = 208
+        Width = 425
+        Height = 13
+        AutoSize = False
+        Caption = 'HyperRipper plugins:'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsUnderline]
+        ParentFont = False
+      end
+      object panPluginsConvert: TPanel
+        Left = 8
+        Top = 32
+        Width = 425
+        Height = 65
+        BevelOuter = bvLowered
+        Caption = 'panPluginsConvert'
+        TabOrder = 0
+        object lblPluginsConvertInfo: TLabel
+          Left = 1
+          Top = 1
+          Width = 423
+          Height = 63
+          Align = alClient
+          AutoSize = False
+          Caption = 
+            'Those plugins will handle the convertion of file formats when ex' +
+            'tracting or previewing files. Example: Convert textures from .AR' +
+            'T file format to .BMP'
+          WordWrap = True
+        end
+      end
+      object panPluginsDrivers: TPanel
+        Left = 8
+        Top = 128
+        Width = 425
+        Height = 65
+        BevelOuter = bvLowered
+        Caption = 'panPluginsConvert'
+        TabOrder = 1
+        object lblPluginsDriversInfo: TLabel
+          Left = 1
+          Top = 1
+          Width = 423
+          Height = 63
+          Align = alClient
+          AutoSize = False
+          Caption = 
+            'Those plugins handle opening file formats so Dragon UnPACKer can' +
+            ' browse into them. If a file is not supported that means no driv' +
+            'er plugin could load it. HyperRipper handle files with another t' +
+            'ype of plugins (see below).'
+          WordWrap = True
+        end
+      end
+      object panPluginsHyperRipper: TPanel
+        Left = 8
+        Top = 224
+        Width = 425
+        Height = 49
+        BevelOuter = bvLowered
+        Caption = 'panPluginsConvert'
+        TabOrder = 2
+        object lblPluginsHyperRipperInfo: TLabel
+          Left = 1
+          Top = 1
+          Width = 423
+          Height = 47
+          Align = alClient
+          AutoSize = False
+          Caption = 
+            'Those plugins handle the file format to scan in HyperRipper (ex:' +
+            ' MPEG Audio, BMP, etc..)'
+          WordWrap = True
+        end
+      end
+    end
+  end
   object tabBasic: TPanel
     Left = 184
     Top = 8
@@ -1017,9 +1142,9 @@ object frmConfig: TfrmConfig
       Width = 32
       Height = 32
       Enabled = False
-      Visible = False
+      Transparent = True
     end
-    object Label1: TLabel
+    object lblAssocInfo: TLabel
       Left = 144
       Top = 16
       Width = 289
@@ -1030,7 +1155,7 @@ object frmConfig: TfrmConfig
         'double-click them in the Explorer:'
       WordWrap = True
     end
-    object Label2: TLabel
+    object lblAssocCurIcon: TLabel
       Left = 144
       Top = 56
       Width = 289
@@ -1045,16 +1170,7 @@ object frmConfig: TfrmConfig
       Width = 16
       Height = 16
       Enabled = False
-      Visible = False
-    end
-    object grpAssoc1: TGroupBox
-      Left = 392
-      Top = 64
-      Width = 41
-      Height = 25
-      Caption = 'Extensions associ'#233'es'
-      TabOrder = 0
-      Visible = False
+      Transparent = True
     end
     object cmdTypesNone: TButton
       Left = 8
@@ -1062,7 +1178,7 @@ object frmConfig: TfrmConfig
       Width = 59
       Height = 25
       Caption = 'Aucunes'
-      TabOrder = 1
+      TabOrder = 0
       OnClick = cmdTypesNoneClick
       OnKeyDown = FormKeyDown
     end
@@ -1072,24 +1188,24 @@ object frmConfig: TfrmConfig
       Width = 57
       Height = 25
       Caption = 'Toutes'
-      TabOrder = 2
+      TabOrder = 1
       OnClick = cmdTypesAllClick
       OnKeyDown = FormKeyDown
     end
-    object CheckBox1: TCheckBox
+    object chkAssocOpenWith: TCheckBox
       Left = 144
       Top = 240
       Width = 289
       Height = 33
       Caption = 'Add Windows Explorer extension "Open with Dragon UnPACKer 5"'
       Checked = True
-      Enabled = False
       State = cbChecked
-      TabOrder = 8
+      TabOrder = 7
       WordWrap = True
-      OnClick = chkLogClick
+      OnClick = chkAssocOpenWithClick
+      OnKeyDown = FormKeyDown
     end
-    object Edit1: TEdit
+    object txtAssocText: TEdit
       Left = 160
       Top = 216
       Width = 273
@@ -1097,57 +1213,54 @@ object frmConfig: TfrmConfig
       AutoSelect = False
       AutoSize = False
       Enabled = False
-      ReadOnly = True
-      TabOrder = 7
-      Text = 'Game Ressource (Dragon UnPACKer)'
-      Visible = False
+      TabOrder = 6
+      Text = 'Dragon UnPACKer 5 Archive'
+      OnChange = txtAssocTextChange
       OnKeyDown = FormKeyDown
     end
-    object CheckBox3: TCheckBox
+    object chkAssocText: TCheckBox
       Left = 144
       Top = 200
       Width = 289
       Height = 17
       Caption = 'Change the association text:'
-      Enabled = False
-      TabOrder = 6
+      TabOrder = 5
       WordWrap = True
-      OnClick = chkLogClick
+      OnClick = chkAssocTextClick
+      OnKeyDown = FormKeyDown
     end
-    object CheckBox4: TCheckBox
+    object chkAssocCheckStartup: TCheckBox
       Left = 144
       Top = 120
       Width = 289
       Height = 17
       Caption = 'Verify associations at start-up'
-      Enabled = False
-      TabOrder = 3
+      TabOrder = 2
       WordWrap = True
-      OnClick = chkLogClick
+      OnClick = chkAssocCheckStartupClick
+      OnKeyDown = FormKeyDown
     end
-    object CheckBox5: TCheckBox
+    object chkAssocExtIcon: TCheckBox
       Left = 144
       Top = 160
       Width = 289
       Height = 17
       Caption = 'Use external icon'
-      Enabled = False
-      TabOrder = 4
+      TabOrder = 3
       WordWrap = True
-      OnClick = chkLogClick
+      OnClick = chkAssocExtIconClick
+      OnKeyDown = FormKeyDown
     end
-    object Edit2: TEdit
+    object txtAssocExtIcon: TEdit
       Left = 160
       Top = 176
-      Width = 273
+      Width = 253
       Height = 21
       AutoSelect = False
       AutoSize = False
       Enabled = False
-      ReadOnly = True
-      TabOrder = 5
-      Text = 'Game Ressource (Dragon UnPACKer)'
-      Visible = False
+      TabOrder = 4
+      OnChange = txtAssocExtIconChange
       OnKeyDown = FormKeyDown
     end
     object lstTypes: TJvCheckListBox
@@ -1157,9 +1270,19 @@ object frmConfig: TfrmConfig
       Height = 225
       ItemHeight = 13
       Sorted = True
-      TabOrder = 9
+      TabOrder = 8
       OnClick = lstTypesClickCheck
       HorScrollbar = False
+    end
+    object butAssocExtIconBrowse: TButton
+      Left = 412
+      Top = 176
+      Width = 21
+      Height = 21
+      Caption = '+'
+      Enabled = False
+      TabOrder = 9
+      OnClick = butAssocExtIconBrowseClick
     end
   end
   object cmdOk: TButton
@@ -1202,131 +1325,6 @@ object frmConfig: TfrmConfig
       0000000800000008000000FFFFFFFFFFFFFFFF0000000000000000044C6F6F6B
       250000000700000007000000FFFFFFFFFFFFFFFF00000000000000000C417373
       6F63696174696F6E73}
-  end
-  object tabPluginsInfos: TPanel
-    Left = 183
-    Top = 8
-    Width = 449
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 10
-    Visible = False
-    object GroupBox2: TGroupBox
-      Left = 0
-      Top = 0
-      Width = 441
-      Height = 281
-      Caption = 'Plugins'
-      TabOrder = 0
-      object lblPluginsConvert: TLabel
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 13
-        AutoSize = False
-        Caption = 'Convert plugins:'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = [fsUnderline]
-        ParentFont = False
-      end
-      object Label5: TLabel
-        Left = 8
-        Top = 112
-        Width = 425
-        Height = 13
-        AutoSize = False
-        Caption = 'Drivers plugins:'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = [fsUnderline]
-        ParentFont = False
-      end
-      object Label7: TLabel
-        Left = 8
-        Top = 208
-        Width = 425
-        Height = 13
-        AutoSize = False
-        Caption = 'Drivers plugins:'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = [fsUnderline]
-        ParentFont = False
-      end
-      object panPluginsConvert: TPanel
-        Left = 8
-        Top = 32
-        Width = 425
-        Height = 65
-        BevelOuter = bvLowered
-        Caption = 'panPluginsConvert'
-        TabOrder = 0
-        object lblPluginsConvertInfo: TLabel
-          Left = 1
-          Top = 1
-          Width = 423
-          Height = 63
-          Align = alClient
-          AutoSize = False
-          Caption = 
-            'Those plugins will handle the convertion of file formats when ex' +
-            'tracting or previewing files. Example: Convert textures from .AR' +
-            'T file format to .BMP'
-          WordWrap = True
-        end
-      end
-      object Panel6: TPanel
-        Left = 8
-        Top = 128
-        Width = 425
-        Height = 65
-        BevelOuter = bvLowered
-        Caption = 'panPluginsConvert'
-        TabOrder = 1
-        object Label6: TLabel
-          Left = 1
-          Top = 1
-          Width = 423
-          Height = 63
-          Align = alClient
-          AutoSize = False
-          Caption = 
-            'Those plugins handle opening file formats so Dragon UnPACKer can' +
-            ' browse into them. If a file is not supported that means no driv' +
-            'er plugin could load it. HyperRipper handle files with another t' +
-            'ype of plugins (see below).'
-          WordWrap = True
-        end
-      end
-      object Panel7: TPanel
-        Left = 8
-        Top = 224
-        Width = 425
-        Height = 49
-        BevelOuter = bvLowered
-        Caption = 'panPluginsConvert'
-        TabOrder = 2
-        object Label8: TLabel
-          Left = 1
-          Top = 1
-          Width = 423
-          Height = 47
-          Align = alClient
-          AutoSize = False
-          Caption = 
-            'Those plugins handle the file format to scan in HyperRipper (ex:' +
-            ' MPEG Audio, BMP, etc..)'
-          WordWrap = True
-        end
-      end
-    end
   end
   object imgLstLangue: TImageList
     BlendColor = clBlack

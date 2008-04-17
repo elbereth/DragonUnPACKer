@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.7 2008-04-16 21:07:51 elbereth Exp $
+// $Id: Translation.pas,v 1.8 2008-04-17 19:15:53 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -299,6 +299,7 @@ begin
     lblCIntVer.Caption := DLNGStr('INFO23');
 
     strDriversList.Caption := DLNGStr('OPT203');
+    strDriversList.Font.Name := GetFont();
 
     cmdDrvAbout.Caption := DLNGStr('OPT201');
     cmdDrvAbout.Font.Name := GetFont();
@@ -374,14 +375,24 @@ begin
     tabAssoc.Caption := DLNGStr('OPT400');
     tabAssoc.Font.Name := GetFont();
 
-    grpAssoc1.Caption := DLNGStr('OPT410');
-    grpAssoc1.Font.Name := GetFont();
-
     cmdTypesNone.Caption := DLNGStr('OPT411');
     cmdTypesNone.Font.Name := GetFont();
 
     cmdTypesAll.Caption := DLNGStr('OPT412');
     cmdTypesAll.Font.Name := GetFont();
+
+    lblAssocInfo.Caption := DLNGStr('OPT401');
+    lblAssocInfo.Font.Name := GetFont();
+    lblAssocCurIcon.Caption := DLNGStr('OPT402');
+    lblAssocCurIcon.Font.Name := GetFont();
+    chkAssocCheckStartup.Caption := DLNGStr('OPT420');
+    chkAssocCheckStartup.Font.Name := GetFont();
+    chkAssocExtIcon.Caption := DLNGStr('OPT430');
+    chkAssocExtIcon.Font.Name := GetFont();
+    chkAssocText.Caption := DLNGStr('OPT440');
+    chkAssocText.Font.Name := GetFont();
+    chkAssocOpenWith.Caption := ReplaceValue('%d',DLNGStr('OPT450'),DLNGStr('OPT451'));
+    chkAssocOpenWith.Font.Name := GetFont();
 
     grpLogOptions.Caption := DLNGStr('OPT810');
     grpLogOptions.Font.Name := GetFont();
@@ -393,6 +404,24 @@ begin
     strVerbose.Font.Name := GetFont();
 
     chkLog.Caption := DLNGStr('OPT811');
+    chkLog.Font.Name := GetFont();
+
+    lblPluginsDrivers.Caption := DLNGStr('OPT203');
+    lblPluginsDrivers.Font.Name := GetFont();
+    lblPluginsConvert.Caption := DLNGStr('OPT501');
+    lblPluginsConvert.Font.Name := GetFont();
+    lblPluginsHyperRipper.Caption := DLNGStr('OPT701');
+    lblPluginsHyperRipper.Font.Name := GetFont();
+
+    lblPluginsDriversInfo.Caption := DLNGStr('OPT191');
+    lblPluginsDriversInfo.Font.Name := GetFont();
+    lblPluginsConvertInfo.Caption := DLNGStr('OPT192');
+    lblPluginsConvertInfo.Font.Name := GetFont();
+    lblPluginsHyperRipperInfo.Caption := DLNGStr('OPT193');
+    lblPluginsHyperRipperInfo.Font.Name := GetFont();
+
+    grpPluginsInfo.Caption := DLNGStr('OPT600');
+    grpPluginsInfo.Font.Name := GetFont();
 
     trackbarVerboseUpdateHint;
 

@@ -29,7 +29,7 @@
 # ============================================================================
 #
 # version 10:
-#
+# Added new Options (Association)
 #
 # version 9a:
 # Added missing OPT203 keyword
@@ -132,7 +132,7 @@ URL = http://www.dragonunpacker.com
 # Dragon UnPACKer v5.3.2         UP      10
 #
 ProgramID = UP
-ProgramVer = 9
+ProgramVer = 10
 #
 # + IconFile +
 # Path & FileName of the "icon" displayed with language name (ex: c:\test.bmp)
@@ -262,6 +262,9 @@ OPT123=Détection intelligente des formats de fichiers
 OPT124=Prendre les icones dans le registre Windows (plus lent)
 OPT125=Utiliser l'HyperRipper si aucun plugin n'arrive à ouvrir le fichier
 OPT126=Afficher le journal d'exécution
+OPT191=Ces plugins gèrent la convertion des formats de fichiers lors de l'extraction et de la prévisualisation. Exemple: Conversion des textures .ART vers .BMP
+OPT192=Ces plugins gèrent l'ouverture des formats de fichiers pour que Dragon UnPACKer puisse les explorer. Si un fichier n'est pas supporté cela signifie qu'aucun plugin ne peut le lire (voir HyperRipper dans ce cas ci-dessous).
+OPT193=Ces plugins gèrent les formats qu'il est possible de rechercher dans le HyperRipper (ex: MPEG Audio, BMP, etc..)
 OPT200=Drivers
 OPT201=A Propos..
 OPT202=Configurer
@@ -275,9 +278,17 @@ OPT320=Fichiers de Look:
 OPT330=Options de Look:  
 OPT331=Style XP pour les menus et la barre d'outils 
 OPT400=Types de fichiers 
-OPT410=Extensions associées
+OPT401=Selectionnez les extensions que Dragon UnPACKer doit ouvrir quand vous double-cliquez dessus dans l'Explorateur:
+OPT402=Icône actuelle pour l'association:
 OPT411=Aucune
 OPT412=Toutes
+OPT420=Vérifier les associations au démarrage
+OPT430=Utiliser une icône externe:
+OPT431=Selectionnez l'icône a utiliser pour l'association avec Dagon UnPACKer 5...
+OPT432=Icônes
+OPT440=Changer le texte associé:
+OPT450=Ajout de l'extension "%d" dans Windows Explorer
+OPT451=Ouvrir avec Dragon UnPACKer 5
 OPT500=Convertion
 OPT501=Plugins de convertion:
 OPT510=Informations

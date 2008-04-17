@@ -1,6 +1,6 @@
 unit lib_look;
 
-// $Id: lib_look.pas,v 1.2 2008-04-16 21:07:16 elbereth Exp $
+// $Id: lib_look.pas,v 1.3 2008-04-17 19:14:16 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/lib_look.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,11 +18,16 @@ unit lib_look;
 
 interface
 
+uses windows, graphics;
+
 procedure LoadLook(fil: string);
+Function GetLargeIconFromFile(FName : String; idx : Word; var Icon : TIcon) : Boolean;
+Function GetSmallIconFromFile(FName : String; idx : Word; var Icon : TIcon) : Boolean;
+Function GetIconCount(FName : String) : Integer;
 
 implementation
 
-uses spec_DULK, main, graphics,classes,sysutils,forms,dialogs;
+uses main, ShellAPI, spec_DULK, classes,sysutils,forms,dialogs;
 
 procedure LoadLook(fil: string);
 var Icn, IcnMask: TBitmap;
@@ -326,6 +331,58 @@ begin
 
     end;
   end;
+
+end;
+
+// Extract the large icon from an exe, dll or ico file.
+// FName : String        // the file name
+// Idx : Word            // the icon index to retrieve
+// Icon : TIcon          // the icon will be placed here on success
+// Return value:         // returns true on success, false on failure.
+Function GetLargeIconFromFile(FName : String; idx : Word; var Icon : TIcon) : Boolean;
+var
+  LargeIcon : HICON;
+  SmallIcon : HICON;
+begin
+
+  ExtractIconEx(PChar(FName), idx, LargeIcon, SmallIcon, 1);
+
+  if LargeIcon <= 1 then
+    Result := False
+  else
+  begin
+     Icon.Handle := LargeIcon;
+     Result := True
+  end;
+
+end;
+
+Function GetSmallIconFromFile(FName : String; idx : Word; var Icon : TIcon) : Boolean;
+var
+  LargeIcon : Hicon;
+  SmallIcon : Hicon;
+begin
+
+  ExtractIconEx(PChar(FName), idx, LargeIcon, SmallIcon, 1);
+
+  if SmallIcon <= 1 then
+    Result := False
+  else
+  begin
+    Icon.Handle := SmallIcon;
+    Result := True
+  end;
+
+end;
+
+// returns the number of icons in an exe, dll or ico file.
+Function GetIconCount(FName : String) : Integer;
+var
+  LargeIcon : Hicon;
+  SmallIcon : HIcon;
+begin
+
+  Result := ExtractIconEx(PChar(FName), -1, LargeIcon, SmallIcon, 0);
 
 end;
 

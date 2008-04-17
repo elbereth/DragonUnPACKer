@@ -2,7 +2,7 @@ program dlookc;
 
 {$APPTYPE CONSOLE}
 
-// $Id: dlookc.dpr,v 1.1.1.1 2004-05-08 10:26:55 elbereth Exp $
+// $Id: dlookc.dpr,v 1.2 2008-04-17 19:20:35 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dlookc/dlookc.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -22,8 +22,8 @@ program dlookc;
 uses
   SysUtils, DateUtils, spec_DULK in '..\..\common\spec_DULK.pas';
 
-const AppVersion = '1.1.1';
-      AppEdit = 'Beta';
+const AppVersion = '1.1.2';
+      AppEdit = '';
 
 function GetFileSize(fil: string): integer;
 var hin: integer;
@@ -49,7 +49,7 @@ var hin: TextFile;
     IsHeader, IsBody, IsLOOK, IsError, XP: Boolean;
     Cline, Uline, poseq, NumIDX, x, ofil, ifil, tsize, excnum: integer;
     ErrInfo: string;
-    HDR: DULK_Header0;
+    HDR: DULK_Header;
     Nom,Auteur,Email,Comment: String;
     tbyt : byte;
     Buffer: Pchar;
@@ -313,8 +313,8 @@ var xp: integer;
 begin
   { TODO -oUser -cConsole Main : placez le code ici }
 
-   writeln('Dragon Software - DUP5 LOOK Compiler           Version: '+AppVersion+' '+AppEdit);
-   writeln('(c)Copyright 2001-2002 Alexandre Devilliers        URL: http://www.drgsoft.com/');
+   writeln('Dragon UnPACKer 5 LOOK Compiler            Version: '+AppVersion+' '+AppEdit);
+   writeln('Created by Alexandre Devilliers                URL: http://www.elberethzone.net');
    writeln;
 
    if ParamCount = 0 then

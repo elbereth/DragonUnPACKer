@@ -1,0 +1,58 @@
+Dragon LaNGuage Compare (DLNGCOMP) v4.0.1                              Freeware
+Created by Alexandre "Elbereth" Devilliers                           18-04-2008
+===============================================================================
+
+  What is DLNGCOMP ?
+  ------------------
+
+This program allow you to compare two .LNG from Elbereth's programs (ex: Dragon
+UnPACKer 5). The result will be a text file with all the differences between
+the two files. This is useful to check nothing was forgotten in a translation
+or to check if some text changed between versions.
+
+
+  How to use DLNGCOMP
+  -------------------
+
+Just run it with the 2 filenames you wish to compare.
+
+Ex: DLNGCOMP example1.lng example2.lng
+
+You can add a third filename, then it will be used to store the test result in
+text format.
+
+Ex: DLNGCOMP example1.lng example2.lng report.txt
+
+
+  Compatibility list
+  ------------------
+
+DLNGCOMP v4.0 can compare:
+  DLNG version 1 (without encryption)
+  DLNG version 3
+  DLNG version 4
+
+DLNGCOMP v4.0 cannot compare DLNG files version 1 with encryption nor version 2
+and it cannot compare LSF files (Language Source Files).
+
+
+  Contact
+  -------
+
+For information about DLNG file format:
+http://www.elberethzone.net/index.php?page=dev
+
+You can reach Alex Devilliers:
+
+ By E-Mail: dlng (at) elberethzone (dot) net
+    By ICQ: 1535372 (Elbereth)
+
+
+  What's new?
+  -----------
+
+Version 4.0.1:
+
+ i Cleaned a bit the source for release. Same features/bugs as 4.0.0.
+
+===============================================================================

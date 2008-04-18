@@ -1,50 +1,54 @@
-Dragon LaNGuage Compare (DLNGCOMP) v4.0.1                              Freeware
+Dragon LaNGuage Compare (DLNGCOMP) v4.0.1                 Open Source / MPL 1.1
 Created by Alexandre "Elbereth" Devilliers                           18-04-2008
 ===============================================================================
 
   What is DLNGCOMP ?
   ------------------
 
-This program allow you to compare two .LNG from Elbereth's programs (ex: Dragon
-UnPACKer 5). The result will be a text file with all the differences between
-the two files. This is useful to check nothing was forgotten in a translation
-or to check if some text changed between versions.
+This program allow you to compare two .LNG files and write the report in a text
+file. That way you know what are changes between two languages versions or if
+you are translating you can check for errors by comparing your language file
+and the official one.
 
 
   How to use DLNGCOMP
   -------------------
 
-Just run it with the 2 filenames you wish to compare.
+The compare program is really easy to use.
+Just run it with the filenames you wish to compare.
 
-Ex: DLNGCOMP example1.lng example2.lng
-
-You can add a third filename, then it will be used to store the test result in
-text format.
-
-Ex: DLNGCOMP example1.lng example2.lng report.txt
+Ex: DLNGCOMP english.lng mytranslation.lng
+    This will compare english.lng and mytranslation.lng and create a report.txt
+Ex: DLNGCOMP mytranslation.lng english.lng diff.txt
+    Same as before but will create the file diff.txt instead of report.txt
 
 
   Compatibility list
   ------------------
 
-DLNGCOMP v4.0 can compare:
-  DLNG version 1 (without encryption)
-  DLNG version 3
-  DLNG version 4
+DLNGCOMP v4.0 can compare DLNG files: version 1, 3 and 4 ONLY.
+Here is a list of programs supporting those format:
 
-DLNGCOMP v4.0 cannot compare DLNG files version 1 with encryption nor version 2
-and it cannot compare LSF files (Language Source Files).
+Program Name          ID      Version  DLNG
+Dragon UnPACKer       UP      4        v1/v2
+Dragon UnPACKer       UP      5.x      v3/v4
+
+DLNGCOMP v4.0 cannot load DLNG files version 2 and thus cannot compare them.
+When crypted DLNG version 1 files are loaded some compare features are switched
+off because DLNGCOMP v4.0 does not include the needed decrypt code.
+If needed just use previous DLNGCOMP versions (v2.0.0 have full version 1
+and 2 support).
 
 
   Contact
   -------
 
-For information about DLNG file format:
-http://www.elberethzone.net/index.php?page=dev
+Elbereth Zone is available on the internet at:
+http://www.elberethzone.net
 
 You can reach Alex Devilliers:
 
- By E-Mail: dlng (at) elberethzone (dot) net
+ By E-Mail: dlngcomp400@dragonunpacker.com
     By ICQ: 1535372 (Elbereth)
 
 
@@ -53,6 +57,31 @@ You can reach Alex Devilliers:
 
 Version 4.0.1:
 
- i Cleaned a bit the source for release. Same features/bugs as 4.0.0.
+ * Cleaned up useless code & changed a bit the name, removed copyright...
+
+Version 4.0.0:
+
+ + Added DLNG v4 support (used by Dragon UnPACKer v5.0.0 RC4 and upward).
+ i Size increased a lot because of the compression used by DLNG v4...
+
+Version 3.0.2:
+
+ ! Fixed a bug with value comparison that wasn't done.
+  
+Version 3.0.1:
+
+ i Apparently I succeeded in adding old formats support to DLNGCOMP v3.0.
+ + Added partial DLNG v1 support.
+   Missing decrypt code (will never be added to DLNGCOMP v3.0).
+ + Added RLE Decode code for future use (DLNG v2).
+
+Version 3.0.0:
+
+ i Rewrited from scratch as a native win32 console program.
+   Main result is a really small size.. only 48k completly stand alone (no need
+   for the huge dlls needed before).
+   The drawback is that older formats (version 1 & 2 of LNG files) cannot be
+   supported anymore.
+ i Support for the new DLNG v3.
 
 ===============================================================================

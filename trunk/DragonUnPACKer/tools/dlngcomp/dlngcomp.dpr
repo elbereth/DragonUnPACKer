@@ -2,7 +2,7 @@ program dlngcomp;
 
 {$APPTYPE CONSOLE}
 
-// $Id: dlngcomp.dpr,v 1.2 2005-12-13 07:13:56 elbereth Exp $
+// $Id: dlngcomp.dpr,v 1.3 2008-04-18 21:04:49 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dlngcomp/dlngcomp.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -22,15 +22,11 @@ program dlngcomp;
 uses
   SysUtils,
   Classes,
-  DateUtils,
   zlib,
-  lib_utils in '..\..\common\lib_utils.pas',
   spec_DLNG in '..\..\common\spec_DLNG.pas',
-  lib_BinUtils in '..\..\common\lib_BinUtils.pas',
-  lib_zlib in '..\..\common\lib_zlib.pas',
-  lib_crc in '..\..\common\lib_crc.pas';
+  lib_BinUtils in '..\..\common\lib_BinUtils.pas';
 
-const AppVersion : string = '4.0.0';
+const AppVersion : string = '4.0.1';
       AppEdit : string = '';
       DLNG_Version : Byte = 4;
       DLNG_Manufacturer : Byte = 30;
@@ -196,11 +192,8 @@ procedure LoadLanguage(fil: string; out res: LngTab);
 var HDR: DLNG_Header;
     HDR3: DLNG_Header_v3;
     HDR4: DLNG_Header_v4;
-    HDRX: DLNG_ExtendedHeader;
     HDR1: LNGv1_Header;
-    HDR2: LNGv2_Header;
     FOOT1: LNGv1_Footer_v1;
-    FOOT2: LNGv1_Footer_v2;
     Idx1: LNGv1_Index;
     lng,x: integer;
     IDX3: DLNG_IndexEntry_v3;
@@ -464,8 +457,7 @@ end;
 
 
 procedure Compare(sin1, sin2, rep: string);
-var stime,etime: TDateTime;
-    lng1, lng2: LngTab;
+var lng1, lng2: LngTab;
     hTxt: TextFile;
     tmps: string;
     x,y,diff,totdiff: integer;
@@ -473,7 +465,7 @@ var stime,etime: TDateTime;
     disp1,disp2: string;
 begin
 
-  stime := now;
+  totdiff := 0;
 
   writeln(' Loading '+ExtractFilename(sin1)+'...');
   LoadLanguage(sin1, lng1);
@@ -714,14 +706,12 @@ begin
 
 end;
 
-var xp: integer;
-var NoCRC,NoDisplay,NoIcon: boolean;
 var report: string;
 begin
   { TODO -oUser -cConsole Main : placez le code ici }
 
-   writeln('Dragon Software - Language Compare             Version: '+AppVersion+' '+AppEdit);
-   writeln('(c)Copyright 2002 Alexandre Devilliers             URL: http://www.drgsoft.com/');
+   writeln('Dragon Language Compare                 Version: '+AppVersion+' '+AppEdit);
+   writeln('Created by Alexandre Devilliers             URL: http://www.elberethzone.net');
    writeln;
 
    if (ParamCount < 2) or (ParamCount > 3) then

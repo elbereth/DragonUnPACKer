@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.12 2008-04-17 19:22:19 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.13 2008-04-19 17:54:21 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -468,10 +468,10 @@ end;
 
 procedure TfrmHyperRipper.RunSearch(filename: String; slist: SearchList);
 var NumThreads: integer;
-    cxCPU: TcxCPU;
+    //cxCPU: TcxCPU;
 begin
 
-  cxCPU := TcxCPU.Create;
+  {cxCPU := TcxCPU.Create;
   try
     if (sliderMT.Value = 0) then
       NumThreads := cxCpu.ProcessorCount.Available.AsNumber
@@ -479,7 +479,7 @@ begin
       NumThreads := sliderMT.Value;
   finally
     cxCPU.Free;
-  end;
+  end;}
 
   SearchThread := THripSearch.Create(true);
   (SearchThread as THripSearch).setSearch(filename,slist,Self,1);

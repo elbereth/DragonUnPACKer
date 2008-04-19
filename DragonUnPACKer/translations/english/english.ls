@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-#  Program: Dragon UnPACKer v5.2.0 \ 5.2.0a \ 5.2.0b
+#  Program: Dragon UnPACKer v5.3.2 WIP
 # Language: English
-#  Version: 9a
+#  Version: 1
 #   Author: Alex Devilliers
 # ============================================================================
 #
@@ -27,6 +27,9 @@
 # ============================================================================
 # Informations about this translation
 # ============================================================================
+#
+# version 10:
+# Added new options.
 #
 # version 9a:
 # Added missing OPT203 keyword
@@ -126,9 +129,12 @@ URL = http://www.dragonunpacker.com
 # Dragon UnPACKer v5.2.0         UP       9
 # Dragon UnPACKer v5.2.0a        UP       9
 # Dragon UnPACKer v5.2.0b        UP       9
+# Dragon UnPACKer v5.3.0         UP       9
+# Dragon UnPACKer v5.3.1         UP       9
+# Dragon UnPACKer v5.3.2         UP      10
 #
 ProgramID = UP
-ProgramVer = 9
+ProgramVer = 10
 #
 # + IconFile +
 # Path & FileName of the "icon" displayed with language name (ex: c:\test.bmp)
@@ -246,6 +252,19 @@ POP3S1=Show log
 POP3S2=Hide log
 POP3S3=Clear log
 OPTTIT=Configuration
+OPT010=Temporary Directory
+OPT011=Use auto-detected temporary directory
+OPT012=Use defined temporary directory:
+OPT013=Select temporary directory to use...
+OPT020=Options for 'Open file'
+OPT021=Make 'Extract file... Without conversion' the default option
+OPT030=Buffer memory
+OPT031=Select the size of the extraction buffer:
+OPT032=No buffer / Not recommended! (Very slow)
+OPT033=%d byte(s)
+OPT034=%d kbytes
+OPT035=%d Mbytes
+OPT036=Default
 OPT100=Basic options
 OPT110=Language
 OPT120=Options

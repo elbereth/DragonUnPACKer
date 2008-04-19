@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.9 2008-04-17 19:15:53 elbereth Exp $
+// $Id: Main.pas,v 1.10 2008-04-19 18:10:36 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -108,7 +108,7 @@ type
     SplitterPreview: TSplitter;
     panPreview: TPanel;
     imgPreview: TImage;
-    menuOption_Advanced: TMenuItem;
+    menuOptions_Advanced: TMenuItem;
     menuOptions_Log: TMenuItem;
     menuOptions_Basic: TMenuItem;
     procedure FormResize(Sender: TObject);
@@ -204,7 +204,7 @@ type
     procedure menuLog_HideClick(Sender: TObject);
     procedure Popup_LogPopup(Sender: TObject);
     procedure menuLog_ClearClick(Sender: TObject);
-    procedure menuOption_AdvancedClick(Sender: TObject);
+    procedure menuOptions_AdvancedClick(Sender: TObject);
     procedure menuOptions_LogClick(Sender: TObject);
   private
     verboseLevel: integer;
@@ -1810,6 +1810,8 @@ var Data: pvirtualTreeData;
     i,DataX, DataY: integer;
     CList: ExtConvertList;
     ConvertOK: Boolean;
+    isExtractDefault: Boolean;
+    Reg: TRegistry;
 begin
 
    if (lstContent.SelectedCount > 1) then
@@ -1876,6 +1878,25 @@ begin
    end
    else if (lstContent.SelectedCount = 1) then
    begin
+
+     isExtractDefault := false;
+
+     Reg := TRegistry.Create;
+     Try
+       Reg.RootKey := HKEY_CURRENT_USER;
+       if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+       begin
+         if Reg.ValueExists('MakeExtractDefault') then
+           isExtractDefault := Reg.ReadBool('MakeExtractDefault');
+         Reg.CloseKey;
+       end;
+     finally
+       Reg.Free;
+     end;
+
+     Popup_Extrairevers_Raw.Default := isExtractDefault;
+     Popup_Open.Default := not(isExtractDefault);
+
      Popup_Extrairevers.Visible := True;
      Popup_ExtraireMulti.Visible := False;
      Popup_Open.Visible := True;
@@ -1957,12 +1978,32 @@ end;
 
 procedure Tdup5Main.lstContentMouseDown(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+var isExtractDefault: Boolean;
+    Reg: TRegistry;
 begin
 
   Shift := (Shift * [ssDouble]);
 
+  isExtractDefault := false;
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      if Reg.ValueExists('MakeExtractDefault') then
+        isExtractDefault := Reg.ReadBool('MakeExtractDefault');
+      Reg.CloseKey;
+    end;
+  finally
+    Reg.Free;
+  end;
+
   if Shift = [ssDouble] then
-    PopUp_OpenClick(sender);
+    if isExtractDefault then
+      Popup_Extrairevers_RAWClick(Sender)
+    else
+      PopUp_OpenClick(sender);
 
 end;
 
@@ -2594,7 +2635,7 @@ begin
 
 end;
 
-procedure Tdup5Main.menuOption_AdvancedClick(Sender: TObject);
+procedure Tdup5Main.menuOptions_AdvancedClick(Sender: TObject);
 begin
 
   InitOptions;

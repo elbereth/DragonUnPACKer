@@ -134,9 +134,8 @@ Comments=Allows you to make .D5P files to be installed by Duppi of Dragon UnPACK
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlUnitOutputDirectory]
-Count=2
+Count=1
 Item0=E:\Developpement\dup-dev-5.1-dcu
-Item1=E:\Developpement\dup-dev-5.1-dsu
 [HistoryLists\hlOutputDirectorry]
 Count=1
-Item0=E:\Developpement\dup-dev-5.1-compiled\utils
+Item0=E:\Developpement\dup-compiled\tools\dlngcomp

@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.6 2008-03-04 06:10:16 elbereth Exp $
+// $Id: classFSE.pas,v 1.7 2008-04-19 17:53:33 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -269,6 +269,7 @@ type TDrivers = class
     procedure saveHRF_v3(srcfil, filename: string; srcsize: int64; prgver: integer; prgid: byte; info: boolean; title,author, url: string);
     function getDriverPriority(drivername: string): integer;
     procedure quickSortDrivers(lowerPos, upperPos: integer);
+    function getBufferSize(): integer;
   protected
 end;
 
@@ -1390,7 +1391,7 @@ begin
     begin
       tmpStm := THandleStream.Create(dst);
 //      BinCopy(CurrentFile,dst,Offset,Size,0,16384,silent);
-      BinCopyToStream(CurrentFile,tmpStm,Offset,Size,0,16384,silent,percent);
+      BinCopyToStream(CurrentFile,tmpStm,Offset,Size,0,getBufferSize(),silent,percent);
       tmpStm.Free;
       FileClose(dst);
       dup5Main.appendLog(DLNGStr('LOG510'));
@@ -1448,7 +1449,7 @@ begin
   end
   else
   begin
-    BinCopyToStream(CurrentFile,outstream,Offset,Size,0,16384,silent,percent);
+    BinCopyToStream(CurrentFile,outstream,Offset,Size,0,getBufferSize(),silent,percent);
     dup5Main.appendLog(DLNGStr('LOG510'));
   end;
  except
@@ -2242,6 +2243,46 @@ procedure TDrivers.sortDriversByPriority;
 begin
 
   quickSortDrivers(1,NumDrivers);
+
+end;
+
+function TDrivers.getBufferSize(): integer;
+var Reg: TRegistry;
+begin
+
+  Result := 16384;
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      if Reg.ValueExists('BufferSize') then
+        Result := Reg.ReadInteger('BufferSize')
+      else
+        Result := 6;
+
+      case result of
+        0: Result := 1;
+        1: Result := 512;
+        2: Result := 1024;
+        3: Result := 2048;
+        4: Result := 4096;
+        5: Result := 8192;
+        6: Result := 16384;
+        7: Result := 32768;
+        8: Result := 65536;
+        9: Result := 131072;
+        10: Result := 262144;
+        11: Result := 524288;
+        12: Result := 1048576;
+      end;
+
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
 
 end;
 

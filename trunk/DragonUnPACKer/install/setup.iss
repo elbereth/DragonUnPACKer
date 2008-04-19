@@ -1,4 +1,4 @@
-; $Id: setup.iss,v 1.9 2008-03-10 20:48:18 elbereth Exp $
+; $Id: setup.iss,v 1.10 2008-04-19 19:15:16 elbereth Exp $
 ; $Source: /home/elbzone/backup/cvs/DragonUnPACKer/install/setup.iss,v $
 ;
 ; The contents of this file are subject to the Mozilla Public License
@@ -18,7 +18,7 @@
 Compression=lzma/ultra
 SolidCompression=yes
 AppName=Dragon UnPACKer 5
-AppVerName=Dragon UnPACKer v5.3.1 WIP (build 174/unstable)
+AppVerName=Dragon UnPACKer v5.3.2 WIP (build 178/unstable)
 AppPublisher=Alexandre Devilliers (aka Elbereth)
 AppPublisherURL=http://www.elberethzone.net
 AppSupportURL=http://sourceforge.net/projects/dragonunpacker/
@@ -26,7 +26,7 @@ AppUpdatesURL=http://www.dragonunpacker.com
 AppCopyright=Mozilla Public License 1.1
 DefaultDirName={pf}\Dragon UnPACKer 5
 DefaultGroupName=Dragon UnPACKer 5
-OutputBaseFilename=dup531wip-setup
+OutputBaseFilename=dup532wip-setup
 AppMutex=DragonUnPACKer5
 AppId=DragonUnPACKer5
 DisableStartupPrompt=yes
@@ -35,7 +35,7 @@ UninstallDisplayIcon={app}\dunpacker5.exe
 WizardImageBackColor=$FFFFFF
 WizardImageFile=dup5-instimage.bmp
 WizardSmallImageFile=dup5-inst55x55.bmp
-VersionInfoVersion=5.3.1.174
+VersionInfoVersion=5.3.2.178
 ; uncomment the following line if you want your installation to run on NT 3.51 too.
 MinVersion=4.10,4.0sp6
 

@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.8 2008-04-17 19:15:53 elbereth Exp $
+// $Id: Translation.pas,v 1.9 2008-04-19 18:11:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -47,12 +47,15 @@ begin
     menuFichier_Fermer.Caption := DLNGStr('MNU1S2');
     menuFichier_Quitter.Caption := DLNGStr('MNU1S3');
     menuOptions.Caption := DLNGStr('MNU2');
+    menuOptions_Sub.Caption := DLNGStr('MNU2S1');
     menuOptions_Basic.Caption := DLNGStr('MNU2S1');
     menuOptions_Drivers.Caption := DLNGStr('MNU2S2');
     MenuOptions_Look.Caption := DLNGStr('MNU2S3');
     MenuOptions_Assoc.Caption := DLNGStr('MNU2S4');
     MenuOptions_Convert.Caption := DLNGStr('MNU2S5');
     MenuOptions_Plugins.Caption := DLNGStr('MNU2S6');
+    MenuOptions_Advanced.Caption := DLNGStr('MNU2S7');
+    MenuOptions_Log.Caption := DLNGStr('MNU2S8');
     menuEdit.Caption := DLNGStr('MNU4');
     menuEdit_Search.Caption := DLNGStr('MNU4S1');
     menuAbout.Caption := DLNGStr('MNU3');
@@ -226,6 +229,7 @@ begin
     treeConfig.Font.Name := GetFont();
 
     treeConfig.Items.Item[0].Text := DLNGStr('OPT100');
+    treeConfig.Items.Item[1].Text := DLNGStr('OPT000');
     treeConfig.Items.Item[2].Text := DLNGStr('OPT800');
     treeConfig.Items.Item[3].Text := DLNGStr('OPT600');
     treeConfig.Items.Item[4].Text := DLNGStr('OPT500');
@@ -422,6 +426,42 @@ begin
 
     grpPluginsInfo.Caption := DLNGStr('OPT600');
     grpPluginsInfo.Font.Name := GetFont();
+
+    grpAdvTemp.Caption := DLNGStr('OPT010');
+    grpAdvTemp.Font.Name := GetFont();
+
+    radTmpDirDefault.Caption := DLNGStr('OPT011');
+    radTmpDirDefault.Font.Name := GetFont();
+
+    radTmpDirOther.Caption := DLNGStr('OPT012');
+    radTmpDirOther.Font.Name := GetFont();
+
+    grpAdvOpenFile.Caption := DLNGStr('OPT020');
+    grpAdvOpenFile.Font.Name := GetFont();
+
+    chkMakeExtractDefault.Caption := DLNGStr('OPT021');
+    chkMakeExtractDefault.Font.Name := GetFont();
+
+    grpAdvBufferSize.Caption := DLNGStr('OPT030');
+    grpAdvBufferSize.Font.Name := GetFont();
+
+    lblBufferSize.Caption := DLNGStr('OPT031');
+    lblBufferSize.Font.Name := GetFont();
+
+    lstBufferSize.Font.Name := GetFont();
+    lstBufferSize.Items[0] := ReplaceValue('%d',DLNGStr('OPT033'),'1')+' -- '+DLNGStr('OPT032');
+    lstBufferSize.Items[1] := ReplaceValue('%d',DLNGStr('OPT033'),'512');
+    lstBufferSize.Items[2] := ReplaceValue('%d',DLNGStr('OPT034'),'1');
+    lstBufferSize.Items[3] := ReplaceValue('%d',DLNGStr('OPT034'),'2');
+    lstBufferSize.Items[4] := ReplaceValue('%d',DLNGStr('OPT034'),'4');
+    lstBufferSize.Items[5] := ReplaceValue('%d',DLNGStr('OPT034'),'8');
+    lstBufferSize.Items[6] := ReplaceValue('%d',DLNGStr('OPT034'),'16')+' -- '+DLNGStr('OPT036');
+    lstBufferSize.Items[7] := ReplaceValue('%d',DLNGStr('OPT034'),'32');
+    lstBufferSize.Items[8] := ReplaceValue('%d',DLNGStr('OPT034'),'64');
+    lstBufferSize.Items[9] := ReplaceValue('%d',DLNGStr('OPT034'),'128');
+    lstBufferSize.Items[10] := ReplaceValue('%d',DLNGStr('OPT034'),'256');
+    lstBufferSize.Items[11] := ReplaceValue('%d',DLNGStr('OPT034'),'512');
+    lstBufferSize.Items[12] := ReplaceValue('%d',DLNGStr('OPT035'),'1');
 
     trackbarVerboseUpdateHint;
 

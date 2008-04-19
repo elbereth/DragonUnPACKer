@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<DPS version="2">
+  <HEAD>
+    <NAME>Elbereth&apos;s Main Driver</NAME>
+    <URL>http://www.elberethzone.net</URL>
+    <AUTHOR>Alexandre Devilliers (aka Elbereth)</AUTHOR>
+    <COMMENT>Added The Elder Scrolls 4: Oblivion .BSA and UFO: Aftermath/Aftershock/Afterlight .VFS support</COMMENT>
+    <VERSION>20140</VERSION>
+    <PACKFILENAME duppversion="2">E:\Developpement\files\default201.d5p</PACKFILENAME>
+    <CHECKDUP5VERSION use="-1" op="1">144</CHECKDUP5VERSION>
+    <THEME use="0"/>
+  </HEAD>
+  <FILES>
+    <FILE>
+      <PATH>E:\Developpement\dup-dev-5.1-compiled\data\drivers\drv_default.d5d</PATH>
+      <OPTIONS storedatetime="-1" hidden="0" readonly="0" regsvr="0" updateonly="-1" compress="-1"/>
+      <INSTALLDIR basedir="2"/>
+      <INSTALLNAME>drv_default.d5d</INSTALLNAME>
+    </FILE>
+  </FILES>
+</DPS>

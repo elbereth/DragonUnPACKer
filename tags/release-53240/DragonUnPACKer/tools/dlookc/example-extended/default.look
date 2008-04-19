@@ -1,0 +1,67 @@
+{LOOK}
+{HEADER}
+# Dragon UnPACKer 5 LooK (DULK) source
+# =============================================================================
+# Decompiled on 15/04/2008 20:06:05 from default.dulk
+# By Dragon LOOK Decompiler v1.0.0 
+# -----------------------------------------------------------------------------
+Name=XT (XP Look)
+Author=BarfHappy
+Email=none
+Comment=Extended Dragon UnPACKer 5 style.
+XP=true
+Outfile=default.dulk
+{/HEADER}
+{BODY}
+CLOS=CLOS.bmp
+OPTN=OPTN.bmp
+OPEN=OPEN.bmp
+QUIT=QUIT.bmp
+FCLO=FCLO.bmp
+FOPN=FOPN.bmp
+FROT=FROT.bmp
+MRCH=MRCH.bmp
+MABT=MABT.bmp
+MOGA=MOGA.bmp
+MOGN=MOGN.bmp
+MOGL=MOGL.bmp
+MOPL=MOPL.bmp
+MOAS=MOAS.bmp
+MOLK=MOLK.bmp
+MOPC=MOPC.bmp
+MOPD=MOPD.bmp
+MOPH=MOPH.bmp
+PIIN=PIIN.bmp
+PICA=PICA.bmp
+PIXA=PIXA.bmp
+PIXT=PIXT.bmp
+PIXD=PIXD.bmp
+PCOP=PCOP.bmp
+PCSX=PCSX.bmp
+PCMX=PCMX.bmp
+PCWC=PCWC.bmp
+TANI=TANI.bmp
+TBIN=TBIN.bmp
+TBMP=TBMP.bmp
+TBSP=TBSP.bmp
+TCFG=TCFG.bmp
+TFNT=TFNT.bmp
+TGIF=TGIF.bmp
+TIFF=TIFF.bmp
+TJPG=TJPG.bmp
+TM3D=TM3D.bmp
+TMUS=TMUS.bmp
+TNON=TNON.bmp
+TPCX=TPCX.bmp
+TPNG=TPNG.bmp
+TPSD=TPSD.bmp
+TSPR=TSPR.bmp
+TTEX=TTEX.bmp
+TTXT=TTXT.bmp
+TTGA=TTGA.bmp
+TTIF=TTIF.bmp
+TWAL=TWAL.bmp
+TWAV=TWAV.bmp
+TZIP=TZIP.bmp
+{/BODY}
+{/LOOK}

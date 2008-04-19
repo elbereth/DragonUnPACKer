@@ -105,10 +105,6 @@ HostApplication=C:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
 Launcher=
 UseLauncher=0
 DebugCWD=
-[Language]
-ActiveLang=
-ProjectLang=
-RootDir=
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=1
@@ -137,14 +133,9 @@ Comments=DUP5 - Unreal Tournament Packages Driver
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlSearchPath]
+[HistoryLists\hlUnitOutputDirectory]
 Count=1
-Item0=H:\Programmation\CVS\drgunpacker\common
+Item0=E:\Developpement\dup-dev-5.1-dcu
 [HistoryLists\hlOutputDirectorry]
-Count=6
-Item0=C:\Developpement\dup-dev-5.1-compiled\data\drivers
-Item1=H:\Programmation\Compiled\drgunpacker\current\data\drivers
-Item2=C:\Developpement\dup-dev-5.1-compiled\utils
-Item3=C:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
-Item4=C:\Developpement\dup-dev-5.1-compiled\data\convert
-Item5=C:\Developpement\dup-dev-5.1-compiled
+Count=1
+Item0=E:\Developpement\dup-compiled\tools\dlngcomp

@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.6 2008-04-17 19:15:53 elbereth Exp $
+// $Id: Options.pas,v 1.7 2008-04-19 18:09:21 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -21,7 +21,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ComCtrls, ImgList, StdCtrls, ExtCtrls, Registry, declFSE,
-  CheckLst, Main, lib_look, JvExCheckLst, JvCheckListBox;
+  CheckLst, Main, lib_look, JvExCheckLst, JvCheckListBox, JvBrowseFolder;
 
 type
   TfrmConfig = class(TForm)
@@ -125,12 +125,9 @@ type
     tabAdvanced: TPanel;
     grpAdvOpenFile: TGroupBox;
     grpAdvTemp: TGroupBox;
-    chkTmpDefault: TCheckBox;
     grpAdvBufferSize: TGroupBox;
-    Label3: TLabel;
-    Label4: TLabel;
-    trackBufferSize: TTrackBar;
-    CheckBox2: TCheckBox;
+    lblBufferSize: TLabel;
+    chkMakeExtractDefault: TCheckBox;
     txtTmpDir: TEdit;
     butTmpDirSelect: TButton;
     cmdTypesNone: TButton;
@@ -158,6 +155,10 @@ type
     panPluginsHyperRipper: TPanel;
     lblPluginsHyperRipperInfo: TLabel;
     butAssocExtIconBrowse: TButton;
+    radTmpDirDefault: TRadioButton;
+    radTmpDirOther: TRadioButton;
+    txtTmpDirDefault: TEdit;
+    lstBufferSize: TComboBox;
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cmdOkClick(Sender: TObject);
@@ -199,6 +200,11 @@ type
     procedure txtAssocTextChange(Sender: TObject);
     procedure chkAssocOpenWithClick(Sender: TObject);
     procedure chkAssocCheckStartupClick(Sender: TObject);
+    procedure butTmpDirSelectClick(Sender: TObject);
+    procedure radTmpDirOtherClick(Sender: TObject);
+    procedure txtTmpDirChange(Sender: TObject);
+    procedure chkMakeExtractDefaultClick(Sender: TObject);
+    procedure lstBufferSizeChange(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -429,9 +435,13 @@ end;
 
 procedure TfrmConfig.FormShow(Sender: TObject);
 var Reg: TRegistry;
+    TempDir: array[0..MAX_PATH] of Char;
 begin
 
   Loading := True;
+
+  GetTempPath(MAX_PATH, @TempDir);
+  txtTmpDirDefault.text := Strip0(TempDir);
 
   Reg := TRegistry.Create;
   Try
@@ -465,6 +475,29 @@ begin
         ChkUseHyperRipper.Checked := Reg.ReadBool('UseHyperRipper')
       else
         ChkUseHyperRipper.Checked := true;
+      if Reg.ValueExists('UseAltTempDir') then
+      begin
+        radTmpDirOther.Checked := Reg.ReadBool('UseAltTempDir');
+        radTmpDirDefault.Checked := not(radTmpDirOther.Checked);
+      end
+      else
+      begin
+        radTmpDirOther.Checked := false;
+        radTmpDirDefault.Checked := true;
+      end;
+      if Reg.ValueExists('AltTempDir') then
+        txtTmpDir.Text := Reg.ReadString('AltTempDir')
+      else
+        txtTmpDir.Text := txtTmpDirDefault.text;
+      if Reg.ValueExists('MakeExtractDefault') then
+        chkMakeExtractDefault.Checked := Reg.ReadBool('MakeExtractDefault')
+      else
+        chkMakeExtractDefault.Checked := false;
+
+      if Reg.ValueExists('BufferSize') then
+        lstBufferSize.ItemIndex := Reg.ReadInteger('BufferSize')
+      else
+        lstBufferSize.ItemIndex := 6;
       Reg.CloseKey;
     end;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
@@ -1178,6 +1211,122 @@ begin
     end;
   Finally
     Reg.Free;
+  end;
+
+end;
+
+procedure TfrmConfig.butTmpDirSelectClick(Sender: TObject);
+var DirSelect: TJvBrowseForFolderDialog;
+begin
+
+  DirSelect := TJvBrowseForFolderDialog.Create(Self);
+  try
+    DirSelect.Title := DLNGStr('OPT013');
+    DirSelect.Directory := txtTmpDir.Text;
+    if DirSelect.Execute then
+    begin
+      txtTmpDir.Text := DirSelect.Directory;
+    end;
+  finally
+    DirSelect.Free;
+  end;
+
+end;
+
+procedure TfrmConfig.radTmpDirOtherClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if Not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        Reg.WriteBool('UseAltTempDir',radTmpDirOther.Checked);
+        Reg.CloseKey;
+      end;
+    Finally
+      Reg.Free;
+    end;
+
+  end;
+
+  txtTmpDir.Enabled := radTmpDirOther.Checked;
+  butTmpDirSelect.Enabled := radTmpDirOther.Checked;
+
+  txtTmpDirDefault.Enabled := radTmpDirDefault.Checked;
+
+end;
+
+procedure TfrmConfig.txtTmpDirChange(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        Reg.WriteString('AltTempDir',txtTmpDir.Text);
+        Reg.CloseKey;
+      end;
+    Finally
+      Reg.Free;
+    end;
+
+  end;
+
+end;
+
+
+procedure TfrmConfig.chkMakeExtractDefaultClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        Reg.WriteBool('MakeExtractDefault',chkMakeExtractDefault.Checked);
+        Reg.CloseKey;
+      end;
+    Finally
+      Reg.Free;
+    end;
+
+  end;
+
+end;
+
+procedure TfrmConfig.lstBufferSizeChange(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        Reg.WriteInteger('BufferSize',lstBufferSize.ItemIndex);
+        Reg.CloseKey;
+      end;
+    Finally
+      Reg.Free;
+    end;
+
   end;
 
 end;

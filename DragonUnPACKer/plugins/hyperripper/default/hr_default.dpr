@@ -446,6 +446,7 @@ var Percent: TPercentCallback;
   *       Added support for DDS file format (Feature Request #1639688)
   * 51012 Fixed MPEG Audio search (using posbuf again instead of BMFind)
   * 51013 Fixed possible error in BMFind function
+  *       Added file size check to avoid false positives
   * }
 
 const DRIVER_VERSION = 51013;
@@ -723,7 +724,6 @@ end;
 
 function posBuf(search: byte; buffer: PByteArray; bufSize: integer; startpos: integer = 0): integer;
 var x: integer;
-    testvalue: byte;
 begin
 
   result := -1;
@@ -1184,6 +1184,8 @@ var buf1, buf2: array[1..4] of char;
 
 begin
 
+  TotSize := FileSeek(handle,0,2);
+
   result.Offset := -1;
   result.Size := -1;
   result.Ext := '';
@@ -1195,7 +1197,7 @@ begin
             FileRead(handle,buf1,4);
             FileRead(handle,Size,4);
             FileRead(handle,buf2,4);
-            if (buf1 = 'RIFF') and (buf2 = 'WAVE') then
+            if (buf1 = 'RIFF') and (buf2 = 'WAVE') and ((Offset + Size + 8) <= TotSize) then
             begin
                 result.Offset := offset;
                 result.Size := Size+8;
@@ -1224,10 +1226,13 @@ begin
                 Inc(Size,CSize+4);
               end;
 
-              result.Offset := offset;
-              result.Size := Size;
-              result.Ext := 'voc';
-              result.GenType := HR_TYPE_AUDIO;
+              if ((Offset + Size) <= TotSize) then
+              begin
+                result.Offset := offset;
+                result.Size := Size;
+                result.Ext := 'voc';
+                result.GenType := HR_TYPE_AUDIO;
+              end;
             end;
           end;
     1002: begin
@@ -1330,10 +1335,13 @@ begin
                 end;
                 FileSeek(handle,offset+size,0);
               end;
-              result.Offset := offset;
-              result.Size := Size;
-              result.Ext := 'xm';
-              result.GenType := HR_TYPE_AUDIO;
+              if ((Offset + Size) <= TotSize) then
+              begin
+                result.Offset := offset;
+                result.Size := Size;
+                result.Ext := 'xm';
+                result.GenType := HR_TYPE_AUDIO;
+              end;
             end;
           end;
     1006: begin
@@ -1733,7 +1741,7 @@ begin
                 break;
             until (false);
 
-            if Size > 0 then
+            if (Size > 0) and ((Offset + Size) <= Totsize) then
             begin
               result.Offset := offset;
               result.Size := Size;
@@ -1748,7 +1756,7 @@ begin
             FileRead(handle,buf1,4);
             FileRead(handle,Size,4);
             FileRead(handle,buf2,4);
-            if (buf1 = 'RIFF') and (buf2 = 'AVI ') then
+            if (buf1 = 'RIFF') and (buf2 = 'AVI ') and ((Offset + Size + 4) <= Totsize) then
             begin
                 result.Offset := offset;
                 result.Size := Size+4;
@@ -1785,7 +1793,8 @@ begin
             FileSeek(handle,offset,0);
             FileRead(handle,buf1,4);
             FileRead(handle,Size,4);
-            if (buf1 = 'BIKf') or (buf1 = 'BIKi') then
+            // Bug 1914923: Sanity check for BIK files (check that the size is not bigger than the source data file!)
+            if (buf1 = 'BIKf') or (buf1 = 'BIKi') and ((Offset + Size + 8) <= Totsize) then
             begin
                 result.Offset := offset;
                 result.Size := Size+8;
@@ -1807,7 +1816,7 @@ begin
                   $AF11: result.Ext := 'fli';
                   $AF12,$AF30,$AF44: result.Ext := 'flc';
                 end;
-                if (result.Ext = 'fli') or (result.ext = 'flc') then
+                if (result.Ext = 'fli') or (result.ext = 'flc') and ((Offset + FLICH.Size) <= Totsize) then
                 begin
                   result.Offset := offset;
                   result.Size := FLICH.Size;
@@ -1820,7 +1829,7 @@ begin
     3000: begin
             FileSeek(handle,offset,0);
             FileRead(handle,BMPH,SizeOf(BMPHeader));
-            if (BMPH.ID = 'BM') and (BMPH.ID2 = 40) and (BMPH.Size > 14) then
+            if (BMPH.ID = 'BM') and (BMPH.ID2 = 40) and (BMPH.Size > 14) and ((Offset + BMPH.Size) <= Totsize) then
             begin
                 result.Offset := offset;
                 result.Size := BMPH.Size;
@@ -1834,7 +1843,7 @@ begin
             begin
               FileSeek(handle,offset,0);
               FileRead(handle,EMFH,SizeOf(EnhancedMetaHeader));
-              if (EMFH.Signature = ' EMF') and (EMFH.RecordType = 1) and (EMFH.Reserved = 0) then
+              if (EMFH.Signature = ' EMF') and (EMFH.RecordType = 1) and (EMFH.Reserved = 0) and ((Offset + EMFH.Size) <= Totsize) then
               begin
                   result.Offset := offset;
                   result.Size := EMFH.Size;
@@ -1850,7 +1859,8 @@ begin
             if ((WMFH.FileType = 1) or (WMFH.FileType = 0))
             and (WMFP.Key = $D7CDC69A)
             and (WMFH.HeaderSize = 9) and (WMFH.NumOfParams = 0)
-            and (WMFP.Handle = 0) and (WMFP.Reserved = 0) then
+            and (WMFP.Handle = 0) and (WMFP.Reserved = 0)
+            and ((Offset + WMFH.FileSize*2 + 44) <= Totsize) then
             begin
                 result.Offset := offset;
                 result.Size := WMFH.FileSize*2+44;
@@ -1940,7 +1950,7 @@ begin
             FileRead(handle,buf1,4);
             FileRead(handle,tBytes4,4);
             FileRead(handle,buf2,4);
-            if (buf1 = 'FORM') and (buf2 = 'ILBM') then
+            if (buf1 = 'FORM') and (buf2 = 'ILBM') and ((Offset + BigToLittle4(tBytes4)+8) <= Totsize) then
             begin
                 result.Offset := offset;
                 result.Size := BigToLittle4(tBytes4)+8;

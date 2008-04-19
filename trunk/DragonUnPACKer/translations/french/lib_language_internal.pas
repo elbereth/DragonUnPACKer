@@ -52,6 +52,10 @@ begin
     result := 'Convertion'
   else if sch = 'MNU2S6' then
     result := 'Plugins'
+  else if sch = 'MNU2S7' then
+    result := 'Avancé'
+  else if sch = 'MNU2S8' then
+    result := 'Journal d''exécution'
   else if sch = 'MNU3' then
     result := '&?'
   else if sch = 'MNU3S1' then
@@ -156,6 +160,8 @@ begin
     result := 'Effacer le journal'
   else if sch = 'OPTTIT' then
     result := 'Configuration'
+  else if sch = 'OPT000' then
+    result := 'Options Avancées'
   else if sch = 'OPT010' then
     result := 'Répertoire Temporaire'
   else if sch = 'OPT011' then

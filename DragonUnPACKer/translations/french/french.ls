@@ -1,82 +1,36 @@
-# Language Source File (for DLNGC v4.0)
+# Language Source File (pour DLNGC v4.0)
 # ============================================================================
-#  Program: Dragon UnPACKer v5.3.2 WIP
-# Language: English
-#  Version: 10
-#   Author: Alex Devilliers
+#  Programme: Dragon UnPACKer v5.3.2 WIP
+#     Langue: English
+#    Version: 10
+#     Auteur: Alex Devilliers
 # ============================================================================
 #
-# This file is the model for translations of Dragon UnPACKer.
+# Ce fichier est le model pour les traductions de Dragon UnPACKer.
 #
-# Just translate everything between {BODY} and {/BODY}
+# Il vous suffit de traduire entre les tags {BODY} et {/BODY}
 #
-# Then compile the file with DLNGC and put the resulting .LNG file into the
-# \Data\ sub-directory of Dragon UnPACKer.
+# Compilez ce fichier avec DLNGC et mettez le fichier .LNG resultant dans le
+# sous-répertoire \Data\ de Dragon UnPACKer.
 #
-# To select a new Language into Dragon UnPACKer run: DrgUnPACK5.exe /lng
-# Or go into the General Options.
+# Pour selectionner une autre langue pour Dragon UnPACKer lancez:
+# DrgUnPACK5.exe /lng
+# Ou aller dans les Options générale.
 #
-# DON'T MODIFY ANY KEYWORD - JUST CHANGE THINGS AFTER THE = SYMBOL
+# NE MODIFIEZ AUCUN MOT CLE - CHANGEZ JUSTE LE TEXTE APRES LE SYMBOLE =
 #
-# If you have made a translation for your language send it to Alex Devilliers
-# so it can be distributed along with the main program archive.
+# Si vous faite une traduction n'hésitez pas a l'envoyer a Alex Devilliers
+# afin qu'elle soit distribuée sur le site internet et avec le programme.
 #
-# You can reach Alex Devilliers by e-mail: translation@dragonunpacker.com
-#                                  by ICQ: 1535372 (Elbereth)
+# Vous pouvez contacter Alex Devilliers par e-mail:
+# translation@dragonunpacker.com et par ICQ: 1535372 (Elbereth)
 #
 # ============================================================================
-# Informations about this translation
+# Informations sur cette traduction
 # ============================================================================
 #
 # version 10:
-# Added new Options (Association)
-#
-# version 9a:
-# Added missing OPT203 keyword
-#
-# version 9:
-# Added UT Package driver plugin strings.
-# Added Log feature strings.
-# Added Duppi strings.
-#
-# version 8:
-# Changed some error messages.
-#
-# version 7:
-# Added new Options strings (drivers priority, etc..).
-# Added Log feature strings.
-#
-# version 6a:
-# Added FontName header option.
-#
-# version 6: (see english-rc3-changes.txt for changes since version 5)
-# Fixed two missing HyperRipper plugin error strings (ERRH01 and ERRH02)
-# Added some convert plugin strings.
-# Added new about box strings.
-# Added 11th Hour driver plugin strings.
-#
-# version 5: (see english-rc2-changes.txt for changes since version 4)
-# Added Use HyperRipper if all plugins fails option string.
-# Fixed some leading ' characters.
-#
-# version 4: (see english-rc1-changes.txt for changes since version 3)
-# Added Error handling string.
-# Added HyperRipper v5.0a strings.
-# Added Convert pic/tex plugin palette convertion strings.
-#
-# version 3: (see english-beta3-changes.txt for changes since version 2)
-#            (no changes between beta3 and beta4)
-# Added Create List strings.
-# Added Error handling strings.
-# Added Duppi v2 strings.
-# Added 1 option string.
-#
-# version 2: (see english-beta2-changes.txt for changes since version 1)
-# Added 1 Duppi string.
-# Added all HyperRipper translation labels.
-#
-# version 1:
-# First version.
+# Première version sous forme de fichier .LS
 #
 {LSF}
 {HEADER}
@@ -84,37 +38,38 @@
 # * Header *
 #
 # + Name +
-# Write here the name that will appear in Dragon UnPACKer 4 dialog box for
-# your language file (ex: English )
+# Ecriverz ici le nom qui apparaitra das la boite de dialogue de Dragon
+# UnPACKer pour votre fichier de langue. Ex: Français (French)
 #
-# Can be up to 80 characters
+# Peut contenir jusqu'à 80 caractères
 #
-Name = Français (French) TEST
+Name = Français (French)
 #
 # + Author +
-# Write here your name or alias (and any comment)
+# Inscrivez ici votre nom ou un surnom (et n'importe quel commentaire)
 #
-# Can be up to 80 characters
+# Peut contenir jusqu'à 80 caractères
 #
 Author = Alexandre Devilliers
 #
 # + Email +
-# Write here your email
+# Inscrivez ici votre email (ou vide si vous ne voulez pas le divulger)
 #
-# Can be up to 80 characters
+# Peut contenir jusqu'à 80 caractères
 #
 Email = dup5.translation@dragonunpacker.com
 #
 # + URL +
-# Write here the Internet URL where your file can be downloaded
+# Inscrivez une adresse internet où l'on peut récuperer la derniere version de
+# votre traduction
 #
-# Can be up to 80 characters
+# Peut contenir jusqu'à 80 caractères
 #
 URL = http://www.dragonunpacker.com
 #
-# + Program Block (ProgramID & ProgramVer)
+# + Block identifiant programme (ProgramID & ProgramVer)
 #
-# DON'T CHANGE THIS UNLESS YOU KNOW WHAT YOU ARE DOING
+# NE CHANGEZ LES VALEURS QUE SI VOUS SAVEZ CE QUE VOUS FAITES
 #
 #                                ID      Ver
 # Dragon UnPACKer v5.0.0 Beta 1  UP       1
@@ -135,32 +90,32 @@ ProgramID = UP
 ProgramVer = 10
 #
 # + IconFile +
-# Path & FileName of the "icon" displayed with language name (ex: c:\test.bmp)
+# Chemin & nom du fichier de l'icône affichée avec le nom de langue.
 #
-# This file must be a Windows Bitmap file 16x16 (Width=16 Height=16).
-# The compiler will not test the file but the program will not display the
-# icon if it is not a valid file.
+# Ce fichier doit être de type Windows Bitmap 16x16 (Hauteur=16 Largeur=16).
+# Le compilateur ne teste pas ce fichier mais le programme n'affichera pas
+# l'icone si ce n'est pas un fichier valide.
 #
-# If you don't want to add an icon just comment out the line.
+# Si vous ne désirez pas d'icône commentez la ligne.
 #
 IconFile = flag_fr.bmp
 #
 # + OutFile +
-# Path & FileName of the compiled file (ex: c:\test.lng)
+# Chemin & nom du fichier du resultat de la compilation.
 #
 OutFile = french.lng
 #
 # + FontName +
-# Name of the font to use to display this languages strings.
-# (For ex Arial, Tahoma, etc..)
+# Nom de la fonte a utiliser (si vous ne désirez pas utiliser celle par défaut)
+# (Par ex Arial, Tahoma, etc..)
 #
 #FontName=Comic Sans MS
 #
 # + Compression +
-# Compression type to use for data (language strings).
+# Compression a utiliser pour les données.
 #
-# Possible values:   0 = None (Default)
-#                   99 = Zlib
+# Valeurs possibles:   0 = Sans compression (Par Défaut)
+#                     99 = Zlib
 #
 Compression=99
 #
@@ -168,20 +123,21 @@ Compression=99
 #
 # * Body *
 #
-# Each Language Keyword used in the program is followed by the string to
-# appear in the program.
+# Chaque mot clé utilisé dans le programme est suivi du texte qui apparait
+# dans le programme.
 #
-# Ex: TEST01=This is for testing purposes
+# Ex: TEST01=Ceci est un test
 #
-# Each Language Keyword cannot be longer than 6 characters.
+# Chaque mot clé ne peut faire que 6 caractères alpha-numériques au maximum.
 #
-# Special words:
-#  %n = New line
-# Any other %k (where k can be any character but n) is a special keyword that
-# will be replaced during Dragon UnPACKer runtime by a value.
+# Macro speciales:
+#  %n = Saute une ligne
+# N'importe qu'el autre lettre suivant un % (ex: %k) est une macro speciale qui
+# sera remplacée par Dragon UnPACKer lors de l'execution.
 #
-# DON'T ADD/DELETE KEYWORDS UNLESS YOU KNOW WHAT YOU ARE DOING.
-# THE PROGRAM WILL TEST FOR KEYWORDS AND WILL ABORT IF THERE IS AN ERROR.
+# N'AJOUTER/SUPPRIMER PAS DE MOT CLE SAUF SI VOUS SAVEZ CE QUE VOUS FAITES.
+# LE PROGRAMME TESTE LA PRESENCE DE CERTAINS MOT CLE ET N'UTILISERA PAS VOTRE
+# FICHIER DE LANGUE S'IL MANQUE DES MOTS CLES.
 #
 {BODY}
 MNU1=&Fichier
@@ -253,6 +209,19 @@ POP3S1=Afficher le journal
 POP3S2=Cacher le journal
 POP3S3=Effacer le journal
 OPTTIT=Configuration
+OPT010=Répertoire Temporaire
+OPT011=Utiliser le répertoire auto-detecté
+OPT012=Utiliser le répertoire défini:
+OPT013=Selectionnez le répertoire temporaire a utiliser...
+OPT020=Options pour le double click
+OPT021=Option 'Extraire fichier... Sans conversion' l'option par défaut
+OPT030=Mémoire cache
+OPT031=Selectionnez la taille pour la mémoire cache lors de l'extraction:
+OPT032=Pas de buffer / Déconseillé! (Trés lent)
+OPT033=%d octet(s)
+OPT034=%d koctets
+OPT035=%d Moctets
+OPT036=Par Défaut
 OPT100=Options générales
 OPT110=Langue
 OPT120=Options
@@ -651,6 +620,6 @@ ERREMP=Le fichier est vide.
 ERRIO=Impossible d'ouvrir le fichier:%n%n%f%n%nVérifiez qu'il n'est pas déjà ouvert par un autre programme ou qu'il ne soit pas/plus accessible.
 {/BODY}
 #
-# End of Language Source File
+# Fin du fichier source de langue (Language Source File)
 #
 {/LSF}

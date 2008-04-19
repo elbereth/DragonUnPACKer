@@ -1,6 +1,6 @@
 program duppi;
 
-// $Id: duppi.dpr,v 1.2 2004-07-15 16:49:46 elbereth Exp $
+// $Id: duppi.dpr,v 1.3 2008-04-19 19:18:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/duppi.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -29,7 +29,8 @@ uses
   lib_zlib in '..\..\common\lib_zlib.pas',
   spec_DLNG in '..\..\common\spec_DLNG.pas',
   spec_DUPP in '..\..\common\spec_DUPP.pas',
-  lib_BinUtils in '..\..\common\lib_BinUtils.pas';
+  lib_BinUtils in '..\..\common\lib_BinUtils.pas',
+  lib_language_internal in '..\..\translations\french\lib_language_internal.pas';
 
 {$R *.res}
 

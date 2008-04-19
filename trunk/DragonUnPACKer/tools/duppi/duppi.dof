@@ -107,11 +107,11 @@ UseLauncher=0
 DebugCWD=
 [Version Info]
 IncludeVerInfo=1
-AutoIncBuild=0
+AutoIncBuild=1
 MajorVer=2
 MinorVer=2
 Release=0
-Build=63
+Build=64
 Debug=0
 PreRelease=0
 Special=0
@@ -122,13 +122,13 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone
 FileDescription=Duppi - The DUP5 Package Installer.
-FileVersion=2.2.0.63
+FileVersion=2.2.0.64
 InternalName=Duppi
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=duppi.exe
 ProductName=Duppi
-ProductVersion=5.2.0
+ProductVersion=5.3.2
 Comments=Duppi - The DUP5 Package Installer.
 [HistoryLists\hlUnitAliases]
 Count=1
@@ -137,5 +137,6 @@ Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 Count=1
 Item0=E:\Developpement\dup-dev-5.1-dcu
 [HistoryLists\hlOutputDirectorry]
-Count=1
-Item0=E:\Developpement\dup-compiled\tools\dlngcomp
+Count=2
+Item0=E:\Developpement\dup-dev-5.1-compiled\utils
+Item1=E:\Developpement\dup-compiled\tools\dlngcomp

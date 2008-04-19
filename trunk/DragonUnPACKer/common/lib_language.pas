@@ -1,6 +1,6 @@
 unit lib_language;
 
-// $Id: lib_language.pas,v 1.8 2008-04-16 21:01:29 elbereth Exp $
+// $Id: lib_language.pas,v 1.9 2008-04-19 16:32:46 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_language.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -56,7 +56,7 @@ type
    end;
 
 const DLNG_VERSION : byte = 4;
-      DLNG_PRGVER : byte = 9;
+      DLNG_PRGVER : byte = 10;
 
 var tabLNG: array[1..1000] of Internal_Tab;
     numLNG: integer = 0;

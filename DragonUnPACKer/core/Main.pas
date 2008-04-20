@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.10 2008-04-19 18:10:36 elbereth Exp $
+// $Id: Main.pas,v 1.11 2008-04-20 19:55:26 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -206,6 +206,7 @@ type
     procedure menuLog_ClearClick(Sender: TObject);
     procedure menuOptions_AdvancedClick(Sender: TObject);
     procedure menuOptions_LogClick(Sender: TObject);
+    procedure lstContentClick(Sender: TObject);
   private
     verboseLevel: integer;
     AlreadyDragging: boolean;
@@ -578,7 +579,8 @@ begin
 
   frmAbout.lblCompDate.Caption := DateToStr(compileTime)+ ' '+TimeToStr(compileTime);
 
-  if (pos('WIP',Uppercase(CurEdit)) > 0) then
+  if (pos('WIP',Uppercase(CurEdit)) > 0) or (pos('BETA',Uppercase(CurEdit)) > 0)
+  or (pos('ALPHA',Uppercase(CurEdit)) > 0) then
     frmAbout.imgWIP.visible := true
   else
     frmAbout.imgWIP.visible := false;
@@ -1256,21 +1258,17 @@ end;
 
 procedure Tdup5Main.PopUp_OpenClick(Sender: TObject);
 var tmpfil: string;
-    TempDir: array[0..MAX_PATH] of Char;
     Data: pvirtualTreeData;
 begin
 
   if (lstContent.SelectedCount > 0) then
   begin
 
-    { find our Windows temp directory }
-    GetTempPath(MAX_PATH, @TempDir);
-
     Randomize;
 
     Data := lstContent.getNodeData(lstContent.getFirstSelected);
 
-    tmpfil := Strip0(TempDir)+'dup5tmp-'+IntToStr(Random(99999999))+'-'+Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+    tmpfil := getTemporaryDir+'dup5tmp-'+IntToStr(Random(99999999))+'-'+Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
 
 {    rep := GetNodePath2(lstIndex2.FocusedNode);
     if length(rep) > 0 then
@@ -1369,7 +1367,6 @@ end;
 
 procedure Tdup5Main.Popup_Extrairevers_MODELClick(Sender: TObject);
 var ext,dstfil,tmpfil: string;
-    TempDir: array[0..MAX_PATH] of Char;
 //    DataX, DataY: integer;
 //    Offset, Size: int64;
     CurrentMenu: TMenuItem;
@@ -1395,12 +1392,9 @@ begin
   if SaveDialog.Execute then
   begin
 
-    { find our Windows temp directory }
-    GetTempPath(MAX_PATH, @TempDir);
-
     Randomize;
 
-    tmpfil := Strip0(TempDir)+'dup5tmp-'+IntToStr(Random(99999999))+'-'+filename;
+    tmpfil := getTemporaryDir+'dup5tmp-'+IntToStr(Random(99999999))+'-'+filename;
 
     dstfil := SaveDialog.Filename;
 
@@ -1496,7 +1490,6 @@ var outputdir: string;
     Offset, Size: int64;}
     tmpfil,dstfil,rep,filename: string;
     perc: integer;
-    TempDir: array[0..MAX_PATH] of Char;
     CurrentMenu: TMenuItem;
     Silent: boolean;
     Node: PVirtualNode;
@@ -1520,7 +1513,6 @@ begin
     if length(rep) > 0 then
       rep := rep + FSE.SlashMode;
 
-    GetTempPath(MAX_PATH, @TempDir);
     Randomize;
 
     Oldperc := 0;
@@ -1542,7 +1534,7 @@ begin
       Data := lstContent.GetNodeData(Node);
       filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
       dstfil := outputdir + ChangeFileExt(fileName,'.'+CListInfo.List[CurrentMenu.Tag].Info.Ext);
-      tmpfil := Strip0(TempDir)+'dup5tmp-'+IntToStr(Random(99999999))+'-'+fileName;
+      tmpfil := getTemporaryDir+'dup5tmp-'+IntToStr(Random(99999999))+'-'+fileName;
 
       if useOldMethod then
       begin
@@ -1984,26 +1976,30 @@ begin
 
   Shift := (Shift * [ssDouble]);
 
-  isExtractDefault := false;
-
-  Reg := TRegistry.Create;
-  Try
-    Reg.RootKey := HKEY_CURRENT_USER;
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
-    begin
-      if Reg.ValueExists('MakeExtractDefault') then
-        isExtractDefault := Reg.ReadBool('MakeExtractDefault');
-      Reg.CloseKey;
-    end;
-  finally
-    Reg.Free;
-  end;
-
   if Shift = [ssDouble] then
+  begin
+  
+    isExtractDefault := false;
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        if Reg.ValueExists('MakeExtractDefault') then
+          isExtractDefault := Reg.ReadBool('MakeExtractDefault');
+        Reg.CloseKey;
+      end;
+    finally
+      Reg.Free;
+    end;
+
     if isExtractDefault then
       Popup_Extrairevers_RAWClick(Sender)
     else
       PopUp_OpenClick(sender);
+
+  end;
 
 end;
 
@@ -2012,7 +2008,6 @@ var dstfil,filename: string;
     curfiles,perc,numper: integer;
     Node: PVirtualNode;
     Data: pvirtualTreeData;
-    TempDir: array[0..MAX_PATH] of Char;
     tmpdir: string;
 begin
 
@@ -2022,8 +2017,7 @@ begin
   begin
     CurFiles := 1;
 
-    GetTempPath(MAX_PATH, @TempDir);
-    tmpdir := Strip0(TempDir)+'dup5tmp-dragndrop\';
+    tmpdir := getTemporaryDir+'dup5tmp-dragndrop\';
 
     if not(DirectoryExists(tmpdir)) then
       mkdir(tmpdir);
@@ -2070,7 +2064,6 @@ procedure Tdup5Main.lstContentStartDrag(Sender: TObject;
   var DragObject: TDragObject);
 var Node: PVirtualNode;
     Data: pvirtualTreeData;
-    TempDir: array[0..MAX_PATH] of Char;
     tmpdir: string;
 begin
 
@@ -2082,9 +2075,7 @@ begin
       DropFileSource.Files.Clear;
       AlreadyDragging := true;
 
-      { find our Windows temp directory }
-      GetTempPath(MAX_PATH, @TempDir);
-      tmpdir := Strip0(TempDir)+'dup5tmp-dragndrop\';
+      tmpdir := getTemporaryDir+'dup5tmp-dragndrop\';
 
       Node := lstContent.GetFirstSelected;
 
@@ -2650,6 +2641,100 @@ begin
   InitOptions;
   TabSelect := 2;
   frmConfig.ShowModal;
+
+end;
+
+procedure Tdup5Main.lstContentClick(Sender: TObject);
+var Data: pvirtualTreeData;
+    Node: PVirtualNode;
+    rep,ext,filename,tmpFil: string;
+    Offset, Size: int64;
+    i,DataX, DataY: integer;
+    CList: ExtConvertList;
+    stmSource, stmBitmap: TMemoryStream;
+begin
+
+  if (lstContent.SelectedCount > 1) then
+  begin
+
+    imgPreview.Picture := nil;
+
+  end
+  else if (lstContent.SelectedCount = 1) then
+  begin
+
+     rep := GetNodePath2(lstIndex2.FocusedNode);
+     if length(rep) > 0 then
+       rep := rep + FSE.SlashMode;
+
+     Node := lstContent.GetFirstSelected;
+     Data := lstContent.GetNodeData(Node);
+     Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+
+     FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
+
+     ext := ExtractFileExt(fileName);
+     if ext <> '' then
+     begin
+       if ext[1] = '.' then
+         ext := RightStr(ext,length(ext)-1);
+       ext := UpperCase(ext);
+     end;
+
+     Randomize;
+     tmpfil := getTemporaryDir+'dup5tmp-'+IntToStr(Random(99999999))+'-'+Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+
+     stmSource := TMemoryStream.Create;
+     stmBitmap := TMemoryStream.Create;
+     try
+       if (ext = '.BMP') then
+       begin
+
+         FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
+         stmSource.Seek(0,soFromBeginning);
+         imgPreview.Picture.Bitmap.LoadFromStream(stmSource);
+
+       end
+       else
+       begin
+
+         CList := CPlug.GetFileConvert(fileName,offset,size,FSE.DriverID,DataX, DataY);
+
+         CListInfo.NumFormats := CList.NumFormats;
+         for i := 1 to CList.NumFormats do
+         begin
+           if uppercase(CList.List[i].Info.ID) = 'BMP' then
+           begin
+             FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
+             stmSource.Seek(0,soFromBeginning);
+             CPlug.Plugins[CList.List[i].Plugin].ConvertStream(stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true);
+             stmBitmap.Seek(0,soFromBeginning);
+             imgPreview.Picture.Bitmap.LoadFromStream(stmBitmap);
+             break;
+           end;
+         end;
+
+       end;
+     finally
+       stmSource.Free;
+       stmBitmap.Free;
+     end;
+
+   end;
+
+   if (imgPreview.Picture.Width > panPreview.Width)
+   or (imgPreview.Picture.Height > panPreview.Height) then
+   begin
+     imgPreview.Stretch := true;
+     imgPreview.Left := 0;
+     imgPreview.Top := 0;
+   end
+   else
+   begin
+     imgPreview.Stretch := false;
+     imgPreview.Left := (panPreview.Width - imgPreview.Picture.Width) div 2;
+     imgPreview.Top := (panPreview.Height - imgPreview.Picture.Height) div 2;
+   end;
 
 end;
 

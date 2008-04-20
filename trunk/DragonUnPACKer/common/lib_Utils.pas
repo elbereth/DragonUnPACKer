@@ -1,6 +1,6 @@
 unit lib_Utils;
 
-// $Id: lib_Utils.pas,v 1.6 2008-04-17 19:12:03 elbereth Exp $
+// $Id: lib_Utils.pas,v 1.7 2008-04-20 19:53:26 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_Utils.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -47,6 +47,7 @@ unit lib_Utils;
 //  function strip0(str : string): string;
 //  procedure UnSetRegistryType(ext: string);
 //  function getPlugVersion(version: integer): string;
+//  function getTemporaryDir(): string;
 //
 // -----------------------------------------------------------------------------
 
@@ -76,6 +77,7 @@ function CheckRegistryHR(prefix: string; ID: integer): Boolean;
 procedure SetRegistryHR(prefix: string; ID: integer; value: boolean);
 function GetAllSystemInfo(): TOSInfo;
 function getPlugVersion(version: integer): string;
+function getTemporaryDir(): string;
 
 implementation
 
@@ -646,7 +648,6 @@ begin
 
 end; {.GetAllSystemInfo}
 
-
 function getPlugVersion(version: integer): string;
 var majVer: integer;
     minVer: integer;
@@ -725,6 +726,34 @@ begin
     valStr := '';
 
   result := TrimRight(IntToStr(majVer)+'.'+IntToStr(minVer)+'.'+IntToStr(revVer)+' '+typStr+ ' '+valStr);
+
+end;
+
+function getTemporaryDir(): string;
+var Reg: TRegistry;
+    TempDir: array[0..MAX_PATH] of Char;
+    testDir: string;
+begin
+
+  GetTempPath(MAX_PATH, @TempDir);
+  result := Strip0(TempDir);
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      if Reg.ValueExists('UseAltTempDir') and Reg.ReadBool('UseAltTempDir') and Reg.ValueExists('AltTempDir') then
+      begin
+        testDir := Reg.ReadString('AltTempDir');
+        if DirectoryExists(testDir) then
+          result := testDir;
+      end;
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
 
 end;
 

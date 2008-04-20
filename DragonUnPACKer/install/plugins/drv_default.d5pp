@@ -4,9 +4,9 @@
     <NAME>Elbereth&apos;s Main Driver</NAME>
     <URL>http://www.elberethzone.net</URL>
     <AUTHOR>Alexandre Devilliers (aka Elbereth)</AUTHOR>
-    <COMMENT>Added The Elder Scrolls 4: Oblivion .BSA and UFO: Aftermath/Aftershock/Afterlight .VFS support</COMMENT>
-    <VERSION>20140</VERSION>
-    <PACKFILENAME duppversion="2">E:\Developpement\files\default201.d5p</PACKFILENAME>
+    <COMMENT>Added support for Act of War .DAT, Dreamfall: The Longest Journey .PAK &amp; Sinking Island .OPK</COMMENT>
+    <VERSION>20240</VERSION>
+    <PACKFILENAME duppversion="2">E:\Developpement\files\default202.d5p</PACKFILENAME>
     <CHECKDUP5VERSION use="-1" op="1">144</CHECKDUP5VERSION>
     <THEME use="0"/>
   </HEAD>

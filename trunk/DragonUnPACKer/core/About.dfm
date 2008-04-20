@@ -1,6 +1,6 @@
 object frmAbout: TfrmAbout
-  Left = 233
-  Top = 131
+  Left = 234
+  Top = 133
   AlphaBlend = True
   AlphaBlendValue = 230
   BorderIcons = []

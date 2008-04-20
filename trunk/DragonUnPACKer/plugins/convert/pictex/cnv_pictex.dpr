@@ -1,6 +1,6 @@
 library cnv_pictex;
 
-// $Id: cnv_pictex.dpr,v 1.7 2008-03-24 14:18:45 elbereth Exp $
+// $Id: cnv_pictex.dpr,v 1.8 2008-04-20 19:59:04 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/cnv_pictex.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -64,8 +64,8 @@ var Percent: TPercentCallback;
     AHandle: THandle;
     AOwner: TComponent;
 
-const DRIVER_VERSION = 21010;
-const DUP_VERSION = 52040;
+const DRIVER_VERSION = 21110;
+const DUP_VERSION = 53340;
 
 { * Version History:
   * v1.0.0 Alpha (10000): First version (never distributed)
@@ -85,6 +85,7 @@ const DUP_VERSION = 52040;
   * v2.0.1       (20140): Removed beta status for 5.2.0 release
   * v2.1.0 Beta  (21010): Using Imaging Lib now
   *                       Added DirectX Texture DDS support
+  * v2.1.1 Beta  (21010): Added BMP as output for all formats (for previewing ability)
   * }
 
 function DUCIVersion: Byte; stdcall;
@@ -131,6 +132,10 @@ begin
   else if (fmt = 'ART') then
     result := true
   else if (uppercase(extractfileext(nam)) = '.DDS') then
+    result := true
+  else if (uppercase(extractfileext(nam)) = '.TGA') then
+    result := true
+  else if (uppercase(extractfileext(nam)) = '.JPG') then
     result := true;
 
 end;
@@ -272,12 +277,12 @@ begin
     result.List[3].ID := 'TGA24';
   end
   else
-    if (uppercase(extractfileext(nam)) = '.DDS') then
+    if (uppercase(extractfileext(nam)) = '.DDS') or (uppercase(extractfileext(nam)) = '.JPG') or (uppercase(extractfileext(nam)) = '.TGA') then
     begin
       inc(result.NumFormats);
-      result.List[result.NumFormats].Display := 'TGA - Targa (24bpp)';
-      result.List[result.NumFormats].Ext := 'TGA';
-      result.List[result.NumFormats].ID := 'TGA24';
+      result.List[result.NumFormats].Display := 'BMP - Windows BitMaP (24bpp)';
+      result.List[result.NumFormats].Ext := 'BMP';
+      result.List[result.NumFormats].ID := 'BMP';
     end;
 
 end;
@@ -884,6 +889,24 @@ begin
 
 end;
 
+function ConvertImagingStream(src, dst: TStream; cnv: ShortString): integer;
+var Img: TImageData;
+begin
+
+  // call this before using any TImageData record
+  InitImage(Img);
+
+  // load texture from file
+  LoadImageFromStream(src, Img);
+
+  // save the image to file
+  SaveImageToStream('bmp',dst,Img);
+
+  // memory occupied by the image is freed
+  FreeImage(Img);
+
+end;
+
 function ConvertStream(src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer; stdcall;
 var Size: int64;
 begin
@@ -946,6 +969,10 @@ begin
     if not(Silent) or (palfil = '') then
       palfil := SelectPal;
     result := ConvertARTStream(src,dst,palfil,DataX,DataY,cnv);
+  end
+  else if (uppercase(extractfileext(nam)) = '.DDS') or (uppercase(extractfileext(nam)) = '.JPG') or (uppercase(extractfileext(nam)) = '.TGA') then
+  begin
+    result := ConvertImagingStream(src,dst,cnv);
   end;
 
 end;

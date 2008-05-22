@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.30 2008-03-29 07:19:35 elbereth Exp $
+// $Id: drv_default.dpr,v 1.31 2008-05-22 18:38:28 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -161,6 +161,7 @@ type FSE = ^element;
     20240        Added support for Act of War .DAT files
                  Added support for Dreamfall - The Longest Journey .PAK files
                  Added support for Sinking Island/L'Ile Noyée .OPK files
+    20271        Added support for Starsiege: Tribes .VOL files (which was supposed to be already supported...)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1323,10 +1324,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 20240;
+  DRIVER_VERSION = 20271;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.30 $';
-  CVS_DATE = '$Date: 2008-03-29 07:19:35 $';
+  CVS_REVISION = '$Revision: 1.31 $';
+  CVS_DATE = '$Date: 2008-05-22 18:38:28 $';
   BUFFER_SIZE = 8192;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -3334,7 +3335,7 @@ begin
 
 end;
 
-function ReadEarthSiege2VOL(src: string): Integer;
+function ReadEarthSiege2VOL: Integer;
 var HDR: VOL_Header;
     HDR2: VOL_Header2;
     ENT, OLD: VOL_Entry;
@@ -3344,10 +3345,6 @@ var HDR: VOL_Header;
     FSize: word;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
     TotFSize := FileSeek(FHandle,0,2);
 
     FileSeek(Fhandle, 0, 0);
@@ -3417,10 +3414,6 @@ begin
       DrvInfo.ExtractInternal := False;
 
     end;
-
-  end
-  else
-    Result := -2;
 
 end;
 
@@ -7640,7 +7633,7 @@ type OPKHeader = packed record
        FileTime: TFileTime;               // Date/File of entry (Windows FiLETIME structure)
      end;
 
-function ReadsinkingIslandOPK(src: string): Integer;
+function ReadSinkingIslandOPK(src: string): Integer;
 var HDR: OPKHeader;
     ENT: OPKEntry;
     disp: string;
@@ -7719,6 +7712,165 @@ begin
   end
   else
     Result := -2;
+
+end;
+
+// Starsiege: Tribes .VOL support
+// Completely coded thanks to the information found on:
+// http://wiki.xentax.com/index.php?title=Star_Siege
+
+// Index entry structure
+type PVOL_Entry = packed record
+       Unknown1Null: Integer;
+       Unknown2FileID: Integer;
+       FileOffset: Integer;
+       FileSize: Integer;
+       Unknown3Null: Byte;
+     end;
+
+function ReadStarsiegeTribesVOL: Integer;
+var ID: array[0..3] of char;
+    // The two buffers will hold the filenames directory and the offset directory
+    BufferNam, BufferIdx: TMemoryStream;
+    // In order to work with the TMemoryStreams the source file is to be wrapped
+    // into a THandleStream.
+    FileSource: THandleStream;
+    ENT: PVOL_Entry;
+    MaxOffset, Offset, Size: Integer;
+    NumE,x: integer;
+    disp: string;
+begin
+
+  // Wrap the source file in the THandleStream
+  FileSource := THandleStream.Create(FHandle);
+
+  // Create the two TMemoryStream buffers
+  BufferNam := TMemoryStream.Create;
+  BufferIdx := TMemoryStream.Create;
+
+  // try finally to always free the 3 objects, if something goes wrong
+  try
+
+    // Maximum possible offset is... End of file! :)
+    MaxOffset := FileSource.Seek(0,sofromEnd);
+
+    // Seek back to the beginning of file
+    FileSource.Seek(0,sofromBeginning);
+
+    // Read the ID (4 bytes)
+    FileSource.Read(ID,4);
+
+    // Read the offset to directory
+    FileSource.Read(Offset,4);
+
+    // Sanity checks:
+    //   ID must be 'PVOL'
+    //   Offset + 8 cannot be bigger than MaxOffset
+    if (ID <> 'PVOL') or ((Offset + 8) > MaxOffset) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'PVOL';
+      ErrInfo.Games := 'Starsiege: Tribes';
+    end
+    else
+    begin
+
+      // Seek to directory
+      FileSource.Seek(Offset,sofromBeginning);
+
+      // Read the block ID (4 bytes)
+      FileSource.Read(ID,4);
+
+      // Read the size of the filename directory
+      FileSource.Read(Size,4);
+
+      // Sanity checks:
+      //   ID must be 'vols'
+      //   Offset + 8 + Size cannot be bigger than MaxOffset
+      if (ID <> 'vols') or ((Offset + 8 + Size) > MaxOffset) then
+      begin
+        FileClose(Fhandle);
+        FHandle := 0;
+        Result := -3;
+        ErrInfo.Format := 'PVOL';
+        ErrInfo.Games := 'Starsiege: Tribes';
+      end
+      else
+      begin
+
+        // Load the full directory filename in the first buffer
+        BufferNam.CopyFrom(FileSource,Size);
+        BufferNam.Seek(0,soFromBeginning);
+
+        // Next offset is at Offset plus:
+        //      8 bytes
+        //   Size bytes (directory size)
+        //      1 byte (Only if Size is not a multiple of 2)
+        Inc(Offset,8);
+        Inc(Offset,Size);
+        Inc(Offset,Size mod 2);
+
+        // Go to that new offset
+        FileSource.Seek(Offset,soFromBeginning);
+
+        // Read the block ID
+        FileSource.Read(ID,4);
+
+        // Read the block size
+        FileSource.Read(Size,4);
+
+        // Sanity checks:
+        //   ID must be 'voli'
+        //   Offset + 8 + Size cannot be bigger than MaxOffset
+        if (ID <> 'voli') or ((Offset + 8 + Size) > MaxOffset) then
+        begin
+          FileClose(Fhandle);
+          FHandle := 0;
+          Result := -3;
+          ErrInfo.Format := 'PVOL';
+          ErrInfo.Games := 'Starsiege: Tribes';
+        end
+        else
+        begin
+
+          // Load the full directory entries in the second buffer
+          BufferIdx.CopyFrom(FileSource,Size);
+          BufferIdx.Seek(0,soFromBeginning);
+
+          // Calculate the number of entries
+          NumE := Size div SizeOf(PVOL_Entry);
+
+          // Parse the entries
+          for x := 1 to NumE do
+          begin
+
+            // Retrieve filename from first buffer
+            disp := strip0(get0_Stream(BufferNam));
+
+            // Retrieve Offset & Size from second buffer
+            BufferIdx.Read(ENT,SizeOf(PVOL_Entry));
+
+            // Add the entry to FSE
+            FSE_Add(disp,ENT.FileOffset+8,ENT.FileSize,ENT.Unknown2FileID,0);
+
+          end;
+
+          // Retrieved NumE entries for the format
+          Result := NumE;
+          DrvInfo.ID := 'PVOL';
+          DrvInfo.Sch := '';
+          DrvInfo.FileHandle := FHandle;
+          DrvInfo.ExtractInternal := False;
+        end;
+      end;
+    end;
+  finally
+    FileSource.Free;
+    BufferNam.Free;
+    BufferIdx.Free;
+  end;
 
 end;
 
@@ -9462,6 +9614,39 @@ begin
 
 end;
 
+function ReadHubVOL(src: String): Integer;
+var ID: array[0..3] of char;
+    res: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileRead(FHandle,ID,4);
+    if ID = 'VOLN' then
+      res := ReadEarthSiege2VOL
+    else if ID = 'PVOL' then
+      res := ReadStarsiegeTribesVOL
+    else
+      res := -3;
+
+    if res = -3 then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'VOL';
+      ErrInfo.Games := 'Earth Siege 2, Starsiege: Tribes';
+    end
+    else
+      Result := res;
+  end
+  else
+    Result := -2;
+
+end;
+
 function ReadHubWAD(src: String): Integer;
 var ID: array[0..3] of char;
     res: integer;
@@ -9778,10 +9963,9 @@ begin
       else if ID4 = ('ESPN') then
         Result := ReadAgeOfEmpires3BAR
       else if ID4 = ('VOLN') then
-      begin
-        FileClose(FHandle);
-        Result := ReadEarthSiege2VOL(fil);
-      end
+        Result := ReadEarthSiege2VOL
+      else if ID4 = ('PVOL') then
+        Result := ReadStarsiegeTribesVOL
       else if ID4 = ('rass') then
       begin
         FileClose(FHandle);
@@ -10082,7 +10266,7 @@ begin
     else if ext = 'VFS' then
       ReadFormat := ReadUFOAftermathVFS(fil)
     else if ext = 'VOL' then
-      ReadFormat := ReadEarthSiege2VOL(fil)
+      ReadFormat := ReadHubVOL(fil)
     else if ext = 'VP' then
       ReadFormat := ReadFreespaceVP(fil)
     else if ext = 'WAD' then
@@ -10352,6 +10536,9 @@ begin
     else if ID4 = ('DWFB') then
       Result := true
     else if ID4 = ('VOLN') then
+      Result := true
+    // Starsiege: Tribes .VOL
+    else if ID4 = ('PVOL') then
       Result := true
     else if ID4 = ('VPVP') then
       Result := true

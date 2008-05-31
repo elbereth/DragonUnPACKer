@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.31 2008-05-22 18:38:28 elbereth Exp $
+// $Id: drv_default.dpr,v 1.32 2008-05-31 07:12:22 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -162,6 +162,7 @@ type FSE = ^element;
                  Added support for Dreamfall - The Longest Journey .PAK files
                  Added support for Sinking Island/L'Ile Noyée .OPK files
     20271        Added support for Starsiege: Tribes .VOL files (which was supposed to be already supported...)
+    20340        Added support for Entropia Universe .BNT files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1324,10 +1325,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 20271;
+  DRIVER_VERSION = 20340;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.31 $';
-  CVS_DATE = '$Date: 2008-05-22 18:38:28 $';
+  CVS_REVISION = '$Revision: 1.32 $';
+  CVS_DATE = '$Date: 2008-05-31 07:12:22 $';
   BUFFER_SIZE = 8192;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1537,6 +1538,8 @@ begin
   GetDriverInfo.Formats[65].Name := 'UFO: Aftermath (*.VFS)|UFO: Aftershock (*.VFS)|UFO: Afterlight (*.VFS)';
   GetDriverInfo.Formats[66].Extensions := '*.OPK';
   GetDriverInfo.Formats[66].Name := 'Sinking Island (*.OPK)|L''Ile Noyée (*.OPK)';
+  GetDriverInfo.Formats[67].Extensions := '*.BNT';
+  GetDriverInfo.Formats[67].Name := 'Entropia Universe (*.BNT)';
 //  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
 //  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -1558,6 +1561,21 @@ begin
     strip0 := copy(str, 1, pos0 - 1)
   else
     strip0 := str;
+
+end;
+
+// Used to keep only all caracters up to the first chr(10) encountered
+// Ex: 'this is a pchar in string'+chr(10) will return same without chr(10)
+function strip0A(str : string): string;
+var pos0: integer;
+begin
+
+  pos0 := pos(chr(10),str);
+
+  if pos0 > 0 then
+    result := copy(str, 1, pos0 - 1)
+  else
+    result := str;
 
 end;
 
@@ -1586,6 +1604,20 @@ begin
   until tchar = chr(0);
 
   Get0 := res;
+
+end;
+
+function Get0A(src: integer): string;
+var tchar: Char;
+    res: string;
+begin
+
+  repeat
+    FileRead(src,tchar,1);
+    res := res + tchar;
+  until tchar = chr(10);
+
+  result := res;
 
 end;
 
@@ -3458,6 +3490,91 @@ begin
       Result := NumE;
 
       DrvInfo.ID := 'SSA';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// Entropia Universe .BNT support
+// Go end of file, the 8 last bytes are:
+//   Index of Directory entries (4 bytes - Interger/Cardinal)
+//   Magic ID (4 bytes - "BNT2")
+
+type BNT2Entry = packed record
+      Size: integer;
+      Offset: integer;
+      Unknown01CRC: integer;   // CRC or Checksum?
+      Unknown02Null: integer;  // 00 00 00 00
+    end;
+
+function ReadEntropiaUniverseBNT(src: string): Integer;
+var ID: array[0..3] of char;
+    DirOffset: integer;
+    ENT: BNT2Entry;
+    NumE, x: integer;
+    disp: string;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    // Go to end of file minus 4 bytes
+    FileSeek(Fhandle, -4, 2);
+
+    // Read the ID
+    FileRead(FHandle, ID, 4);
+
+    // If the ID is not BNT2 then this is not an Entropia Universe BNT file
+    if (ID <> 'BNT2') then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'BNT2';
+      ErrInfo.Games := 'Entropia Universe';
+    end
+    else
+    begin
+
+      // Go to end of file minus 8 bytes
+      FileSeek(FHandle,-8,2);
+
+      // Read the directory offset
+      FileRead(FHandle,DirOffset,4);
+
+      // Go to directory offset
+      FileSeek(FHandle,DirOffset,0);
+
+      // Read number of entries in the file
+      FileRead(FHandle,NumE,4);
+
+      // Read each entry
+      for x := 1 to NumE do
+      begin
+
+        // Filename (ending with 0x0A)
+        disp := strip0A(get0A(FHandle));
+
+        // Entry info
+        FileRead(FHandle,ENT,SizeOf(ENT));
+
+        // Add entry to FSE
+        FSE_Add(disp,ENT.Offset,ENT.Size,ENT.Unknown01CRC,ENT.Unknown02Null);
+
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'BNT2';
       DrvInfo.Sch := '\';
       DrvInfo.FileHandle := FHandle;
       DrvInfo.ExtractInternal := False;
@@ -9744,6 +9861,7 @@ end;
 function ReadFormat(fil: ShortString; Deeper: boolean): Integer; stdcall;
 var ext: string;
     ID4: array[0..3] of char;
+    ID4Last: array[0..3] of char;
     ID6: array[0..5] of char;
     ID8: array[0..7] of char;
     ID12: array[0..11] of char;
@@ -9780,6 +9898,8 @@ begin
       FileRead(FHandle,ID127,127);
       FileSeek(FHandle,520,0);
       FileRead(FHandle,ID12SLF,12);
+      FileSeek(FHandle,-4,2);
+      FileRead(FHandle,ID4Last,4);
       for x := 0 to 3 do
       begin
         ID4[x] := ID127[x];
@@ -9879,6 +9999,12 @@ begin
         FileClose(FHandle);
         Result := ReadCivilization4FPK(fil);
       end
+      // Entropia Universe .BNT file
+      else if (ID4Last = 'BNT2') then
+      begin
+        FileClose(FHandle);
+        Result := ReadEntropiaUniverseBNT(fil);
+      end
       // Hitman: Contracts .PRM file
       else if (ID4[0] = #30) and (ID4[1] = #7) and (ID4[2] = #0) and (ID4[3] = #0) then
       begin
@@ -9888,7 +10014,7 @@ begin
       // Fable: The Lost Chapter .BIG file
       else if (ID4 = 'BIGB') then
         Result := ReadFableTheLostChaptersBIG
-      // Fable: The Lost Chapter .BIG file
+      // F.E.A.R. .ARCH00 file
       else if (ID4 = 'LTAR') then
       begin
         FileClose(FHandle);
@@ -10349,6 +10475,7 @@ end;
 
 function IsFormatSMART(fil: String): boolean;
 var ID4: array[0..3] of char;
+    ID4Last: array[0..3] of char;
     ID6: array[0..5] of char;
     ID8: array[0..7] of char;
     ID12: array[0..11] of char;
@@ -10371,6 +10498,8 @@ begin
     FileRead(TestFile,ID127,127);
     FileSeek(TestFile,520,0);
     FileRead(TestFile,ID12SLF,12);
+    FileSeek(TestFile,-4,2);
+    FileRead(TestFile,ID4Last,4);
     for x := 0 to 3 do
     begin
       ID4[x] := ID127[x];
@@ -10452,6 +10581,9 @@ begin
       Result := true
     // Civilization 4 .FPK file
     else if (ID8[4] = 'F') and (ID8[5] = 'P') and (ID8[6] = 'K') and (ID8[7] = '_') then
+      Result := true
+    // Entropia Universe .BNT file
+    else if (ID4Last = 'BNT2') then
       Result := true
     // Hitman: Contracts .PRM file
     else if (ID4[0] = #30) and (ID4[1] = #7) and (ID4[2] = #0) and (ID4[3] = #0) then
@@ -10630,6 +10762,8 @@ begin
     else if ext = 'BIG' then
       IsFormat := True
     else if ext = 'BIN' then
+      IsFormat := True
+    else if ext = 'BNT' then    // Entropia Universe
       IsFormat := True
     else if ext = 'BOX' then
       IsFormat := True

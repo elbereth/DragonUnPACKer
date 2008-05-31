@@ -1,6 +1,6 @@
 <?php
 
-// $Id: dus.php,v 1.3 2005-12-30 21:45:57 elbereth Exp $
+// $Id: dus.php,v 1.4 2008-05-31 14:46:13 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dus/dus.php,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,9 +18,9 @@
 //
 
   // CVS variables
-  $CVS_REVISION = '$Revision: 1.3 $';
+  $CVS_REVISION = '$Revision: 1.4 $';
   $CVS_REVISION_DISPLAY = substr($CVS_REVISION,11,strlen($CVS_REVISION)-13);
-  $CVS_DATE = '$Date: 2005-12-30 21:45:57 $';
+  $CVS_DATE = '$Date: 2008-05-31 14:46:13 $';
   $CVS_DATE_DISPLAY = substr($CVS_DATE,7,strlen($CVS_DATE)-9);
 
   // Sending the header
@@ -57,7 +57,7 @@
   $dusbody = '';
 
   // Retrieving core information
-  $query = "SELECT * FROM dus_core WHERE type = 'stable' AND available = 'yes' AND build>=".$userBuild." ORDER BY build DESC";
+  $query = "SELECT * FROM dus_core WHERE type = 'stable' AND available = 'yes' ORDER BY build DESC";
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
   	echo "Result=M10\n";

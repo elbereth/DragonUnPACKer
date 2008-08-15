@@ -1,10 +1,10 @@
 object dup5Main: Tdup5Main
-  Left = 366
-  Top = 343
+  Left = 457
+  Top = 119
   HelpContext = 1
   AlphaBlendValue = 128
   AutoScroll = False
-  Caption = 'Dragon UnPACKer v5.1.2'
+  Caption = 'Dragon UnPACKer v5'
   ClientHeight = 311
   ClientWidth = 667
   Color = clBtnFace
@@ -61,6 +61,7 @@ object dup5Main: Tdup5Main
   Menu = mainMenu
   OldCreateOrder = False
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   OnHide = FormHide
   OnResize = FormResize
   OnShow = FormShow
@@ -90,7 +91,6 @@ object dup5Main: Tdup5Main
     HelpContext = 2
     Align = alRight
     MinSize = 20
-    Visible = False
   end
   object ctrlBar: TControlBar
     Left = 0
@@ -187,12 +187,14 @@ object dup5Main: Tdup5Main
     TreeOptions.AutoOptions = [toAutoDropExpand, toAutoScroll, toAutoSort, toAutoTristateTracking, toAutoDeleteMovedNodes]
     TreeOptions.PaintOptions = [toShowButtons, toShowDropmark, toThemeAware, toUseBlendedImages]
     TreeOptions.SelectionOptions = [toMultiSelect]
+    OnClick = lstContentClick
     OnCompareNodes = lstContentCompareNodes
     OnContextPopup = lstContentContextPopup
     OnGetText = lstContentGetText
     OnGetImageIndex = lstContentGetImageIndex
     OnHeaderClick = lstContentHeaderClick
     OnInitNode = lstContentInitNode
+    OnKeyUp = lstContentKeyUp
     OnMouseDown = lstContentMouseDown
     OnStartDrag = lstContentStartDrag
     Columns = <
@@ -319,13 +321,23 @@ object dup5Main: Tdup5Main
     Align = alRight
     BevelOuter = bvLowered
     TabOrder = 5
-    Visible = False
-    object imgPreview: TImage
+    object ScrollBox1: TScrollBox
       Left = 1
       Top = 1
       Width = 193
       Height = 175
       Align = alClient
+      AutoSize = True
+      BorderStyle = bsNone
+      TabOrder = 0
+      object imgPreview: TPaintBox
+        Left = 0
+        Top = 0
+        Width = 193
+        Height = 175
+        Align = alClient
+        OnPaint = imgPreviewPaint
+      end
     end
   end
   object OpenDialog: TOpenDialog

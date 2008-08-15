@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.11 2008-04-20 19:55:26 elbereth Exp $
+// $Id: Main.pas,v 1.12 2008-08-15 19:06:02 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -20,12 +20,19 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, ToolWin, Menus, ImgList,
+  Dialogs, JclBase, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, ToolWin, Menus, ImgList,
   lib_language, translation, ShellApi, JvJCLUtils, VirtualTrees, lib_look,
   DropSource, XPMan, DragDrop, DragDropFile, prg_ver, JvclVer,
   classIconsFromExt, DateUtils, JvMenus,  JvRichEdit,
   JvComponent, cxCpu40, JvBaseDlg, JvBrowseFolder, lib_binutils,
-  JvExStdCtrls, commonTypes;
+  JvExStdCtrls, commonTypes,
+  ImagingTypes,
+  Imaging,
+  ImagingClasses,
+  ImagingComponents,
+  ImagingCanvases,
+  ImagingFormats,
+  ImagingUtility;     // Vampyre Imaging Library
 
 type
   Tdup5Main = class(TForm)
@@ -107,10 +114,11 @@ type
     richLog: TJvRichEdit;
     SplitterPreview: TSplitter;
     panPreview: TPanel;
-    imgPreview: TImage;
     menuOptions_Advanced: TMenuItem;
     menuOptions_Log: TMenuItem;
     menuOptions_Basic: TMenuItem;
+    ScrollBox1: TScrollBox;
+    imgPreview: TPaintBox;
     procedure FormResize(Sender: TObject);
     procedure menuFichier_QuitterClick(Sender: TObject);
     procedure menuAbout_AboutClick(Sender: TObject);
@@ -207,7 +215,13 @@ type
     procedure menuOptions_AdvancedClick(Sender: TObject);
     procedure menuOptions_LogClick(Sender: TObject);
     procedure lstContentClick(Sender: TObject);
+    procedure imgPreviewPaint(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure lstContentKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
   private
+    FPreviewImage: ImagingClasses.TMultiImage;
+    isPreviewImage: boolean;
     verboseLevel: integer;
     AlreadyDragging: boolean;
     bottomHeight: integer;
@@ -511,7 +525,10 @@ begin
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsItalic]);
   frmAbout.txtMoreinfo.Lines.Add('');
   frmAbout.txtMoreinfo.Lines.Add(DLNGstr('ABT004'));
-  frmAbout.txtMoreinfo.Lines.Add('JVCL v'+JVCL_VERSIONSTRING);
+  frmAbout.txtMoreinfo.Lines.Add('JEDI Code Library [JCL] v'+inttostr(JclVersionMajor)+'.'+inttostr(JclVersionMinor)+'.'+inttostr(JclVersionRelease)+' Build '+inttostr(JclVersionBuild));
+  setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
+  frmAbout.txtMoreinfo.Lines.Add('http://jcl.sourceforge.net');
+  frmAbout.txtMoreinfo.Lines.Add('JEDI Visual Component Library [JVCL] v'+JVCL_VERSIONSTRING);
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
   frmAbout.txtMoreinfo.Lines.Add('http://jvcl.sourceforge.net');
   frmAbout.txtMoreinfo.Lines.Add('VirtualTree v'+VTVersion);
@@ -522,7 +539,10 @@ begin
   frmAbout.txtMoreinfo.Lines.Add('http://www.carbonsoft.com/cxcpu/');
   frmAbout.txtMoreinfo.Lines.Add('Drag and Drop Component Suite');
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
-  frmAbout.txtMoreinfo.Lines.Add('http://www.users.on.net/johnson/delphi/');
+  frmAbout.txtMoreinfo.Lines.Add('http://melander.dk/');
+  frmAbout.txtMoreinfo.Lines.Add('Vampyre Imaging Livrary v'+Imaging.GetVersionStr);
+  setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
+  frmAbout.txtMoreinfo.Lines.Add('http://imaginglib.sourceforge.net/');
 
 //  Compile Time Expert
 
@@ -977,6 +997,40 @@ begin
 
 end;
 
+procedure Tdup5Main.imgPreviewPaint(Sender: TObject);
+var R: TRect;
+begin
+
+  dup5Main.writeLogVerbose(2,'Painting... ');
+
+  if isPreviewImage then
+  begin
+    if (FPreviewImage.Width > 0) and (FPreviewImage.Height > 0) and (FPreviewImage.Format = ifA8R8G8B8) then
+    begin
+      dup5Main.appendLogVerbose(2,inttostr(FPreviewImage.Width)+'x'+inttostr(FPreviewImage.Height)+' ['+inttostr(FPreviewImage.ImageCount)+' image(s) - Active: '+inttostr(FPreviewImage.ActiveImage)+']');
+      // Draw image to canvas (without conversion) using OS drawing functions.
+      // Note that DisplayImage only supports images in ifA8R8G8B8 format so
+      // if you have image in different format you must convert it or
+      // create standard TBitmap by calling ImagingComponents.ConvertImageToBitmap
+      R := ImagingUtility.ScaleRectToRect(FPreviewImage.BoundsRect, ImgPreview.ClientRect);
+      ImagingComponents.DisplayImage(ImgPreview.Canvas, R, FPreviewImage);
+    end
+    else
+      dup5Main.writeLogVerbose(2,'Hmm?');
+  end
+  else
+  begin
+
+    dup5Main.appendLogVerbose(2,'Nothing to preview');
+    ImgPreview.Color := clBlack;
+    ImgPreview.Canvas.Font.Color := clRed;
+    ImgPreview.Canvas.Font.Style := [fsBold];
+    ImgPreview.Canvas.TextOut(0,10,'Nothing to preview');
+
+  end;
+
+end;
+
 procedure Tdup5Main.FormShow(Sender: TObject);
 var Reg: TRegistry;
     tmpi: integer;
@@ -1024,14 +1078,9 @@ begin
       end;
 
       if Reg.ValueExists('VerboseLevel') then
-      begin
-        verboseLevel := reg.ReadInteger('VerboseLevel');
-      end;
-
-      if Reg.ValueExists('VerboseLevel') then
         verboseLevel := Reg.ReadInteger('VerboseLevel')
       else
-        verboseLevel := 0;
+        verboseLevel := 1;
 
       if Reg.ValueExists('Look') then
         clook := Reg.ReadString('Look')
@@ -1165,6 +1214,15 @@ begin
     LoadLook(clook);
 
   richLog.Refresh;
+
+  dup5Main.writeLogVerbose(1,DLNGstr('LOG005'));
+
+  dup5Main.writeLogVerbose(1,' + cxCpu v'+cxCpu.Version.FormatVersion);
+  dup5Main.writeLogVerbose(1,' + JEDI Code Library [JCL] v'+inttostr(JclVersionMajor)+'.'+inttostr(JclVersionMinor)+'.'+inttostr(JclVersionRelease)+' Build '+inttostr(JclVersionBuild));
+  dup5Main.writeLogVerbose(1,' + JEDI Visual Component Library [JVCL] v'+JVCL_VERSIONSTRING);
+  dup5Main.writeLogVerbose(1,' + Vampyre Imaging Library v'+Imaging.GetVersionStr);
+//  dup5Main.writeLog('Jedi Class Library [JCL] v'+JCL_VERSIONSTRING);
+  dup5Main.writeLogVerbose(1,' + VirtualTree v'+VTVersion);
 
   dup5Main.writeLog(DLNGStr('LOG001'));
 
@@ -1661,6 +1719,8 @@ end;
 procedure Tdup5Main.FormCreate(Sender: TObject);
 begin
 
+  FPreviewImage := TMultiImage.Create;
+
   lstContent.NodeDataSize := SizeOf(virtualTreeData);
   lstContent.Header.SortColumn := 0;
 
@@ -1957,6 +2017,9 @@ begin
   dup5Main.lstContent.clear;
 //  dup5Main.lstIndex.Items.Clear;
   dup5Main.lstIndex2.Clear;
+
+  isPreviewImage := false;
+  ImgPreview.Repaint;
 
   if CurFile > 0 then
   begin
@@ -2647,17 +2710,20 @@ end;
 procedure Tdup5Main.lstContentClick(Sender: TObject);
 var Data: pvirtualTreeData;
     Node: PVirtualNode;
-    rep,ext,filename,tmpFil: string;
-    Offset, Size: int64;
+    rep,ext,filename,tmpFil,foundFormat: string;
+    Offset, Size, T, FLastTime: int64;
     i,DataX, DataY: integer;
     CList: ExtConvertList;
     stmSource, stmBitmap: TMemoryStream;
+    foundCnv: boolean;
+    StartTime: TDateTime;
 begin
 
   if (lstContent.SelectedCount > 1) then
   begin
 
-    imgPreview.Picture := nil;
+    isPreviewImage := false;
+    ImgPreview.Repaint;
 
   end
   else if (lstContent.SelectedCount = 1) then
@@ -2687,31 +2753,75 @@ begin
      stmSource := TMemoryStream.Create;
      stmBitmap := TMemoryStream.Create;
      try
-       if (ext = '.BMP') then
+
+       FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
+       stmSource.Seek(0,soFromBeginning);
+
+       dup5Main.WriteLogVerbose(2,'Detecting image format... ');
+
+       StartTime := Now;
+       foundFormat := Imaging.DetermineStreamFormat(stmSource);
+       dup5Main.appendLogVerbose(2,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
+
+       if (foundFormat <> '') then
        begin
 
-         FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
-         stmSource.Seek(0,soFromBeginning);
-         imgPreview.Picture.Bitmap.LoadFromStream(stmSource);
+         dup5Main.appendLogVerbose(2,' (Format: '+uppercase(foundFormat)+')');
+
+         dup5Main.writeLogVerbose(2,'Preview (1/2): Load image...');
+         FPreviewImage.LoadMultiFromStream(stmSource);
+         dup5Main.writeLogVerbose(2,'Preview (2/2): Convert to ARGB...');
+         FPreviewImage.ConvertImages(ifA8R8G8B8);
+         dup5Main.writeLogVerbose(2,'Forcing repaint!');
+         isPreviewImage := true;
+         ImgPreview.Repaint;
+
+//       if (ext = '.BMP') then
+//       begin
+
+//         FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
+//         stmSource.Seek(0,soFromBeginning);
+//         imgPreview.Picture.Bitmap.LoadFromStream(stmSource);
 
        end
        else
        begin
+
+         dup5Main.appendLogVerbose(2,'... Convert plugins:');
 
          CList := CPlug.GetFileConvert(fileName,offset,size,FSE.DriverID,DataX, DataY);
 
          CListInfo.NumFormats := CList.NumFormats;
          for i := 1 to CList.NumFormats do
          begin
-           if uppercase(CList.List[i].Info.ID) = 'BMP' then
+           foundCnv := (uppercase(CList.List[i].Info.ID) = 'BMP') or (uppercase(CList.List[i].Info.ID) = 'TGA32') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT1') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT3');
+           if foundCnv then
            begin
-             FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
+             dup5Main.appendLogVerbose(2,CPlug.Plugins[CList.List[i].Plugin].Version.Name+' v'+CPlug.Plugins[CList.List[i].Plugin].Version.Version);
+//             FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
              stmSource.Seek(0,soFromBeginning);
              CPlug.Plugins[CList.List[i].Plugin].ConvertStream(stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true);
              stmBitmap.Seek(0,soFromBeginning);
-             imgPreview.Picture.Bitmap.LoadFromStream(stmBitmap);
+             //imgPreview.Picture.Bitmap.LoadFromStream(stmBitmap);
+             //CPlug.Plugins[CList.List[i].Plugin].DrawToCanvas(stmSource,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true,imgPreview.ClientRect,imgPreview.Canvas);
+
+             dup5Main.writeLogVerbose(2,'Preview (1/2): Load image...');
+             FPreviewImage.LoadMultiFromStream(stmBitmap);
+             dup5Main.writeLogVerbose(2,'Preview (2/2): Convert to ARGB...');
+             FPreviewImage.ConvertImages(ifA8R8G8B8);
+             dup5Main.writeLogVerbose(2,'Forcing repaint!');
+             isPreviewImage := true;
+             ImgPreview.Repaint;
+
              break;
            end;
+         end;
+
+         if not(foundCnv) then
+         begin
+           dup5Main.appendLogVerbose(2,'Unknown! (Cannot preview)');
+           isPreviewImage := false;
+           imgPreview.Repaint;
          end;
 
        end;
@@ -2722,7 +2832,7 @@ begin
 
    end;
 
-   if (imgPreview.Picture.Width > panPreview.Width)
+{   if (imgPreview.Picture.Width > panPreview.Width)
    or (imgPreview.Picture.Height > panPreview.Height) then
    begin
      imgPreview.Stretch := true;
@@ -2734,7 +2844,23 @@ begin
      imgPreview.Stretch := false;
      imgPreview.Left := (panPreview.Width - imgPreview.Picture.Width) div 2;
      imgPreview.Top := (panPreview.Height - imgPreview.Picture.Height) div 2;
-   end;
+   end;}
+
+end;
+
+procedure Tdup5Main.FormDestroy(Sender: TObject);
+begin
+
+  FPreviewImage.Free;
+
+end;
+
+
+procedure Tdup5Main.lstContentKeyUp(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+
+  lstContentClick(Sender);
 
 end;
 

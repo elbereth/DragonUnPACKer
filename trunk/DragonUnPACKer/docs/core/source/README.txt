@@ -1,5 +1,5 @@
-Dragon UnPACKer 5.3.0 WIP Source Code                           MPL open source
-by Alexande "Elbereth" Devilliers                                    04/03/2008
+Dragon UnPACKer 5.3.3 Beta Source Code                          MPL open source
+by Alexande "Elbereth" Devilliers                                    15/08/2008
 ===============================================================================
 
 This source code can be used and modified if following the Mozilla Public
@@ -22,6 +22,7 @@ Needed libraries:
 - ICS Internet Component Suite  http://www.overbyte.be
 - Drag&Drop Component Suite 4.0 http://www.users.on.net/johnson/delphi/
 - cxCPU v4.x                    http://www.carbonsoft.com/cxcpu/
+- Vampyre Imaging Library v0.24 http://imaginglib.sourceforge.net/
 
 For Compile Time (in about box) :
 - Compile Time Expert v1.12	    http://www.fi.muni.cz/~xkovalc/

@@ -110,8 +110,8 @@ IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=2
 MinorVer=1
-Release=0
-Build=113
+Release=1
+Build=116
 Debug=0
 PreRelease=1
 Special=0
@@ -122,21 +122,25 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=DUP5 - Picture/Textures Convert Plugin
-FileVersion=2.1.0.113
+FileVersion=2.1.1.116
 InternalName=cnv_pictex
 LegalCopyright=Created by Alexandre Devilliers (aka Elbereth)
 LegalTrademarks=
 OriginalFilename=cnv_pictex.d5c
 ProductName=Dragon UnPACKer 5
-ProductVersion=5.2
+ProductVersion=5.3/5.4
 Comments=Convert between file formats in DUP5
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlUnitOutputDirectory]
-Count=1
-Item0=E:\Developpement\dup-dev-5.1-dcu
+[HistoryLists\hlSearchPath]
+Count=4
+Item0=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;..\..\..\Extras\Extensions;..\Common;..\..\..\Source\Extensions
+Item1=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;..\..\..\Extras\Extensions;..\Common
+Item2=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;..\..\..\Extras\Extensions
+Item3=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;
 [HistoryLists\hlOutputDirectorry]
-Count=2
-Item0=E:\Developpement\dup-dev-5.1-compiled\utils
-Item1=E:\Developpement\dup-compiled\tools\dlngcomp
+Count=3
+Item0=E:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
+Item1=E:\Developpement\dup-dev-5.1-compiled\data\convert
+Item2=..\..\Bin

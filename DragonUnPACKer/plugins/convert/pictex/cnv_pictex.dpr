@@ -1,6 +1,6 @@
 library cnv_pictex;
 
-// $Id: cnv_pictex.dpr,v 1.8 2008-04-20 19:59:04 elbereth Exp $
+// $Id: cnv_pictex.dpr,v 1.9 2008-08-23 17:17:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/cnv_pictex.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -19,12 +19,19 @@ library cnv_pictex;
 uses
   Windows,
   Forms,
+  Graphics,
   StrUtils,
   SysUtils,
   Classes,
   Registry,
   Controls,
-  ImagingTypes, Imaging,     // Vampyre Imaging Library
+  ImagingTypes,
+  Imaging,
+  ImagingClasses,
+  ImagingComponents,
+  ImagingCanvases,
+  ImagingFormats,
+  ImagingUtility,     // Vampyre Imaging Library
   class_Images in 'class_Images.pas',
   Convert in 'Convert.pas' {frmConvert},
   lib_version in '..\..\..\common\lib_version.pas',
@@ -85,7 +92,7 @@ const DUP_VERSION = 53340;
   * v2.0.1       (20140): Removed beta status for 5.2.0 release
   * v2.1.0 Beta  (21010): Using Imaging Lib now
   *                       Added DirectX Texture DDS support
-  * v2.1.1 Beta  (21010): Added BMP as output for all formats (for previewing ability)
+  * v2.1.1 Beta  (21110): Added BMP as output for all formats (for previewing ability)
   * }
 
 function DUCIVersion: Byte; stdcall;
@@ -1012,7 +1019,7 @@ begin
 
   MessageBoxA(AHandle, PChar('Picture/Textures Convert Plugin v'+getVersion(DRIVER_VERSION)+#10+
                           'Created by Alexandre Devilliers (aka Elbereth)'+#10+
-                          'Uses Vampyre Imaging Library v0.24.2 by Marek Mauder'+#10+'http://imaginglib.sourceforge.net'+#10+#10+
+                          'Uses Vampyre Imaging Library v'+Imaging.GetVersionStr+' by Marek Mauder'+#10+'http://imaginglib.sourceforge.net'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+#10+
                           DLNGStr('CNV010')
                           )

@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-#  Program: Dragon UnPACKer v5.3.2 WIP
+#  Program: Dragon UnPACKer v5.3.3 Beta
 # Language: English
-#  Version: 1
+#  Version: 11
 #   Author: Alex Devilliers
 # ============================================================================
 #
@@ -27,6 +27,9 @@
 # ============================================================================
 # Informations about this translation
 # ============================================================================
+#
+# version 11:
+# Added preview keywords
 #
 # version 10:
 # Added new options.
@@ -132,9 +135,10 @@ URL = http://www.dragonunpacker.com
 # Dragon UnPACKer v5.3.0         UP       9
 # Dragon UnPACKer v5.3.1         UP       9
 # Dragon UnPACKer v5.3.2         UP      10
+# Dragon UnPACKer v5.3.3 Beta    UP      11
 #
 ProgramID = UP
-ProgramVer = 10
+ProgramVer = 11
 #
 # + IconFile +
 # Path & FileName of the "icon" displayed with language name (ex: c:\test.bmp)
@@ -203,6 +207,7 @@ MNU2S5=Convert
 MNU2S6=Plugins
 MNU2S7=Advanced
 MNU2S8=Execution log
+MNU2S9=Preview
 MNU3=&?
 MNU3S1=About
 LSTCP1=File
@@ -253,6 +258,12 @@ POP2S5=Full Collapse
 POP3S1=Show log
 POP3S2=Hide log
 POP3S3=Clear log
+POP4S1=Hide preview
+POP4S2=Show preview
+POP5S1=Display mode
+POP5S2=Original size with scrollbar (if needed)
+POP5S3=Shrinked/Stretched to panel size
+POP5S4=Preview options...
 OPTTIT=Configuration
 OPT000=Advanced options
 OPT010=Temporary Directory
@@ -318,6 +329,19 @@ OPT841=Select the amount of informations to display :
 OPT850=Low - Scarce information
 OPT851=Medium - A good amount of information
 OPT852=High - A lot of information!
+OPT900=Preview
+OPT910=Preview options
+OPT911=Enable preview
+OPT920=Preview Size Limits
+OPT921=Do not limit size of files to preview
+OPT922=Limit size of files that will be previewed (Recommended)
+OPT923=Limit:
+OPT924=Very Low
+OPT925=Low
+OPT926=Medium (Recommended)
+OPT927=High
+OPT928=Very High
+OPT940=Preview Display Mode
 
 OPEN00=Open a file...
 ALLCMP=Compatible files

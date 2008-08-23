@@ -1,8 +1,8 @@
 # Language Source File (pour DLNGC v4.0)
 # ============================================================================
-#  Programme: Dragon UnPACKer v5.3.2 WIP
+#  Programme: Dragon UnPACKer v5.3.3 WIP
 #     Langue: English
-#    Version: 10
+#    Version: 11
 #     Auteur: Alex Devilliers
 # ============================================================================
 #
@@ -28,6 +28,9 @@
 # ============================================================================
 # Informations sur cette traduction
 # ============================================================================
+#
+# version 11:
+# Nouvelles entrées pour la prévisualisation
 #
 # version 10:
 # Première version sous forme de fichier .LS
@@ -85,9 +88,10 @@ URL = http://www.dragonunpacker.com
 # Dragon UnPACKer v5.2.0a        UP       9
 # Dragon UnPACKer v5.2.0b        UP       9
 # Dragon UnPACKer v5.3.2         UP      10
+# Dragon UnPACKer v5.3.3 Beta    UP      11
 #
 ProgramID = UP
-ProgramVer = 10
+ProgramVer = 11
 #
 # + IconFile +
 # Chemin & nom du fichier de l'icône affichée avec le nom de langue.
@@ -157,6 +161,7 @@ MNU2S5=Convertion
 MNU2S6=Plugins
 MNU2S7=Avancé
 MNU2S8=Journal d'exécution
+MNU2S9=Prévisualisation
 MNU3=&?
 MNU3S1=A Propos de
 LSTCP1=Fichier
@@ -166,7 +171,7 @@ LSTCP4=Description
 STAT10=objet(s)
 STAT20=octet(s)
 
-ABT001=Open Source / Mozilla Public Licence 1.1
+ABT001=Open Source / Mozilla Public License 1.1
 ABT002=Contactez moi:
 ABT003=Page Internet:
 ABT004=Dragon UnPACKer utilise:
@@ -210,6 +215,12 @@ POP2S5=Replier tout
 POP3S1=Afficher le journal
 POP3S2=Cacher le journal
 POP3S3=Effacer le journal
+POP4S1=Cacher la prévisualisation
+POP4S2=Afficher la prévisualisation
+POP5S1=Mode d'affichage
+POP5S2=Taille originale avec barres de défilement (si nécessaire)
+POP5S3=Réduit/Augmenté à la taille du paneau
+POP5S4=Options de la prévisualisation...
 OPTTIT=Configuration
 OPT000=Options Avancées
 OPT010=Répertoire Temporaire
@@ -275,6 +286,19 @@ OPT841=Sélectionnez le niveau de détail pour le journal d'exécution:
 OPT850=Bas - Aucune information supplémentaire
 OPT851=Moyen - Affichage de plus d'informations 
 OPT852=Haut - Affichage du maximum d'informations
+OPT900=Prévisualisation
+OPT910=Options de la prévisualisation
+OPT911=Activer la prévisualisation
+OPT920=Taille limite de prévisualisation
+OPT921=Ne pas limiter la taille des fichiers à prévisualiser
+OPT922=Limiter la taille des fichiers à prévisualiser (Recommandé)
+OPT923=Limite:
+OPT924=Trés Basse
+OPT925=Basse
+OPT926=Moyenne (Recommandé)
+OPT927=Haute
+OPT928=Très Haute
+OPT940=Mode d'affichage de la prévisualisation
 OPEN00=Ouvrir un fichier...
 XTRCAP=Extraction en cour...
 XTRSTA=Extraction de %f...
@@ -567,6 +591,7 @@ LOG001=Initialisation des plugins:
 LOG002=Chargement des plugins Drivers...
 LOG003=Chargement des plugins Convertions...
 LOG004=Chargement des plugins HyperRipper...
+LOG005=Librairies utilisées:
 LOG009=%p plugin(s)
 LOG101=Ouverture du fichier "%f":
 LOG102=Format de fichier non reconnu!
@@ -593,6 +618,7 @@ LOGC12=Méthode lente (plugins obsolètes)!
 LOGC13=Convertion vers "%b"...
 LOGC14=Convertion de multiples entrées vers "%b"...
 LOGC15=Convertion...
+
 ERR000=Erreur
 ERR101=Une erreur est survenue pendant l'extraction.
 ERR102=Une erreur est survenue pendant l'extraction du fichier:

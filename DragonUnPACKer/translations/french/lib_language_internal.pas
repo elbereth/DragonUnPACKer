@@ -19,7 +19,6 @@ function DLNGInternalStr(sch: string): string;
 implementation
 
 function DLNGInternalStr(sch: string): string;
-var res: string;
 begin
 
   if sch = 'MNU1' then
@@ -56,6 +55,8 @@ begin
     result := 'Avancé'
   else if sch = 'MNU2S8' then
     result := 'Journal d''exécution'
+  else if sch = 'MNU2S9' then
+    result := 'Prévisualisation'
   else if sch = 'MNU3' then
     result := '&?'
   else if sch = 'MNU3S1' then
@@ -73,7 +74,7 @@ begin
   else if sch = 'STAT20' then
     result := 'octet(s)'
   else if sch = 'ABT001' then
-    result := 'Open Source / Mozilla Public Licence 1.1'
+    result := 'Open Source / Mozilla Public License 1.1'
   else if sch = 'ABT002' then
     result := 'Contactez moi:'
   else if sch = 'ABT003' then
@@ -158,6 +159,18 @@ begin
     result := 'Cacher le journal'
   else if sch = 'POP3S3' then
     result := 'Effacer le journal'
+  else if sch = 'POP4S1' then
+    result := 'Cacher la prévisualisation'
+  else if sch = 'POP4S2' then
+    result := 'Afficher la prévisualisation'
+  else if sch = 'POP5S1' then
+    result := 'Mode d''affichage'
+  else if sch = 'POP5S2' then
+    result := 'Taille originale avec barres de défilement (si nécessaire)'
+  else if sch = 'POP5S3' then
+    result := 'Réduit/Augmenté à la taille du paneau'
+  else if sch = 'POP5S4' then
+    result := 'Options de la prévisualisation...'
   else if sch = 'OPTTIT' then
     result := 'Configuration'
   else if sch = 'OPT000' then
@@ -288,6 +301,32 @@ begin
     result := 'Moyen - Affichage de plus d''informations '
   else if sch = 'OPT852' then
     result := 'Haut - Affichage du maximum d''informations'
+  else if sch = 'OPT900' then
+    result := 'Prévisualisation'
+  else if sch = 'OPT910' then
+    result := 'Options de la prévisualisation'
+  else if sch = 'OPT911' then
+    result := 'Activer la prévisualisation'
+  else if sch = 'OPT920' then
+    result := 'Taille limite de prévisualisation'
+  else if sch = 'OPT921' then
+    result := 'Ne pas limiter la taille des fichiers à prévisualiser'
+  else if sch = 'OPT922' then
+    result := 'Limiter la taille des fichiers à prévisualiser (Recommandé)'
+  else if sch = 'OPT923' then
+    result := 'Limite:'
+  else if sch = 'OPT924' then
+    result := 'Trés Basse'
+  else if sch = 'OPT925' then
+    result := 'Basse'
+  else if sch = 'OPT926' then
+    result := 'Moyenne (Recommandé)'
+  else if sch = 'OPT927' then
+    result := 'Haute'
+  else if sch = 'OPT928' then
+    result := 'Très Haute'
+  else if sch = 'OPT940' then
+    result := 'Mode d''affichage de la prévisualisation'
   else if sch = 'OPEN00' then
     result := 'Ouvrir un fichier...'
   else if sch = 'XTRCAP' then
@@ -866,6 +905,8 @@ begin
     result := 'Chargement des plugins Convertions...'
   else if sch = 'LOG004' then
     result := 'Chargement des plugins HyperRipper...'
+  else if sch = 'LOG005' then
+    result := 'Librairies utilisées:'
   else if sch = 'LOG009' then
     result := '%p plugin(s)'
   else if sch = 'LOG101' then

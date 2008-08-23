@@ -1,4 +1,4 @@
-; $Id: setup.iss,v 1.10 2008-04-19 19:15:16 elbereth Exp $
+; $Id: setup.iss,v 1.11 2008-08-23 17:21:49 elbereth Exp $
 ; $Source: /home/elbzone/backup/cvs/DragonUnPACKer/install/setup.iss,v $
 ;
 ; The contents of this file are subject to the Mozilla Public License
@@ -15,18 +15,18 @@
 ; (elbereth@users.sourceforge.net, http://www.elberethzone.net).
 
 [Setup]
-Compression=lzma/ultra
+Compression=lzma/ultra64
 SolidCompression=yes
 AppName=Dragon UnPACKer 5
-AppVerName=Dragon UnPACKer v5.3.2 WIP (build 178/unstable)
+AppVerName=Dragon UnPACKer v5.3.3 Beta (build 182/unstable)
 AppPublisher=Alexandre Devilliers (aka Elbereth)
 AppPublisherURL=http://www.elberethzone.net
-AppSupportURL=http://sourceforge.net/projects/dragonunpacker/
+AppSupportURL=http://www.elberethzone.net/dup-support.html
 AppUpdatesURL=http://www.dragonunpacker.com
 AppCopyright=Mozilla Public License 1.1
 DefaultDirName={pf}\Dragon UnPACKer 5
 DefaultGroupName=Dragon UnPACKer 5
-OutputBaseFilename=dup532wip-setup
+OutputBaseFilename=dup533beta-setup
 AppMutex=DragonUnPACKer5
 AppId=DragonUnPACKer5
 DisableStartupPrompt=yes
@@ -35,7 +35,7 @@ UninstallDisplayIcon={app}\dunpacker5.exe
 WizardImageBackColor=$FFFFFF
 WizardImageFile=dup5-instimage.bmp
 WizardSmallImageFile=dup5-inst55x55.bmp
-VersionInfoVersion=5.3.2.178
+VersionInfoVersion=5.3.3.182
 ; uncomment the following line if you want your installation to run on NT 3.51 too.
 MinVersion=4.10,4.0sp6
 
@@ -78,7 +78,8 @@ Name: "{group}\Dragon UnPACKer 5"; Filename: "{app}\DrgUnPack5.exe"
 ; vvv --- sp --- vvv
 Name: "{group}\Read me"; Languages: en; Filename: "{app}\readme.txt"
 ; For WIP versions
-Name: "{group}\Read me (WIP)"; Languages: en fr; Filename: "{app}\readme-WIP.txt"
+Name: "{group}\Read me (Unstable releases)"; Languages: en; Filename: "{app}\readme-WIP.txt"
+Name: "{group}\Lisez moi (version instable) [Anglais]"; Languages: fr; Filename: "{app}\readme-WIP.txt"
 Name: "{group}\Lisez moi"; Languages: fr; Filename: "{app}\lisezmoi.txt"
 ; vvv --- sp --- vvv
 Name: "{group}\What's new"; Languages: en; Filename: "{app}\whatsnew.txt"
@@ -94,9 +95,9 @@ Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Dragon UnPACKer 5"
 Name: "{group}\Uninstall"; Filename: "{uninstallexe}"
 
 [Run]
-Languages: en; Filename: "{app}\DrgUnPack5.exe"; Description: "Launch Dragon UnPACKer 5 to finish installation"; Flags: nowait postinstall skipifsilent
-Languages: fr; Filename: "{app}\DrgUnPack5.exe"; Description: "Lancer Dragon UnPACKer 5 pour finir l'installation"; Flags: nowait postinstall skipifsilent
-;Languages: sp; Filename: "{app}\DrgUnPack5.exe"; Description: "Lanzar Dragon UnPACKer 5 para terminar la instalacion"; Flags: nowait postinstall skipifsilent
+Languages: en; Filename: "{app}\DrgUnPack5.exe"; Parameters: "/lng"; Description: "Launch Dragon UnPACKer 5 to finish installation"; Flags: nowait postinstall skipifsilent
+Languages: fr; Filename: "{app}\DrgUnPack5.exe"; Parameters: "/lng"; Description: "Lancer Dragon UnPACKer 5 pour finir l'installation"; Flags: nowait postinstall skipifsilent
+;Languages: sp; Filename: "{app}\DrgUnPack5.exe"; Parameters: "/lng"; Description: "Lanzar Dragon UnPACKer 5 para terminar la instalacion"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 Type: files; Name: "{app}\DrgUnPack5.url"

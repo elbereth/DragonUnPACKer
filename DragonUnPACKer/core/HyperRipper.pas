@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.13 2008-04-19 17:54:21 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.14 2008-08-23 17:40:41 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -467,7 +467,7 @@ begin
 end;
 
 procedure TfrmHyperRipper.RunSearch(filename: String; slist: SearchList);
-var NumThreads: integer;
+//var NumThreads: integer;
     //cxCPU: TcxCPU;
 begin
 
@@ -605,7 +605,8 @@ begin
   Elem1 := Item1;
   Elem2 := Item2;
 
-  result := Elem2^.Offset - Elem1^.Offset;
+  // Bug fixed by Psych0phobiA (order was reversed)
+  result := Elem1^.Offset - Elem2^.Offset;
 
 end;
 

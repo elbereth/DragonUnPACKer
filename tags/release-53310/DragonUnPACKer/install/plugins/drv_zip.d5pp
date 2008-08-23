@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<DPS version="2">
+  <HEAD>
+    <NAME>InfoZip&apos;s ZIP Driver</NAME>
+    <URL>http://www.elberethzone.net</URL>
+    <AUTHOR>Alexandre Devilliers (aka Elbereth)</AUTHOR>
+    <COMMENT>Added a lot of supported file types thanks to Z0oMiK</COMMENT>
+    <VERSION>11140</VERSION>
+    <PACKFILENAME duppversion="2">E:\Developpement\drv_zip111.d5p</PACKFILENAME>
+    <CHECKDUP5VERSION use="-1" op="1">144</CHECKDUP5VERSION>
+    <THEME use="0"/>
+  </HEAD>
+  <FILES>
+    <FILE>
+      <PATH>E:\Developpement\dup-dev-5.1-compiled\data\drivers\drv_zip.d5d</PATH>
+      <OPTIONS storedatetime="-1" hidden="0" readonly="0" regsvr="0" updateonly="-1" compress="-1"/>
+      <INSTALLDIR basedir="2"/>
+      <INSTALLNAME>drv_zip.d5d</INSTALLNAME>
+    </FILE>
+    <FILE>
+      <PATH>E:\Developpement\dup-dev-5.1-compiled\data\drivers\unzip32.dll</PATH>
+      <OPTIONS storedatetime="-1" hidden="0" readonly="0" regsvr="0" updateonly="0" compress="-1"/>
+      <INSTALLDIR basedir="2"/>
+      <INSTALLNAME>unzip32.dll</INSTALLNAME>
+    </FILE>
+  </FILES>
+</DPS>

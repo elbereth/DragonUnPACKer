@@ -1,18 +1,19 @@
-Dragon UnPACKer v5.3.2 WIP                                  MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    19/04/2008
+Dragon UnPACKer v5.3.3 Beta                                 MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    23/08/2008
 ===============================================================================
 
-  ** NOTE: This is a Work In Progress build, use it at your own risk. Might
-           be unstable. You are warned! **
+  ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
+           use it at your own risk. Might be unstable. You were warned! **
 
   Documentation files are not updated since last stable release (v5.2.0b).
   
   New features in v5.3 (CVS branch HEAD) :
   - HyperRipper v5.5: Much more reliable AND faster!
       Fixed buffer to 128KB and rollback to 32 bytes (should be optimal)
+  - Previewing ability for images & textures.
   
   To Do until v5.4 stable release :
-  - Add previewing ability
+  - Nothing? Well make new features bug free (or as stable as possible)... :)
   
   Ideas for the future:
   - Add popup to select between different driver plugin when more than one
@@ -25,6 +26,56 @@ by Alexande "Elbereth" Devilliers                                    19/04/2008
 
 -------------------------------------------------------------------------------
 Main program version and versions history:
+
+Version 5.3.3.182
+Beta [23/08/2008]
+
+ i From now on I will not use WIP (Work In Progress) suffix for versions.
+   It will be:
+     Unstable:
+       Alpha
+       Beta
+       Release Candidate (RC)
+     Stable:
+       <Nothing> (ex: 5.2.0)
+       Release x (ex: 5.2.0 Release B or 5.2.0b)
+   I just don't understand why I was using the WIP (Work In Progress) suffix.
+   This was used (during 5.0.0 Alpha/Beta) on special (and very unstable) test
+   builds.
+ * Updated following libraries to latest versions:
+     Drag and Drop Component Suite Version v4.2
+     JEDI Code Library [JCL] v1.102.1 Build 3072
+     JEDI Visual Component Library [JVCL] v3.34
+ + Added display of library used (with version info) when the log verbose 
+   level is medium or high.
+ + Added JEDI Code Library info in the About windows.
+ + Added (finally) previewing ability for images!
+   It works by using Vampyre Imaging Library v0.24.2.
+   The speed is good (the previewing is fast, the extraction can be slow).
+   Therefore there is a threshold limit (in number of bytes) which trigger
+   preview or not (by default ~1M). This limit can be configured in the options
+   and can also be disabled.
+   It either displays full size or stretched/shrinked to fit preview pane size.
+ * Elbereth's Convert Driver v2.1.1 Beta:
+   + Using Vampyre Imaging Library v0.24.2
+   + Added .BMP support for most know formats (for previewing support).
+ ! Fixed HyperRipper form that wasn't showing modal when displayed after load
+   not possible by Drivers plugins.
+ * Improved loading time by displaying the main form first and then starting
+   to load all plugins.
+ * HyperRipper v5.5c:
+   ! Fixed HyperRipper bug (sorting bug) thanks to patch from Psych0phobiA.
+     This was leading to files being missed.
+ * Elbereth's HyperRipper 5.5 plugin v5.1.0 Release Candidate 1
+   + A gift (patch) from Psych0phobiA brings support for Truevision Targa TGA
+     RGB only.
+ * Elbereth's Main Driver v2.0.4:
+   + Added support for Entropia Universe .BNT.
+   + Added support for AGON .SFL
+     Thanks to http://wiki.xentax.com/index.php?title=GRAF:AGON_SFL
+     Still missing folders, I hope to understand how it works... Still it is
+     already working without the folders so...
+ 
 
 Version 5.3.2.178 WIP
 Release [19/04/2008]

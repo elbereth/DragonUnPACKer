@@ -90,7 +90,7 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=C:\Developpement\dup-dev-5.1-compiled\data\drivers
+OutputDir=E:\Developpement\dup-dev-5.1-compiled\data\drivers
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
@@ -101,7 +101,7 @@ DebugSourceDirs=
 UsePackages=0
 [Parameters]
 RunParams=
-HostApplication=C:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
+HostApplication=E:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
 Launcher=
 UseLauncher=0
 DebugCWD=
@@ -133,9 +133,14 @@ Comments=DUP5 - Unreal Tournament Packages Driver
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlUnitOutputDirectory]
-Count=1
-Item0=E:\Developpement\dup-dev-5.1-dcu
+[HistoryLists\hlSearchPath]
+Count=4
+Item0=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;..\..\..\Extras\Extensions;..\Common;..\..\..\Source\Extensions
+Item1=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;..\..\..\Extras\Extensions;..\Common
+Item2=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;..\..\..\Extras\Extensions
+Item3=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;
 [HistoryLists\hlOutputDirectorry]
-Count=1
-Item0=E:\Developpement\dup-compiled\tools\dlngcomp
+Count=3
+Item0=E:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
+Item1=E:\Developpement\dup-dev-5.1-compiled\data\convert
+Item2=..\..\Bin

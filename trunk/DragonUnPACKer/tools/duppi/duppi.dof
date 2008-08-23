@@ -111,7 +111,7 @@ AutoIncBuild=1
 MajorVer=2
 MinorVer=2
 Release=0
-Build=64
+Build=65
 Debug=0
 PreRelease=0
 Special=0
@@ -122,21 +122,31 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone
 FileDescription=Duppi - The DUP5 Package Installer.
-FileVersion=2.2.0.64
+FileVersion=2.2.0.65
 InternalName=Duppi
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=duppi.exe
 ProductName=Duppi
-ProductVersion=5.3.2
+ProductVersion=5.3.3
 Comments=Duppi - The DUP5 Package Installer.
+[Excluded Packages]
+C:\Program Files\RemObjects Software\Everwood\Bin\RemObjects_Everwood_D7.bpl=RemObjects Everwood for Delphi
+P:\Program Files\Pascal Script for Delphi\Dcu\D7\PascalScript_Core_D7.bpl=RemObjects Pascal Script - Core Package
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlUnitOutputDirectory]
-Count=1
-Item0=E:\Developpement\dup-dev-5.1-dcu
+[HistoryLists\hlSearchPath]
+Count=5
+Item0=E:\Developpement\dup-HEAD-2008\DragonUnPACKer
+Item1=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;..\..\..\Extras\Extensions;..\Common;..\..\..\Source\Extensions
+Item2=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;..\..\..\Extras\Extensions;..\Common
+Item3=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;..\..\..\Extras\Extensions
+Item4=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;
 [HistoryLists\hlOutputDirectorry]
-Count=2
+Count=5
 Item0=E:\Developpement\dup-dev-5.1-compiled\utils
-Item1=E:\Developpement\dup-compiled\tools\dlngcomp
+Item1=E:\Developpement\dup-dev-5.1-compiled
+Item2=E:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
+Item3=E:\Developpement\dup-dev-5.1-compiled\data\convert
+Item4=..\..\Bin

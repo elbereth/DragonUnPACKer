@@ -1,6 +1,6 @@
 unit spec_DULK;
 
-// $Id: spec_DULK.pas,v 1.2 2008-04-16 21:02:44 elbereth Exp $
+// $Id: spec_DULK.pas,v 1.3 2008-08-23 17:45:46 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/spec_DULK.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -52,7 +52,7 @@ type
    end;
 
 const DULK_Version : Byte = 1;
-      DULK_IndexNum : Integer = 50;  // 50 entries needed in current version of Dragon UnPACKer
+      DULK_IndexNum : Integer = 51;  // 51 entries needed in current version of Dragon UnPACKer (5.3.3 Beta+)
 
 implementation
 

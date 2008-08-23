@@ -1,5 +1,5 @@
 Dragon UnPACKer 5.3.3 Beta Source Code                          MPL open source
-by Alexande "Elbereth" Devilliers                                    15/08/2008
+by Alexande "Elbereth" Devilliers                                    23/08/2008
 ===============================================================================
 
 This source code can be used and modified if following the Mozilla Public

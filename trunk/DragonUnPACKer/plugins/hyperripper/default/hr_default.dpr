@@ -18,6 +18,8 @@ uses
 {$R *.res}
 {$R-}
 
+{$Include datetime.inc}
+
 const HR_TYPE_ERROR = -1;
       HR_TYPE_UNKNOWN = 0;
       HR_TYPE_AUDIO = 1;
@@ -413,6 +415,27 @@ type FormatsListElem = record
        ViR: byte;
        ViT: byte;
      end;
+     TGAHeader = packed record
+       IDSize: byte;
+       CMapType: byte;
+       ImageType: byte;
+       CMapStart: word;
+       CMapSize: word;
+       CMapBits: byte;
+       XOrigin: word;
+       YOrigin: word;
+       Width: word;
+       Height: word;
+       Bits: byte;
+       Descriptor: byte;
+     end;
+     TGAFooter = packed record
+       ExtAreaOffset: integer;
+       DevDirOffset: integer;
+       Signature: array[0..15] of char;
+       Dot: char;
+       NullTerminator: byte;
+     end;
 
 type
   TPercentCallback = procedure (p: byte);
@@ -447,10 +470,13 @@ var Percent: TPercentCallback;
   * 51012 Fixed MPEG Audio search (using posbuf again instead of BMFind)
   * 51013 Fixed possible error in BMFind function
   *       Added file size check to avoid false positives
+  * 51021 Added TGA (RGB) support (patch from Psych0phobiA)
   * }
 
-const DRIVER_VERSION = 51013;
-      HR_VERSION = 55042;
+const DRIVER_VERSION = 51021;
+      HR_VERSION = 55043;
+      CVS_REVISION = '$Revision: 1.10 $';
+      CVS_DATE = '$Date: 2008-08-23 17:20:33 $';
 
 function BigToLittle2(src: array of byte): word;
 begin
@@ -606,7 +632,7 @@ begin
   lngEXIMG := DLNGstr('HRTIMG');
   lngEXVID := DLNGstr('HRTVID');
 
-  result.NumFormats := 22;
+  result.NumFormats := 23;
   result.FormatsList[1].GenType := HR_TYPE_AUDIO;
   result.FormatsList[1].Format := 'WAVE';
   result.FormatsList[1].Desc := 'Wave/RIFF';
@@ -719,6 +745,13 @@ begin
   result.FormatsList[22].Desc := 'DirectX Texture';
   result.FormatsList[22].ID := 3007;
   result.FormatsList[22].IsConfig := False;
+  // TGA RGB by Psych0phobiA -- Start //
+  result.FormatsList[23].GenType := HR_TYPE_IMAGE;
+  result.FormatsList[23].Format := 'TGA';
+  result.FormatsList[23].Desc := 'TrueVision Targa (RGB)';
+  result.FormatsList[23].ID := 3008;
+  result.FormatsList[23].IsConfig := False;
+  // TGA RGB by Psych0phobiA -- End //
 
 end;
 
@@ -1107,6 +1140,51 @@ begin
                   inc(tmpRes,4);
                 end;
               end;
+        // TGA RGB search by Psych0phobiA -- Start //
+        3008: begin
+                tmpRes := posBuf(0,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  if (tmpRes > (bufSize - 17)) then
+                    tmpRes := -1
+                  else
+                  begin
+                    if (buffer^[tmpRes+1] = 0)
+                    and (buffer^[tmpRes+2] = 2)
+                    and (buffer^[tmpRes+3] = 0)
+                    and (buffer^[tmpRes+4] = 0)
+                    and (buffer^[tmpRes+5] = 0)
+                    and (buffer^[tmpRes+6] = 0)
+                    and ( (buffer^[tmpRes+7] = 0)
+                       or (buffer^[tmpRes+7] = 15)
+                       or (buffer^[tmpRes+7] = 16)
+                       or (buffer^[tmpRes+7] = 24)
+                       or (buffer^[tmpRes+7] = 32) )
+                    and (buffer^[tmpRes+8] = 0)
+                    and (buffer^[tmpRes+9] = 0)
+                    and (buffer^[tmpRes+10] = 0)
+                    and (buffer^[tmpRes+11] = 0)
+                    and ( (buffer^[tmpRes+12] <> 0)
+                       or (buffer^[tmpRes+13] <> 0) )
+                    and ( (buffer^[tmpRes+14] <> 0)
+                       or (buffer^[tmpRes+15] <> 0) )
+                    and ( (buffer^[tmpRes+16] = 8)
+                       or (buffer^[tmpRes+16] = 16)
+                       or (buffer^[tmpRes+16] = 24)
+                       or (buffer^[tmpRes+16] = 32) )
+                    then
+                    begin
+                      // Add found offset to the list
+                      result.Add(tmpRes);
+                      // Next searchable offset is 17 bytes after the one found
+                      inc(tmpRes,17);
+                    end
+                    else
+                      inc(tmpRes, 1);
+                  end;
+                end;
+              end;
+        // TGA RGB search by Psych0phobiA -- End //
       end;
 
     end;
@@ -1179,6 +1257,11 @@ var buf1, buf2: array[1..4] of char;
     DDSH: DDSHeader;
 
     mustBeStart: boolean;
+
+    // TGA RGB searchFile by Psych0phobiA -- Start //
+    TGAH: TGAHeader;
+    TGAF: TGAFooter;
+    // TGA RGB searchFile by Psych0phobiA -- End //
 
     szFind: array [0..255] of char;
 
@@ -2047,6 +2130,29 @@ begin
                 result.GenType := HR_TYPE_IMAGE;
               end;
           end;
+    // TGA RGB searchFile by Psych0phobiA -- Start //
+    3008: begin
+            FileSeek(handle,offset,0);
+            FileRead(handle,TGAH,SizeOf(TGAHeader));
+            //Sanity check --
+            //Next values represent the largest valid screen dimensions
+            if (TGAH.Width <= 2560) and
+               (TGAH.Height <= 2048) then
+            begin
+                Size := TGAH.Width * TGAH.Height * TGAH.Bits div 8;
+                FileSeek(handle,size,1);
+                FileRead(handle,TGAF,SizeOf(TGAFooter));
+                if (TGAF.Signature = 'TRUEVISION-XFILE')
+                and (TGAF.Dot = '.')
+                and (TGAF.NullTerminator = 0) then
+                  Inc(Size,Sizeof(TGAFooter));
+                result.Offset := offset;
+                result.Size := Size + SizeOf(TGAHeader);
+                result.Ext := 'tga';
+                result.GenType := HR_TYPE_IMAGE;
+            end;
+          end;
+    // TGA RGB searchFile by Psych0phobiA -- End //
 
   else
     result.Offset := -1;
@@ -2112,8 +2218,10 @@ procedure AboutBox; stdcall;
 begin
 
   MessageBoxA(AHandle, PChar('Elbereth''s HyperRipper plugin v'+getVersion(DRIVER_VERSION)+#10+
-                          '(c)Copyright 2002-2008 Alexandre Devilliers'+#10+#10+
-                          'Designed for HyperRipper v'+getVersion(HR_VERSION)
+                          'Created by Alexandre Devilliers (aka Elbereth/Piecito)'+#10+#10+
+                          'Designed for HyperRipper v'+getVersion(HR_VERSION)+#10+
+                          'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+
+                          'Based on CVS rev '+getCVSRevision(CVS_REVISION)+' ('+getCVSDate(CVS_DATE)+')'
                           )
                         , 'About Elbereth''s HyperRipper plugin...', MB_OK);
 

@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.9 2008-04-19 18:11:31 elbereth Exp $
+// $Id: Translation.pas,v 1.10 2008-08-23 17:42:36 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -56,6 +56,7 @@ begin
     MenuOptions_Plugins.Caption := DLNGStr('MNU2S6');
     MenuOptions_Advanced.Caption := DLNGStr('MNU2S7');
     MenuOptions_Log.Caption := DLNGStr('MNU2S8');
+    MenuOptions_Preview.Caption := DLNGStr('MNU2S9');
     menuEdit.Caption := DLNGStr('MNU4');
     menuEdit_Search.Caption := DLNGStr('MNU4S1');
     menuAbout.Caption := DLNGStr('MNU3');
@@ -74,6 +75,17 @@ begin
     menuIndex_Infos.Caption := DLNGStr('POP2S3');
     menuIndex_Expand.Caption := DLNGStr('POP2S4');
     menuIndex_Collapse.Caption := DLNGStr('POP2S5');
+
+    menuPreview_Hide.Caption := DLNGStr('POP4S1');
+    menuPreview_DisplayMode.Caption := DLNGStr('POP5S1');
+    menuPreview_Display_Full.Caption := DLNGStr('POP5S2');
+    menuPreview_Display_Stretched.Caption := DLNGStr('POP5S3');
+    menuPreview_Options.Caption := DLNGStr('POP5S4');
+
+    menuStatus_PreviewHide.Caption := DLNGStr('POP4S1');
+    menuStatus_PreviewShow.Caption := DLNGStr('POP4S2');
+    menuStatus_LogHide.Caption := DLNGStr('POP3S2');
+    menuStatus_LogShow.Caption := DLNGStr('POP3S1');
 
     menuLog_Show.Caption := DLNGstr('POP3S1');
     menuLog_Hide.Caption := DLNGstr('POP3S2');
@@ -237,6 +249,7 @@ begin
     treeConfig.Items.Item[6].Text := 'HyperRipper';
     treeConfig.Items.Item[7].Text := DLNGStr('OPT300');
     treeConfig.Items.Item[8].Text := DLNGStr('OPT400');
+    treeConfig.Items.Item[9].Text := DLNGStr('OPT900');
 
     grpLanguage.Caption := DLNGStr('OPT110');
     grpLanguage.Font.Name := GetFont();
@@ -463,6 +476,42 @@ begin
     lstBufferSize.Items[11] := ReplaceValue('%d',DLNGStr('OPT034'),'512');
     lstBufferSize.Items[12] := ReplaceValue('%d',DLNGStr('OPT035'),'1');
 
+    grpPreviewBasic.Caption := DLNGStr('OPT910');
+    grpPreviewBasic.Font.Name := GetFont();
+
+    chkPreviewEnable.Caption := DLNGStr('OPT911');
+    chkPreviewEnable.Font.Name := GetFont();
+
+    grpPreviewLimits.Caption := DLNGStr('OPT920');
+    grpPreviewLimits.Font.Name := GetFont();
+
+    optPreviewLimitNo.Caption := DLNGStr('OPT921');
+    optPreviewLimitNo.Font.Name := GetFont();
+
+    optPreviewLimitYes.Caption := DLNGStr('OPT922');
+    optPreviewLimitYes.Font.Name := GetFont();
+
+    lblPreviewLimit.Caption := DLNGStr('OPT923');
+    lblPreviewLimit.Font.Name := GetFont();
+
+    lstPreviewLimit.Items[0] := DLNGStr('OPT924');
+    lstPreviewLimit.Items[1] := DLNGStr('OPT925');
+    lstPreviewLimit.Items[2] := DLNGStr('OPT926');
+    lstPreviewLimit.Items[3] := DLNGStr('OPT927');
+    lstPreviewLimit.Items[4] := DLNGStr('OPT928');
+    lstPreviewLimit.Font.Name := GetFont();
+
+    lblPreviewLimitBytes.Caption := DLnGStr('HR4012');
+    lblPreviewLimitBytes.Font.Name := GetFont();
+
+    grpPreviewDisplay.Caption := DLNGStr('OPT940');
+    grpPreviewDisplay.Font.Name := GetFont();
+
+    optPreviewDisplayFull.Caption := DLNGStr('POP5S2');
+    optPreviewDisplayFull.Font.Name := GetFont();
+    optPreviewDisplayStretch.Caption := DLNGStr('POP5S3');
+    optPreviewDisplayStretch.Font.Name := GetFont();
+
     trackbarVerboseUpdateHint;
 
   end;
@@ -478,6 +527,8 @@ begin
     Caption := DLNGStr('SCHTIT');
     cmdSearch.Caption := DLNGStr('BUTGO');
     cmdSearch.Font.Name := getFont();
+    cmdOk.Caption := DLNGStr('BUTOK');
+    cmdOk.Font.Name := getFont();
     GroupBox.Caption := DLNGStr('SCHGRP');
     GroupBox.Font.Name := getFont();
     CheckCase.Caption := DLNGStr('SCH001');

@@ -1,6 +1,6 @@
 unit Search;
 
-// $Id: Search.pas,v 1.1.1.1 2004-05-08 10:25:50 elbereth Exp $
+// $Id: Search.pas,v 1.2 2008-08-23 17:42:36 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Search.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -31,10 +31,12 @@ type
     CheckCase: TCheckBox;
     RadioTout: TRadioButton;
     RadioDirOnly: TRadioButton;
+    cmdOk: TButton;
     procedure cmdSearchClick(Sender: TObject);
     procedure CheckCaseClick(Sender: TObject);
     procedure RadioToutClick(Sender: TObject);
     procedure RadioDirOnlyClick(Sender: TObject);
+    procedure cmdOkClick(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -121,6 +123,13 @@ begin
   Finally
     Reg.Free;
   end;
+
+end;
+
+procedure TfrmSearch.cmdOkClick(Sender: TObject);
+begin
+
+  close;
 
 end;
 

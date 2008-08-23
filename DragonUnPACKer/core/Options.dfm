@@ -1,6 +1,6 @@
 object frmConfig: TfrmConfig
-  Left = 199
-  Top = 241
+  Left = 256
+  Top = 546
   BorderStyle = bsToolWindow
   Caption = 'Configuration'
   ClientHeight = 295
@@ -917,7 +917,6 @@ object frmConfig: TfrmConfig
         Width = 425
         Height = 65
         BevelOuter = bvLowered
-        Caption = 'panPluginsConvert'
         TabOrder = 0
         object lblPluginsConvertInfo: TLabel
           Left = 1
@@ -939,7 +938,6 @@ object frmConfig: TfrmConfig
         Width = 425
         Height = 65
         BevelOuter = bvLowered
-        Caption = 'panPluginsConvert'
         TabOrder = 1
         object lblPluginsDriversInfo: TLabel
           Left = 1
@@ -962,7 +960,6 @@ object frmConfig: TfrmConfig
         Width = 425
         Height = 49
         BevelOuter = bvLowered
-        Caption = 'panPluginsConvert'
         TabOrder = 2
         object lblPluginsHyperRipperInfo: TLabel
           Left = 1
@@ -1333,7 +1330,7 @@ object frmConfig: TfrmConfig
     OnChange = treeConfigChange
     OnKeyDown = FormKeyDown
     Items.Data = {
-      040000001E0000000500000005000000FFFFFFFFFFFFFFFF0000000002000000
+      050000001E0000000500000005000000FFFFFFFFFFFFFFFF0000000002000000
       054261736963210000000F0000000F000000FFFFFFFFFFFFFFFF000000000000
       000008416476616E6365641C0000001000000010000000FFFFFFFFFFFFFFFF00
       00000000000000034C6F67200000000600000006000000FFFFFFFFFFFFFFFF00
@@ -1343,7 +1340,143 @@ object frmConfig: TfrmConfig
       000000FFFFFFFFFFFFFFFF00000000000000000B48797065725269707065721D
       0000000800000008000000FFFFFFFFFFFFFFFF0000000000000000044C6F6F6B
       250000000700000007000000FFFFFFFFFFFFFFFF00000000000000000C417373
-      6F63696174696F6E73}
+      6F63696174696F6E73200000001100000011000000FFFFFFFFFFFFFFFF000000
+      00000000000750726576696577}
+  end
+  object tabPreview: TPanel
+    Left = 183
+    Top = 6
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 11
+    Visible = False
+    object grpPreviewBasic: TGroupBox
+      Left = 0
+      Top = 0
+      Width = 441
+      Height = 41
+      Caption = 'Preview Options'
+      TabOrder = 0
+      object chkPreviewEnable: TCheckBox
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Enable preview'
+        Checked = True
+        State = cbChecked
+        TabOrder = 0
+        OnClick = chkPreviewEnableClick
+      end
+    end
+    object grpPreviewLimits: TGroupBox
+      Left = 0
+      Top = 48
+      Width = 441
+      Height = 89
+      Caption = 'Preview Size Limits'
+      TabOrder = 1
+      object lblPreviewLimit: TLabel
+        Left = 24
+        Top = 59
+        Width = 73
+        Height = 13
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Limit:'
+      end
+      object lblPreviewLimitBytes: TLabel
+        Left = 384
+        Top = 59
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'Bytes'
+      end
+      object txtPreviewLimitSize: TLabel
+        Left = 296
+        Top = 59
+        Width = 81
+        Height = 13
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = '1048576'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object optPreviewLimitNo: TRadioButton
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Do not limit size of detected files (not recommended)'
+        TabOrder = 0
+        OnClick = optPreviewLimitNoClick
+      end
+      object optPreviewLimitYes: TRadioButton
+        Left = 8
+        Top = 32
+        Width = 425
+        Height = 17
+        Caption = 'Limit detection of files that can be previewed (recommended)'
+        Checked = True
+        TabOrder = 1
+        TabStop = True
+        OnClick = optPreviewLimitYesClick
+      end
+      object lstPreviewLimit: TComboBox
+        Left = 104
+        Top = 56
+        Width = 185
+        Height = 21
+        AutoComplete = False
+        Style = csDropDownList
+        ItemHeight = 13
+        ItemIndex = 2
+        TabOrder = 2
+        Text = 'Medium (Recommended)'
+        OnChange = lstPreviewLimitChange
+        Items.Strings = (
+          'Very Low'
+          'Low'
+          'Medium (Recommended)'
+          'High'
+          'Very High')
+      end
+    end
+    object grpPreviewDisplay: TGroupBox
+      Left = 0
+      Top = 144
+      Width = 441
+      Height = 57
+      Caption = 'Preview Display Mode'
+      TabOrder = 2
+      object optPreviewDisplayFull: TRadioButton
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Original size with scrollbars (if needed)'
+        Checked = True
+        TabOrder = 0
+        TabStop = True
+        OnClick = optPreviewDisplayFullClick
+      end
+      object optPreviewDisplayStretch: TRadioButton
+        Left = 8
+        Top = 32
+        Width = 425
+        Height = 17
+        Caption = 'Shrinked/Streched to preview panel'
+        TabOrder = 1
+        OnClick = optPreviewDisplayStretchClick
+      end
+    end
   end
   object imgLstLangue: TImageList
     BlendColor = clBlack

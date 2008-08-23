@@ -1,6 +1,6 @@
 object frmHyperRipper: TfrmHyperRipper
-  Left = 431
-  Top = 589
+  Left = 217
+  Top = 542
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'HyperRipper'
@@ -12,6 +12,7 @@ object frmHyperRipper: TfrmHyperRipper
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
+  FormStyle = fsStayOnTop
   OldCreateOrder = False
   Position = poMainFormCenter
   OnClose = FormClose
@@ -1262,7 +1263,7 @@ object frmHyperRipper: TfrmHyperRipper
     Top = 8
     Width = 417
     Height = 297
-    ActivePage = tabAbout
+    ActivePage = tabSearch
     TabOrder = 0
     object tabAbout: TTabSheet
       Caption = 'A Propos..'

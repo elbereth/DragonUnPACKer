@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.7 2008-04-19 17:53:33 elbereth Exp $
+// $Id: classFSE.pas,v 1.8 2008-08-23 17:42:36 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -1269,8 +1269,8 @@ begin
   Save_Cursor := Screen.Cursor;
   SaveTitle;
   SetTitle(DLNGStr('XTRCAP'));
-  SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entry^.name));
-  ShowPanelEx;
+  if not(silent) then
+    SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entry^.name));
   Screen.Cursor := crHourGlass;    { Affiche le curseur en forme de sablier }
   try
     //GetListElem(entrynam,Offset,Size,DataX,DataY);
@@ -1279,7 +1279,6 @@ begin
     Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
     SetStatus('-');
     RestoreTitle;
-    HidePanelEx;
   end;
 
 end;
@@ -1296,7 +1295,7 @@ begin
   Save_Cursor := Screen.Cursor;
   SaveTitle;
   SetTitle(DLNGStr('XTRCAP'));
-  ShowPanelEx;
+//  ShowPanelEx;
   Screen.Cursor := crHourGlass;    { Affiche le curseur en forme de sablier }
   try
 
@@ -1356,7 +1355,7 @@ begin
   finally
     Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
     SetStatus('-');
-    HidePanelEx;
+//    HidePanelEx;
     RestoreTitle;
   end;
 
@@ -1374,7 +1373,8 @@ begin
     if @Drivers[CurrentDriver].ExtractFile <> Nil then
     begin
       Drivers[CurrentDriver].ExtractFile(outfile,entrynam,offset,size,datax,datay,silent);
-      dup5Main.appendLog(DLNGStr('LOG510'));
+      if not(silent) then
+        dup5Main.appendLog(DLNGStr('LOG510'));
     end
     else
     begin
@@ -1394,7 +1394,8 @@ begin
       BinCopyToStream(CurrentFile,tmpStm,Offset,Size,0,getBufferSize(),silent,percent);
       tmpStm.Free;
       FileClose(dst);
-      dup5Main.appendLog(DLNGStr('LOG510'));
+      if not(silent) then
+        dup5Main.appendLog(DLNGStr('LOG510'));
     end;
   end;
  except
@@ -1437,7 +1438,8 @@ begin
     if @Drivers[CurrentDriver].ExtractFileToStream <> Nil then
     begin
       Drivers[CurrentDriver].ExtractFileToStream(outstream,entrynam,offset,size,datax,datay,silent);
-      dup5Main.appendLog(DLNGStr('LOG510'));
+      if not(silent) then
+        dup5Main.appendLog(DLNGStr('LOG510'));
     end
     else
     begin
@@ -1450,7 +1452,8 @@ begin
   else
   begin
     BinCopyToStream(CurrentFile,outstream,Offset,Size,0,getBufferSize(),silent,percent);
-    dup5Main.appendLog(DLNGStr('LOG510'));
+    if not(silent) then
+      dup5Main.appendLog(DLNGStr('LOG510'));
   end;
  except
   on E: Exception do
@@ -2295,8 +2298,8 @@ begin
   Save_Cursor := Screen.Cursor;
   SaveTitle;
   SetTitle(DLNGStr('XTRCAP'));
-  SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entry^.name));
-  ShowPanelEx;
+  if not(silent) then
+    SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entry^.name));
   Screen.Cursor := crHourGlass;    { Affiche le curseur en forme de sablier }
   try
     if (CurrentDriver <> -1) and Drivers[CurrentDriver].GetDriver.ExtractInternal and (Drivers[CurrentDriver].DUDIVersion < 4) then
@@ -2315,7 +2318,6 @@ begin
     Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
     SetStatus('-');
     RestoreTitle;
-    HidePanelEx;
   end;
 
 end;

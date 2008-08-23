@@ -1,6 +1,6 @@
 # Language Source File (pour DLNGC v4.0)
 # ============================================================================
-#  Programme: Dragon UnPACKer v5.3.3 WIP
+#  Programme: Dragon UnPACKer v5.3.3 Beta
 #     Langue: English
 #    Version: 11
 #     Auteur: Alex Devilliers
@@ -190,7 +190,7 @@ INFO11=Format:
 INFO12=Entrées: 
 INFO13=Taille: 
 INFO14=Chargement: 
-INFO20=Nom du plugin'
+INFO20=Nom du plugin
 INFO21=Version
 INFO22=Informations Avancées
 INFO23=Ver.Int.:
@@ -601,8 +601,8 @@ LOG200=Fermeture fichier actuel...
 LOG300=Affichage des entrées du répertoire "%d"...
 LOG301=%e entrée(s)... 
 LOG400=Utilisation de la détection intelligente du format du fichier source. 
-LOG500=Le plugin Driver "%d" pense pouvoir ouvrir ce fichier.'
-LOG501=Ouverture du fichier en utilisant le plugin "%d"...'
+LOG500=Le plugin Driver "%d" pense pouvoir ouvrir ce fichier.
+LOG501=Ouverture du fichier en utilisant le plugin "%d"...
 LOG502=Récupération de %x entrée(s)...
 LOG503=Récupération des répertoires...
 LOG504=Fichier ouvert grâce au plugin "%p" (format détecté: "%f")

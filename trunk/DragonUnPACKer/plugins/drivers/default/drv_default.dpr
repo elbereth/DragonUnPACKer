@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.32 2008-05-31 07:12:22 elbereth Exp $
+// $Id: drv_default.dpr,v 1.33 2008-08-23 17:14:42 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -163,6 +163,7 @@ type FSE = ^element;
                  Added support for Sinking Island/L'Ile Noyée .OPK files
     20271        Added support for Starsiege: Tribes .VOL files (which was supposed to be already supported...)
     20340        Added support for Entropia Universe .BNT files
+    20440        Added support for AGON .SFL files (still needs more work but usable)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1325,10 +1326,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 20340;
+  DRIVER_VERSION = 20440;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.32 $';
-  CVS_DATE = '$Date: 2008-05-31 07:12:22 $';
+  CVS_REVISION = '$Revision: 1.33 $';
+  CVS_DATE = '$Date: 2008-08-23 17:14:42 $';
   BUFFER_SIZE = 8192;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1404,8 +1405,8 @@ begin
   GetDriverInfo.Name := 'Elbereth''s Main Driver';
   GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 79 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 66;
+  GetDriverInfo.Comment := 'This driver support 80 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.NumFormats := 68;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -1540,6 +1541,8 @@ begin
   GetDriverInfo.Formats[66].Name := 'Sinking Island (*.OPK)|L''Ile Noyée (*.OPK)';
   GetDriverInfo.Formats[67].Extensions := '*.BNT';
   GetDriverInfo.Formats[67].Name := 'Entropia Universe (*.BNT)';
+  GetDriverInfo.Formats[68].Extensions := '*.SFL';
+  GetDriverInfo.Formats[68].Name := 'AGON: The Lost Sword of Toledo (*.SFL)';
 //  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
 //  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -2197,6 +2200,137 @@ begin
     DrvInfo.ExtractInternal := False;
 
   end;
+
+end;
+
+// AGON .SFL
+// Support added thanks to the Xentax wiki page:
+// http://wiki.xentax.com/index.php?title=GRAF:AGON_SFL
+type SFLHeader = packed record
+       ID: array[0..4] of char;                // SFL10
+       FoldersDirOffset: integer;              //
+       FilesDirOffset: integer;                //
+       FilenameDirOffset: integer;             //
+       NumberOfFolders: integer;               //
+       NumberOfFiles: integer;                 //
+       FilenameDirLength: integer;             //
+     end;
+
+function ReadAgonSFL(src: string): Integer;
+var HDR: SFLHeader;
+    NameOffset, FileID, ParentID, UnkID, Offset, Size, TotSize, x, y: Integer;
+    foldersBuffer, filesBuffer, nameBuffer: TMemoryStream;
+    handle_stm: THandleStream;
+    dirNames: array of string;
+    nameStr: string;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    TotSize := FileSeek(Fhandle, 0, 2);
+    FileSeek(Fhandle,0,0);
+    FileRead(FHandle, HDR, SizeOf(SFLHeader));
+
+    // Some verifications of the header to be sure it is an AGON .SFL file
+    if (HDR.ID <> 'SFL10') or (HDR.FoldersDirOffset > TotSize) or (HDR.FilesDirOffset > TotSize) or ((HDR.FilenameDirOffset + HDR.FilenameDirLength) > TotSize) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'SFL10';
+      ErrInfo.Games := 'AGON';
+    end
+    else
+    begin
+
+      // Create a HandleStream from the source file
+      handle_stm := THandleStream.Create(Fhandle);
+
+      // Seek to the Folders Directory Offset
+      handle_stm.Seek(HDR.FoldersDirOffset,soFromBeginning);
+
+      // Create the Folders Directory buffer stream
+      foldersBuffer := TMemoryStream.Create;
+
+      // Read the complete folders directory to the buffer
+      foldersBuffer.CopyFrom(handle_stm,(HDR.NumberOfFolders * 16)-4);
+
+      // Seek to the Files Directory Offset
+      handle_stm.Seek(HDR.FilesDirOffset,soFromBeginning);
+
+      // Create the Files Directory buffer stream
+      filesBuffer := TMemoryStream.Create;
+
+      // Read the complete files directory to the buffer
+      filesBuffer.CopyFrom(handle_stm,(HDR.NumberOfFiles * 17));
+
+      // Seek to the Name Directory Offset
+      handle_stm.Seek(HDR.FilenameDirOffset,soFromBeginning);
+
+      // Create the Names Directory buffer stream
+      nameBuffer := TMemoryStream.Create;
+
+      // Read the complete names directory to the buffer
+      nameBuffer.CopyFrom(handle_stm,HDR.FilenameDirLength);
+
+      foldersBuffer.Seek(0,0);
+      filesBuffer.Seek(0,0);
+      nameBuffer.Seek(0,0);
+
+{      setLength(dirNames,HDR.NumberOfFolders);
+
+      for x := 0 to HDR.NumberOfFolders-1 do
+      begin
+        dirNames[x] := '';
+      end;
+
+      for x := 1 to HDR.NumberOfFolders do
+      begin
+        foldersBuffer.Read(NameOffset,4);
+        nameBuffer.Seek(NameOffset,0);
+        nameStr := strip0(get0_Stream(nameBuffer));
+        dirNames[x-1] := dirNames[x-1]+'-'+nameStr;
+        foldersBuffer.Read(FileID,4);
+        foldersBuffer.Read(ParentID,4);
+        if x <> HDR.NumberOfFolders then
+        begin
+          foldersBuffer.Read(UnkID,4);
+        end
+        else
+          UnkID := -2;
+        for y := 1 to ParentID do
+          dirNames[x+y-1] := dirNames[x-1];
+        FSE_Add('FOLDERS\'+dirNames[x-1]+' '+inttostr(FileID)+' '+inttostr(ParentID)+' '+inttostr(UnkID),x,1,-1,-1);
+      end;}
+
+      for x := 1 to HDR.NumberOfFiles do
+      begin
+
+        filesBuffer.Read(NameOffset,4);
+        filesBuffer.Seek(1,1);
+        nameBuffer.Seek(NameOffset,0);
+        nameStr := strip0(get0_Stream(nameBuffer));
+        filesBuffer.Read(FileID,4);
+        filesBuffer.Read(Offset,4);
+        filesBuffer.Read(Size,4);
+        FSE_Add(nameStr,offset,Size,FileID,-1);
+      end;
+
+      result := HDR.NumberOfFiles;
+
+      DrvInfo.ID := 'SFL10';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end
+  else
+    Result := -2;
 
 end;
 
@@ -10023,7 +10157,14 @@ begin
       // Dreamfall: The Longest Journey
       else if ID12 = 'tlj_pack0001' then
       begin
+        Fileclose(Fhandle);
         Result := ReadDreamfallTLJPAK(fil);
+      end
+      // AGON .SFL file
+      else if (ID4 = 'SFL1') and (ID6[4] = '0') then
+      begin
+        Fileclose(Fhandle);
+        Result := ReadAgonSFL(fil);
       end
       else if ID8 = 'LiOnHeAd' then
       begin
@@ -10369,6 +10510,8 @@ begin
       ReadFormat := ReadPostalSAK(fil)
     else if ext = 'SDT' then
       ReadFormat := ReadDungeonKeeper2SDT(fil)
+    else if ext = 'SFL' then
+      ReadFormat := ReadAgonSFL(fil)
     else if ext = 'SIN' then
       ReadFormat := ReadSinSIN(fil)
     else if ext = 'SLF' then
@@ -10596,6 +10739,9 @@ begin
       Result := true
     // FEAR .ARCH00 file
     else if (ID4 = 'LTAR') then
+      Result := true
+    // AGON .SFL file
+    else if (ID4 = 'SFL1') and (ID6[4] = '0') then
       Result := true
     else if ID12 = GRPID then
       Result := true
@@ -10852,6 +10998,8 @@ begin
     else if ext = 'SAK' then
       IsFormat := True
     else if ext = 'SDT' then
+      IsFormat := True
+    else if ext = 'SFL' then
       IsFormat := True
     else if ext = 'SIN' then
       IsFormat := True

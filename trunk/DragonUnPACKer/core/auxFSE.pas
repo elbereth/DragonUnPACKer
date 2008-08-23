@@ -1,6 +1,6 @@
 unit auxFSE;
 
-// $Id: auxFSE.pas,v 1.3 2005-12-13 07:13:56 elbereth Exp $
+// $Id: auxFSE.pas,v 1.4 2008-08-23 17:42:36 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/auxFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -61,8 +61,6 @@ procedure RestoreTitle;
 procedure SaveTitle;
 procedure SetTitle(st: String);
 procedure SetTitleDefault();
-procedure ShowPanelEx;
-procedure HidePanelEx;
 procedure SetPanelEx(st: string);
 procedure DisplayPercent(value: integer);
 function GetDirCache(CurDir: string): TDirCache;
@@ -466,27 +464,9 @@ begin
 
 end;
 
-procedure ShowPanelEx;
-begin
-
-//  dup5Main.PanelStatusEx.Width :=
-  dup5Main.PanelStatusEx.Visible := not(dup5Main.richLog.Visible);
-  dup5Main.Refresh;
-
-end;
-
-procedure HidePanelEx;
-begin
-
-  dup5Main.PanelStatusEx.Visible := False;
-  dup5Main.Refresh;
-
-end;
-
 procedure SetPanelEx(st: string);
 begin
 
-  dup5Main.PanelStatusEx.Caption := st;
   dup5Main.writeLog(st);
   dup5Main.Refresh;
 

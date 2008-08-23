@@ -4,7 +4,7 @@ object frmSearch: TfrmSearch
   BorderStyle = bsToolWindow
   Caption = 'Rechercher'
   ClientHeight = 147
-  ClientWidth = 297
+  ClientWidth = 352
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -18,7 +18,7 @@ object frmSearch: TfrmSearch
   object GroupBox: TGroupBox
     Left = 8
     Top = 40
-    Width = 281
+    Width = 337
     Height = 81
     Caption = 'Options'
     TabOrder = 0
@@ -72,12 +72,22 @@ object frmSearch: TfrmSearch
   object StatusBar: TStatusBar
     Left = 0
     Top = 128
-    Width = 297
+    Width = 352
     Height = 19
     Panels = <
       item
         Alignment = taCenter
         Width = 50
       end>
+  end
+  object cmdOk: TButton
+    Left = 296
+    Top = 8
+    Width = 51
+    Height = 21
+    Caption = 'Exit'
+    Default = True
+    TabOrder = 4
+    OnClick = cmdOkClick
   end
 end

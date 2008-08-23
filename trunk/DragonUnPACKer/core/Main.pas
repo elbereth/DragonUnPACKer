@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.12 2008-08-15 19:06:02 elbereth Exp $
+// $Id: Main.pas,v 1.13 2008-08-23 17:42:36 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -101,7 +101,6 @@ type
     menuIndex_Infos: TMenuItem;
     DirSelect: TJvBrowseForFolderDialog;
     lstIndex2: TVirtualStringTree;
-    PanelStatusEx: TPanel;
     TimerParam: TTimer;
     SplitterBottom: TSplitter;
     Popup_Log: TJvPopupMenu;
@@ -117,8 +116,23 @@ type
     menuOptions_Advanced: TMenuItem;
     menuOptions_Log: TMenuItem;
     menuOptions_Basic: TMenuItem;
-    ScrollBox1: TScrollBox;
-    imgPreview: TPaintBox;
+    scrollPreview: TScrollBox;
+    imgPreview: TImage;
+    TimerInit: TTimer;
+    Popup_Preview: TJvPopupMenu;
+    menuPreview_Hide: TMenuItem;
+    MenuItem3: TMenuItem;
+    menuPreview_DisplayMode: TMenuItem;
+    menuPreview_Display_Full: TMenuItem;
+    menuPreview_Display_Stretched: TMenuItem;
+    menuPreview_Options: TMenuItem;
+    Popup_Status: TJvPopupMenu;
+    menuStatus_PreviewShow: TMenuItem;
+    MenuItem2: TMenuItem;
+    menuStatus_LogShow: TMenuItem;
+    menuStatus_LogHide: TMenuItem;
+    menuOptions_Preview: TMenuItem;
+    menuStatus_PreviewHide: TMenuItem;
     procedure FormResize(Sender: TObject);
     procedure menuFichier_QuitterClick(Sender: TObject);
     procedure menuAbout_AboutClick(Sender: TObject);
@@ -134,7 +148,6 @@ type
     procedure menuIndex_ExtractDirsClick(Sender: TObject);
     procedure menuOptions_SubClick(Sender: TObject);
     procedure FormHide(Sender: TObject);
-    procedure FormShow(Sender: TObject);
     procedure Bouton_OptionsClick(Sender: TObject);
     procedure Bouton_FermerClick(Sender: TObject);
     procedure Bouton_OuvrirClick(Sender: TObject);
@@ -219,8 +232,17 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure lstContentKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
+    procedure TimerInitTimer(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure actionPreviewHide(Sender: TObject);
+    procedure Popup_StatusPopup(Sender: TObject);
+    procedure actionPreviewShow(Sender: TObject);
+    procedure actionPreviewOptions(Sender: TObject);
+    procedure menuPreview_Display_StretchedClick(Sender: TObject);
+    procedure menuPreview_Display_FullClick(Sender: TObject);
   private
-    FPreviewImage: ImagingClasses.TMultiImage;
+    FPreviewBitmap: TImagingBitmap;
+    FPreviewImage: TMultiImage;
     isPreviewImage: boolean;
     verboseLevel: integer;
     AlreadyDragging: boolean;
@@ -230,7 +252,10 @@ type
       Style: TFontStyles);
     procedure setRichEditLineColor(R: TJvRichEdit; Line: Integer;
       Color: TColor);
+    procedure InitEngine();
   public
+    isPreviewLimit: boolean;
+    previewLimitValue: integer;
     function getVerboseLevel(): integer;
     procedure setVerboseLevel(verbLevel: integer);
     procedure writeLog(text: string);
@@ -243,6 +268,7 @@ type
     procedure colorLogVerbose(minLevel: integer; Color : TColor);
     procedure separatorLog();
     procedure separatorLogVerbose(minLevel: integer);
+    function getPreviewLimitInBytes(value: integer): integer;
     { Déclarations publiques }
   end;
 
@@ -322,11 +348,11 @@ begin
       colorLog(clRed);
     end;
 
-    if res and (loadRes <> dlFileNotFound) then
+    if res and (loadRes <> dlFileNotFound) and (loadRes <> dlError) then
     begin
       writeLog(DLNGStr('LOG103'));
-      frmHyperRipper.Show;
       frmHyperRipper.txtSource.Text := src;
+      frmHyperRipper.ShowModal;
     end;
 
   end;
@@ -439,8 +465,6 @@ begin
   fsize := fsize div 2;
   Status.Panels[0].Width := fsize;
   Status.Panels[1].Width := fsize;
-  PanelStatusEx.Top := Status.Top + 2;
-  PanelStatusEx.Width := Status.Panels[0].Width + Status.Panels[1].Width;
 
 end;
 
@@ -946,6 +970,7 @@ begin
       Reg.WriteInteger('Main_H',Height);
       Reg.WriteInteger('Main_W',Width);
       Reg.WriteInteger('Main_S',lstIndex2.Width);
+      Reg.WriteInteger('Main_P',panPreview.Width);
       if richLog.Visible then
         Reg.WriteInteger('Main_B',panBottom.Height)
       else
@@ -1022,256 +1047,12 @@ begin
   begin
 
     dup5Main.appendLogVerbose(2,'Nothing to preview');
-    ImgPreview.Color := clBlack;
-    ImgPreview.Canvas.Font.Color := clRed;
-    ImgPreview.Canvas.Font.Style := [fsBold];
-    ImgPreview.Canvas.TextOut(0,10,'Nothing to preview');
+//    ImgPreview.Color := clBlack;
+//    ImgPreview.Canvas.Font.Color := clRed;
+//    ImgPreview.Canvas.Font.Style := [fsBold];
+//    ImgPreview.Canvas.TextOut(0,10,'Nothing to preview');
 
   end;
-
-end;
-
-procedure Tdup5Main.FormShow(Sender: TObject);
-var Reg: TRegistry;
-    tmpi: integer;
-    clng,clook: string;
-begin
-
-  Caption := 'Dragon UnPACKer v' + CurVersion + ' ' + CurEdit;
-
-  if CurEdit = '' then
-    dup5Main.writeLog('Dragon UnPACKer v' + CurVersion + ' (Build ' + IntToStr(CurBuild) +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')')
-  else
-    dup5Main.writeLog('Dragon UnPACKer v' + CurVersion + ' ' + CurEdit + ' (Build ' + IntToStr(CurBuild)  +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')');
-
-  menuEdit.Visible := false;
-  menuTools.Visible := false;
-
-  setRegistryDuppi;
-
-  Top := ((Screen.Height - Height) div 2) ;
-  Left := ((Screen.Width - Width) div 2) ;
-
-  Reg := TRegistry.Create;
-  Try
-    Reg.RootKey := HKEY_CURRENT_USER;
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
-    begin
-      Reg.WriteDateTime('LastDateExec', Now);
-      Reg.WriteString('Path',ExtractFilePath(Application.Exename));
-      Reg.WriteString('Version',CurVersion);
-      Reg.WriteString('Edit',CurEdit);
-      Reg.WriteInteger('Build',CurBuild);
-      if Reg.ValueExists('Language') then
-        clng := Reg.ReadString('Language')
-      else
-        clng := '*';
-      if clng = '*' then
-        LoadInternalLanguage
-      else
-        LoadLanguage(ExtractFilePath(Application.ExeName)+'data\'+clng);
-
-      if Reg.ValueExists('ShowLog') then
-      begin
-        richLog.visible := Reg.ReadBool('ShowLog');
-        splitterBottom.Visible := richLog.Visible;
-      end;
-
-      if Reg.ValueExists('VerboseLevel') then
-        verboseLevel := Reg.ReadInteger('VerboseLevel')
-      else
-        verboseLevel := 1;
-
-      if Reg.ValueExists('Look') then
-        clook := Reg.ReadString('Look')
-      else
-        clook := 'default.dulk';
-{      if Reg.ValueExists('XPStyle') then
-        XPMenu.Active := Reg.ReadBool('XPStyle')
-      else
-        XPMenu.Active := true;}
-      Reg.CloseKey;
-    end;
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Windows',True) then
-    begin
-      if Reg.ValueExists('Main_H') then
-      begin
-        tmpi := Reg.ReadInteger('Main_H');
-        if tmpi > 0 then
-        begin
-          Height := tmpi;
-          Top := ((Screen.Height - Height) div 2) ;
-        end;
-      end;
-      if Reg.ValueExists('Main_W') then
-      begin
-        tmpi := Reg.ReadInteger('Main_W');
-        if tmpi > 0 then
-        begin
-          Width := tmpi;
-          Left := ((Screen.Width - Width) div 2) ;
-        end;
-      end;
-      if Reg.ValueExists('Main_X') then
-      begin
-        tmpi := Reg.ReadInteger('Main_X');
-        if tmpi > 0 then
-          Left := tmpi;
-      end;
-      if Reg.ValueExists('Main_Y') then
-      begin
-        tmpi := Reg.ReadInteger('Main_Y');
-        if tmpi > 0 then
-          Top := tmpi;
-      end;
-      if Reg.ValueExists('Main_S') then
-      begin
-        tmpi := Reg.ReadInteger('Main_S');
-        if tmpi > 20 then
-          lstIndex2.Width := tmpi;
-      end;
-      if Reg.ValueExists('Main_B') then
-      begin
-        tmpi := Reg.ReadInteger('Main_B');
-        if tmpi > 100 then
-          bottomHeight := tmpi
-        else
-          bottomHeight := 100;
-        if richLog.Visible then
-          panBottom.Height := bottomHeight
-        else
-          panBottom.Height := status.Height;
-      end;
-      if Reg.ValueExists('Main_M') then
-      begin
-        tmpi := Reg.ReadInteger('Main_M');
-        if tmpi = 1  then
-          WindowState := wsMaximized;
-      end;
-      if Reg.ValueExists('lstContent_0') then
-      begin
-        tmpi := Reg.ReadInteger('lstContent_0');
-        if tmpi >= 0 then
-          lstContent.Header.Columns.Items[0].Width := tmpi;
-      end;
-      if Reg.ValueExists('lstContent_1') then
-      begin
-        tmpi := Reg.ReadInteger('lstContent_1');
-        if tmpi >= 0 then
-          lstContent.Header.Columns.Items[1].Width := tmpi;
-      end;
-      if Reg.ValueExists('lstContent_2') then
-      begin
-        tmpi := Reg.ReadInteger('lstContent_2');
-        if tmpi >= 0 then
-          lstContent.Header.Columns.Items[2].Width := tmpi;
-      end;
-      if Reg.ValueExists('lstContent_3') then
-      begin
-        tmpi := Reg.ReadInteger('lstContent_3');
-        if tmpi > 0 then
-          lstContent.Header.Columns.Items[3].Width := tmpi;
-      end;
-      if Reg.ValueExists('toolBar_T') then
-      begin
-        tmpi := Reg.ReadInteger('toolBar_T');
-        if tmpi > 0 then
-          toolBar.Top := tmpi;
-      end;
-      if Reg.ValueExists('toolBar_L') then
-      begin
-        tmpi := Reg.ReadInteger('toolBar_L');
-        if tmpi > 0 then
-          toolBar.Left := tmpi;
-      end;
-      if Reg.ValueExists('Percent_T') then
-      begin
-        tmpi := Reg.ReadInteger('Percent_T');
-        if tmpi > 0 then
-          Percent.Top := tmpi;
-      end;
-      if Reg.ValueExists('Percent_L') then
-      begin
-        tmpi := Reg.ReadInteger('Percent_L');
-        if tmpi > 0 then
-          Percent.Left := tmpi;
-      end;
-      Reg.CloseKey;
-    end;
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
-    begin
-      if Reg.ValueExists('CheckStartup') and Reg.ReadBool('CheckStartup') then
-        SetRegistryDUP5;
-      Reg.CloseKey;
-    end;
-  Finally
-    Reg.Free;
-  end;
-
-  TranslateMain;
-  LoadLook('default.dulk');
-  if clook <> 'default.dulk' then
-    LoadLook(clook);
-
-  richLog.Refresh;
-
-  dup5Main.writeLogVerbose(1,DLNGstr('LOG005'));
-
-  dup5Main.writeLogVerbose(1,' + cxCpu v'+cxCpu.Version.FormatVersion);
-  dup5Main.writeLogVerbose(1,' + JEDI Code Library [JCL] v'+inttostr(JclVersionMajor)+'.'+inttostr(JclVersionMinor)+'.'+inttostr(JclVersionRelease)+' Build '+inttostr(JclVersionBuild));
-  dup5Main.writeLogVerbose(1,' + JEDI Visual Component Library [JVCL] v'+JVCL_VERSIONSTRING);
-  dup5Main.writeLogVerbose(1,' + Vampyre Imaging Library v'+Imaging.GetVersionStr);
-//  dup5Main.writeLog('Jedi Class Library [JCL] v'+JCL_VERSIONSTRING);
-  dup5Main.writeLogVerbose(1,' + VirtualTree v'+VTVersion);
-
-  dup5Main.writeLog(DLNGStr('LOG001'));
-
-  dup5Main.writeLog(DLNGStr('LOG002'));
-
-  FSE := FSEInit;
-  FSE.SetProgressBar(PercentCB);
-  FSE.SetLanguage(LanguageCB);
-  FSE.SetPath(ExtractFilePath(Application.ExeName)+'data\drivers\');
-  FSE.SetOwner(frmConfig);
-  FSE.LoadDrivers(ExtractFilePath(Application.ExeName)+'data\drivers\');
-
-  dup5Main.writeLog(' = '+ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(FSe.NumDrivers)));
-
-  dup5Main.writeLog(DLNGStr('LOG003'));
-
-  CPlug := CPlugInit;
-  CPlug.SetPercent(PercentCB);
-  CPlug.SetLanguage(LanguageCB);
-  CPlug.SetPath(ExtractFilePath(Application.ExeName)+'data\convert\');
-  CPlug.SetOwner(self);
-  CPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\convert\');
-
-  dup5Main.writeLog(' = '+ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(CPlug.NumPlugins)));
-
-  dup5Main.writeLog(DLNGStr('LOG004'));
-
-  HPlug := HPlugInit;
-  HPlug.SetPercent(PercentCB);
-  HPlug.SetLanguage(LanguageCB);
-  HPlug.SetPath(ExtractFilePath(Application.ExeName)+'data\HyperRipper\');
-  HPlug.SetOwner(self);
-  HPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\HyperRipper\');
-
-  dup5Main.writeLog(' = '+ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(HPlug.NumPlugins)));
-
-  Icons := TIconsFromExt.Create;
-  Icons.init(imgContents);
-
-  TempFiles := TStringList.Create;
-
-  RecentFiles_Load;
-
-  if ParamCount > 0 then
-    if ParamStr(1) <> '/lng' then
-      if FileExists(ParamStr(1)) then
-      begin
-        TimerParam.Enabled := true;
-      end;
 
 end;
 
@@ -1717,14 +1498,299 @@ begin
 end;
 
 procedure Tdup5Main.FormCreate(Sender: TObject);
+var Reg: TRegistry;
+    tmpi: integer;
+    clng,clook: string;
 begin
 
+  // Initializing preview engine
   FPreviewImage := TMultiImage.Create;
+  FPreviewBitmap := TImagingBitmap.Create;
+  imgPreview.Picture.Graphic := FPreviewBitmap;
 
+  // Initializing Virtual TreeView
   lstContent.NodeDataSize := SizeOf(virtualTreeData);
   lstContent.Header.SortColumn := 0;
 
   lstIndex2.NodeDataSize := SizeOf(virtualIndexData);
+
+  // Indicate version number in title and in log
+  Caption := 'Dragon UnPACKer v' + CurVersion + ' ' + CurEdit;
+
+  if CurEdit = '' then
+    dup5Main.writeLog('Dragon UnPACKer v' + CurVersion + ' (Build ' + IntToStr(CurBuild) +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')')
+  else
+    dup5Main.writeLog('Dragon UnPACKer v' + CurVersion + ' ' + CurEdit + ' (Build ' + IntToStr(CurBuild)  +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')');
+
+  // Edit and Tools menus are hidden (visible only when a file is loaded)
+  menuEdit.Visible := false;
+  menuTools.Visible := false;
+
+  // Set Duppi registry associations with D5P
+  setRegistryDuppi;
+
+  Top := ((Screen.Height - Height) div 2) ;
+  Left := ((Screen.Width - Width) div 2) ;
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      Reg.WriteDateTime('LastDateExec', Now);
+      Reg.WriteString('Path',ExtractFilePath(Application.Exename));
+      Reg.WriteString('Version',CurVersion);
+      Reg.WriteString('Edit',CurEdit);
+      Reg.WriteInteger('Build',CurBuild);
+      if Reg.ValueExists('Language') then
+        clng := Reg.ReadString('Language')
+      else
+        clng := '*';
+      if clng = '*' then
+        LoadInternalLanguage
+      else
+        LoadLanguage(ExtractFilePath(Application.ExeName)+'data\'+clng);
+
+      if Reg.ValueExists('ShowLog') then
+      begin
+        richLog.visible := Reg.ReadBool('ShowLog');
+        splitterBottom.Visible := richLog.Visible;
+      end;
+
+      if Reg.ValueExists('ShowPreview') then
+      begin
+        panPreview.visible := Reg.ReadBool('ShowPreview');
+        splitterPreview.Visible := panPreview.visible;
+      end;
+
+      if Reg.ValueExists('PreviewLimit') then
+      begin
+        isPreviewLimit := Reg.ReadBool('PreviewLimit');
+      end
+      else
+        isPreviewLimit := false;
+
+      if Reg.ValueExists('PreviewLimitSize') then
+      begin
+        previewLimitValue := Reg.ReadInteger('PreviewLimitSize');
+      end
+      else
+        previewLimitValue := 2;
+
+      if Reg.ValueExists('PreviewFullSize') and not(Reg.ReadBool('PreviewFullSize')) then
+      begin
+        imgPreview.AutoSize := false;
+        imgPreview.Align := alClient;
+        menuPreview_Display_Stretched.Checked := true;
+        menuPreview_Display_Full.Checked := false;
+      end;
+
+      if Reg.ValueExists('VerboseLevel') then
+        verboseLevel := Reg.ReadInteger('VerboseLevel')
+      else
+        verboseLevel := 1;
+
+      if Reg.ValueExists('Look') then
+        clook := Reg.ReadString('Look')
+      else
+        clook := 'default.dulk';
+{      if Reg.ValueExists('XPStyle') then
+        XPMenu.Active := Reg.ReadBool('XPStyle')
+      else
+        XPMenu.Active := true;}
+      Reg.CloseKey;
+    end;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Windows',True) then
+    begin
+      if Reg.ValueExists('Main_H') then
+      begin
+        tmpi := Reg.ReadInteger('Main_H');
+        if tmpi > 0 then
+        begin
+          Height := tmpi;
+          Top := ((Screen.Height - Height) div 2) ;
+        end;
+      end;
+      if Reg.ValueExists('Main_W') then
+      begin
+        tmpi := Reg.ReadInteger('Main_W');
+        if tmpi > 0 then
+        begin
+          Width := tmpi;
+          Left := ((Screen.Width - Width) div 2) ;
+        end;
+      end;
+      if Reg.ValueExists('Main_X') then
+      begin
+        tmpi := Reg.ReadInteger('Main_X');
+        if tmpi > 0 then
+          Left := tmpi;
+      end;
+      if Reg.ValueExists('Main_Y') then
+      begin
+        tmpi := Reg.ReadInteger('Main_Y');
+        if tmpi > 0 then
+          Top := tmpi;
+      end;
+      if Reg.ValueExists('Main_S') then
+      begin
+        tmpi := Reg.ReadInteger('Main_S');
+        if tmpi > 20 then
+          lstIndex2.Width := tmpi;
+      end;
+      if Reg.ValueExists('Main_P') then
+      begin
+        tmpi := Reg.ReadInteger('Main_P');
+        if tmpi > 20 then
+          panPreview.Width := tmpi;
+      end;
+      if Reg.ValueExists('Main_B') then
+      begin
+        tmpi := Reg.ReadInteger('Main_B');
+        if tmpi > 100 then
+          bottomHeight := tmpi
+        else
+          bottomHeight := 100;
+        if richLog.Visible then
+          panBottom.Height := bottomHeight
+        else
+          panBottom.Height := status.Height;
+      end;
+      if Reg.ValueExists('Main_M') then
+      begin
+        tmpi := Reg.ReadInteger('Main_M');
+        if tmpi = 1  then
+          WindowState := wsMaximized;
+      end;
+      if Reg.ValueExists('lstContent_0') then
+      begin
+        tmpi := Reg.ReadInteger('lstContent_0');
+        if tmpi >= 0 then
+          lstContent.Header.Columns.Items[0].Width := tmpi;
+      end;
+      if Reg.ValueExists('lstContent_1') then
+      begin
+        tmpi := Reg.ReadInteger('lstContent_1');
+        if tmpi >= 0 then
+          lstContent.Header.Columns.Items[1].Width := tmpi;
+      end;
+      if Reg.ValueExists('lstContent_2') then
+      begin
+        tmpi := Reg.ReadInteger('lstContent_2');
+        if tmpi >= 0 then
+          lstContent.Header.Columns.Items[2].Width := tmpi;
+      end;
+      if Reg.ValueExists('lstContent_3') then
+      begin
+        tmpi := Reg.ReadInteger('lstContent_3');
+        if tmpi > 0 then
+          lstContent.Header.Columns.Items[3].Width := tmpi;
+      end;
+      if Reg.ValueExists('toolBar_T') then
+      begin
+        tmpi := Reg.ReadInteger('toolBar_T');
+        if tmpi > 0 then
+          toolBar.Top := tmpi;
+      end;
+      if Reg.ValueExists('toolBar_L') then
+      begin
+        tmpi := Reg.ReadInteger('toolBar_L');
+        if tmpi > 0 then
+          toolBar.Left := tmpi;
+      end;
+      if Reg.ValueExists('Percent_T') then
+      begin
+        tmpi := Reg.ReadInteger('Percent_T');
+        if tmpi > 0 then
+          Percent.Top := tmpi;
+      end;
+      if Reg.ValueExists('Percent_L') then
+      begin
+        tmpi := Reg.ReadInteger('Percent_L');
+        if tmpi > 0 then
+          Percent.Left := tmpi;
+      end;
+      Reg.CloseKey;
+    end;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
+    begin
+      if Reg.ValueExists('CheckStartup') and Reg.ReadBool('CheckStartup') then
+        SetRegistryDUP5;
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
+
+  TranslateMain;
+  LoadLook('default.dulk');
+  if clook <> 'default.dulk' then
+    LoadLook(clook);
+
+end;
+
+procedure Tdup5Main.InitEngine;
+begin
+
+  richLog.Refresh;
+
+  dup5Main.writeLogVerbose(1,DLNGstr('LOG005'));
+
+  dup5Main.writeLogVerbose(1,' + cxCpu v'+cxCpu.Version.FormatVersion);
+  dup5Main.writeLogVerbose(1,' + JEDI Code Library [JCL] v'+inttostr(JclVersionMajor)+'.'+inttostr(JclVersionMinor)+'.'+inttostr(JclVersionRelease)+' Build '+inttostr(JclVersionBuild));
+  dup5Main.writeLogVerbose(1,' + JEDI Visual Component Library [JVCL] v'+JVCL_VERSIONSTRING);
+  dup5Main.writeLogVerbose(1,' + Vampyre Imaging Library v'+Imaging.GetVersionStr);
+//  dup5Main.writeLog('Jedi Class Library [JCL] v'+JCL_VERSIONSTRING);
+  dup5Main.writeLogVerbose(1,' + VirtualTree v'+VTVersion);
+
+  dup5Main.writeLog(DLNGStr('LOG001'));
+
+  dup5Main.writeLog(DLNGStr('LOG002'));
+
+  FSE := FSEInit;
+  FSE.SetProgressBar(PercentCB);
+  FSE.SetLanguage(LanguageCB);
+  FSE.SetPath(ExtractFilePath(Application.ExeName)+'data\drivers\');
+  FSE.SetOwner(frmConfig);
+  FSE.LoadDrivers(ExtractFilePath(Application.ExeName)+'data\drivers\');
+
+  dup5Main.writeLog(' = '+ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(FSe.NumDrivers)));
+
+  dup5Main.writeLog(DLNGStr('LOG003'));
+
+  CPlug := CPlugInit;
+  CPlug.SetPercent(PercentCB);
+  CPlug.SetLanguage(LanguageCB);
+  CPlug.SetPath(ExtractFilePath(Application.ExeName)+'data\convert\');
+  CPlug.SetOwner(self);
+  CPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\convert\');
+
+  dup5Main.writeLog(' = '+ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(CPlug.NumPlugins)));
+
+  dup5Main.writeLog(DLNGStr('LOG004'));
+
+  HPlug := HPlugInit;
+  HPlug.SetPercent(PercentCB);
+  HPlug.SetLanguage(LanguageCB);
+  HPlug.SetPath(ExtractFilePath(Application.ExeName)+'data\HyperRipper\');
+  HPlug.SetOwner(self);
+  HPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\HyperRipper\');
+
+  dup5Main.writeLog(' = '+ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(HPlug.NumPlugins)));
+
+  Icons := TIconsFromExt.Create;
+  Icons.init(imgContents);
+
+  TempFiles := TStringList.Create;
+
+  RecentFiles_Load;
+
+  if ParamCount > 0 then
+    if ParamStr(1) <> '/lng' then
+      if FileExists(ParamStr(1)) then
+      begin
+        TimerParam.Enabled := true;
+      end;
 
 end;
 
@@ -2711,7 +2777,7 @@ procedure Tdup5Main.lstContentClick(Sender: TObject);
 var Data: pvirtualTreeData;
     Node: PVirtualNode;
     rep,ext,filename,tmpFil,foundFormat: string;
-    Offset, Size, T, FLastTime: int64;
+    Offset, Size: int64;
     i,DataX, DataY: integer;
     CList: ExtConvertList;
     stmSource, stmBitmap: TMemoryStream;
@@ -2719,132 +2785,126 @@ var Data: pvirtualTreeData;
     StartTime: TDateTime;
 begin
 
-  if (lstContent.SelectedCount > 1) then
+  if panPreview.Visible then
   begin
+    if (lstContent.SelectedCount > 1) then
+    begin
 
-    isPreviewImage := false;
-    ImgPreview.Repaint;
+      isPreviewImage := false;
+      ImgPreview.Repaint;
 
-  end
-  else if (lstContent.SelectedCount = 1) then
-  begin
+    end
+    else if (lstContent.SelectedCount = 1) then
+    begin
 
-     rep := GetNodePath2(lstIndex2.FocusedNode);
-     if length(rep) > 0 then
-       rep := rep + FSE.SlashMode;
+      rep := GetNodePath2(lstIndex2.FocusedNode);
+      if length(rep) > 0 then
+        rep := rep + FSE.SlashMode;
 
-     Node := lstContent.GetFirstSelected;
-     Data := lstContent.GetNodeData(Node);
-     Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+      Node := lstContent.GetFirstSelected;
+      Data := lstContent.GetNodeData(Node);
+      Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
 
-     FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
+      FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
 
-     ext := ExtractFileExt(fileName);
-     if ext <> '' then
-     begin
-       if ext[1] = '.' then
-         ext := RightStr(ext,length(ext)-1);
-       ext := UpperCase(ext);
-     end;
+      ext := ExtractFileExt(fileName);
+      if ext <> '' then
+      begin
+        if ext[1] = '.' then
+          ext := RightStr(ext,length(ext)-1);
+        ext := UpperCase(ext);
+      end;
 
-     Randomize;
-     tmpfil := getTemporaryDir+'dup5tmp-'+IntToStr(Random(99999999))+'-'+Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+      dup5Main.WriteLogVerbose(2,'Preview: ');
 
-     stmSource := TMemoryStream.Create;
-     stmBitmap := TMemoryStream.Create;
-     try
+      if not(isPreviewLimit) or (Data.Data^.Size <= getPreviewLimitInBytes(previewLimitValue)) then
+      begin
 
-       FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
-       stmSource.Seek(0,soFromBeginning);
+        Randomize;
+        tmpfil := getTemporaryDir+'dup5tmp-'+IntToStr(Random(99999999))+'-'+Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+        foundCnv := false;
 
-       dup5Main.WriteLogVerbose(2,'Detecting image format... ');
+        stmSource := TMemoryStream.Create;
+        stmBitmap := TMemoryStream.Create;
+        try
 
-       StartTime := Now;
-       foundFormat := Imaging.DetermineStreamFormat(stmSource);
-       dup5Main.appendLogVerbose(2,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
+          dup5Main.appendLogVerbose(2,'Extracting... ');
 
-       if (foundFormat <> '') then
-       begin
+          FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
+          stmSource.Seek(0,soFromBeginning);
 
-         dup5Main.appendLogVerbose(2,' (Format: '+uppercase(foundFormat)+')');
+          dup5Main.appendLogVerbose(2,'Detecting... ');
 
-         dup5Main.writeLogVerbose(2,'Preview (1/2): Load image...');
-         FPreviewImage.LoadMultiFromStream(stmSource);
-         dup5Main.writeLogVerbose(2,'Preview (2/2): Convert to ARGB...');
-         FPreviewImage.ConvertImages(ifA8R8G8B8);
-         dup5Main.writeLogVerbose(2,'Forcing repaint!');
-         isPreviewImage := true;
-         ImgPreview.Repaint;
+          StartTime := Now;
+          foundFormat := Imaging.DetermineStreamFormat(stmSource);
+          dup5Main.appendLogVerbose(2,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
 
-//       if (ext = '.BMP') then
-//       begin
+          if (foundFormat <> '') then
+          begin
 
-//         FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
-//         stmSource.Seek(0,soFromBeginning);
-//         imgPreview.Picture.Bitmap.LoadFromStream(stmSource);
+            dup5Main.appendLogVerbose(2,'Format: '+uppercase(foundFormat));
 
-       end
-       else
-       begin
+            dup5Main.appendLogVerbose(2,'... Loading...');
+            FPreviewImage.LoadMultiFromStream(stmSource);
+            dup5Main.appendLogVerbose(2,' Displaying...');
+            FPreviewImage.ActiveImage := 0;
+            isPreviewImage := true;
+            ImgPreview.Picture.Graphic.Assign(FPreviewImage);
+            ImgPreview.Refresh;
+            dup5Main.appendLogVerbose(2,' OK');
 
-         dup5Main.appendLogVerbose(2,'... Convert plugins:');
+          end
+          else
+          begin
 
-         CList := CPlug.GetFileConvert(fileName,offset,size,FSE.DriverID,DataX, DataY);
+            dup5Main.appendLogVerbose(2,'Convert plugins:');
 
-         CListInfo.NumFormats := CList.NumFormats;
-         for i := 1 to CList.NumFormats do
-         begin
-           foundCnv := (uppercase(CList.List[i].Info.ID) = 'BMP') or (uppercase(CList.List[i].Info.ID) = 'TGA32') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT1') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT3');
-           if foundCnv then
-           begin
-             dup5Main.appendLogVerbose(2,CPlug.Plugins[CList.List[i].Plugin].Version.Name+' v'+CPlug.Plugins[CList.List[i].Plugin].Version.Version);
-//             FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
-             stmSource.Seek(0,soFromBeginning);
-             CPlug.Plugins[CList.List[i].Plugin].ConvertStream(stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true);
-             stmBitmap.Seek(0,soFromBeginning);
-             //imgPreview.Picture.Bitmap.LoadFromStream(stmBitmap);
-             //CPlug.Plugins[CList.List[i].Plugin].DrawToCanvas(stmSource,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true,imgPreview.ClientRect,imgPreview.Canvas);
+            CList := CPlug.GetFileConvert(fileName,offset,size,FSE.DriverID,DataX, DataY);
 
-             dup5Main.writeLogVerbose(2,'Preview (1/2): Load image...');
-             FPreviewImage.LoadMultiFromStream(stmBitmap);
-             dup5Main.writeLogVerbose(2,'Preview (2/2): Convert to ARGB...');
-             FPreviewImage.ConvertImages(ifA8R8G8B8);
-             dup5Main.writeLogVerbose(2,'Forcing repaint!');
-             isPreviewImage := true;
-             ImgPreview.Repaint;
+            CListInfo.NumFormats := CList.NumFormats;
+            for i := 1 to CList.NumFormats do
+            begin
+              foundCnv := (uppercase(CList.List[i].Info.ID) = 'BMP') or (uppercase(CList.List[i].Info.ID) = 'TGA32') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT1') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT3');
+              if foundCnv then
+              begin
+                dup5Main.appendLogVerbose(2,CPlug.Plugins[CList.List[i].Plugin].Version.Name+' v'+CPlug.Plugins[CList.List[i].Plugin].Version.Version);
+                stmSource.Seek(0,soFromBeginning);
+                CPlug.Plugins[CList.List[i].Plugin].ConvertStream(stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true);
+                stmBitmap.Seek(0,soFromBeginning);
+                dup5Main.appendLogVerbose(2,'... Loading...');
+                FPreviewImage.LoadMultiFromStream(stmBitmap);
+                dup5Main.appendLogVerbose(2,' Displaying...');
+                FPreviewImage.ActiveImage := 0;
+                isPreviewImage := true;
+                ImgPreview.Picture.Graphic.Assign(FPreviewImage);
+                ImgPreview.Refresh;
+                dup5Main.appendLogVerbose(2,' OK');
 
-             break;
-           end;
-         end;
+                break;
+              end;
+            end;
 
-         if not(foundCnv) then
-         begin
-           dup5Main.appendLogVerbose(2,'Unknown! (Cannot preview)');
-           isPreviewImage := false;
-           imgPreview.Repaint;
-         end;
+            if not(foundCnv) then
+            begin
+              dup5Main.appendLogVerbose(2,'Unknown! (Cannot preview)');
+              isPreviewImage := false;
+              imgPreview.Refresh;
+            end;
 
-       end;
-     finally
-       stmSource.Free;
-       stmBitmap.Free;
-     end;
-
-   end;
-
-{   if (imgPreview.Picture.Width > panPreview.Width)
-   or (imgPreview.Picture.Height > panPreview.Height) then
-   begin
-     imgPreview.Stretch := true;
-     imgPreview.Left := 0;
-     imgPreview.Top := 0;
-   end
-   else
-   begin
-     imgPreview.Stretch := false;
-     imgPreview.Left := (panPreview.Width - imgPreview.Picture.Width) div 2;
-     imgPreview.Top := (panPreview.Height - imgPreview.Picture.Height) div 2;
-   end;}
+          end;
+        finally
+          stmSource.Free;
+          stmBitmap.Free;
+        end;
+      end
+      else
+      begin
+        dup5Main.appendLogVerbose(2,'Canceled: Size is bigger than limit ('+inttostr(getPreviewLimitInBytes(previewLimitValue))+' bytes)');
+        isPreviewImage := false;
+        imgPreview.Refresh;
+      end;
+    end;
+  end;
 
 end;
 
@@ -2852,6 +2912,7 @@ procedure Tdup5Main.FormDestroy(Sender: TObject);
 begin
 
   FPreviewImage.Free;
+  FPreviewBitmap.Free;
 
 end;
 
@@ -2861,6 +2922,144 @@ procedure Tdup5Main.lstContentKeyUp(Sender: TObject; var Key: Word;
 begin
 
   lstContentClick(Sender);
+
+end;
+
+procedure Tdup5Main.TimerInitTimer(Sender: TObject);
+begin
+
+  TimerInit.Enabled := false;
+  InitEngine;
+
+end;
+
+procedure Tdup5Main.FormShow(Sender: TObject);
+begin
+
+  TimerInit.Enabled := true;
+
+end;
+
+procedure Tdup5Main.actionPreviewHide(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      Reg.WriteBool('ShowPreview',false);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
+
+  SplitterPreview.Visible := false;
+  panPreview.Visible := false;
+//  scrollPreview.Visible := false
+
+end;
+
+procedure Tdup5Main.Popup_StatusPopup(Sender: TObject);
+begin
+
+  menuStatus_PreviewShow.Visible := not(panPreview.Visible);
+  menuStatus_PreviewHide.Visible := panPreview.Visible;
+  menuStatus_LogShow.Visible := not(richLog.Visible);
+  menuStatus_LogHide.Visible := richLog.Visible;
+
+end;
+
+procedure Tdup5Main.actionPreviewShow(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      Reg.WriteBool('ShowPreview',true);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
+
+  SplitterPreview.Visible := true;
+  panPreview.Visible := true;
+//  scrollPreview.Visible := false
+
+end;
+
+procedure Tdup5Main.actionPreviewOptions(Sender: TObject);
+begin
+
+  InitOptions;
+  TabSelect := 9;
+  frmConfig.ShowModal;
+
+end;
+
+function Tdup5Main.getPreviewLimitInBytes(value: integer): integer;
+begin
+
+  case value of
+    0: result := 70000;
+    1: result := 300000;
+    3: result := 5000000;
+    4: result := 20000000;
+  else
+    result := 2000000;
+  end;
+
+end;
+
+procedure Tdup5Main.menuPreview_Display_StretchedClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      Reg.WriteBool('PreviewFullSize',false);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
+
+  imgPreview.AutoSize := false;
+  imgPreview.Align := alClient;
+  menuPreview_Display_Stretched.Checked := true;
+  menuPreview_Display_Full.Checked := false;
+
+end;
+
+procedure Tdup5Main.menuPreview_Display_FullClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      Reg.WriteBool('PreviewFullSize',true);
+      Reg.CloseKey;
+    end;
+  Finally
+    Reg.Free;
+  end;
+
+  imgPreview.Align := alNone;
+  imgPreview.AutoSize := true;
+  menuPreview_Display_Stretched.Checked := false;
+  menuPreview_Display_Full.Checked := true;
 
 end;
 

@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.7 2008-04-19 18:09:21 elbereth Exp $
+// $Id: Options.pas,v 1.8 2008-08-23 17:42:36 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -159,6 +159,19 @@ type
     radTmpDirOther: TRadioButton;
     txtTmpDirDefault: TEdit;
     lstBufferSize: TComboBox;
+    tabPreview: TPanel;
+    grpPreviewBasic: TGroupBox;
+    chkPreviewEnable: TCheckBox;
+    grpPreviewLimits: TGroupBox;
+    optPreviewLimitNo: TRadioButton;
+    optPreviewLimitYes: TRadioButton;
+    lstPreviewLimit: TComboBox;
+    lblPreviewLimit: TLabel;
+    lblPreviewLimitBytes: TLabel;
+    txtPreviewLimitSize: TLabel;
+    grpPreviewDisplay: TGroupBox;
+    optPreviewDisplayFull: TRadioButton;
+    optPreviewDisplayStretch: TRadioButton;
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cmdOkClick(Sender: TObject);
@@ -205,6 +218,12 @@ type
     procedure txtTmpDirChange(Sender: TObject);
     procedure chkMakeExtractDefaultClick(Sender: TObject);
     procedure lstBufferSizeChange(Sender: TObject);
+    procedure chkPreviewEnableClick(Sender: TObject);
+    procedure optPreviewLimitNoClick(Sender: TObject);
+    procedure lstPreviewLimitChange(Sender: TObject);
+    procedure optPreviewLimitYesClick(Sender: TObject);
+    procedure optPreviewDisplayFullClick(Sender: TObject);
+    procedure optPreviewDisplayStretchClick(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -498,6 +517,15 @@ begin
         lstBufferSize.ItemIndex := Reg.ReadInteger('BufferSize')
       else
         lstBufferSize.ItemIndex := 6;
+
+      if dup5Main.isPreviewLimit then
+        optPreviewLimitYes.Checked := true
+      else
+        optPreviewLimitNo.Checked := true;
+
+      lstPreviewLimit.ItemIndex := dup5Main.previewLimitValue;
+      lstPreviewLimitChange(self);
+      
       Reg.CloseKey;
     end;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
@@ -531,6 +559,9 @@ begin
   Finally
     Reg.Free;
   end;
+
+  optPreviewDisplayStretch.Checked := dup5Main.imgPreview.Stretch;
+  optPreviewDisplayFull.checked := not(dup5Main.imgPreview.Stretch);
 
   trackbarVerbose.Position := dup5Main.getVerboseLevel;
   trackbarVerboseUpdateHint;
@@ -799,6 +830,7 @@ begin
   tabLog.Visible := False;
   tabConvert.Visible := False;
   tabHyperRipper.Visible := False;
+  tabPreview.Visible := False;
 
   case treeConfig.Selected.AbsoluteIndex of
     0: begin
@@ -817,6 +849,7 @@ begin
          tabAssoc.Visible := True;
          updateAssocIcon;
        end;
+    9: tabPreview.Visible := True;
   end;
 
 end;
@@ -1328,6 +1361,113 @@ begin
     end;
 
   end;
+
+end;
+
+procedure TfrmConfig.chkPreviewEnableClick(Sender: TObject);
+begin
+
+  if not(chkPreviewEnable.Checked) then
+    dup5Main.actionPreviewHide(self)
+  else
+    dup5Main.actionPreviewShow(self);
+
+end;
+
+procedure TfrmConfig.optPreviewLimitNoClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        Reg.WriteBool('PreviewLimit',false);
+        Reg.CloseKey;
+      end;
+    Finally
+      Reg.Free;
+    end;
+
+    dup5main.isPreviewLimit := false;
+    
+  end;
+
+  lstPreviewLimit.Enabled := false;
+
+end;
+
+procedure TfrmConfig.lstPreviewLimitChange(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        Reg.WriteInteger('PreviewLimitSize',lstPreviewLimit.ItemIndex);
+        Reg.CloseKey;
+      end;
+    Finally
+      Reg.Free;
+    end;
+
+    dup5main.previewLimitValue := lstPreviewLimit.ItemIndex;
+
+  end;
+
+  txtPreviewLimitSize.Caption := inttostr(dup5Main.getPreviewLimitInBytes(dup5main.previewLimitValue));
+
+end;
+
+procedure TfrmConfig.optPreviewLimitYesClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        Reg.WriteBool('PreviewLimit',true);
+        Reg.CloseKey;
+      end;
+    Finally
+      Reg.Free;
+    end;
+
+    dup5main.isPreviewLimit := true;
+
+  end;
+
+  lstPreviewLimit.Enabled := true;
+
+end;
+
+procedure TfrmConfig.optPreviewDisplayFullClick(Sender: TObject);
+begin
+
+  if not(Loading) then
+    dup5Main.menuPreview_Display_FullClick(Self);
+
+end;
+
+procedure TfrmConfig.optPreviewDisplayStretchClick(Sender: TObject);
+begin
+
+  if not(Loading) then
+    dup5Main.menuPreview_Display_StretchedClick(Self);
 
 end;
 

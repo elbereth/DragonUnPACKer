@@ -110,7 +110,7 @@ begin
   else if sch = 'INFO14' then
     result := 'Chargement: '
   else if sch = 'INFO20' then
-    result := 'Nom du plugin'''
+    result := 'Nom du plugin'
   else if sch = 'INFO21' then
     result := 'Version'
   else if sch = 'INFO22' then
@@ -926,9 +926,9 @@ begin
   else if sch = 'LOG400' then
     result := 'Utilisation de la détection intelligente du format du fichier source. '
   else if sch = 'LOG500' then
-    result := 'Le plugin Driver "%d" pense pouvoir ouvrir ce fichier.'''
+    result := 'Le plugin Driver "%d" pense pouvoir ouvrir ce fichier.'
   else if sch = 'LOG501' then
-    result := 'Ouverture du fichier en utilisant le plugin "%d"...'''
+    result := 'Ouverture du fichier en utilisant le plugin "%d"...'
   else if sch = 'LOG502' then
     result := 'Récupération de %x entrée(s)...'
   else if sch = 'LOG503' then

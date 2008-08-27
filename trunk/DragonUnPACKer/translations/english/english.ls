@@ -28,6 +28,9 @@
 # Informations about this translation
 # ============================================================================
 #
+# version 11a:
+# Fixed missing LOG005 keyword
+#
 # version 11:
 # Added preview keywords
 #
@@ -643,6 +646,7 @@ LOG001=Initializing plugins:
 LOG002=Loading Drivers plugins...
 LOG003=Loading Convert plugins...
 LOG004=Loading HyperRipper plugins...
+LOG005=Libraries used:
 LOG009=%p plugin(s)
 LOG101=Opening "%f" file:
 LOG102=File format not recognized!

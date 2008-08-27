@@ -2,7 +2,7 @@
 # ============================================================================
 #  Program: Dragon UnPACKer v5.3.3 Beta
 # Language: Spanish
-#  Version: 10
+#  Version: 11a
 #   Author: Alex Devilliers
 # ============================================================================
 {LSF}
@@ -454,6 +454,7 @@ LOG001=Inicializar plugins:
 LOG002=Cargando plugins Drivers...
 LOG003=Cargando plugins Convertir...
 LOG004=Cargando plugins HyperRipper...
+LOG005=Librerias utilizadas:
 LOG009=%p plugin(s)
 LOG101=Abriendo el fichero "%f":
 LOG102=Formato del fichero desconocido!

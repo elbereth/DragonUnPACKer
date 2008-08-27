@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.33 2008-08-23 17:14:42 elbereth Exp $
+// $Id: drv_default.dpr,v 1.34 2008-08-27 19:56:19 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -25,6 +25,7 @@ uses
   SysUtils,
   Windows,
   U_IntList in '..\..\..\common\U_IntList.pas',
+  spec_DDS in '..\..\..\common\spec_DDS.pas',
   spec_HRF in '..\..\..\common\spec_HRF.pas',
   lib_version in '..\..\..\common\lib_version.pas';
 
@@ -164,6 +165,8 @@ type FSE = ^element;
     20271        Added support for Starsiege: Tribes .VOL files (which was supposed to be already supported...)
     20340        Added support for Entropia Universe .BNT files
     20440        Added support for AGON .SFL files (still needs more work but usable)
+    20511        Added support for Enclave & The Chronicles of Riddick: Butcher Bay .XWC & .XTC file format (MOS DATAFILE2.0)
+                 This is a beta because the XWC/XTC support needs to be cleaned up and secured...
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1326,10 +1329,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 20440;
+  DRIVER_VERSION = 20511;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.33 $';
-  CVS_DATE = '$Date: 2008-08-23 17:14:42 $';
+  CVS_REVISION = '$Revision: 1.34 $';
+  CVS_DATE = '$Date: 2008-08-27 19:56:19 $';
   BUFFER_SIZE = 8192;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1405,8 +1408,8 @@ begin
   GetDriverInfo.Name := 'Elbereth''s Main Driver';
   GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 80 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 68;
+  GetDriverInfo.Comment := 'This driver support 81 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.NumFormats := 69;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -1543,6 +1546,8 @@ begin
   GetDriverInfo.Formats[67].Name := 'Entropia Universe (*.BNT)';
   GetDriverInfo.Formats[68].Extensions := '*.SFL';
   GetDriverInfo.Formats[68].Name := 'AGON: The Lost Sword of Toledo (*.SFL)';
+  GetDriverInfo.Formats[69].Extensions := '*.XWC;.XTC';
+  GetDriverInfo.Formats[69].Name := 'Enclave (*.XTC;*.XWC)|The Chronicles of Riddick: Butcher (*.XTC;*.XWC)';
 //  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
 //  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -1655,6 +1660,28 @@ begin
 
   res := tchar;
   Get16 := Copy(res,1,tword);
+
+  FreeMem(tchar);
+
+end;
+
+function Get32_Stream(src: TStream): string;
+var tchar: Pchar;
+    tint: Integer;
+    res: string;
+begin
+
+  src.Read(tint,4);
+  if tint > 255 then
+  begin
+    raise Exception.Create(inttostr(tint)+' octets! t''es fou ?!'+#10+inttostr(src.Seek(0,1))+#10+inttohex(src.Seek(0,1),8));
+  end;
+  GetMem(tchar,tint);
+  FillChar(tchar^,tint,0);
+  src.Read(tchar^,tint);
+
+  res := tchar;
+  Result := Copy(res,1,tint);
 
   FreeMem(tchar);
 
@@ -3580,6 +3607,218 @@ begin
       DrvInfo.ExtractInternal := False;
 
     end;
+
+end;
+
+type MOSChunk = packed record
+       ID: array[0..23] of char;
+       NextChunkOffset: integer;
+     end;
+     MOSSoundEntry = packed record
+       Offset: integer;
+       Size: integer;
+     end;
+     MOSTextureEntry_Init = packed record
+       Unk1: integer;   // Always 0?
+       MipMapNum: integer;        // Number of mipmap entries
+       Unk3: integer;   // Always 512?
+       Unk4: integer;
+       FirstMipMapSize: integer;
+       Width: integer;
+       Height: integer;
+     end;
+     // Riddick have an integer here for unknown purpose...
+     MOSTextureEntry_End = packed record
+       TextureType: integer;
+       Offset: integer;
+       Unk10: integer;
+       Unk11: integer;
+       Unk12: integer;
+       Unk13: integer;
+       Unk14: integer;
+       Unk15: integer;
+       Unk16: word;
+     end;
+
+type MOSDTextureLocalHeader_Init = packed record
+       Unk1: integer;
+       Unk2: integer;
+       Unk3: integer;
+       Width: integer;
+       Height: integer;
+     end;
+     // Riddick have an integer here for unknown purpose...
+     MOSDTextureLocalHeader_End = packed record
+       Unk4: integer;      // Depth?
+       TextureType: integer;
+       Size: integer;
+       Unk6: integer;
+       Unk7: integer;
+     end;
+
+// MOS DATAFILE2.0 support
+// Only WAVEDATA and TEXTURES are supported (XWC and XTC)
+// In order to speed up reading from XTC files there is a buffering of the whole directory
+// and then a parse through the directory
+function ReadEnclaveMOS(src: string): Integer;
+var HDR: MOSChunk;
+    SND: MOSSoundEntry;
+    TEX1: MOSTextureEntry_Init;
+    TEX2: MOSTextureEntry_End;
+    TEXHDR1: MOSDTextureLocalHeader_Init;
+    TEXHDR2: MOSDTextureLocalHeader_End;
+    DirCache: TMemoryStream;
+    DirFile: THandleStream;
+    disp: string;
+    NumE, x, fileType, DirOffset, DirNum, NextOffset, Offset, Per, OldPer, FormatCheck, EntrySize: integer;
+    Test1, Test2: integer;
+    OggCheck: array[0..3] of char;
+    isWave: boolean;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, SizeOf(MOSChunk));
+
+    if strip0(HDR.ID) <> 'MOS DATAFILE2.0' then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'MOSD';
+      ErrInfo.Games := 'Enclave, The Chronicles of Riddick: Butcher Bay';
+    end
+    else
+    begin
+
+      NumE := 0;
+
+      isWave := false;
+
+      repeat
+        Fileseek(FHandle, HDR.NextChunkOffset, 0);
+        FileRead(FHandle, HDR, SizeOf(MOSChunk));
+        if (strip0(HDR.ID) = 'WAVEDATA') then
+        begin
+          FileSeek(FHandle,8,1);
+          FileRead(Fhandle,DirOffset,4);
+          FileRead(Fhandle,DirNum,4);
+          NextOffset := DirOffset+48;
+          for x := 1 to DirNum do
+          begin
+            FileSeek(FHandle,NextOffset,0);
+            FileRead(Fhandle,SND,SizeOf(MOSSoundEntry));
+            disp := Get32(Fhandle);
+            if (length(disp) mod 4) <> 0 then
+              NextOffset := FileSeek(Fhandle,4 - (Length(disp) mod 4),1)
+            else
+              NextOffset := FileSeek(Fhandle,0,1);
+            if SND.Size >= 40 then
+            begin
+              FileSeek(Fhandle,SND.Offset+36,0);
+              FileRead(Fhandle,OggCheck,4);
+              if strip0(OggCheck) = 'OggS' then // Enclave
+              begin
+                disp := disp + '.ogg';
+                dec(SND.Size,36);
+                inc(SND.Offset,36);
+              end
+              else if SND.Size >= 44 then // Chronicles of Riddick
+              begin
+                FileSeek(Fhandle,SND.Offset+40,0);
+                FileRead(Fhandle,OggCheck,4);
+                if strip0(OggCheck) = 'OggS' then
+                begin
+                  disp := disp + '.ogg';
+                  dec(SND.Size,40);
+                  inc(SND.Offset,40);
+                end
+              end;
+            end;
+            FSE_Add(disp,SND.Offset,SND.Size,0,0);
+            inc(NumE);
+          end;
+          isWave := true;
+        end;
+        if (strip0(HDR.ID) = 'TEXTURES') then
+        begin
+          FileSeek(FHandle,8,1);
+          FileRead(Fhandle,DirOffset,4);
+          FileRead(Fhandle,DirNum,4);
+          DirFile := THandleStream.Create(Fhandle);
+          Offset := DirFile.Seek(0,1);
+          DirFile.Seek(DirOffset,0);
+          DirFile.Read(FormatCheck,4);  // 512 = Enclave?    20480 = Riddick?
+          DirFile.Seek(52,1);
+          DirCache := TMemoryStream.Create;
+          DirCache.CopyFrom(DirFile,Offset-DirOffset-24-56);
+          NextOffset := 0;
+          OldPer := -6;
+          EntrySize := SizeOf(MOSTextureEntry_Init)+SizeOf(MOSTextureEntry_End);
+          if FormatCheck = 20480 then // Riddick
+            inc(EntrySize,4);
+          for x := 1 to DirNum do
+          begin
+            Per := ROund(((x / DirNum)*100));
+            if (Per > OldPer + 5) then
+            begin
+              SetPercent(Per);
+              OldPer := Per;
+            end;
+            Dircache.Seek(NextOffset,0);
+//            FileSeek(FHandle,NextOffset,0);
+            disp := Get32_Stream(DirCache);
+            if (length(disp) mod 4) <> 0 then
+              NextOffset := Dircache.Seek(4 - (Length(disp) mod 4),1)+EntrySize
+            else
+              NextOffset := DirCache.Seek(0,1)+EntrySize;
+            Dircache.Read(TEX1,SizeOf(MOSTextureEntry_Init));
+            if FormatCheck = 20480 then // Riddick...
+              Dircache.Seek(4,1);
+            Dircache.Read(TEX2,SizeOf(MOSTextureEntry_End));
+            inc(NumE);
+            FileSeek(Fhandle,TEX2.Offset,0);
+            FileRead(Fhandle,Offset,4);
+            FileSeek(Fhandle,Offset,0);
+            FileRead(FHandle,TEXHDR1,SizeOf(MOSDTextureLocalHeader_Init));
+            if FormatCheck = 20480 then // Riddick...
+              FileSeek(Fhandle,4,1);
+            FileRead(FHandle,TEXHDR2,SizeOf(MOSDTextureLocalHeader_End));
+
+            if (TEXHDR1.Width > 0) and (TEXHDR1.Height > 0) and ((TEXHDR2.TextureType = 0) or (TEXHDR2.TextureType = 2)) then
+              FSE_Add(disp+'.dds',TEX2.Offset,TEX1.FirstMipMapSize,1,TEX1.MipMapNum)
+            else
+              FSE_Add(disp,TEX2.Offset,TEX1.FirstMipMapSize,0,0)
+          end;
+        end;
+      until HDR.NextChunkOffset = 0;
+
+      Result := NumE;
+
+      if isWave then
+      begin
+        DrvInfo.ID := 'MOSD';
+        DrvInfo.ExtractInternal := False;
+      end
+      else
+      begin
+        if formatCheck = 20480 then
+          DrvInfo.ID := 'MOSDr'
+        else
+          DrvInfo.ID := 'MOSDe';
+        DrvInfo.ExtractInternal := True;
+      end;
+
+      DrvInfo.Sch := '';
+      DrvInfo.FileHandle := FHandle;
+
+    end;
+  end
+  else
+    Result := -2;
 
 end;
 
@@ -10333,6 +10572,11 @@ begin
         FileClose(FHandle);
         Result := ReadDescentHOG(fil);
       end
+      else if strip0(ID23) = 'MOS DATAFILE2.0' then
+      begin
+        FileClose(FHandle);
+        Result := ReadEnclaveMOS(fil)
+      end
       else if ID36 = DRSID then
       begin
         FileClose(FHandle);
@@ -10546,6 +10790,9 @@ begin
       ReadFormat := ReadWarlordsBattlecryXCR(fil)
     else if ext = 'XRS' then
       ReadFormat := ReadPixelPaintersXRS(fil)
+    // Enclave
+    else if (ext = 'XTC') or (ext = 'XWC')then
+      Result := ReadEnclaveMOS(fil)
     else if ext = 'ZFS' then
       ReadFormat := ReadInterstateZFS(fil)
     else
@@ -10625,7 +10872,7 @@ var ID4: array[0..3] of char;
     ID12SLF: array[0..11] of char;
 //    ID18: array[0..17] of char;
     ID21P4: array[0..20] of char;
-    ID23: array[0..27] of char;
+    ID23: array[0..22] of char;
     ID28: array[0..27] of char;
     ID36: array[0..35] of char;
     ID127: array[0..126] of char;
@@ -10840,6 +11087,9 @@ begin
       Result := true
     else if ID4 = ('&YA1') then
       Result := true
+    // Enclave .XTC .XWC
+    else if strip0(ID23) = 'MOS DATAFILE2.0' then
+      Result := true
     else if (ID4[0] = #0) and (ID4[1] = #0) and (ID4[2] = #128) and (ID4[3] = #63) then
       Result := true
     else if (ID4[0] = 'B') and (ID4[1] = 'S') and (ID4[2] = 'A') and (ID4[3] = #0) then
@@ -11034,6 +11284,10 @@ begin
     else if ext = 'X13' then
       IsFormat := True
     else if ext = 'XCR' then
+      IsFormat := True
+    else if ext = 'XTC' then
+      IsFormat := True
+    else if ext = 'XWC' then
       IsFormat := True
     else if ext = 'XRS' then
       IsFormat := True
@@ -12233,6 +12487,91 @@ end;
 
 end;
 
+// Function to extract textures from MOS DATAFILE2.0 to DDS
+// Only supports textures types 0 and 2 (DXT1 and DXT3)
+// If something weird is found, just do a BinCopy extraction (there are some weird entries in those files...)
+function ExtractMOSDTextureToDDS(outputstream: TStream; Offset, Size: int64; MipMapnum: integer; BufferSize: integer; silent, isRiddick: boolean): boolean;
+var DDS: DDSHeader;
+    TEXHDR1: MOSDTextureLocalHeader_Init;
+    TEXHDR2: MOSDTextureLocalHeader_End;
+    MipMapOffsets: array of integer;
+    inFile: THandleStream;
+    x: integer;
+begin
+
+  SetLength(MipMapOffsets, MipMapNum);
+
+  inFile := THandleStream.Create(FHandle);
+
+  inFile.Seek(Offset,0);
+  for x := 0 to MipMapNum - 1 do
+    inFile.Read(MipMapOffsets[x],4);
+
+  inFile.Seek(MipMapOffsets[0],0);
+  inFile.Read(TEXHDR1,SizeOf(MOSDTextureLocalHeader_Init));
+  if isRiddick then
+    inFile.Seek(4,1);
+  inFile.Read(TEXHDR2,SizeOf(MOSDTextureLocalHeader_End));
+
+  // Sanity checks, if they fail, we just extract a BinCopy
+  if (TEXHDR1.Width <= 0) or (TEXHDR1.Height <= 0) or (TEXHDR2.Size <= 0) or ((TEXHDR2.TextureType <> 0) and (TEXHDR2.TextureType <> 2)) then
+  begin
+
+    inFile.Free;
+    BinCopyToStream(Fhandle,outputstream,Offset, Size,BufferSize,silent);
+
+  end
+  else
+  begin
+
+    MipMapNum := 1;
+
+    FillChar(DDS,SizeOf(DDSHeader),0);
+    DDS.ID[0] := 'D';
+    DDS.ID[1] := 'D';
+    DDS.ID[2] := 'S';
+    DDS.ID[3] := ' ';
+    DDS.SurfaceDesc.dwSize := 124;
+    DDS.SurfaceDesc.dwFlags := DDSD_CAPS or DDSD_HEIGHT or DDSD_WIDTH or DDSD_PIXELFORMAT or DDSD_LINEARSIZE;
+    if MipMapNum > 1 then
+      DDS.SurfaceDesc.dwFlags := DDS.SurfaceDesc.dwFlags or DDSD_MIPMAPCOUNT;
+    DDS.SurfaceDesc.dwHeight := TEXHDR1.Height;
+    DDS.SurfaceDesc.dwWidth := TEXHDR1.Width;
+    DDS.SurfaceDesc.dwPitchOrLinearSize := TEXHDR2.Size;
+    DDS.SurfaceDesc.dwMipMapCount := MipMapnum;
+    DDS.SurfaceDesc.ddpfPixelFormat.dwSize := 32;
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_FOURCC;
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'D';
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[1] := 'X';
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[2] := 'T';
+    if (TEXHDR2.TextureType = 2) then
+      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '3'
+    else
+      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '1';
+    DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDSCAPS_TEXTURE;
+    if MipMapNum > 1 then
+      DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDS.SurfaceDesc.ddsCaps.dwCaps1 or DDSCAPS_COMPLEX or DDSCAPS_MIPMAP;
+
+    outputstream.Write(DDS,SizeOf(DDSHeader));
+
+    for x := 0 to MipMapNum - 1 do
+    begin
+      inFile.Seek(MipMapOffsets[x],0);
+      inFile.Read(TEXHDR1,SizeOf(MOSDTextureLocalHeader_Init));
+      if isRiddick then
+        inFile.Seek(4,1);
+      inFile.Read(TEXHDR2,SizeOf(MOSDTextureLocalHeader_End));
+      outputstream.CopyFrom(inFile,TEXHDR2.Size);
+    end;
+
+    inFile.Free;
+
+  end;
+
+  result := true;
+
+end;
+
 function ExtractFileToStream(outputstream: TStream; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
 var ENT: MTFCompress;
     SSA: SSACompress;
@@ -12469,6 +12808,13 @@ begin
     begin
       BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
     end;
+  end
+  else if Leftstr(DrvInfo.ID,4) = 'MOSD' then
+  begin
+    if DataX = 1 then
+      ExtractMOSDTextureToDDS(outputstream,Offset,Size,DataY,BUFFER_SIZE,silent,Rightstr(DrvInfo.ID,1)='r')
+    else
+      BinCopyToStream(FHandle,outputstream,offset,size,BUFFER_SIZE,silent);
   end
   else
   begin

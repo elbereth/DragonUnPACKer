@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.34 2008-08-27 19:56:19 elbereth Exp $
+// $Id: drv_default.dpr,v 1.35 2008-09-03 19:38:42 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -167,6 +167,7 @@ type FSE = ^element;
     20440        Added support for AGON .SFL files (still needs more work but usable)
     20511        Added support for Enclave & The Chronicles of Riddick: Butcher Bay .XWC & .XTC file format (MOS DATAFILE2.0)
                  This is a beta because the XWC/XTC support needs to be cleaned up and secured...
+    20512        Improved Spellforce .PAK files support (directories are now shown) thanks to info from Anonimeitor
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -582,7 +583,7 @@ type MFHeader = packed record
         Size: integer;
         RelOffset: integer;
         NameOffset: integer;
-        Unknown: integer;
+        DirNameOffset: integer;
      end;
 
 // Get0
@@ -1329,10 +1330,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 20511;
+  DRIVER_VERSION = 20512;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.34 $';
-  CVS_DATE = '$Date: 2008-08-27 19:56:19 $';
+  CVS_REVISION = '$Revision: 1.35 $';
+  CVS_DATE = '$Date: 2008-09-03 19:38:42 $';
   BUFFER_SIZE = 8192;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -6973,15 +6974,18 @@ begin
     try
       FAT.CopyFrom(HF,HDR.NbFatEntry*16);
       FAT.Seek(0,0);
-      nameoffset := 94+HDR.NbFatEntry*16;
+      nameoffset := 92+HDR.NbFatEntry*16;
       for x := 1 to HDR.NbFatEntry do
       begin
         FAT.Read(ENT,SizeOf(ENT));
-        if (ENT.NameOffset and $FF000000) <> 0 then
-          ENT.NameOffset := ENT.NameOffset and $FFFFFF;
+        ENT.NameOffset := ENT.NameOffset and $FFFFFF;
+        ENT.DirNameOffset := ENT.DirNameOffset and $FFFFFF;
 
-        FileSeek(FHandle,ENT.NameOffset+nameoffset,0);
+        FileSeek(FHandle,ENT.NameOffset+nameoffset+2,0);
         disp := revstr(Strip0(Get0(FHandle)));
+
+        FileSeek(FHandle,ENT.DirNameOffset+nameoffset,0);
+        disp := revstr(Strip0(Get0(FHandle)))+'\'+disp;
 
         FSE_Add(disp,ENT.RelOffset+HDR.DataOffset,ENT.Size,0,0);
       end;
@@ -6994,7 +6998,7 @@ begin
     Result := HDR.NbFatEntry;
 
     DrvInfo.ID := 'MPF4';
-    DrvInfo.Sch := '/';
+    DrvInfo.Sch := '\';
     DrvInfo.FileHandle := FHandle;
     DrvInfo.ExtractInternal := False;
 

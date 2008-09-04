@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.35 2008-09-03 19:38:42 elbereth Exp $
+// $Id: drv_default.dpr,v 1.36 2008-09-04 20:35:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -168,6 +168,7 @@ type FSE = ^element;
     20511        Added support for Enclave & The Chronicles of Riddick: Butcher Bay .XWC & .XTC file format (MOS DATAFILE2.0)
                  This is a beta because the XWC/XTC support needs to be cleaned up and secured...
     20512        Improved Spellforce .PAK files support (directories are now shown) thanks to info from Anonimeitor
+    20513
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1330,10 +1331,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 20512;
+  DRIVER_VERSION = 20513;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.35 $';
-  CVS_DATE = '$Date: 2008-09-03 19:38:42 $';
+  CVS_REVISION = '$Revision: 1.36 $';
+  CVS_DATE = '$Date: 2008-09-04 20:35:32 $';
   BUFFER_SIZE = 8192;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1409,7 +1410,7 @@ begin
   GetDriverInfo.Name := 'Elbereth''s Main Driver';
   GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 81 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.Comment := 'This driver support 82 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
   GetDriverInfo.NumFormats := 69;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)';
@@ -1466,7 +1467,7 @@ begin
   GetDriverInfo.Formats[27].Extensions := '*.bkf';
   GetDriverInfo.Formats[27].Name := 'Moto Racer (*.BKF)';
   GetDriverInfo.Formats[28].Extensions := '*.dat';
-  GetDriverInfo.Formats[28].Name := 'Nascar Racing (*.DAT)|Gunlok (*.DAT)|LEGO Star Wars (*.DAT)|Act of War (*.DAT)';
+  GetDriverInfo.Formats[28].Name := 'Nascar Racing (*.DAT)|Gunlok (*.DAT)|LEGO Star Wars (*.DAT)|Act of War (*.DAT)|F-22 Air Dominance Fighter (*.DAT)';
   GetDriverInfo.Formats[29].Extensions := '*.pbo';
   GetDriverInfo.Formats[29].Name := 'Operation Flashpoint (*.PBO)';
   GetDriverInfo.Formats[30].Extensions := '*.awf';
@@ -4094,6 +4095,76 @@ begin
   end
   else
     Result := -2;
+
+end;
+
+// Experimental and PARTIAL F-22 Advanced Dominance Fighter .DAT files
+// The filenames are stored in the EXE files of the game
+// The DAT file only use some sort of Hash value, this function only retrieve
+// the hash and that's all... It is dirty but better than nothing! :)
+
+type F22adfDAT_Entry = packed record
+       Hash: integer;
+       Offset: integer;
+       Size: integer;
+     end;
+
+function ReadF22adfDAT(): Integer;
+var ENT: F22adfDAT_Entry;
+    DirNames: array of string;
+    ExtNames: array of string;
+    DirOffset,EntOffset,NameOffset,NumE,x : integer;
+    DirNum,NameSize,DirNameNum,ExtNameNum : word;
+    Disp: String;
+begin
+
+  FileSeek(Fhandle, 0, 0);
+
+  // Read & seek to the offset to the directory structure
+  FileRead(FHandle, DirOffset, 4);
+  FileSeek(Fhandle, DirOffset,0);
+
+  // Read the number of entries
+  FileRead(FHandle, DirNum,2);
+  // Read the number of directory names
+  FileRead(FHandle, DirNameNum,2);
+  // Read the number of extension names
+  FileRead(FHandle, ExtNameNum,2);
+  // Read the size of the directory+extension names block
+  FileRead(FHandle, NameSize,2);
+
+  // Read the directory names
+  setLength(DirNames,DirNameNum);
+  for x := 1 to DirNameNum do
+    DirNames[x-1] := Get8(Fhandle);
+
+  // Read the extension names
+  setLength(ExtNames,ExtNameNum);
+  for x := 1 to ExtNameNum do
+    ExtNames[x-1] := Get8(Fhandle);
+
+  // Just to be sure, we calculate the offset of the entries and seek there
+  EntOffset := DirOffset+NameSize+8;
+  fileSeek(FHandle,EntOffset,0);
+
+  // For each entry read the hash, offset and size
+  NumE := DirNum;
+
+  for x := 1 to NumE do
+  begin
+
+    FileRead(FHandle,ENT,SizeOf(F22adfDAT_Entry));
+
+    FSE_Add(IntToHex(ENT.Hash,8),ENT.Offset,ENT.Size,0,0);
+
+  end;
+
+  Result := NumE;
+
+  DrvInfo.ID := 'F22DAT';
+  DrvInfo.Sch := '';
+  DrvInfo.FileHandle := FHandle;
+  DrvInfo.ExtractInternal := False;
 
 end;
 
@@ -9882,6 +9953,7 @@ end;
 function ReadHubDAT(src: String): Integer;
 var ID: array[0..7] of char;
     res,test1,test2,test3: integer;
+    test4,test5: word;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead);
@@ -9905,6 +9977,17 @@ begin
         FileRead(FHandle,test3,4);
         if test3 = -1 then
           res := ReadLegoStarWarsDAT
+        else
+          res := ReadNascarDAT;
+      end
+      else if test1+8 < TotFSize then
+      begin
+        FileSeek(FHandle,test1,0);
+        fileRead(FHandle,test4,2);
+        FileSeek(FHandle,4,1);
+        fileRead(FHandle,test5,2);
+        if (test1+(test4*12)+test5+8) = TotFSize then
+          res := ReadF22adfDAT
         else
           res := ReadNascarDAT;
       end

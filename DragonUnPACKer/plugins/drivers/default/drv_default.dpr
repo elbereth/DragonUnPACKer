@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.36 2008-09-04 20:35:32 elbereth Exp $
+// $Id: drv_default.dpr,v 1.37 2008-09-06 05:33:25 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -168,7 +168,11 @@ type FSE = ^element;
     20511        Added support for Enclave & The Chronicles of Riddick: Butcher Bay .XWC & .XTC file format (MOS DATAFILE2.0)
                  This is a beta because the XWC/XTC support needs to be cleaned up and secured...
     20512        Improved Spellforce .PAK files support (directories are now shown) thanks to info from Anonimeitor
-    20513
+    20513        Added partial support for F-22 Air Dominance Fighter .DAT files
+    20514        Improved Enclave & Riddick .XTC extraction of DXT1/DXT3 textures (MipMap is included now)
+                 Added detection of DXT5 textures in .XTC files of Riddick
+                 Fixed F-22 Air Dominance Fighter .DAT detection to work with did.dat of ADF & Total Air War
+                 Added detection of Super EF2000 .DAT files (same structure than F-22 ADF)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -1331,10 +1335,10 @@ type SYN_Header = packed record
      end;
 
 const
-  DRIVER_VERSION = 20513;
+  DRIVER_VERSION = 20514;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.36 $';
-  CVS_DATE = '$Date: 2008-09-04 20:35:32 $';
+  CVS_REVISION = '$Revision: 1.37 $';
+  CVS_DATE = '$Date: 2008-09-06 05:33:25 $';
   BUFFER_SIZE = 8192;
 
   BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
@@ -1419,7 +1423,7 @@ begin
   GetDriverInfo.Formats[3].Extensions := '*.grp;*.art';
   GetDriverInfo.Formats[3].Name := 'Duke Nukem 3D (*.GRP;*.ART)|Shadow Warrior (*.GRP;*.ART)';
   GetDriverInfo.Formats[4].Extensions := '*.pff';
-  GetDriverInfo.Formats[4].Name := 'Comanche 4 (*.PFF)|Delta Force (*.PFF)|Delta Force 2 (*.PFF)|Delta Force: Land Warrior (*.PFF)|F33 Lightning 3';
+  GetDriverInfo.Formats[4].Name := 'Comanche 4 (*.PFF)|Delta Force (*.PFF)|Delta Force 2 (*.PFF)|Delta Force: Land Warrior (*.PFF)|F-22 Lightning 3';
   GetDriverInfo.Formats[5].Extensions := '*.rez';
   GetDriverInfo.Formats[5].Name := 'Alien vs Predator 2 (*.REZ)|No One Lives Forever (*.REZ)|No One Lives Forever 2 (*.REZ)|Sanity Aiken''s Artifact (*.REZ)|Shogo: Mobile Armor Division (*.REZ)|Purge (*.REZ)|Tron 2.0 (*.REZ)';
   GetDriverInfo.Formats[6].Extensions := '*.drs';
@@ -1467,7 +1471,7 @@ begin
   GetDriverInfo.Formats[27].Extensions := '*.bkf';
   GetDriverInfo.Formats[27].Name := 'Moto Racer (*.BKF)';
   GetDriverInfo.Formats[28].Extensions := '*.dat';
-  GetDriverInfo.Formats[28].Name := 'Nascar Racing (*.DAT)|Gunlok (*.DAT)|LEGO Star Wars (*.DAT)|Act of War (*.DAT)|F-22 Air Dominance Fighter (*.DAT)';
+  GetDriverInfo.Formats[28].Name := 'Nascar Racing (*.DAT)|Gunlok (*.DAT)|LEGO Star Wars (*.DAT)|Act of War (*.DAT)|F-22 Air Dominance Fighter (*.DAT)|F-22 Total Air War (*.DAT)|Super EF2000 (*.DAT)';
   GetDriverInfo.Formats[29].Extensions := '*.pbo';
   GetDriverInfo.Formats[29].Name := 'Operation Flashpoint (*.PBO)';
   GetDriverInfo.Formats[30].Extensions := '*.awf';
@@ -2247,10 +2251,11 @@ type SFLHeader = packed record
 
 function ReadAgonSFL(src: string): Integer;
 var HDR: SFLHeader;
-    NameOffset, FileID, ParentID, UnkID, Offset, Size, TotSize, x, y: Integer;
+    NameOffset, FileID, Offset, Size, TotSize, x: Integer;
+//    ParentID, UnkID, y: integer;
     foldersBuffer, filesBuffer, nameBuffer: TMemoryStream;
     handle_stm: THandleStream;
-    dirNames: array of string;
+//    dirNames: array of string;
     nameStr: string;
 begin
 
@@ -3672,8 +3677,8 @@ var HDR: MOSChunk;
     DirCache: TMemoryStream;
     DirFile: THandleStream;
     disp: string;
-    NumE, x, fileType, DirOffset, DirNum, NextOffset, Offset, Per, OldPer, FormatCheck, EntrySize: integer;
-    Test1, Test2: integer;
+    NumE, x, DirOffset, DirNum, NextOffset, Offset, Per, OldPer, FormatCheck, EntrySize: integer;
+//    fileType, Test1, Test2: integer;
     OggCheck: array[0..3] of char;
     isWave: boolean;
 begin
@@ -3790,7 +3795,7 @@ begin
               FileSeek(Fhandle,4,1);
             FileRead(FHandle,TEXHDR2,SizeOf(MOSDTextureLocalHeader_End));
 
-            if (TEXHDR1.Width > 0) and (TEXHDR1.Height > 0) and ((TEXHDR2.TextureType = 0) or (TEXHDR2.TextureType = 2)) then
+            if (TEXHDR1.Width > 0) and (TEXHDR1.Height > 0) and ((TEXHDR2.TextureType = 0) or (TEXHDR2.TextureType = 2) or (TEXHDR2.TextureType = 4)) then
               FSE_Add(disp+'.dds',TEX2.Offset,TEX1.FirstMipMapSize,1,TEX1.MipMapNum)
             else
               FSE_Add(disp,TEX2.Offset,TEX1.FirstMipMapSize,0,0)
@@ -4113,9 +4118,8 @@ function ReadF22adfDAT(): Integer;
 var ENT: F22adfDAT_Entry;
     DirNames: array of string;
     ExtNames: array of string;
-    DirOffset,EntOffset,NameOffset,NumE,x : integer;
+    DirOffset,EntOffset,NumE,x : integer;
     DirNum,NameSize,DirNameNum,ExtNameNum : word;
-    Disp: String;
 begin
 
   FileSeek(Fhandle, 0, 0);
@@ -4628,11 +4632,11 @@ function ReadLionheadAudioBank(src: string): Integer;
 var HDR: LUG_Chunk;
     ABST_HDR: LUG_LHAudioBankSampleTable;
     ABST_ENT: LUG_LHAudioBankSampleTable_Entry;
-    ABST_ENT_Size: cardinal;
+    ABST_ENT_Size, DirSize, DirNum: cardinal;
     IDst: array[0..7] of char;
     disp: string;
     NumE, x: integer;
-    DataOffset, DirOffset, DirNum, DirSize, FLength, CurP, idx: integer;
+    DataOffset, DirOffset, FLength, CurP, idx: integer;
     MusicOffset, MusicSize, OldPer, Per: integer;
     tagid, nam: string;
     IsMusic, IsFirst: boolean;
@@ -8202,7 +8206,7 @@ function ReadSinkingIslandOPK(src: string): Integer;
 var HDR: OPKHeader;
     ENT: OPKEntry;
     disp: string;
-    NumE, x, per, oldper: integer;
+    x, per, oldper: integer;
     rest: longword;
 begin
 
@@ -8525,7 +8529,7 @@ var HDR: TES4BSAHeader;
     FolderENT: TES4BSAFolderRecord;
     FileENT: TES4BSAFileRecord;
     curDir: string;
-    NumE, x, y, CurOffset, OffsetToNames, originalsize, perc, oldperc: integer;
+    NumE, x, y, OffsetToNames, originalsize, perc, oldperc: integer;
     DefaultCompressed, FileCompressed: boolean;
     FileNames: TStringList;
     Buffer: TMemoryStream;
@@ -8579,7 +8583,7 @@ begin
         // 3. Free the buffer as we don't need it anymore
         Buffer.Free;
 
-        perc := 0;
+        oldperc := 0;
 
         // Go throw the Folder records
         for x := 1 to HDR.FolderCount do
@@ -9178,8 +9182,7 @@ end;
 function ReadUFOAftermathVFS(src: string): Integer;
 var HDR: VFSHeader;
     ENT: VFSFileEntry;
-    curDir: string;
-    RootOffset, StartOffset, x, numFSE, numChunks: integer;
+    RootOffset, StartOffset, x, numFSE: integer;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead);
@@ -9982,11 +9985,20 @@ begin
       end
       else if test1+8 < TotFSize then
       begin
+//        FileRead(FHandle,test3,4);
         FileSeek(FHandle,test1,0);
         fileRead(FHandle,test4,2);
         FileSeek(FHandle,4,1);
         fileRead(FHandle,test5,2);
-        if (test1+(test4*12)+test5+8) = TotFSize then
+        // Checks to try to be sure this is an F-22 ADF/TAW or EF2000 .DAT (DID)
+        // test1 should be offset to directory
+        // test4 should be number of entries (one entry is 3 integers therefore 12 bytes)
+        // test5 should be the size of the name dir
+        // Therefore if we do the calculation the result should be under the total file size
+        // test2 seems to be always the same value for the 3 .dat files of F-22 ADF/TAW I inspected ($50001)
+        //       and for EF2000 it seems to be $2004152
+        // This is dirty but can avoid wrong identifications
+        if ((test1+(test4*12)+test5+8) <= TotFSize) and ((test2 = $50001) or (test2 = $2004152)) then
           res := ReadF22adfDAT
         else
           res := ReadNascarDAT;
@@ -12024,8 +12036,10 @@ var
   Buf: PChar;
   InputStream: TMemoryStream;
   DStream: TDecompressionStream;
-  FinalSize, x, chunkSize,checkValue: integer;
+  FinalSize, chunkSize,checkValue: integer;
 begin
+
+  FinalSize := 0;
 
   GetMem(Buf,Size);
   try
@@ -12601,7 +12615,7 @@ begin
   inFile.Read(TEXHDR2,SizeOf(MOSDTextureLocalHeader_End));
 
   // Sanity checks, if they fail, we just extract a BinCopy
-  if (TEXHDR1.Width <= 0) or (TEXHDR1.Height <= 0) or (TEXHDR2.Size <= 0) or ((TEXHDR2.TextureType <> 0) and (TEXHDR2.TextureType <> 2)) then
+  if (TEXHDR1.Width <= 0) or (TEXHDR1.Height <= 0) or (TEXHDR2.Size <= 0) or ((TEXHDR2.TextureType <> 0) and (TEXHDR2.TextureType <> 2) and (TEXHDR2.TextureType <> 4)) then
   begin
 
     inFile.Free;
@@ -12611,7 +12625,7 @@ begin
   else
   begin
 
-    MipMapNum := 1;
+    //MipMapNum := 1;
 
     FillChar(DDS,SizeOf(DDSHeader),0);
     DDS.ID[0] := 'D';
@@ -12631,7 +12645,9 @@ begin
     DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'D';
     DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[1] := 'X';
     DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[2] := 'T';
-    if (TEXHDR2.TextureType = 2) then
+    if (TEXHDR2.TextureType = 4) then
+      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '5'
+    else if (TEXHDR2.TextureType = 2) then
       DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '3'
     else
       DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '1';
@@ -12666,7 +12682,6 @@ var ENT: MTFCompress;
     tbyt,key: byte;
     ID: array[0..2] of char;
     ID4: array[0..3] of char;
-    CSize,OSize,x: integer;
 begin
 
   FileSeek(FHandle,Offset,0);

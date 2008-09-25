@@ -1,6 +1,6 @@
 unit spec_HRF;
 
-// $Id: spec_HRF.pas,v 1.8 2008-08-23 17:45:04 elbereth Exp $
+// $Id: spec_HRF.pas,v 1.9 2008-09-25 20:54:11 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/spec_HRF.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -112,6 +112,11 @@ type Version = packed record
        Author: array[0..63] of char;
        url: array[0..127] of char;
        Title: array[0..63] of char;
+     end;
+     HRF_Index_v0 = packed record
+       FileType: byte;
+       Offset: integer;
+       Size: integer;
      end;
      HRF_Index_v1 = packed record
        Filename: array[0..31] of char;

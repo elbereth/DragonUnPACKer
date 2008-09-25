@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.3 2008-03-02 18:27:56 elbereth Exp $
+// $Id: Main.pas,v 1.4 2008-09-25 20:57:37 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dpackc/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -23,7 +23,8 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, zlib,
   Dialogs, ComCtrls, StdCtrls, Menus, ToolWin, ImgList, ExtCtrls,
   lib_crc, lib_zlib, spec_DUPP, JvComponent, JvSimpleXml, lib_version, lib_binutils,
-  JvExStdCtrls, JvButton, JvCtrls, JvRichEdit;
+  JvExStdCtrls, JvButton, JvCtrls, JvRichEdit,
+  ULZMAEnc,UBufferedFS,DCPsha512,DCPsha256;
 
 type
      BMPHeader = packed record
@@ -121,9 +122,24 @@ type
     Label18: TLabel;
     lblFileVersion: TStaticText;
     Label19: TLabel;
+    TabSheet5: TTabSheet;
+    grpCompressionOptions: TGroupBox;
+    chkCompressNone: TCheckBox;
+    chkCompressZlib: TCheckBox;
+    chkCompressLZMA: TCheckBox;
+    GroupBox6: TGroupBox;
+    optFileHashMD5: TRadioButton;
+    optFileHashSHA1: TRadioButton;
+    optFileHashSHA256: TRadioButton;
+    optFileHashSHA512: TRadioButton;
+    optFileHashRipemd160: TRadioButton;
+    GroupBox7: TGroupBox;
+    optFileCompressSingle: TRadioButton;
+    optFileCompressSolid: TRadioButton;
+    GroupBox8: TGroupBox;
     optDUPPv2: TRadioButton;
     optDUPPv3: TRadioButton;
-    Label20: TLabel;
+    optDUPPv4: TRadioButton;
     procedure ListBox1DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure ListBox1DragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
@@ -158,11 +174,17 @@ type
     procedure butVersionNextClick(Sender: TObject);
     procedure writeLog(text: string);
     procedure butBrowsePackageFileClick(Sender: TObject);
+    procedure optDUPPv4Click(Sender: TObject);
+    procedure optDUPPv3Click(Sender: TObject);
+    procedure optDUPPv2Click(Sender: TObject);
 //    function convertInstallTo(val: integer): string;
   private
     { Déclarations privées }
     function getPluginVersion(filename: String): Integer;
     procedure refreshSelectedInstallTo;
+    procedure refreshAvailableOptions;
+    procedure createDUPPv2_v3;
+    procedure createDUPPv4;
   public
     PackVersion: Integer;
     PackDUP5Check: Boolean;
@@ -180,6 +202,7 @@ type
 type FileInfo = class
      public
        Compress: boolean;
+       CompressType: byte;
        UpgradeOnly: boolean;
        StoreDateTime: boolean;
        ReadOnly: boolean;
@@ -190,7 +213,7 @@ type FileInfo = class
        Filename: string;
        InstallDir: string;
        ForcedDir: boolean;
-       constructor Create(Comp, Upg, StoreDT, ReadO, Hide, Reg: boolean; InstTo: integer; Vers: integer; FName, InstallDir: string);
+       constructor Create(Comp, Upg, StoreDT, ReadO, Hide, Reg: boolean; CompType, InstTo: integer; Vers: integer; FName, InstallDir: string);
      end;
 
 var
@@ -202,12 +225,30 @@ implementation
 
 uses Compile, Config;
 
-const DPSVERSION = 2;
-      VERSION = 20040;
+const DPSVERSION = 3;
+      VERSION = 30011;
 
 {$R *.dfm}
 
 {$Include datetime.inc}
+
+procedure TfrmMain.refreshAvailableOptions;
+begin
+
+  chkCompressNone.Enabled := optDUPPv4.Checked;
+  chkCompressZlib.Enabled := optDUPPv4.Checked;
+  chkCompressLZMA.Enabled := optDUPPv4.Checked;
+
+  optFileCompressSingle.Enabled := optDUPPv4.Checked;
+  optFileCompressSolid.Enabled := optDUPPv4.Checked;
+
+  optFileHashMD5.Enabled := optDUPPv4.Checked;
+  optFileHashSHA1.Enabled := optDUPPv4.Checked;
+  optFileHashSHA256.Enabled := optDUPPv4.Checked;
+  optFileHashSHA512.Enabled := optDUPPv4.Checked;
+  optFileHashRIPEMD160.Enabled := optDUPPv4.Checked;
+
+end;
 
 procedure TfrmMain.ListBox1DragDrop(Sender, Source: TObject; X, Y: Integer);
 begin
@@ -235,7 +276,7 @@ begin
 
 end;
 
-procedure TfrmMain.butCompileClick(Sender: TObject);
+procedure TfrmMain.createDUPPv2_v3();
 var HDR: DUP5PACK_Header;
     NFO: DUP5PACK_Info;
     NFO1: DUP5PACK_Info_v1;
@@ -249,7 +290,7 @@ var HDR: DUP5PACK_Header;
     tByt: byte;
     InputStream: TCompressionStream;
     OutputStream: TMemoryStream;
-    Size: Integer;
+//    Size: Integer;
     Buffer: PByteArray;
     hBAN: integer;
     BMP: BMPHeader;
@@ -496,11 +537,429 @@ begin
 
 end;
 
+procedure TfrmMain.createDUPPv4();
+var HDR: DUP5PACK_Header_v4;
+    BlocksOffsets: array of DUP5PACK_Offsets_v4;
+    Blocks: array of TMemoryStream;
+    NFO: DUP5PACK_Info_v4;
+    Files: array of DUP5PACK_File_v4;
+    FilesData: array of TMemoryStream;
+    FTR: DUP5PACK_Footer_v4;
+    Hash_SHA256: TDCP_sha256;
+    Hash_SHA512: TDCP_sha512;
+    TmpStream, TmpStream2: TStream;
+    x,i,CurBlock,entriesBlock,dataBlock,namesBlock: integer;
+    BMP: BMPHeader;
+    fInfo: FileInfo;
+    fIn, fOut: TStream;
+    s: String;
+begin
+
+  writeLog('Creating Dragon UnPACKer Package [DUPP] v4...');
+  ProgressBar.Position := 0;
+
+  writeLog('+ Initializing hash engines...');
+  writeLog('+-+ SHA-256');
+  Hash_SHA256 := TDCP_sha256.Create(Self);
+  writeLog('+-+ SHA-512');
+  Hash_SHA512 := TDCP_sha512.Create(Self);
+
+  writeLog('+ Generating header...');
+
+  // --------------------------------------------------------------------------
+  // === HEADER ===============================================================
+  // --------------------------------------------------------------------------
+
+  FillChar(HDR,SizeOf(DUP5PACK_Header_v4),0);
+  HDR.ID := 'DUPP';
+  HDR.EOF := 26;
+  HDR.Version := 4;
+  HDR.NeededVersion := 30040;
+
+  writeLog('+-+ Compatibility: Duppi v'+getVersion(HDR.NeededVersion));
+
+  // There will be at least 4 blocks
+  HDR.NumOffsets := 4;
+
+  SetLength(BlocksOffsets,HDR.NumOffsets);
+  SetLength(Blocks,HDR.NumOffsets);
+
+  curBlock := 0;
+
+  // --------------------------------------------------------------------------
+  // === INFORMATION BLOCK ====================================================
+  // --------------------------------------------------------------------------
+
+  writeLog('+ Generating information block...');
+
+  // Fill block offset data (minus Offset & Hash that will be calculated afterwards)
+  BlocksOffsets[curBlock].ID := D5PID_INFORMATION;                 // Information block
+  BlocksOffsets[curBlock].OptionsFlags := D5PBLOCK_COMPRESSED;     // Block is compressed
+  BlocksOffsets[curBlock].CompressionType := D5PCOMPRESSION_LZMA;  // Zlib compressed
+  BlocksOffsets[curBlock].CompanionOfID := 0;                      // This is a main block
+  BlocksOffsets[curBlock].NumEntries := 0;                         // No entry based block
+
+  // Fill block information
+  NFO.NumVer := strtoint(txtVersion.text);
+  if (chkDUP5.Checked) then
+  begin
+    if (optCompSup.Checked) then
+      NFO.DUP5VerTest := 1
+    else if (optCompInf.Checked) then
+      NFO.DUP5VerTest := 2
+    else if (optCompEqual.Checked) then
+      NFO.DUP5VerTest := 0
+    else if (optCompDiff.Checked) then
+      NFO.DUP5VerTest := 3;
+  end
+  else
+    NFO.DUP5VerTest := -1;
+  NFO.DUP5VerValue := strtoint(txtDUP5Version.Text);
+
+  // Create block content
+  Blocks[curBlock] := TMemoryStream.Create;
+  tmpStream := TMemoryStream.Create;
+  tmpStream.Write(NFO,SizeOf(DUP5PACK_Info_v4));
+  put8(tmpStream,txtName.Text);
+  put8(tmpStream,txtURL.Text);
+  put8(tmpStream,txtAuthor.Text);
+  put32(tmpStream,txtComment.Text);
+  tmpStream.Seek(0,0);
+
+  writeLog('+-+ Compressing block with LZMA (Size: '+inttostr(tmpStream.Size)+' bytes)');
+
+  // Compress
+  lzma_encode(tmpStream,Blocks[curBlock]);
+
+  writeLog('+---+ OK (Size: '+inttostr(Blocks[curBlock].Size)+' bytes - '+floattostrF(((Blocks[curBlock].size/tmpStream.Size)*100),ffFixed,1,1)+'%)');
+
+  writeLog('+-+ Calculating hash of the block...');
+
+  // Calculates SHA-256 hash of the block
+  Blocks[curBlock].Seek(0,0);
+  Hash_SHA256.Init;
+  Hash_SHA256.UpdateStream(Blocks[curBlock],Blocks[curBlock].Size);
+  Hash_SHA256.Final(BlocksOffsets[curBlock].Hash);
+  Blocks[curBlock].Seek(0,0);
+
+  writeLog('+---+ OK');
+
+  // Indicate size of block
+  BlocksOffsets[curBlock].Size := Blocks[curBlock].Size;
+  BlocksOffsets[curBlock].DSize := tmpStream.Size;
+
+  tmpStream.Free;
+
+  // --------------------------------------------------------------------------
+  // === BANNER BLOCK =========================================================
+  // --------------------------------------------------------------------------
+
+  if (chkImagePerso.Checked and FileExists(txtImageFile.Text)) then
+  begin
+    writeLog('+ Importing image from: '+txtImageFile.Text);
+    tmpStream := TBufferedFS.Create(txtImageFile.Text,fmOpenRead or fmShareDenyWrite);
+    try
+      tmpStream.Seek(0,0);
+      tmpStream.Read(BMP,SizeOf(BMP));
+      tmpStream.Seek(0,0);
+      if ((BMP.ID = 'BM') and (BMP.Width = 465) and (BMP.height = 90)) then
+      begin
+        writeLog('+ Image is BMP 465x90 as expected... Adding BANNER block ('+inttostr(tmpStream.Size)+' bytes)...');
+
+        inc(HDR.NumOffsets);
+        SetLength(Blocks,HDR.NumOffsets);
+        SetLength(BlocksOffsets,HDR.NumOffsets);
+
+        inc(curBlock);
+
+        // Fill block offset data (minus Offset & Hash that will be calculated afterwards)
+        BlocksOffsets[curBlock].ID := D5PID_BANNER;                      // Banner block
+        BlocksOffsets[curBlock].OptionsFlags := D5PBLOCK_COMPRESSED;     // Block is compressed
+        BlocksOffsets[curBlock].CompressionType := D5PCOMPRESSION_LZMA;  // Zlib compressed
+        BlocksOffsets[curBlock].CompanionOfID := D5PID_INFORMATION;      // This is a companion of information block
+        BlocksOffsets[curBlock].NumEntries := 0;                         // No entry based block
+
+        // Compress
+        lzma_encode(tmpStream,Blocks[curBlock]);
+
+        // Calculates SHA-256 hash of the block
+        Blocks[curBlock].Seek(0,0);
+        Hash_SHA256.Init;
+        Hash_SHA256.UpdateStream(Blocks[curBlock],Blocks[curBlock].Size);
+        Hash_SHA256.Final(BlocksOffsets[curBlock].Hash);
+        Blocks[curBlock].Seek(0,0);
+
+        // Indicate size of block
+        BlocksOffsets[curBlock].Size := Blocks[curBlock].Size;
+        BlocksOffsets[curBlock].DSize := tmpStream.Size;
+
+      end
+      else
+        writeLog('+ Image is NOT BMP 465x90 as expected not using banner...');
+    finally
+      tmpStream.Free;
+    end;
+  end;
+
+  // --------------------------------------------------------------------------
+  // === NAMES BLOCK ==========================================================
+  // --------------------------------------------------------------------------
+
+  inc(curBlock);
+  entriesBlock := curBlock;
+  inc(curBlock);
+  namesBlock := curBlock;
+  inc(curBlock);
+  dataBlock := curBlock;
+
+  // Fill block offset data (minus Offset & Hash that will be calculated afterwards)
+  BlocksOffsets[namesBlock].ID := D5PID_NAMES;                     // Entries block
+  BlocksOffsets[namesBlock].OptionsFlags := D5PBLOCK_COMPRESSED or D5PBLOCK_COMPANION or D5PBLOCK_ENTRIES;
+  BlocksOffsets[namesBlock].CompressionType := D5PCOMPRESSION_LZMA;  // LZMA compressed
+  BlocksOffsets[namesBlock].CompanionOfID := D5PID_ENTRIES;          // This is a companion block
+  BlocksOffsets[namesBlock].NumEntries := lstFiles.Items.Count;      // Number of filenames (must be equal to block entries number)
+
+  // Generate contents of names block
+  tmpStream := TMemoryStream.Create;
+  try
+    for x := 0 to lstFiles.Items.Count-1 do
+    begin
+      put8(tmpStream,lstFiles.Items.Item[x].Caption);
+    end;
+
+    tmpStream.Seek(0,0);
+
+    writeLog('+-+ Compressing block with LZMA (Size: '+inttostr(tmpStream.Size)+' bytes)');
+
+    // Compress
+    Blocks[namesBlock] := TMemoryStream.Create;
+    lzma_encode(tmpStream,Blocks[namesBlock]);
+
+    writeLog('+---+ OK (Size: '+inttostr(Blocks[namesBlock].Size)+' bytes - '+floattostrF(((Blocks[namesBlock].size/tmpStream.Size)*100),ffFixed,1,1)+'%)');
+
+    writeLog('+-+ Calculating hash of the block...');
+
+    // Calculates SHA-256 hash of the block
+    Blocks[namesBlock].Seek(0,0);
+    Hash_SHA256.Init;
+    Hash_SHA256.UpdateStream(Blocks[namesBlock],Blocks[namesBlock].Size);
+    Hash_SHA256.Final(BlocksOffsets[namesBlock].Hash);
+    Blocks[namesBlock].Seek(0,0);
+
+    writeLog('+---+ OK');
+
+    // Indicate size of block
+    BlocksOffsets[namesBlock].Size := Blocks[namesBlock].Size;
+    BlocksOffsets[namesBlock].DSize := tmpStream.Size;
+  finally
+    tmpStream.Free;
+  end;
+
+  // --------------------------------------------------------------------------
+  // === DATA & ENTRIES BLOCKS ================================================
+  // --------------------------------------------------------------------------
+
+  // Fill block offset data (minus Offset & Hash that will be calculated afterwards)
+  BlocksOffsets[entriesBlock].ID := D5PID_ENTRIES;                     // Entries block
+  BlocksOffsets[entriesBlock].OptionsFlags := D5PBLOCK_COMPRESSED or D5PBLOCK_ENTRIES;
+  BlocksOffsets[entriesBlock].CompressionType := D5PCOMPRESSION_LZMA;  // LZMA compressed
+  BlocksOffsets[entriesBlock].CompanionOfID := 0;                      // This is a main block
+  BlocksOffsets[entriesBlock].NumEntries := lstFiles.Items.Count;      // List of files
+
+  // Fill block offset data (minus Offset & Hash that will be calculated afterwards)
+  BlocksOffsets[dataBlock].ID := D5PID_DATA;                        // Entries block
+  BlocksOffsets[dataBlock].OptionsFlags := D5PBLOCK_COMPANION;
+  BlocksOffsets[dataBlock].CompressionType := D5PCOMPRESSION_NONE;  // Each file is compressed independently in the block
+  BlocksOffsets[dataBlock].CompanionOfID := D5PID_ENTRIES;          // This is a main block
+  BlocksOffsets[dataBlock].NumEntries := 0;
+
+  Blocks[entriesBlock] := TMemoryStream.Create;
+  Blocks[dataBlock] := TMemoryStream.Create;
+
+  SetLength(Files,lstFiles.Items.Count);
+  SetLength(FilesData,lstFiles.Items.Count);
+
+  tmpStream2 := TMemoryStream.Create;
+
+  for x := 0 to lstFiles.Items.Count-1 do
+  begin
+    fInfo := FileInfo(lstFiles.Items.Item[x].Data);
+    writeLog('+ File '+inttostr(x+1)+': '+fInfo.Filename);
+    fin := TBufferedFS.Create(fInfo.Filename,fmOpenRead or fmShareDenyWrite);
+    try
+      Files[x].DSize := fin.Size;
+      writeLog('+--+ Size: '+inttostr(Files[x].DSize)+' bytes');
+      if fInfo.StoreDateTime then
+        Files[x].DateT := FileAge(fInfo.Filename)
+      else
+        Files[x].DateT := 0;
+      Files[x].Flags := 0;
+      if fInfo.Hidden then
+        Files[x].Flags := Files[x].Flags or D5PFILE_HIDDEN;
+      if fInfo.ReadOnly then
+        Files[x].Flags := Files[x].Flags or D5PFILE_READONLY;
+      if fInfo.RegSvr then
+        Files[x].Flags := Files[x].Flags or D5PFILE_REGSVR32;
+      if fInfo.UpgradeOnly then
+        Files[x].Flags := Files[x].Flags or D5PFILE_UPDATEONLY;
+
+      Files[x].BaseInstallDir := fInfo.InstallTo;
+      Files[x].NameID := x;
+      Files[x].Version := fInfo.Version;
+
+      fin.Seek(0,0);
+
+      Files[x].HashType := D5PHASH_SHA512;
+      Hash_SHA512.Init;
+      Hash_SHA512.UpdateStream(fin,fin.Size);
+      Hash_SHA512.Final(Files[x].Hash);
+
+      fin.Seek(0,0);
+
+      s:= '';
+      for i:= 0 to 63 do
+        s:= s + IntToHex(Files[x].Hash[i],2);
+      writeLog('+--+ Hash: '+Lowercase(s));
+
+      if fInfo.Compress and (fInfo.CompressType = D5PCOMPRESSION_LZMA) then
+      begin
+        Files[x].Flags := Files[x].Flags or D5PFILE_COMPRESSED;
+        Files[x].CompressionType := D5PCOMPRESSION_LZMA;
+
+        tmpStream := TMemoryStream.Create;
+        fin.Seek(0,0);
+        lzma_encode(fin,tmpStream);
+        tmpStream.Seek(0,0);
+
+        Files[x].Size := tmpStream.Size;
+
+        Blocks[dataBlock].CopyFrom(tmpStream,tmpStream.Size);
+
+        writeLog('+---+ OK (Size: '+inttostr(Files[x].Size)+' bytes - '+floattostrF(((Files[x].Size/Files[x].DSize)*100),ffFixed,1,1)+'%)');
+
+        tmpStream.Free;
+      end
+      else
+      begin
+        Files[x].Size := Files[x].DSize;
+
+        Blocks[dataBlock].CopyFrom(fin,Files[x].Size);
+        Files[x].CompressionType := D5PCOMPRESSION_NONE;
+      end;
+
+      if (x = 0) then
+        Files[x].RelOffset := 0
+      else
+        Files[x].RelOffset := Files[x-1].RelOffset+Files[x-1].Size;
+
+    finally
+      fin.Free;
+    end;
+
+    tmpStream2.Write(Files[x],SizeOf(DUP5PACK_File_v4)); 
+
+    ProgressBar.Position := 10 + round(((x+1)/lstFiles.Items.Count)*90);
+
+  end;
+
+  // Compress the entries block
+  tmpStream2.Seek(0,0);
+  lzma_encode(tmpStream2,Blocks[entriesBlock]);
+
+  // Calculates SHA-256 hash of the entries block
+  Blocks[entriesBlock].Seek(0,0);
+  Hash_SHA256.Init;
+  Hash_SHA256.UpdateStream(Blocks[entriesBlock],Blocks[entriesBlock].Size);
+  Hash_SHA256.Final(BlocksOffsets[entriesBlock].Hash);
+  Blocks[entriesBlock].Seek(0,0);
+
+  // Indicate size of entries block
+  BlocksOffsets[entriesBlock].Size := Blocks[entriesBlock].Size;
+  BlocksOffsets[entriesBlock].DSize := tmpStream2.Size;
+
+  tmpStream2.Free;
+
+  Blocks[dataBlock].Seek(0,0);
+
+  // Calculates SHA-256 hash of the data block
+  Hash_SHA256.Init;
+  Hash_SHA256.UpdateStream(Blocks[dataBlock],Blocks[dataBlock].Size);
+  Hash_SHA256.Final(BlocksOffsets[dataBlock].Hash);
+  Blocks[dataBlock].Seek(0,0);
+
+  // Indicate size of data block
+  BlocksOffsets[dataBlock].Size := Blocks[dataBlock].Size;
+  BlocksOffsets[dataBlock].DSize := 0;
+
+  tmpStream := TMemoryStream.Create;
+  tmpStream.Write(HDR,SizeOf(DUP5PACK_Header_v4));
+
+  // Calculating offsets
+  for x := 0 to HDR.NumOffsets-1 do
+  begin
+
+    if x = 0 then
+      BlocksOffsets[x].Offset := SizeOf(DUP5PACK_Offsets_v4)*(curBlock+1) + SizeOf(DUP5PACK_Header_v4)
+    else
+      BlocksOffsets[x].Offset := BlocksOffsets[x-1].Offset+BlocksOffsets[x-1].Size;
+
+    tmpStream.Write(BlocksOffsets[x],SizeOf(DUP5PACK_Offsets_v4));
+
+  end;
+
+  // --------------------------------------------------------------------------
+  // === FOOTER ===============================================================
+  // --------------------------------------------------------------------------
+
+  FillChar(FTR,SizeOf(DUP5PACK_Footer_v4),0);
+  FTR.ID := 'PPUD';
+  FTR.EOF := 26;
+  FTR.Version := 1;
+  FTR.SignatureID := 1;
+  FTR.SignatureVersion := VERSION;
+
+  // Calculates SHA-256 hash of the data block
+  tmpStream.Seek(0,0);
+  Hash_SHA256.Init;
+  Hash_SHA256.UpdateStream(tmpStream,tmpStream.Size);
+  Hash_SHA256.Final(FTR.HashHeaderOffsets);
+
+  // Write to file (finally?!)
+  fout := TBufferedFS.Create(txtPackageFile.Text, fmCreate);
+
+  tmpStream.Seek(0,0);
+  fout.CopyFrom(tmpStream,tmpStream.Size);
+
+  for x := 0 to HDR.NumOffsets-1 do
+  begin
+
+    Blocks[x].Seek(0,0);
+    fout.CopyFrom(Blocks[x],Blocks[x].Size);
+    Blocks[x].Free;
+
+  end;
+
+  fout.Write(FTR,SizeOf(DUP5PACK_Footer_v4));
+
+  fout.Free;
+
+end;
+
+procedure TfrmMain.butCompileClick(Sender: TObject);
+begin
+
+  if optDUPPv2.Checked or optDUPPv3.Checked then
+    createDUPPv2_v3
+  else
+    createDUPPv4;
+
+end;
+
 procedure TfrmMain.butAddClick(Sender: TObject);
 var itmx: TListItem;
     ext: string;
     tmp: FileInfo;
-    Handle: THandle;
+//    Handle: THandle;
 begin
 
   Dialog.Filter := 'Tous les fichiers|*.*';
@@ -516,7 +975,7 @@ begin
       itmx.SubItems.Add(IntToStr(GetFSize(Dialog.Filename)));
       itmx.SubItems.Add(DateTimeToStr(FileDateToDateTime(FileAge(Dialog.FileName))));
       ext := lowercase(ExtractFileExt(Dialog.FileName));
-      tmp := FileInfo.Create(True, True, True, False, False,False, 0,-1,Dialog.FileName,'');
+      tmp := FileInfo.Create(True, True, True, False, False,False,D5PCOMPRESSION_LZMA,0,-1,Dialog.FileName,'');
       if ext = '.d5d' then
       begin
         tmp.InstallTo := 2;
@@ -563,8 +1022,6 @@ end;
 function TfrmMain.GetFSize(filnam: string): Int64;
 var F: integer;
 begin
-
-  Result := 0;
 
   F := FileOpen(filnam,fmOpenRead);
   try
@@ -663,10 +1120,11 @@ end;
 
 { FileInfo }
 
-constructor FileInfo.Create(Comp, Upg, StoreDT, ReadO, Hide, Reg: boolean; InstTo: integer; Vers: Integer; FName, InstallDir: String);
+constructor FileInfo.Create(Comp, Upg, StoreDT, ReadO, Hide, Reg: boolean; CompType, InstTo: integer; Vers: Integer; FName, InstallDir: String);
 begin
 
   Compress := comp;
+  CompressType := comptype;
   UpgradeOnly := Upg;
   StoreDateTime := StoreDT;
   ReadOnly := ReadO;
@@ -754,7 +1212,7 @@ var Handle: THandle;
     DUDIVer: TDUDIVersion;
     DUCIVer: TDUDIVersion;
     DUHIVer: TDUDIVersion;
-    CnvInfo: ConvertInfo;
+//    CnvInfo: ConvertInfo;
     GetNumVer: TGetNumVersion;
     GetConvertVer: TGetConvertVersion;
     GetHRVer: TGetHRVersion;
@@ -768,7 +1226,7 @@ begin
     @DUCIVer := GetProcAddress(Handle, 'DUCIVersion');
     @DUHIVer := GetProcAddress(Handle, 'DUHIVersion');
 
-    if ((@DUDIVer <> Nil) and ((DUDIVer = 1) or (DUDIVer = 2) or (DUDIVer = 3) or (DUDIVer = 4))) then
+    if ((@DUDIVer <> Nil) and (DUDIVer >= 1)) then
     begin
       @GetNumVer := GetProcAddress(Handle, 'GetNumVersion');
 
@@ -777,7 +1235,7 @@ begin
       else
         result := GetNumVer;
     end
-    else if ((@DUCIVer <> Nil) and ((DUCIVer = 1) or (DUCIVer = 2) or (DUCIVer = 3))) then
+    else if ((@DUCIVer <> Nil) and (DUCIVer >= 1)) then
     begin
       @GetConvertVer := GetProcAddress(Handle, 'VersionInfo');
 
@@ -786,7 +1244,7 @@ begin
       else
         result := GetConvertVer.VerID;
     end
-    else if ((@DUHIVer <> Nil) and ((DUHIVer = 1) or (DUHIVer = 2) or (DUHIVer = 3))) then
+    else if ((@DUHIVer <> Nil) and (DUHIVer >= 1)) then
     begin
       @GetHRVer := GetProcAddress(Handle, 'GetVersionInfo');
 
@@ -878,8 +1336,10 @@ begin
     sub.Value := txtPackageFile.Text;
     if optDUPPv3.Checked then
       sub.Properties.Add('duppversion',3)
+    else if optDUPPv2.Checked then
+      sub.Properties.Add('duppversion',2)
     else
-      sub.Properties.Add('duppversion',2);
+      sub.Properties.Add('duppversion',4);
     sub := head.Items.Add('CHECKDUP5VERSION');
     sub.Value := txtDUP5Version.Text;
 
@@ -898,6 +1358,28 @@ begin
     sub.Value := txtImageFile.Text;
 
     sub.Properties.Add('use',chkImagePerso.Checked);
+
+    sub := head.Items.Add('COMPRESSION');
+    sub.Value := '';
+
+    sub.Properties.Add('none',chkCompressNone.Checked);
+    sub.Properties.Add('zlib',chkCompressZlib.Checked);
+    sub.Properties.Add('lzma',chkCompressLZMA.Checked);
+    sub.Properties.Add('solid',optFileCompressSolid.Checked);
+
+    sub := head.Items.Add('HASH');
+    sub.Value := '';
+
+    if (optFileHashMD5.Checked) then
+      sub.Properties.Add('type',0)
+    else if (optFileHashSHA1.Checked) then
+      sub.Properties.Add('type',1)
+    else if (optFileHashSHA256.Checked) then
+      sub.Properties.Add('type',2)
+    else if (optFileHashRIPEMD160.Checked) then
+      sub.Properties.Add('type',4)
+    else
+      sub.Properties.Add('type',3);
 
     head := SimpleXML.Root.Items.Add('FILES');
 
@@ -935,14 +1417,17 @@ end;
 
 procedure TfrmMain.menuFichier_OuvrirClick(Sender: TObject);
 var head: TJvSimpleXMLElem;
-    sub, sub2: TJvSimpleXMLElem;
+    sub: TJvSimpleXMLElem;
     tmp: FileInfo;
     x: integer;
     itmx: TListItem;
     ext: string;
-    Handle: THandle;
+//    Handle: THandle;
+    Dialog: TSaveDialog;
     SimpleXML: TJvSimpleXML;
 begin
+
+  Dialog := TSaveDialog.Create(Self);
 
   Dialog.Title := 'Open project...';
   Dialog.Filter := 'Dragon UnPACKer 5 Package Project (*.D5PP)|*.D5PP';
@@ -961,10 +1446,11 @@ begin
     head := SimpleXML.Root.Items.ItemNamed['HEAD'];
 
     if (SimpleXML.Root.Properties.IntValue('version') <> DPSVERSION) and
+       (SimpleXML.Root.Properties.IntValue('version') <> 2) and
        (SimpleXML.Root.Properties.IntValue('version') <> 1) then
     begin
 
-      ShowMessage('Error: Project file must be version '+inttostr(DPSVERSION)+' (v1 are also supported).');
+      ShowMessage('Error: Project file must be version '+inttostr(DPSVERSION)+' (v1 and v2 are also supported).');
 
     end
     else
@@ -981,8 +1467,9 @@ begin
         case head.Items.ItemNamed['PACKFILENAME'].Properties.IntValue('duppversion',0) of
           2: optDUPPv2.Checked := true;
           3: optDUPPv3.Checked := true;
+          4: optDUPPv4.Checked := true;
         else
-          optDUPPv3.Checked := true;
+          optDUPPv4.Checked := true;
         end;
       end;
       txtDUP5Version.Text := head.Items.ItemNamed['CHECKDUP5VERSION'].Value;
@@ -997,6 +1484,26 @@ begin
 
       txtImageFile.Text := head.Items.ItemNamed['THEME'].Value;
       chkImagePerso.Checked := head.Items.ItemNamed['THEME'].Properties.BoolValue('use',false);
+
+      if head.Items.IndexOf('COMPRESSION') <> -1 then
+      begin
+        chkCompressNone.Checked := head.Items.ItemNamed['COMPRESSION'].Properties.BoolValue('none',true);
+        chkCompressZlib.Checked := head.Items.ItemNamed['COMPRESSION'].Properties.BoolValue('zlib',true);
+        chkCompressLZMA.Checked := head.Items.ItemNamed['COMPRESSION'].Properties.BoolValue('lzma',true);
+        optFileCompressSolid.Checked := head.Items.ItemNamed['COMPRESSION'].Properties.BoolValue('solid',false);
+      end;
+
+      if head.Items.IndexOf('HASH') <> -1 then
+      begin
+        case head.Items.ItemNamed['HASH'].Properties.IntValue('type',3) of
+          0: optFileHashMD5.Checked := true;
+          1: optFileHashSHA1.Checked := true;
+          2: optFileHashSHA256.Checked := true;
+          4: optFileHashRIPEMD160.Checked := true;
+        else
+          optFileHashSHA512.Checked := true;
+        end;
+      end;
 
       head := SimpleXML.Root.Items.ItemNamed['FILES'];
 
@@ -1022,6 +1529,7 @@ begin
             sub.Items.ItemNamed['OPTIONS'].Properties.BoolValue('readonly',false),
             sub.Items.ItemNamed['OPTIONS'].Properties.BoolValue('hidden',false),
             sub.Items.ItemNamed['OPTIONS'].Properties.BoolValue('regsvr',false),
+            D5PCOMPRESSION_LZMA,
             sub.Items.ItemNamed['INSTALLDIR'].Properties.IntValue('basedir',0),
             -1,
             sub.Items.ItemNamed['PATH'].Value,
@@ -1057,6 +1565,8 @@ begin
    end;
 
   end;
+
+  Dialog.Free;
 
 end;
 
@@ -1334,6 +1844,27 @@ begin
   begin
     txtPackageFile.Text := SaveDialog.Filename;
   end;
+
+end;
+
+procedure TfrmMain.optDUPPv4Click(Sender: TObject);
+begin
+
+  refreshAvailableOptions;
+
+end;
+
+procedure TfrmMain.optDUPPv3Click(Sender: TObject);
+begin
+
+  refreshAvailableOptions;
+
+end;
+
+procedure TfrmMain.optDUPPv2Click(Sender: TObject);
+begin
+
+  refreshAvailableOptions;
 
 end;
 

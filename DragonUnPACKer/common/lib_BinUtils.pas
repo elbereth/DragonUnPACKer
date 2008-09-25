@@ -4,14 +4,22 @@ interface
 
 uses classes, SysUtils, StrUtils;
 
-function Get0(src: integer): string;
-function Get0stm(stm: TStream): string;
+function Get0(src: integer): string; overload;
+function Get0(stm: TStream): string; overload;
+function Get0A(src: integer): string;
+function Get16(src: integer): string;
 function Get16v(src: integer; size: word): string;
-function Get32(src: integer): string;
-function Get8(src: integer): string;
+function Get32(src: TStream): string; overload;
+function Get32(src: integer): string; overload;
+function Get32(src, size: integer): string; overload;
+function Get8(src: integer): string; overload;
+function Get8(stm: TStream): string; overload;
 function Get8u(src: integer): string;
 function Get8v(src: integer; size: byte): string;
-procedure put8(src: integer; val: string);
+function GetSwapInt(src: integer): Integer;
+procedure put8(src: integer; val: string); overload;
+procedure put8(outstm: TStream; val: string); overload;
+procedure put32(outstm: TStream; val: AnsiString);
 function revstr(str: string): string;
 function posrev(substr: string; str: string): integer;
 function strip0(str : string): string;
@@ -32,7 +40,7 @@ begin
 
 end;
 
-function Get0stm(stm: TStream): string;
+function Get0(stm: TStream): string;
 var tchar: Char;
     res: string;
 begin
@@ -41,6 +49,20 @@ begin
     stm.Read(tchar,1);
     res := res + tchar;
   until tchar = chr(0);
+
+  result := res;
+
+end;
+
+function Get0A(src: integer): string;
+var tchar: Char;
+    res: string;
+begin
+
+  repeat
+    FileRead(src,tchar,1);
+    res := res + tchar;
+  until tchar = chr(10);
 
   result := res;
 
@@ -56,6 +78,24 @@ begin
 
   res := tchar;
   Get8v := Copy(res,1,size);
+
+end;
+
+function Get16(src: integer): string;
+var tchar: Pchar;
+    tword: Word;
+    res: string;
+begin
+
+  FileRead(src,tword,2);
+  GetMem(tchar,tword);
+  FillChar(tchar^,tword,0);
+  FileRead(src,tchar^,tword);
+
+  res := tchar;
+  Get16 := Copy(res,1,tword);
+
+  FreeMem(tchar);
 
 end;
 
@@ -94,7 +134,29 @@ begin
 
 end;
 
-function Get8(src: integer): string;
+procedure put8(outstm: TStream; val: string); overload;
+var tchar: array[0..255] of Char;
+    tbyt: byte;
+    x: integer;
+begin
+
+  if (length(val) > 256) then
+    val := LeftStr(val,256);
+
+  FillChar(tchar,256,0);
+
+  for x := 0 to length(val)-1 do
+    tchar[x] := val[x+1];
+
+  tbyt := length(val);
+
+  outstm.Write(tbyt,1);
+  if (tbyt > 0) then
+    outstm.Write(tchar,length(val));
+
+end;
+
+function Get8(src: integer): string; overload;
 var tchar: array[0..255] of Char;
     tbyt: byte;
 begin
@@ -105,6 +167,20 @@ begin
   FileRead(src,tchar[0],tbyt);
 
   Get8 := tchar;
+
+end;
+
+function Get8(stm: TStream): string; overload;
+var tchar: array[0..255] of Char;
+    tbyt: byte;
+begin
+
+  stm.Read(tbyt,1);
+  FillChar(tchar,256,0);
+  // Fixed bug #958622 : this may have fixed other functions relying on get8
+  stm.Read(tchar[0],tbyt);
+
+  result := tchar;
 
 end;
 
@@ -122,9 +198,43 @@ begin
 
 end;
 
-function Get32(src: integer): string;
+procedure put32(outstm: TStream; val: AnsiString);
+var tint: integer;
+begin
+
+  tint := Length(val);
+  outstm.Write(tint,4);
+  if (tint > 0) then
+    outstm.Write(val[1],tint);
+
+end;
+
+function Get32(src: TStream): string; overload;
 var tchar: Pchar;
     tint: Integer;
+    res: string;
+begin
+
+  src.Read(tint,4);
+  if tint > 255 then
+  begin
+    raise Exception.Create(inttostr(tint)+' octets! t''es fou ?!'+#10+inttostr(src.Seek(0,1))+#10+inttohex(src.Seek(0,1),8));
+  end;
+  GetMem(tchar,tint);
+  FillChar(tchar^,tint,0);
+  src.Read(tchar^,tint);
+
+  res := tchar;
+  Result := Copy(res,1,tint);
+
+  FreeMem(tchar);
+
+end;
+
+function Get32(src: integer): string; overload;
+var tchar: Pchar;
+    tint: Integer;
+    res: string;
 begin
 
   FileRead(src,tint,4);
@@ -132,9 +242,30 @@ begin
   FillChar(tchar^,tint,0);
   FileRead(src,tchar^,tint);
 
-  Get32 := tchar;
+  res := tchar;
+  result := Copy(res,1,tint);
 
   FreeMem(tchar);
+
+end;
+
+function Get32(src, size: integer): string; overload;
+var tchar: PChar;
+    res: string;
+    x: integer;
+begin
+
+  GetMem(tchar,size);
+
+  FillChar(tchar^,size,0);
+  FileRead(src,tchar^,size);
+
+  for x := 0 to size-1 do
+    res := res + tchar[x];
+
+  FreeMem(tchar);
+
+  Result := Copy(res,1,size);
 
 end;
 
@@ -182,6 +313,14 @@ begin
 
   posrev := res;
 
+end;
+
+function GetSwapInt(src: integer): Integer;
+var tint: integer;
+begin
+  FileRead(src,tint,4);
+  result := swap(tint shr 16) or
+           (longint(swap(tint and $ffff)) shl 16);
 end;
 
 end.

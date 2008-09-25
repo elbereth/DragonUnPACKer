@@ -1,6 +1,6 @@
 unit lib_crc;
 
-// $Id: lib_crc.pas,v 1.2 2008-03-02 18:29:58 elbereth Exp $
+// $Id: lib_crc.pas,v 1.3 2008-09-25 20:54:11 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_crc.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -25,12 +25,14 @@ unit lib_crc;
 // -----------------------------------------------------------------------------
 
 interface
-function GetStrCRC32(Data: string) : longint;
-function GetBufCRC32(Data: PChar; datalength: integer) : longint;
-
-implementation
 
 uses classes;
+
+function GetStrCRC32(Data: string) : longint;
+function GetBufCRC32(Data: PChar; datalength: integer) : longint;
+function GetStmCRC32(Data: TStream; datalength: integer) : longint;
+
+implementation
 
 {CRC32}
 type
@@ -97,6 +99,27 @@ begin
    while index <= datalength do
    begin
       crc := ((crc shr 8) and $FFFFFF) xor fcrctable[(crc xor byte(data[index]) ) and $FF];
+      inc(index) ;
+   end;
+   result := (crc xor Integer($FFFFFFFF) ) ;
+end;
+
+function GetStmCRC32(Data: TStream; datalength: integer) : longint;
+var
+   crc: longint;
+   index: integer;
+   tmpRead: byte;
+begin
+   if not(tabinit) then
+     fcrctable := crc32gen;
+
+   crc := longint($FFFFFFFF) ;
+
+   index := 1;
+   while index <= datalength do
+   begin
+      tmpRead := data.Read(tmpRead,1);
+      crc := ((crc shr 8) and $FFFFFF) xor fcrctable[(crc xor tmpRead) and $FF];
       inc(index) ;
    end;
    result := (crc xor Integer($FFFFFFFF) ) ;

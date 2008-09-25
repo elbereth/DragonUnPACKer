@@ -108,12 +108,12 @@ DebugCWD=
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=1
-MajorVer=2
+MajorVer=3
 MinorVer=0
 Release=0
-Build=65
+Build=71
 Debug=0
-PreRelease=0
+PreRelease=1
 Special=0
 Private=0
 DLL=0
@@ -122,25 +122,17 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone
 FileDescription=Dragon UnPACKer 5 Package (D5P) Maker
-FileVersion=2.0.0.65
+FileVersion=3.0.0.71
 InternalName=dpackc
-LegalCopyright=(c)2003-2008 Alexandre "Elbereth" Devilliers
-LegalTrademarks=
+LegalCopyright=Created by Alexandre "Elbereth" Devilliers
+LegalTrademarks=Mozilla Public Licence 1.1
 OriginalFilename=dpackc
 ProductName=D5P Maker
-ProductVersion=2.0.0
-Comments=Allows you to make .D5P files to be installed by Duppi of Dragon UnPACKer 5
+ProductVersion=3.0.0 Beta 1
+Comments=Allows you to create .D5P files that are installable packages by Duppi of Dragon UnPACKer 5
+[Excluded Packages]
+C:\Program Files\RemObjects Software\Everwood\Bin\RemObjects_Everwood_D7.bpl=RemObjects Everwood for Delphi
+P:\Program Files\Pascal Script for Delphi\Dcu\D7\PascalScript_Core_D7.bpl=RemObjects Pascal Script - Core Package
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlSearchPath]
-Count=4
-Item0=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;..\..\..\Extras\Extensions;..\Common;..\..\..\Source\Extensions
-Item1=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;..\..\..\Extras\Extensions;..\Common
-Item2=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;..\..\..\Extras\Extensions
-Item3=..\..\..\Source;..\..\..\Source\JpegLib;..\..\..\Source\ZLib;
-[HistoryLists\hlOutputDirectorry]
-Count=3
-Item0=E:\Developpement\dup-dev-5.1-compiled\data\HyperRipper
-Item1=E:\Developpement\dup-dev-5.1-compiled\data\convert
-Item2=..\..\Bin

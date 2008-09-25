@@ -1,6 +1,6 @@
 program dpackc;
 
-// $Id: dpackc.dpr,v 1.3 2008-03-02 18:27:56 elbereth Exp $
+// $Id: dpackc.dpr,v 1.4 2008-09-25 20:57:37 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dpackc/dpackc.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -28,7 +28,19 @@ uses
   lib_zlib in '..\..\common\lib_zlib.pas',
   spec_DLNG in '..\..\common\spec_DLNG.pas',
   spec_DUPP in '..\..\common\spec_DUPP.pas',
-  lib_BinUtils in '..\..\common\lib_BinUtils.pas';
+  lib_BinUtils in '..\..\common\lib_BinUtils.pas',
+  ULZBinTree,
+  ULZInWindow,
+  ULZOutWindow,
+  ULZMABase,
+  ULZMACommon,
+  ULZMAEncoder,
+  UBitTreeDecoder,
+  UBitTreeEncoder,
+  URangeDecoder,
+  URangeEncoder,
+  lib_language_internal in '..\..\translations\french\lib_language_internal.pas',
+  ULZMAEnc in 'ULZMAEnc.pas';
 
 {$R *.res}
 

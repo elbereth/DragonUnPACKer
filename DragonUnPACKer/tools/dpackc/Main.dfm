@@ -1,6 +1,6 @@
 object frmMain: TfrmMain
-  Left = 199
-  Top = 332
+  Left = 385
+  Top = 431
   BorderStyle = bsSingle
   Caption = 'DUP5 Package (D5P) Maker v2.0.0'
   ClientHeight = 378
@@ -154,15 +154,15 @@ object frmMain: TfrmMain
         WordWrap = True
       end
       object Label16: TLabel
-        Left = 48
+        Left = 0
         Top = 232
-        Width = 409
+        Width = 529
         Height = 17
         Alignment = taCenter
         AutoSize = False
         Caption = 
-          'This version will create fully compliant DUPP v2 and v3 files (D' +
-          '5P for Duppi)'
+          'This version will create fully compliant DUPP v2/v3/v4 files (D5' +
+          'P for Duppi v2.0.2+/v2.2.0+/v3+)'
         WordWrap = True
       end
       object Label17: TLabel
@@ -9179,6 +9179,161 @@ object frmMain: TfrmMain
         end
       end
     end
+    object TabSheet5: TTabSheet
+      Caption = 'Options'
+      ImageIndex = 4
+      object grpCompressionOptions: TGroupBox
+        Left = 320
+        Top = 8
+        Width = 201
+        Height = 73
+        Caption = 'Allowed compression algorithm (v4)'
+        TabOrder = 0
+        object chkCompressNone: TCheckBox
+          Left = 8
+          Top = 16
+          Width = 185
+          Height = 17
+          Caption = 'None (Do not compress)'
+          Checked = True
+          State = cbChecked
+          TabOrder = 0
+        end
+        object chkCompressZlib: TCheckBox
+          Left = 8
+          Top = 32
+          Width = 185
+          Height = 17
+          Caption = 'Zlib (Fast compression)'
+          Checked = True
+          State = cbChecked
+          TabOrder = 1
+        end
+        object chkCompressLZMA: TCheckBox
+          Left = 8
+          Top = 48
+          Width = 185
+          Height = 17
+          Caption = 'LZMA (Best compression but slow)'
+          Checked = True
+          State = cbChecked
+          TabOrder = 2
+        end
+      end
+      object GroupBox6: TGroupBox
+        Left = 320
+        Top = 152
+        Width = 201
+        Height = 105
+        Caption = 'File hash algorithm (v4)'
+        TabOrder = 1
+        object optFileHashMD5: TRadioButton
+          Left = 8
+          Top = 16
+          Width = 185
+          Height = 17
+          Caption = 'MD5 (128bits)'
+          TabOrder = 0
+        end
+        object optFileHashSHA1: TRadioButton
+          Left = 8
+          Top = 32
+          Width = 185
+          Height = 17
+          Caption = 'SHA-1 (160bits)'
+          TabOrder = 1
+        end
+        object optFileHashSHA256: TRadioButton
+          Left = 8
+          Top = 48
+          Width = 185
+          Height = 17
+          Caption = 'SHA-256 (256bits)'
+          TabOrder = 2
+        end
+        object optFileHashSHA512: TRadioButton
+          Left = 8
+          Top = 64
+          Width = 185
+          Height = 17
+          Caption = 'SHA-512 (512bits) [Default]'
+          Checked = True
+          TabOrder = 3
+          TabStop = True
+        end
+        object optFileHashRipemd160: TRadioButton
+          Left = 8
+          Top = 80
+          Width = 185
+          Height = 17
+          Caption = 'RIPEMD160 (160bits)'
+          TabOrder = 4
+        end
+      end
+      object GroupBox7: TGroupBox
+        Left = 320
+        Top = 88
+        Width = 201
+        Height = 57
+        Caption = 'File compression scheme (v4)'
+        TabOrder = 2
+        object optFileCompressSingle: TRadioButton
+          Left = 8
+          Top = 16
+          Width = 185
+          Height = 17
+          Caption = 'Each file idenpendently'
+          Checked = True
+          TabOrder = 0
+          TabStop = True
+        end
+        object optFileCompressSolid: TRadioButton
+          Left = 8
+          Top = 32
+          Width = 185
+          Height = 17
+          Caption = 'Solid (all files in one block)'
+          TabOrder = 1
+        end
+      end
+      object GroupBox8: TGroupBox
+        Left = 8
+        Top = 8
+        Width = 305
+        Height = 73
+        Caption = 'DUP5 Package (D5P) format to create'
+        TabOrder = 3
+        object optDUPPv2: TRadioButton
+          Left = 8
+          Top = 16
+          Width = 289
+          Height = 17
+          Caption = 'Version 2 (wrong CRC verification)'
+          TabOrder = 0
+          OnClick = optDUPPv2Click
+        end
+        object optDUPPv3: TRadioButton
+          Left = 8
+          Top = 32
+          Width = 289
+          Height = 17
+          Caption = 'Version 3 (fixed CRC but compatible with Duppi v2.2.0+)'
+          TabOrder = 1
+          OnClick = optDUPPv3Click
+        end
+        object optDUPPv4: TRadioButton
+          Left = 8
+          Top = 48
+          Width = 289
+          Height = 17
+          Caption = 'Version 4 (best but compatible with Duppi v3.0.0+)'
+          Checked = True
+          TabOrder = 2
+          TabStop = True
+          OnClick = optDUPPv4Click
+        end
+      end
+    end
     object TabSheet2: TTabSheet
       Caption = 'Files'
       ImageIndex = 1
@@ -9249,7 +9404,7 @@ object frmMain: TfrmMain
           Top = 56
           Width = 233
           Height = 17
-          Caption = 'Compress with Zlib (recommended)'
+          Caption = 'Compress (use best algorithm)'
           Checked = True
           Enabled = False
           State = cbChecked
@@ -9392,46 +9547,38 @@ object frmMain: TfrmMain
       object Label14: TLabel
         Left = 8
         Top = 10
-        Width = 145
+        Width = 137
         Height = 13
         Alignment = taRightJustify
         AutoSize = False
         Caption = 'Package filename and path:'
       end
-      object Label20: TLabel
-        Left = 0
-        Top = 41
-        Width = 57
-        Height = 13
-        Alignment = taRightJustify
-        AutoSize = False
-        Caption = 'DUPP:'
-      end
       object richLog: TJvRichEdit
         Left = 0
-        Top = 104
+        Top = 64
         Width = 529
-        Height = 185
+        Height = 225
         AutoSize = False
         ReadOnly = True
         TabOrder = 0
+        WordWrap = False
       end
       object ProgressBar: TProgressBar
         Left = 0
-        Top = 80
+        Top = 40
         Width = 529
         Height = 16
         TabOrder = 1
       end
       object txtPackageFile: TEdit
-        Left = 160
+        Left = 152
         Top = 8
-        Width = 337
+        Width = 209
         Height = 21
         TabOrder = 2
       end
       object butBrowsePackageFile: TButton
-        Left = 496
+        Left = 360
         Top = 8
         Width = 21
         Height = 21
@@ -9440,9 +9587,9 @@ object frmMain: TfrmMain
         OnClick = butBrowsePackageFileClick
       end
       object butCompile: TJvImgBtn
-        Left = 376
-        Top = 40
-        Width = 137
+        Left = 392
+        Top = 8
+        Width = 129
         Height = 25
         Caption = 'Compile D5P file'
         TabOrder = 4
@@ -9454,24 +9601,6 @@ object frmMain: TfrmMain
         HotTrackFont.Style = []
         Images = imgButtons
         ImageIndex = 2
-      end
-      object optDUPPv2: TRadioButton
-        Left = 64
-        Top = 40
-        Width = 305
-        Height = 17
-        Caption = 'v2 (wrong CRC verification but fully compatible)'
-        TabOrder = 5
-      end
-      object optDUPPv3: TRadioButton
-        Left = 64
-        Top = 56
-        Width = 305
-        Height = 17
-        Caption = 'v3 (good CRC but compatible with Duppi v2.2.0+ only)'
-        Checked = True
-        TabOrder = 6
-        TabStop = True
       end
     end
   end

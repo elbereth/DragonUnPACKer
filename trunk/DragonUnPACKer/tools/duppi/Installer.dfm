@@ -1,6 +1,6 @@
 object frmInstaller: TfrmInstaller
-  Left = 660
-  Top = 311
+  Left = 1168
+  Top = 250
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'DUP5 Package Installer'

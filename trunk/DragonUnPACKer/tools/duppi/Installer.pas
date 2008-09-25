@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.8 2008-03-04 20:12:11 elbereth Exp $
+// $Id: Installer.pas,v 1.9 2008-09-25 21:00:43 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -24,6 +24,7 @@ uses
   Dialogs, StdCtrls, ComCtrls, lib_binutils, spec_DUPP, zlib, lib_crc, lib_zlib, Registry,
   ExtCtrls, ShellAPI, lib_language, XPMan, VirtualTrees, OverbyteIcsHttpProt,
   JvListView, IniFiles, lib_utils, JvExStdCtrls, JvRichEdit,
+  ULZMADecoder,UBufferedFS,DCPsha512,DCPsha256,DCPsha1,DCPmd5,DCPripemd160,DCPcrypt2,ULZMADec,
   OverbyteIcsWndControl;
 
 type
@@ -111,8 +112,14 @@ type
     Shape1: TShape;
     lstTranslations: TListView;
     procedure parseDUPP_version1to3(src: integer; version: integer);
+    procedure parseDUPP_version4(src: integer);
     function infosDUPP_version1(src: integer): boolean;
     function infosDUPP_version2(src: integer): boolean;
+    function infosDUPP_version4(src: integer): boolean;
+    function sanitycheckDUPP_version4(src: integer): boolean;
+    function getDUPP_version4_blockcontent(src,id: integer): TStream;
+    function searchDUPP_version4_blockID(id: integer): integer;
+    function extractDUPP_version4_file(fileid: DUP5PACK_File_v4; srcStream: TStream; var dstStream: TBufferedFS): integer;
     function isDup5Running(): boolean;
     procedure FormShow(Sender: TObject);
     procedure butInstallClick(Sender: TObject);
@@ -160,6 +167,7 @@ type
     urlToStable: string;
     urlToWIP: string;
     NFOLoaded: boolean;
+    BlockOffsets: array of DUP5PACK_Offsets_v4;
     function infosDUPP(): boolean;
     procedure parseDUPP();
     procedure translate();
@@ -194,7 +202,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 22040;
+  VERSION: Integer = 30040;
 
 implementation
 
@@ -210,6 +218,496 @@ begin
   if (hDupp <> 0) then
     FileClose(hDupp);
 
+end;
+
+// -------------------------------------------------------------------------- //
+// DUPP version 4 support functions ========================================= //
+// -------------------------------------------------------------------------- //
+
+// This function pre-process DUPP v4 files to be sure it is not broken
+//   1) Checks footer is present
+//   2) Checks header+offets hash is OK
+//   3) Reads the block offsets
+//   4) Checks the flags are OK
+// Returns False if anything is wrong
+//         True if all is OK
+function TfrmInstaller.sanitycheckDUPP_version4(src: integer): boolean;
+var HDR: DUP5PACK_Header_v4;
+    FTR: DUP5PACK_Footer_v4;
+    tmpStream, srcStream: TStream;
+    Hash_SHA256: TDCP_sha256;
+    Hash: array[0..31] of byte;
+    HashOk, OffsetsOk: boolean;
+    x, NeededBlocks: integer;
+begin
+
+  Result := false;
+
+  srcStream := THandleStream.Create(src);
+  tmpStream := TMemoryStream.Create;
+  Hash_SHA256 := TDCP_sha256.Create(Self);
+
+  try
+
+    srcStream.Seek(0,0);
+    tmpStream.CopyFrom(srcStream,SizeOf(DUP5PACK_Header_v4));
+    tmpStream.Seek(0,0);
+    tmpStream.Read(HDR,SizeOf(DUP5PACK_Header_v4));
+    tmpStream.CopyFrom(srcStream,SizeOf(DUP5PACK_Offsets_v4)*HDR.NumOffsets);
+
+    srcStream.Seek(-SizeOf(DUP5PACK_Footer_v4),2);
+    srcStream.Read(FTR,SizeOf(DUP5PACK_Footer_v4));
+
+    if (FTR.ID = 'PPUD') and (FTR.EOF = 26) and (FTR.Version = 1) then
+    begin
+      tmpStream.Seek(0,0);
+      Hash_SHA256.Init;
+      Hash_SHA256.UpdateStream(tmpStream,tmpStream.Size);
+      Hash_SHA256.Final(Hash);
+
+      HashOk := true;
+      for x := 0 to 31 do
+        HashOk := HashOk and (Hash[x] = FTR.HashHeaderOffsets[x]);
+
+      if HashOk then
+      begin
+
+        tmpStream.Seek(SizeOf(DUP5PACK_Header_v4),0);
+        SetLength(BlockOffsets,HDR.NumOffsets);
+
+        OffsetsOk := true;
+        NeededBlocks := 0;
+        
+        for x := 0 to HDR.NumOffsets-1 do
+        begin
+          tmpStream.Read(BlockOffsets[x],SizeOf(DUP5PACK_Offsets_v4));
+          OffsetsOk := OffsetsOk and
+            ((((BlockOffsets[x].OptionsFlags and D5PBLOCK_COMPRESSED) = D5PBLOCK_COMPRESSED)
+              and ((BlockOffsets[x].CompressionType = D5PCOMPRESSION_ZLIB)
+                or (BlockOffsets[x].CompressionType = D5PCOMPRESSION_LZMA))
+               and (BlockOffsets[x].DSize > 0))
+              or (((BlockOffsets[x].OptionsFlags and D5PBLOCK_COMPRESSED) = 0)
+               and (BlockOffsets[x].CompressionType = D5PCOMPRESSION_NONE)
+               and (BlockOffsets[x].DSize = 0)))
+
+            and ((((BlockOffsets[x].OptionsFlags and D5PBLOCK_COMPANION) = D5PBLOCK_COMPANION)
+               and (BlockOffsets[x].CompanionOfID > 0))
+              or (((BlockOffsets[x].OptionsFlags and D5PBLOCK_COMPANION) = 0)
+               and (BlockOffsets[x].CompanionOfID = 0)))
+
+            and ((((BlockOffsets[x].OptionsFlags and D5PBLOCK_ENTRIES) = D5PBLOCK_ENTRIES)
+               and (BlockOffsets[x].NumEntries > 0))
+              or (((BlockOffsets[x].OptionsFlags and D5PBLOCK_ENTRIES) = 0)
+               and (BlockOffsets[x].NumEntries = 0)))
+
+            and ((BlockOffsets[x].ID = 1) or (BlockOffsets[x].ID = 10)
+              or (BlockOffsets[x].ID = 2) or (BlockOffsets[x].ID = 20)
+              or (BlockOffsets[x].ID = 21)
+              or ((BlockOffsets[x].OptionsFlags and D5PBLOCK_UNIMPORTANT) = D5PBLOCK_UNIMPORTANT));
+
+          if (BlockOffsets[x].ID = 1)
+          or (BlockOffsets[x].ID = 2)
+          or (BlockOffsets[x].ID = 20)
+          or (BlockOffsets[x].ID = 21) then
+            Inc(NeededBlocks);
+        end;
+
+      end;
+
+      Result := HashOk and OffsetsOk and (NeededBlocks = 4);
+
+    end;
+
+  finally
+    srcStream.Free;
+    tmpStream.Free;
+  end;
+
+end;
+
+function TfrmInstaller.searchDUPP_version4_blockID(id: integer): integer;
+var x: integer;
+begin
+
+  result := -1;
+
+  for x := 0 to length(BlockOffsets) do
+  begin
+    if (BlockOffsets[x].ID = id) then
+    begin
+      result := x;
+      exit;
+    end;
+  end;
+
+end;
+
+function TfrmInstaller.extractDUPP_version4_file(fileid: DUP5PACK_File_v4; srcStream: TStream; var dstStream: TBufferedFS): integer;
+var tmpStream: TStream;
+    DStream: TDecompressionStream;
+    Hash_Engine: TDCP_hash;
+    Hash: array[0..63] of byte;
+    x, hashsize: integer;
+    testValue: int64;
+    HashOk: boolean;
+    s1,s2: string;
+begin
+
+  tmpStream := TMemoryStream.Create;
+
+  case fileid.HashType of
+    D5PHASH_MD5: Hash_Engine := TDCP_md5.Create(Self);
+    D5PHASH_SHA1: Hash_Engine := TDCP_sha1.Create(Self);
+    D5PHASH_SHA256: Hash_Engine := TDCP_sha256.Create(Self);
+    D5PHASH_SHA512: Hash_Engine := TDCP_sha512.Create(Self);
+    D5PHASH_RIPEMD160: Hash_Engine := TDCP_ripemd160.Create(Self);
+  else
+    raise Exception.Create('Unknown hash type: '+inttostr(fileid.HashType));
+  end;
+
+  hashsize := Hash_Engine.GetHashSize div 8;
+
+  try
+    testValue := srcStream.Seek(fileid.RelOffset,0);
+    if testValue <> fileid.RelOffset then
+      raise Exception.Create('Seek to file data location failed ('+inttohex(testValue,8)+' <> '+inttohex(fileid.RelOffset,8)+')');
+
+    testValue := tmpStream.CopyFrom(srcStream,fileid.Size);
+    if testValue <> fileid.Size then
+      raise Exception.Create('Read file data error ('+inttostr(testValue)+' bytes <> '+inttostr(fileid.Size)+' bytes)');
+
+    tmpStream.Seek(0,0);
+    if (fileid.Flags and D5PFILE_COMPRESSED) = D5PFILE_COMPRESSED then
+    begin
+      case fileid.CompressionType of
+        D5PCOMPRESSION_ZLIB: begin
+          DStream := TDecompressionStream.Create(tmpStream);
+          try
+            testValue := dstStream.CopyFrom(DStream,fileid.DSize);
+          finally
+            DStream.Free;
+          end;
+          if testValue <> fileid.DSize then
+            raise Exception.Create('Zlib decompression error ('+inttostr(testValue)+' bytes <> '+inttostr(fileid.DSize)+' bytes)');
+        end;
+        D5PCOMPRESSION_LZMA: begin
+          lzma_decode(tmpStream,dstStream);
+          if dstStream.size <> fileid.DSize then
+            raise Exception.Create('LZMA decompression error ('+inttostr(dstStream.size)+' bytes <> '+inttostr(fileid.DSize)+' bytes)');
+        end;
+      else  // Unsupported compression format
+        raise Exception.Create('Unsupported Compression ('+inttohex(fileid.CompressionType,2)+')');
+      end;
+    end
+    else
+    begin
+      dstStream.copyFrom(tmpStream,tmpStream.size);
+    end;
+
+    dstStream.Seek(0,0);
+
+    Hash_Engine.Init;
+    Hash_Engine.UpdateStream(dstStream,dstStream.Size);
+    Hash_Engine.Final(Hash);
+
+    HashOk := true;
+    for x := 0 to hashsize - 1 do
+    begin
+      HashOk := HashOk and (Hash[x] = fileid.Hash[x]);
+      s1:= s1 + IntToHex(Hash[x],2);
+      s2:= s2 + IntToHex(fileid.Hash[x],2);
+    end;
+
+    if not(HashOk) then
+      raise Exception.Create('Wrong Hash for block data ('+s1+' <> '+s2+')');
+
+  finally
+    Hash_Engine.Free;
+    tmpStream.free;
+  end;
+
+end;
+
+function TfrmInstaller.getDUPP_version4_blockcontent(src,id: integer): TStream;
+var tmpStream, srcStream: TStream;
+    DStream: TDecompressionStream;
+    Hash_SHA256: TDCP_sha256;
+    Hash: array[0..31] of byte;
+    x: integer;
+    testValue: int64;
+    HashOk: boolean;
+    s1,s2: string;
+begin
+
+  srcStream := THandleStream.Create(src);
+  tmpStream := TMemoryStream.Create;
+  Hash_SHA256 := TDCP_sha256.Create(Self);
+
+  try
+    testValue := srcStream.Seek(BlockOffsets[id].Offset,0);
+    if testValue <> BlockOffsets[id].Offset then
+      raise Exception.Create('Seek to block data error ('+inttohex(testValue,8)+' <> '+inttohex(BlockOffsets[id].Offset,8)+')');
+
+    testValue := tmpStream.CopyFrom(srcStream,BlockOffsets[id].Size);
+    if testValue <> BlockOffsets[id].Size then
+      raise Exception.Create('Read block data error ('+inttostr(testValue)+' bytes <> '+inttostr(BlockOffsets[id].Size)+' bytes)');
+
+    tmpStream.Seek(0,0);
+    Hash_SHA256.Init;
+    Hash_SHA256.UpdateStream(tmpStream,tmpStream.Size);
+    Hash_SHA256.Final(Hash);
+
+    HashOk := true;
+    for x := 0 to 31 do
+    begin
+      HashOk := HashOk and (Hash[x] = BlockOffsets[id].Hash[x]);
+      s1:= s1 + IntToHex(Hash[x],2);
+      s2:= s2 + IntToHex(BlockOffsets[id].Hash[x],2);
+    end;
+
+    if not(HashOk) then
+      raise Exception.Create('Wrong Hash for block data ('+s1+' <> '+s2+')');
+
+    tmpStream.Seek(0,0);
+    if (BlockOffsets[id].OptionsFlags and D5PBLOCK_COMPRESSED) = D5PBLOCK_COMPRESSED then
+    begin
+      case BlockOffsets[id].CompressionType of
+        D5PCOMPRESSION_ZLIB: begin
+          result := TMemoryStream.Create;
+          DStream := TDecompressionStream.Create(tmpStream);
+          try
+            testValue := result.CopyFrom(DStream,BlockOffsets[id].DSize);
+          finally
+            DStream.Free;
+          end;
+          if testValue <> BlockOffsets[id].DSize then
+            raise Exception.Create('Zlib decompression error ('+inttostr(testValue)+' bytes <> '+inttostr(BlockOffsets[id].DSize)+' bytes)');
+          result.Seek(0,0);
+        end;
+        D5PCOMPRESSION_LZMA: begin
+          result := TMemoryStream.Create;
+          lzma_decode(tmpStream,result);
+          if result.size <> BlockOffsets[id].DSize then
+            raise Exception.Create('LZMA decompression error ('+inttostr(result.size)+' bytes <> '+inttostr(BlockOffsets[id].DSize)+' bytes)');
+          result.Seek(0,0);
+        end;
+      else  // Unsupported compression format
+        raise Exception.Create('Unsupported Compression ('+inttohex(BlockOffsets[id].CompressionType,2)+')');
+      end;
+    end
+    else
+    begin
+      result := tmpStream;
+    end;
+  finally
+    srcStream.free;
+    Hash_SHA256.Free;
+    if result <> tmpStream then
+      tmpStream.free;
+  end;
+
+end;
+
+function TfrmInstaller.infosDUPP_version4(src: integer): boolean;
+var  Dup5Ver: integer;
+  //  previewfile: string;
+//    stmTmp: TMemoryStream;
+//    InputStream: TMemoryStream;
+//    DStream: TDecompressionStream;
+//    FinalSize: integer;
+//    Buffer: PByteArray;
+
+    infoid, bannerid: integer;
+    tmpStream, srcStream: TStream;
+    NFO: DUP5PACK_Info_v4;
+    isError, cont: boolean;
+    imgTmp: tbitmap;
+begin
+
+  result := false;
+  isError := false;
+
+  if (length(BlockOffsets) > 0) or sanitycheckDUPP_version4(src) then
+  begin
+
+    infoid := searchDUPP_version4_blockID(D5PID_INFORMATION);
+    bannerid := searchDUPP_version4_blockID(D5PID_BANNER);
+
+    if infoid <> -1 then
+    begin
+
+      try
+        tmpStream := getDUPP_version4_blockcontent(src,infoid);
+      except
+        on E: exception do
+        begin
+          MessageDlg('Error while retrieving information:'+chr(10)+e.Message,mtError,[mbOk],0);
+          isError := true;
+        end;
+      end;
+
+      if not(isError) then
+      begin
+
+        tmpStream.Read(NFO,SizeOf(DUP5PACK_Info_v4));
+        PackName := Get8(tmpStream);
+        PackURL := get8(tmpStream);
+        PackAuthor := get8(tmpStream);
+        PackComment := get32(tmpStream);
+
+        tmpStream.free;
+
+        panTitle.Caption := ' '+StringReplace(PackName,'&','&&',[rfReplaceAll]);
+        panPVersion.Caption := ' '+getVersionFromInt(NFO.NumVer);
+        panAuthor.Caption := ' '+StringReplace(PackAuthor,'&','&&',[rfReplaceAll]);
+        panComment.Caption := ' '+StringReplace(PackComment,'&','&&',[rfReplaceAll]);
+        panURL.Caption := ' '+PackURL;
+
+        Dup5Ver := getDup5Version;
+
+        cont := (NFO.DUP5VerTest = -1) or
+                ((NFO.DUP5VerTest = 0) and (Dup5Ver = NFO.DUP5VerValue)) or
+                ((NFO.DUP5VerTest = 1) and (Dup5Ver > NFO.DUP5VerValue)) or
+                ((NFO.DUP5VerTest = 2) and (Dup5Ver < NFO.DUP5VerValue)) or
+                ((NFO.DUP5VerTest = 3) and (Dup5Ver <> NFO.DUP5VerValue));
+
+        NFOLoaded := true;
+
+        if not(cont) then
+        begin
+          MessageDlg(DLNGStr('PI0042'),mtError,[mbOk],0);
+        end
+        else if bannerid <> -1 then
+        begin
+
+          try
+            tmpStream := getDUPP_version4_blockcontent(src,bannerid);
+          except
+            on E: exception do
+            begin
+              MessageDlg('Error while retrieving banner:'+chr(10)+e.Message,mtError,[mbOk],0);
+              isError := true;
+            end;
+          end;
+
+          if not(isError) then
+          begin
+
+            imgCustomBanner.Visible := false;
+            tmpStream.Seek(0,0);
+            imgTmp := TBitmap.Create;
+            imgTmp.LoadFromStream(tmpStream);
+            imgCustomBanner.Picture.Assign(imgTmp);
+            imgCustomBanner.Visible := true;
+
+          end;
+        end;
+      end;
+    end;
+  end;
+
+  result := not(isError) and cont;
+
+//  exit;
+
+{
+  FileRead(src,NFO1,SizeOf(DUP5PACK_Info_v1));
+  
+  PackName := get8(src);
+  PackURL := get8(src);
+  PackAuthor := get8(src);
+  PackComment := get8(src);
+
+  panTitle.Caption := ' '+StringReplace(PackName,'&','&&',[rfReplaceAll]);
+  panPVersion.Caption := ' '+getVersionFromInt(NFO.NumVer);
+  panAuthor.Caption := ' '+StringReplace(PackAuthor,'&','&&',[rfReplaceAll]);
+  panComment.Caption := ' '+StringReplace(PackComment,'&','&&',[rfReplaceAll]);
+  panURL.Caption := ' '+PackURL;
+
+  Dup5Ver := getDup5Version;
+
+  cont := (NFO.DUP5VerTest = -1) or
+          ((NFO.DUP5VerTest = 0) and (Dup5Ver = NFO.DUP5VerValue)) or
+          ((NFO.DUP5VerTest = 1) and (Dup5Ver > NFO.DUP5VerValue)) or
+          ((NFO.DUP5VerTest = 2) and (Dup5Ver < NFO.DUP5VerValue)) or
+          ((NFO.DUP5VerTest = 3) and (Dup5Ver <> NFO.DUP5VerValue));
+
+  if not(cont) then
+  begin
+    MessageDlg(DLNGStr('PI0042'),mtError,[mbOk],0);
+//    ShowMessage('This package cannot be installed with your version of Dragon UnPACKer.');
+  end
+  else
+  begin
+    // Gestion de l'image a rajouter.. (Skip atm)
+    //FileSeek(src,NFO.PictureSize,1);
+
+    imgCustomBanner.Visible := false;
+    if (NFO.PictureSize > 0) then
+    begin
+//        previewFile := getTempFilename;
+      stmTmp := TMemoryStream.Create;
+
+      try
+
+       if (NFO.NumVer = 1) and (NFO1.PictureCompressed = 1) then
+       begin
+
+        GetMem(Buffer,NFO1.PictureCompressedSize);
+        try
+          FileRead(src,Buffer^,NFO1.PictureCompressedSize);
+
+          InputStream := TMemoryStream.Create;
+          try
+            InputStream.Write(Buffer^,NFO1.PictureCompressedSize);
+            InputStream.Seek(0, soFromBeginning);
+
+            DStream := TDecompressionStream.Create(InputStream);
+            try
+              FinalSize := stmTmp.CopyFrom(DStream,NFO.PictureSize);
+            finally
+              DStream.Free;
+            end;
+          finally
+            InputStream.Free;
+          end;
+        finally
+          FreeMem(Buffer);
+        end;
+
+       end
+       else
+       begin
+
+        GetMem(Buffer,NFO.PictureSize);
+        stmTmp := TMemoryStream.Create;
+
+        try
+          FileRead(src,buffer^,NFO.PictureSize);
+          stmTmp.Write(Buffer^,NFO.PictureSize);
+        finally
+          FreeMem(Buffer);
+        end;
+
+      end;
+
+      imgTmp := TBitMap.Create;
+      stmTmp.Seek(0,0);
+      imgTmp.LoadFromStream(stmTmp);
+      imgCustomBanner.Picture.Assign(imgTmp);
+      imgCustomBanner.Visible := true;
+
+     finally
+      stmTmp.Free;
+     end;
+
+    end;
+
+    NFOLoaded := true;
+  end;
+
+  result := cont;
+ }
 end;
 
 function TfrmInstaller.loadDUPP(duppfile: string): boolean;
@@ -236,6 +734,14 @@ begin
        MessageDlg(ReplaceValue('%y',ReplaceValue('%v',DLNGstr('PI0041'),GetVersionFromInt(HDR.NeededVersion)),GetVersionFromInt(VERSION)),mtError,[mbOk],0);
        result := false;
      end
+     else if (HDR.Version = 4) and not(sanitycheckDUPP_version4(hDupp)) then
+     begin
+       FileClose(hDupp);
+       hDupp := 0;
+       // ToTRANSLATE //
+       MessageDlg('Verifications of DUPP file failed!',mtError,[mbOk],0);
+       result := false;
+     end
      else
      begin
        result := true;
@@ -259,6 +765,7 @@ begin
       1: parseDUPP_version1to3(hDupp,HDR.Version);
       2: parseDUPP_version1to3(hDupp,HDR.Version);
       3: parseDUPP_version1to3(hDupp,HDR.Version);
+      4: parseDUPP_version4(hDupp);
     else
       MessageDlg(ReplaceValue('%v',DLNGstr('PI0014'),inttostr(HDR.Version)),mtError, [mbOk],0);
     end;
@@ -377,13 +884,19 @@ begin
             calcCRC := getStrCRC32(bufoutstr^);
           List.Items.Add('Buffer: '+IntToHex(calcCRC,8)+' / Compare: '+IntToHex(ENT.CRC,8));
         end
-        else
+        else if ENT.CompressionType = 0 then
         begin
           if version = 3 then
             calcCRC := GetBufCRC32(buf,ENT.DSize)
           else
             calcCRC := getStrCRC32(buf^);
           Size := ENT.DSize;
+        end
+        else
+        begin
+          List.Items.Add('Unknown compression method ['+inttostr(ENT.CompressionType)+']');
+//          MessageDlg(ReplaceValue('%f',DLNGstr('PI0020'),FileName),mtConfirmation,[mbOk],0);
+          MessageDlg('Unknown compression method ['+inttostr(ENT.CompressionType)+'] for:'+chr(10)+chr(13)+FileName,mtConfirmation,[mbOk],0);
         end;
 
         lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0031');
@@ -444,6 +957,314 @@ begin
     lblStatus.Caption := ReplaceValue('%e',DLNGstr('PI0024'),intToStr(errCount));
     lblInstalling.Caption := ReplaceValue('%i',ReplaceValue('%e',DLNGstr('PI0025'),intToStr(errCount)),intToStr(NFO.NumFiles - errCount));
   end;
+
+end;
+
+procedure TfrmInstaller.parseDUPP_version4(src: integer);
+var ENT: DUP5PACK_File;
+    FileName, InstallDir, DestDir: string;
+    x, fout, calcCRC, size, destVersion: integer;
+    Buf, bufoutstr: PChar;
+    InputStream: TMemoryStream;
+    OutputStream: TDeCompressionStream;
+    installFile: boolean;
+    errCount: integer;
+
+    entStream,namStream,datStream: TStream;
+    entriesid, namesid, dataid,fileattrib: integer;
+    isError: boolean;
+
+    outFile: TBufferedFS;
+
+    names: array of String;
+    files: array of DUP5PACK_File_v4;
+
+begin
+
+//  result := false;
+  isError := false;
+
+  if (length(BlockOffsets) > 0) or sanitycheckDUPP_version4(src) then
+  begin
+
+    entriesid := searchDUPP_version4_blockID(D5PID_ENTRIES);
+    namesid := searchDUPP_version4_blockID(D5PID_NAMES);
+    dataid := searchDUPP_version4_blockID(D5PID_DATA);
+
+    if (entriesid <> -1) and (namesid <> -1) and (dataid <> -1) then
+    begin
+
+      try
+        entStream := getDUPP_version4_blockcontent(src,entriesid);
+      except
+        on E: exception do
+        begin
+          MessageDlg('Error while retrieving entries block data:'+chr(10)+e.Message,mtError,[mbOk],0);
+          isError := true;
+        end;
+      end;
+
+      try
+        namStream := getDUPP_version4_blockcontent(src,namesid);
+      except
+        on E: exception do
+        begin
+          MessageDlg('Error while retrieving names block data:'+chr(10)+e.Message,mtError,[mbOk],0);
+          isError := true;
+        end;
+      end;
+
+      try
+        datStream := getDUPP_version4_blockcontent(src,dataid);
+      except
+        on E: exception do
+        begin
+          MessageDlg('Error while retrieving data block data:'+chr(10)+e.Message,mtError,[mbOk],0);
+          isError := true;
+        end;
+      end;
+
+      if not(isError) then
+      begin
+
+        SetLength(names,BlockOffsets[namesid].NumEntries);
+        namStream.Seek(0,0);
+        for x := 0 to BlockOffsets[namesid].NumEntries - 1 do
+          names[x] := Get8(namStream);
+        namStream.Free;
+
+        SetLength(files,BlockOffsets[entriesid].NumEntries);
+        entStream.Seek(0,0);
+        for x := 0 to BlockOffsets[entriesid].NumEntries - 1 do
+          entStream.Read(files[x],SizeOf(DUP5PACK_File_v4));
+        entStream.Free;
+
+        for x := 0 to BlockOffsets[entriesid].NumEntries - 1 do
+        begin
+
+          DestDir := getDestDir(files[x].BaseInstallDir) + names[x];
+          ForceDirectories(getDestDir(files[x].BaseInstallDir));
+
+          if (files[x].Version >= 0) and FileExists(DestDir) then
+            destVersion := getPluginVersion(DestDir)
+          else
+            destVersion := -1;
+
+          if (files[x].Version >= 0) and (files[x].Version <= destVersion) then
+          begin
+            if (files[x].Flags and D5PFILE_UPDATEONLY) = D5PFILE_UPDATEONLY then
+            begin
+              if MessageDlg(ReplaceValue('%2',ReplaceValue('%1',ReplaceValue('%f',DLNGstr('PI0019'),destdir),getVersionFromInt(destVersion)),getVersionFromInt(files[x].Version)),mtConfirmation,[mbYes, mbNo],0) = mrYes then
+                installFile := true
+              else
+                installFile := false;
+            end
+            else
+              installFile := false;
+          end
+          else
+            installFile := true;
+
+          if installFile then
+          begin
+
+            outfile := TBufferedFS.Create(destdir,fmCreate or fmShareExclusive);
+            try
+              extractDUPP_version4_file(files[x],datStream,outfile);
+            finally
+              outfile.Free;
+            end;
+
+            fileattrib := 0;
+            if (files[x].Flags and D5PFILE_HIDDEN) = D5PFILE_HIDDEN then
+              fileattrib := fileattrib or faHidden;
+            if (files[x].Flags and D5PFILE_READONLY) = D5PFILE_READONLY then
+              fileattrib := fileattrib or faReadOnly;
+
+            if fileattrib > 0 then
+              filesetattr(DestDir,fileattrib);
+
+            filesetdate(destdir,files[x].DateT);
+
+            if ((files[x].Flags and D5PFILE_REGSVR32) = D5PFILE_REGSVR32) then
+              RegisterOcx(destdir);
+
+          end;
+        end;
+
+      end;
+    end;
+  end;
+
+
+{  errCount := 0;
+
+  for x := 1 to NFO.NumFiles do
+  begin
+    List.Items.Add('File '+inttostr(x)+'...');
+    lblStatus.Caption := DLNGstr('PI0018');
+
+    FileRead(src,ENT.Size,4);
+    FileRead(src,ENT.DSize,4);
+    FileRead(src,ENT.DateT,4);
+    FileRead(src,ENT.Hidden,1);
+    FileRead(src,ENT.ReadOnly,1);
+    FileRead(src,ENT.Flags,1);
+    FileRead(src,ENT.UpdateOnly,1);
+    FileRead(src,ENT.Version,4);
+    FileRead(src,ENT.CompressionType,4);
+    FileRead(src,ENT.BaseInstallDir,4);
+    FileRead(src,ENT.CRC,4);
+    filename := get8(src);
+    installdir := get8(src);
+
+    lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+'kb) ';
+
+    DestDir := getDestDir(ENT.BaseInstallDir) + installdir + filename;
+    ForceDirectories(getDestDir(ENT.BaseInstallDir) + installdir);
+
+    if (ENT.Version >= 0) and FileExists(DestDir) then
+      destVersion := getPluginVersion(DestDir)
+    else
+      destVersion := -1;
+
+    if (ENT.Version >= 0) and (ENT.Version <= destVersion) then
+    begin
+      if (ENT.UpdateOnly = 0) then
+      begin
+        if MessageDlg(ReplaceValue('%2',ReplaceValue('%1',ReplaceValue('%f',DLNGstr('PI0019'),destdir),getVersionFromInt(destVersion)),getVersionFromInt(ENT.Version)),mtConfirmation,[mbYes, mbNo],0) = mrYes then
+        begin
+          installFile := true;
+        end
+        else
+          installFile := false;
+      end
+      else
+        installFile := false;
+    end
+    else
+      installFile := true;
+
+//    FileSeek(src,ENT.Size,1);
+
+    if not(installFile) then
+    begin
+      lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0027');
+      FileSeek(src,ENT.Size,1);
+    end
+    else
+    begin
+
+      List.Items.Add(filename+' ('+inttostr(Round(ENT.DSize/1024))+'kb)');
+      lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0029');
+
+      GetMem(Buf,ENT.Size);
+      try
+        List.Items.Add('Reading..');
+        FileRead(src,buf^,ENT.Size);
+
+        if (ENT.CompressionType = 1) then
+        begin
+          InputStream := TMemoryStream.Create;
+
+          List.Items.Add('Decompressing..');
+          lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0030');
+          try
+            InputStream.Write(buf^, ENT.Size);
+            InputStream.Seek(0, soFromBeginning);
+
+            OutputStream := TDecompressionStream.Create(InputStream);
+            try
+              OutputStream.Read(Size, SizeOf(Size));
+              getMem(bufoutstr,Size);
+              OutputStream.Read(bufoutstr^, Size);
+            finally
+              OutputStream.Free
+            end
+          finally
+            InputStream.Free
+          end;
+          List.Items.Add('Calculating CRC32..');
+          if version = 3 then
+            calcCRC := GetBufCRC32(bufoutstr,ENT.DSize)
+          else
+            calcCRC := getStrCRC32(bufoutstr^);
+          List.Items.Add('Buffer: '+IntToHex(calcCRC,8)+' / Compare: '+IntToHex(ENT.CRC,8));
+        end
+        else if ENT.CompressionType = 0 then
+        begin
+          if version = 3 then
+            calcCRC := GetBufCRC32(buf,ENT.DSize)
+          else
+            calcCRC := getStrCRC32(buf^);
+          Size := ENT.DSize;
+        end
+        else
+        begin
+          List.Items.Add('Unknown compression method ['+inttostr(ENT.CompressionType)+']');
+//          MessageDlg(ReplaceValue('%f',DLNGstr('PI0020'),FileName),mtConfirmation,[mbOk],0);
+          MessageDlg('Unknown compression method ['+inttostr(ENT.CompressionType)+'] for:'+chr(10)+chr(13)+FileName,mtConfirmation,[mbOk],0);
+        end;
+
+        lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0031');
+
+        if (calcCRC <> ENT.CRC) then
+        begin
+          MessageDlg(ReplaceValue('%f',DLNGstr('PI0020'),FileName),mtConfirmation,[mbOk],0);
+          inc(errCount);
+        end
+        else if (Size <> ENT.DSize) then
+        begin
+          MessageDlg(ReplaceValue('%f',DLNGstr('PI0021'),FileName),mtConfirmation,[mbOk],0);
+          inc(errCount);
+        end
+        else
+        begin
+          if (FileExists(destdir)) then
+            DeleteFile(destdir);
+          fout := FileCreate(destdir);
+          if (ENT.CompressionType = 1) then
+          begin
+            FileWrite(fout,bufoutstr^,ENT.DSize);
+            FreeMem(bufoutstr);
+          end
+          else
+            FileWrite(fout,buf^,ENT.DSize);
+          FileClose(fout);
+          if ((ENT.Flags and D5PFILE_REGSVR32) = D5PFILE_REGSVR32) then
+          begin
+            List.Items.Add('Registering ActiveX DLL...');
+            RegisterOcx(destdir);
+          end;
+        end;
+
+        lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0032');
+        List.Items.Add('Freeing memory buffer..');
+
+      finally
+        FreeMem(Buf);
+      end;
+    end;
+
+  //  ShowMessage(filename);
+
+
+    Progress.Position := Round((x / NFO.NumFiles)*100);
+
+  end;
+
+  Progress.Position := 100;
+  if (errCount = 0) then
+  begin
+    lblStatus.Caption := ReplaceValue('%i',DLNGstr('PI0022'),IntToStr(NFO.NumFiles));
+    lblInstalling.Caption := DLNGstr('PI0023');
+  end
+  else
+  begin
+    lblStatus.Caption := ReplaceValue('%e',DLNGstr('PI0024'),intToStr(errCount));
+    lblInstalling.Caption := ReplaceValue('%i',ReplaceValue('%e',DLNGstr('PI0025'),intToStr(errCount)),intToStr(NFO.NumFiles - errCount));
+  end;
+}
 
 end;
 
@@ -655,6 +1476,7 @@ begin
       1: result := infosDUPP_version1(hDupp);
       2: result := infosDUPP_version2(hDupp);
       3: result := infosDUPP_version2(hDupp);
+      4: result := infosDUPP_version4(hDupp);
     else
       MessageDlg(ReplaceValue('%v',DLNGstr('PI0014'),inttostr(HDR.Version)),mtError, [mbOk],0);
       result := false;
@@ -862,9 +1684,10 @@ begin
     stepInternet.Visible := false;
     lstUpd.Add(txtPathD5P.Text);
     curUpd := 0;
-    if loadDupp(txtPathD5P.Text) then
-      if not(infosDupp()) then
-        close;
+    if not(loadDupp(txtPathD5P.Text)) then
+      close
+    else if not(infosDupp()) then
+      close;
   end;
 
 end;

@@ -1,6 +1,6 @@
 <?php
 
-// $Id: dus.php,v 1.4 2008-05-31 14:46:13 elbereth Exp $
+// $Id: dus.php,v 1.5 2008-09-26 05:59:16 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dus/dus.php,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,9 +18,9 @@
 //
 
   // CVS variables
-  $CVS_REVISION = '$Revision: 1.4 $';
+  $CVS_REVISION = '$Revision: 1.5 $';
   $CVS_REVISION_DISPLAY = substr($CVS_REVISION,11,strlen($CVS_REVISION)-13);
-  $CVS_DATE = '$Date: 2008-05-31 14:46:13 $';
+  $CVS_DATE = '$Date: 2008-09-26 05:59:16 $';
   $CVS_DATE_DISPLAY = substr($CVS_DATE,7,strlen($CVS_DATE)-9);
 
   // Sending the header
@@ -74,11 +74,12 @@
   mysql_free_result($queryresult);
 
   // Retrieving corewip information
-  $query = "SELECT * FROM dus_core WHERE type = 'wip' AND available = 'yes' AND build>=$installedbuild ORDER BY build DESC";
+  $query = "SELECT * FROM dus_core WHERE type = 'wip' AND available = 'yes' AND build>=$userBuild ORDER BY build DESC";
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
   	echo "Result=M11\n";
-    echo "ResultDescription=".mysql_error()."\n";
+       echo "ResultQuery=".$query."\n";
+       echo "ResultDescription=".mysql_error()."\n";
   	return;
   }
 
@@ -192,7 +193,7 @@
   mysql_free_result($queryresult);
 
   // Retrieving available translations
-  $query = "SELECT name, release, description, author, URL, file, fileDL, size, date FROM dus_translation WHERE version = ".$userlang." ORDER BY name, release DESC";
+  $query = "SELECT * FROM dus_translation WHERE version = ".$userlang." ORDER BY dus_translation.name,dus_translation.release DESC";
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
   	echo "Result=M33\n";
@@ -204,12 +205,12 @@
   $lastlangname = '';
   $dustranslations = 'Translations=';
 
-  while ($line = mysql_fetch_array($queryresult, MYSQL_NUM)) {
+  while ($line = mysql_fetch_assoc($queryresult)) {
 
-    if ($lastlangname != $line[0]) {
-      $dusbody .= '['.$line[0]."]\nRelease=".$line[1]."\nDescription=".$line[2]."\nAuthor=".$line[3]."\nURL=".$line[4]."\nSize=".$line[7]."\nFile=".$line[5]."\nFileDL=".$line[6]."\nDate=".$line[8]."\n\n";
-      $lastlangname = $line[0];
-      $dustranslations .= $line[0].' ';
+    if ($lastlangname != $line['name']) {
+      $dusbody .= '['.$line['name']."]\nRelease=".$line['release']."\nDescription=".$line['description']."\nAuthor=".$line['author']."\nURL=".$line['URL']."\nSize=".$line['size']."\nFile=".$line['file']."\nFileDL=".$line['fileDL']."\nDate=".$line['date']."\n\n";
+      $lastlangname = $line['name'];
+      $dustranslations .= $line['name'].' ';
     }
  	
   }

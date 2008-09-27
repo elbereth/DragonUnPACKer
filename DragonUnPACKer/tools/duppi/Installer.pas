@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.9 2008-09-25 21:00:43 elbereth Exp $
+// $Id: Installer.pas,v 1.10 2008-09-27 16:34:43 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -26,25 +26,6 @@ uses
   JvListView, IniFiles, lib_utils, JvExStdCtrls, JvRichEdit,
   ULZMADecoder,UBufferedFS,DCPsha512,DCPsha256,DCPsha1,DCPmd5,DCPripemd160,DCPcrypt2,ULZMADec,
   OverbyteIcsWndControl;
-
-type
- pvirtualTreeData = ^virtualTreeData;
- virtualTreeData = record
-   ImageIndex: Integer;
-   Release: Integer;
-   GameTitle: String;
-   Country: String;
-   ReleasedBy: String;
-   Tracks: array[1..8] of byte;
-   Size: Integer;
-   ProdNum: String;
-   NumFiles: Integer;
-   Format: Integer;
-   Redumped: Boolean;
-   NeedRedump: Boolean;
-   IsNew: boolean;
-   NumCD: byte;
- end;
 
 type
   TfrmInstaller = class(TForm)
@@ -962,7 +943,7 @@ end;
 
 procedure TfrmInstaller.parseDUPP_version4(src: integer);
 var ENT: DUP5PACK_File;
-    FileName, InstallDir, DestDir: string;
+    FileName, InstallDir, DestDir, DuppiInstallNew: string;
     x, fout, calcCRC, size, destVersion: integer;
     Buf, bufoutstr: PChar;
     InputStream: TMemoryStream;
@@ -979,10 +960,14 @@ var ENT: DUP5PACK_File;
     names: array of String;
     files: array of DUP5PACK_File_v4;
 
+    duppiInstall: boolean;
+
+
 begin
 
 //  result := false;
   isError := false;
+  duppiInstall := false;
 
   if (length(BlockOffsets) > 0) or sanitycheckDUPP_version4(src) then
   begin
@@ -1042,7 +1027,14 @@ begin
         for x := 0 to BlockOffsets[entriesid].NumEntries - 1 do
         begin
 
-          DestDir := getDestDir(files[x].BaseInstallDir) + names[x];
+          if (files[x].BaseInstallDir = 5) and (compareText(names[x],'duppi.exe') = 0) then
+          begin
+            duppiInstall := true;
+            DestDir := getDestDir(files[x].BaseInstallDir) + names[x] + '.new';
+            duppiInstallNew := DestDir;
+          end
+          else
+            DestDir := getDestDir(files[x].BaseInstallDir) + names[x];
           ForceDirectories(getDestDir(files[x].BaseInstallDir));
 
           if (files[x].Version >= 0) and FileExists(DestDir) then
@@ -1091,180 +1083,18 @@ begin
 
           end;
         end;
-
       end;
     end;
   end;
 
-
-{  errCount := 0;
-
-  for x := 1 to NFO.NumFiles do
+  if duppiInstall then
   begin
-    List.Items.Add('File '+inttostr(x)+'...');
-    lblStatus.Caption := DLNGstr('PI0018');
 
-    FileRead(src,ENT.Size,4);
-    FileRead(src,ENT.DSize,4);
-    FileRead(src,ENT.DateT,4);
-    FileRead(src,ENT.Hidden,1);
-    FileRead(src,ENT.ReadOnly,1);
-    FileRead(src,ENT.Flags,1);
-    FileRead(src,ENT.UpdateOnly,1);
-    FileRead(src,ENT.Version,4);
-    FileRead(src,ENT.CompressionType,4);
-    FileRead(src,ENT.BaseInstallDir,4);
-    FileRead(src,ENT.CRC,4);
-    filename := get8(src);
-    installdir := get8(src);
-
-    lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+'kb) ';
-
-    DestDir := getDestDir(ENT.BaseInstallDir) + installdir + filename;
-    ForceDirectories(getDestDir(ENT.BaseInstallDir) + installdir);
-
-    if (ENT.Version >= 0) and FileExists(DestDir) then
-      destVersion := getPluginVersion(DestDir)
-    else
-      destVersion := -1;
-
-    if (ENT.Version >= 0) and (ENT.Version <= destVersion) then
-    begin
-      if (ENT.UpdateOnly = 0) then
-      begin
-        if MessageDlg(ReplaceValue('%2',ReplaceValue('%1',ReplaceValue('%f',DLNGstr('PI0019'),destdir),getVersionFromInt(destVersion)),getVersionFromInt(ENT.Version)),mtConfirmation,[mbYes, mbNo],0) = mrYes then
-        begin
-          installFile := true;
-        end
-        else
-          installFile := false;
-      end
-      else
-        installFile := false;
-    end
-    else
-      installFile := true;
-
-//    FileSeek(src,ENT.Size,1);
-
-    if not(installFile) then
-    begin
-      lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0027');
-      FileSeek(src,ENT.Size,1);
-    end
-    else
-    begin
-
-      List.Items.Add(filename+' ('+inttostr(Round(ENT.DSize/1024))+'kb)');
-      lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0029');
-
-      GetMem(Buf,ENT.Size);
-      try
-        List.Items.Add('Reading..');
-        FileRead(src,buf^,ENT.Size);
-
-        if (ENT.CompressionType = 1) then
-        begin
-          InputStream := TMemoryStream.Create;
-
-          List.Items.Add('Decompressing..');
-          lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0030');
-          try
-            InputStream.Write(buf^, ENT.Size);
-            InputStream.Seek(0, soFromBeginning);
-
-            OutputStream := TDecompressionStream.Create(InputStream);
-            try
-              OutputStream.Read(Size, SizeOf(Size));
-              getMem(bufoutstr,Size);
-              OutputStream.Read(bufoutstr^, Size);
-            finally
-              OutputStream.Free
-            end
-          finally
-            InputStream.Free
-          end;
-          List.Items.Add('Calculating CRC32..');
-          if version = 3 then
-            calcCRC := GetBufCRC32(bufoutstr,ENT.DSize)
-          else
-            calcCRC := getStrCRC32(bufoutstr^);
-          List.Items.Add('Buffer: '+IntToHex(calcCRC,8)+' / Compare: '+IntToHex(ENT.CRC,8));
-        end
-        else if ENT.CompressionType = 0 then
-        begin
-          if version = 3 then
-            calcCRC := GetBufCRC32(buf,ENT.DSize)
-          else
-            calcCRC := getStrCRC32(buf^);
-          Size := ENT.DSize;
-        end
-        else
-        begin
-          List.Items.Add('Unknown compression method ['+inttostr(ENT.CompressionType)+']');
-//          MessageDlg(ReplaceValue('%f',DLNGstr('PI0020'),FileName),mtConfirmation,[mbOk],0);
-          MessageDlg('Unknown compression method ['+inttostr(ENT.CompressionType)+'] for:'+chr(10)+chr(13)+FileName,mtConfirmation,[mbOk],0);
-        end;
-
-        lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0031');
-
-        if (calcCRC <> ENT.CRC) then
-        begin
-          MessageDlg(ReplaceValue('%f',DLNGstr('PI0020'),FileName),mtConfirmation,[mbOk],0);
-          inc(errCount);
-        end
-        else if (Size <> ENT.DSize) then
-        begin
-          MessageDlg(ReplaceValue('%f',DLNGstr('PI0021'),FileName),mtConfirmation,[mbOk],0);
-          inc(errCount);
-        end
-        else
-        begin
-          if (FileExists(destdir)) then
-            DeleteFile(destdir);
-          fout := FileCreate(destdir);
-          if (ENT.CompressionType = 1) then
-          begin
-            FileWrite(fout,bufoutstr^,ENT.DSize);
-            FreeMem(bufoutstr);
-          end
-          else
-            FileWrite(fout,buf^,ENT.DSize);
-          FileClose(fout);
-          if ((ENT.Flags and D5PFILE_REGSVR32) = D5PFILE_REGSVR32) then
-          begin
-            List.Items.Add('Registering ActiveX DLL...');
-            RegisterOcx(destdir);
-          end;
-        end;
-
-        lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0032');
-        List.Items.Add('Freeing memory buffer..');
-
-      finally
-        FreeMem(Buf);
-      end;
-    end;
-
-  //  ShowMessage(filename);
-
-
-    Progress.Position := Round((x / NFO.NumFiles)*100);
+    MessageDlg('Package installation completed successfully.'+chr(10)+'The Duppi program will now restart to update itself.',mtCustom,[mbOk],0);
+    ShellExecute(0, nil,PChar(extractfilepath(Application.EXEName)+'DuppiInstall.exe'), PChar(Application.EXEName+' '+DuppiInstallNew), nil, SW_SHOW);
+    Application.Terminate;
 
   end;
-
-  Progress.Position := 100;
-  if (errCount = 0) then
-  begin
-    lblStatus.Caption := ReplaceValue('%i',DLNGstr('PI0022'),IntToStr(NFO.NumFiles));
-    lblInstalling.Caption := DLNGstr('PI0023');
-  end
-  else
-  begin
-    lblStatus.Caption := ReplaceValue('%e',DLNGstr('PI0024'),intToStr(errCount));
-    lblInstalling.Caption := ReplaceValue('%i',ReplaceValue('%e',DLNGstr('PI0025'),intToStr(errCount)),intToStr(NFO.NumFiles - errCount));
-  end;
-}
 
 end;
 
@@ -1341,10 +1171,17 @@ begin
   end;
 
   frmInstaller.Caption := 'Duppi v'+getVersionFromInt(VERSION);
+  Application.Title := 'Duppi v'+getVersionFromInt(VERSION);
 
   translate;
 
-  if (ParamStr(1) <> '') then
+  if (ParamStr(1) = '/InstalledOK') then
+  begin
+
+    ShowMessage('Update of Duppi successfull!');
+
+  end
+  else if (ParamStr(1) <> '') then
   begin
     stepChoice.Visible := false;
     stepInstall.Visible := true;
@@ -1588,6 +1425,11 @@ begin
        else
          result := Dup5Path;
     4: result := Dup5Path;
+    5: result := Dup5Path + 'utils\';
+    6: result := Dup5Path + 'utils\templates\';
+    7: result := Dup5Path + 'utils\translation\';
+  else
+    raise Exception.Create('Unknown destination directory!'); 
   end;
 
 end;

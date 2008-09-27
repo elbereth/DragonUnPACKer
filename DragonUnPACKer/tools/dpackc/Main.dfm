@@ -9135,12 +9135,13 @@ object frmMain: TfrmMain
           Top = 88
         end
         object lblCommentMax: TLabel
-          Left = 488
+          Left = 480
           Top = 112
-          Width = 33
+          Width = 41
           Height = 10
           Alignment = taRightJustify
-          Caption = '32767'
+          AutoSize = False
+          Caption = '0'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -8

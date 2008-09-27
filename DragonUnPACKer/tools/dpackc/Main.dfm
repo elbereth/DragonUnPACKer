@@ -1,6 +1,6 @@
 object frmMain: TfrmMain
-  Left = 385
-  Top = 431
+  Left = 253
+  Top = 419
   BorderStyle = bsSingle
   Caption = 'DUP5 Package (D5P) Maker v2.0.0'
   ClientHeight = 378
@@ -8895,7 +8895,7 @@ object frmMain: TfrmMain
         Left = 0
         Top = 0
         Width = 377
-        Height = 129
+        Height = 105
         Caption = 'Version number (xyzir)'
         TabOrder = 0
         object Label4: TLabel
@@ -8948,8 +8948,8 @@ object frmMain: TfrmMain
           Caption = '7 = Fix, 8 = Patch, 9 = Special)'
         end
         object Label13: TLabel
-          Left = 8
-          Top = 104
+          Left = 192
+          Top = 56
           Width = 177
           Height = 13
           AutoSize = False
@@ -8981,12 +8981,12 @@ object frmMain: TfrmMain
         Left = 384
         Top = 0
         Width = 145
-        Height = 129
+        Height = 105
         Caption = 'Dragon UnPACKer'
         TabOrder = 1
         object optCompInf: TRadioButton
           Left = 72
-          Top = 48
+          Top = 32
           Width = 33
           Height = 17
           Caption = '<'
@@ -8995,7 +8995,7 @@ object frmMain: TfrmMain
         end
         object optCompSup: TRadioButton
           Left = 8
-          Top = 48
+          Top = 32
           Width = 33
           Height = 17
           Caption = '>'
@@ -9006,7 +9006,7 @@ object frmMain: TfrmMain
         end
         object chkDUP5: TCheckBox
           Left = 8
-          Top = 24
+          Top = 16
           Width = 129
           Height = 17
           Caption = 'Enable check version'
@@ -9015,7 +9015,7 @@ object frmMain: TfrmMain
         end
         object optCompEqual: TRadioButton
           Left = 40
-          Top = 48
+          Top = 32
           Width = 33
           Height = 17
           Caption = '='
@@ -9024,7 +9024,7 @@ object frmMain: TfrmMain
         end
         object optCompDiff: TRadioButton
           Left = 104
-          Top = 48
+          Top = 32
           Width = 33
           Height = 17
           Caption = '<>'
@@ -9033,7 +9033,7 @@ object frmMain: TfrmMain
         end
         object txtDUP5Version: TEdit
           Left = 56
-          Top = 72
+          Top = 56
           Width = 33
           Height = 21
           Enabled = False
@@ -9044,7 +9044,7 @@ object frmMain: TfrmMain
         end
         object lblDUPVersion: TStaticText
           Left = 8
-          Top = 104
+          Top = 80
           Width = 129
           Height = 17
           Alignment = taCenter
@@ -9056,7 +9056,7 @@ object frmMain: TfrmMain
         end
         object butVersionPrev: TButton
           Left = 8
-          Top = 72
+          Top = 56
           Width = 41
           Height = 21
           Caption = 'Prev'
@@ -9066,7 +9066,7 @@ object frmMain: TfrmMain
         end
         object butVersionNext: TButton
           Left = 96
-          Top = 72
+          Top = 56
           Width = 41
           Height = 21
           Caption = 'Next'
@@ -9077,15 +9077,15 @@ object frmMain: TfrmMain
       end
       object GroupBox3: TGroupBox
         Left = 0
-        Top = 136
+        Top = 112
         Width = 529
-        Height = 153
+        Height = 177
         Caption = 'Displayed information'
         TabOrder = 2
         object Label3: TLabel
           Left = 8
           Top = 18
-          Width = 145
+          Width = 113
           Height = 13
           Alignment = taRightJustify
           AutoSize = False
@@ -9094,16 +9094,16 @@ object frmMain: TfrmMain
         object Label5: TLabel
           Left = 8
           Top = 42
-          Width = 145
+          Width = 113
           Height = 13
           Alignment = taRightJustify
           AutoSize = False
-          Caption = 'Internet URL of the package:'
+          Caption = 'Internet URL:'
         end
         object Label6: TLabel
           Left = 8
           Top = 66
-          Width = 145
+          Width = 113
           Height = 13
           Alignment = taRightJustify
           AutoSize = False
@@ -9112,70 +9112,207 @@ object frmMain: TfrmMain
         object Label11: TLabel
           Left = 8
           Top = 90
-          Width = 145
+          Width = 113
           Height = 13
           Alignment = taRightJustify
           AutoSize = False
           Caption = 'Comment:'
         end
-        object txtName: TEdit
-          Left = 160
+        object ledName: TJvLED
+          Left = 472
           Top = 16
-          Width = 329
+        end
+        object ledURL: TJvLED
+          Left = 472
+          Top = 40
+        end
+        object ledAuthor: TJvLED
+          Left = 472
+          Top = 64
+        end
+        object ledComment: TJvLED
+          Left = 472
+          Top = 88
+        end
+        object lblCommentMax: TLabel
+          Left = 488
+          Top = 112
+          Width = 33
+          Height = 10
+          Alignment = taRightJustify
+          Caption = '32767'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -8
+          Font.Name = 'Small Fonts'
+          Font.Style = []
+          ParentFont = False
+        end
+        object lblNameMax: TLabel
+          Left = 496
+          Top = 16
+          Width = 25
+          Height = 10
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = '0'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -8
+          Font.Name = 'Small Fonts'
+          Font.Style = []
+          ParentFont = False
+        end
+        object Label20: TLabel
+          Left = 488
+          Top = 24
+          Width = 33
+          Height = 10
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'Max: 255'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -8
+          Font.Name = 'Small Fonts'
+          Font.Style = []
+          ParentFont = False
+        end
+        object Label21: TLabel
+          Left = 488
+          Top = 48
+          Width = 33
+          Height = 10
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'Max: 255'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -8
+          Font.Name = 'Small Fonts'
+          Font.Style = []
+          ParentFont = False
+        end
+        object lblURLMax: TLabel
+          Left = 496
+          Top = 40
+          Width = 25
+          Height = 10
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = '0'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -8
+          Font.Name = 'Small Fonts'
+          Font.Style = []
+          ParentFont = False
+        end
+        object Label23: TLabel
+          Left = 488
+          Top = 72
+          Width = 33
+          Height = 10
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'Max: 255'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -8
+          Font.Name = 'Small Fonts'
+          Font.Style = []
+          ParentFont = False
+        end
+        object lblAuthorMax: TLabel
+          Left = 496
+          Top = 64
+          Width = 25
+          Height = 10
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = '0'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -8
+          Font.Name = 'Small Fonts'
+          Font.Style = []
+          ParentFont = False
+        end
+        object lblCommentMaxMax: TLabel
+          Left = 472
+          Top = 120
+          Width = 49
+          Height = 10
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'Max: 32767'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -8
+          Font.Name = 'Small Fonts'
+          Font.Style = []
+          ParentFont = False
+        end
+        object txtName: TEdit
+          Left = 128
+          Top = 16
+          Width = 345
           Height = 21
-          MaxLength = 255
           TabOrder = 0
+          OnChange = txtNameChange
         end
         object txtURL: TEdit
-          Left = 160
+          Left = 128
           Top = 40
-          Width = 329
+          Width = 345
           Height = 21
-          MaxLength = 255
           TabOrder = 1
+          OnChange = txtURLChange
         end
         object txtAuthor: TEdit
-          Left = 160
+          Left = 128
           Top = 64
-          Width = 329
+          Width = 345
           Height = 21
-          MaxLength = 255
           TabOrder = 2
-        end
-        object txtComment: TEdit
-          Left = 160
-          Top = 88
-          Width = 329
-          Height = 21
-          MaxLength = 255
-          TabOrder = 3
+          OnChange = txtAuthorChange
         end
         object chkImagePerso: TCheckBox
           Left = 8
-          Top = 120
+          Top = 152
           Width = 145
           Height = 17
           Caption = 'Use custom Duppi picture:'
-          Enabled = False
-          TabOrder = 4
+          TabOrder = 3
           OnClick = chkImagePersoClick
         end
         object txtImageFile: TEdit
           Left = 160
-          Top = 120
-          Width = 337
+          Top = 144
+          Width = 345
           Height = 21
           Enabled = False
-          TabOrder = 5
+          TabOrder = 4
         end
         object butBrowseImage: TButton
-          Left = 496
-          Top = 120
+          Left = 504
+          Top = 144
           Width = 21
           Height = 21
           Caption = '+'
           Enabled = False
+          TabOrder = 5
+          OnClick = butBrowseImageClick
+        end
+        object txtComment: TMemo
+          Left = 128
+          Top = 88
+          Width = 345
+          Height = 49
+          HideSelection = False
+          ScrollBars = ssVertical
           TabOrder = 6
+          OnChange = txtCommentChange
         end
       end
     end
@@ -9198,6 +9335,7 @@ object frmMain: TfrmMain
           Checked = True
           State = cbChecked
           TabOrder = 0
+          OnClick = chkCompressNoneClick
         end
         object chkCompressZlib: TCheckBox
           Left = 8
@@ -9208,6 +9346,7 @@ object frmMain: TfrmMain
           Checked = True
           State = cbChecked
           TabOrder = 1
+          OnClick = chkCompressZlibClick
         end
         object chkCompressLZMA: TCheckBox
           Left = 8
@@ -9218,6 +9357,7 @@ object frmMain: TfrmMain
           Checked = True
           State = cbChecked
           TabOrder = 2
+          OnClick = chkCompressLZMAClick
         end
       end
       object GroupBox6: TGroupBox
@@ -9240,7 +9380,7 @@ object frmMain: TfrmMain
           Top = 32
           Width = 185
           Height = 17
-          Caption = 'SHA-1 (160bits)'
+          Caption = 'SHA1 (160bits)'
           TabOrder = 1
         end
         object optFileHashSHA256: TRadioButton
@@ -9248,7 +9388,7 @@ object frmMain: TfrmMain
           Top = 48
           Width = 185
           Height = 17
-          Caption = 'SHA-256 (256bits)'
+          Caption = 'SHA256 (256bits)'
           TabOrder = 2
         end
         object optFileHashSHA512: TRadioButton
@@ -9256,7 +9396,7 @@ object frmMain: TfrmMain
           Top = 64
           Width = 185
           Height = 17
-          Caption = 'SHA-512 (512bits) [Default]'
+          Caption = 'SHA512 (512bits) [Default]'
           Checked = True
           TabOrder = 3
           TabStop = True
@@ -9282,7 +9422,7 @@ object frmMain: TfrmMain
           Top = 16
           Width = 185
           Height = 17
-          Caption = 'Each file idenpendently'
+          Caption = 'Each file independently'
           Checked = True
           TabOrder = 0
           TabStop = True
@@ -9310,7 +9450,7 @@ object frmMain: TfrmMain
           Height = 17
           Caption = 'Version 2 (wrong CRC verification)'
           TabOrder = 0
-          OnClick = optDUPPv2Click
+          OnClick = optDUPPClick
         end
         object optDUPPv3: TRadioButton
           Left = 8
@@ -9319,7 +9459,7 @@ object frmMain: TfrmMain
           Height = 17
           Caption = 'Version 3 (fixed CRC but compatible with Duppi v2.2.0+)'
           TabOrder = 1
-          OnClick = optDUPPv3Click
+          OnClick = optDUPPClick
         end
         object optDUPPv4: TRadioButton
           Left = 8
@@ -9330,7 +9470,7 @@ object frmMain: TfrmMain
           Checked = True
           TabOrder = 2
           TabStop = True
-          OnClick = optDUPPv4Click
+          OnClick = optDUPPClick
         end
       end
     end
@@ -9391,6 +9531,7 @@ object frmMain: TfrmMain
           Height = 13
           AutoSize = False
           Caption = 'Sub-directory:'
+          Visible = False
         end
         object Label19: TLabel
           Left = 256
@@ -9466,11 +9607,14 @@ object frmMain: TfrmMain
           TabOrder = 5
           OnChange = txtInstallToChange
           Items.Strings = (
-            '{convert}'
-            '{data}'
-            '{drivers}'
-            '{hyperripper}'
-            '{program}')
+            '{program}\data\convert'
+            '{program}\data'
+            '{program}\data\drivers'
+            '{program}\data\hyperripper'
+            '{program}'
+            '{program}\utils'
+            '{program}\utils\templates'
+            '{program}\utils\translations')
         end
         object txtInstallDir: TEdit
           Left = 272
@@ -9480,6 +9624,7 @@ object frmMain: TfrmMain
           Enabled = False
           MaxLength = 255
           TabOrder = 6
+          Visible = False
           OnChange = txtInstallDirChange
         end
         object chkRegSvr: TCheckBox
@@ -9668,10 +9813,6 @@ object frmMain: TfrmMain
     Caption = 'Quit'
     TabOrder = 2
     OnClick = butExitClick
-  end
-  object Dialog: TOpenDialog
-    Left = 504
-    Top = 8
   end
   object imgButtons: TImageList
     Left = 472

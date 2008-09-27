@@ -111,9 +111,9 @@ AutoIncBuild=1
 MajorVer=3
 MinorVer=0
 Release=0
-Build=80
+Build=85
 Debug=0
-PreRelease=1
+PreRelease=0
 Special=0
 Private=0
 DLL=0
@@ -122,13 +122,13 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone
 FileDescription=Dragon UnPACKer 5 Package (D5P) Maker
-FileVersion=3.0.0.80
+FileVersion=3.0.0.85
 InternalName=dpackc
 LegalCopyright=Created by Alexandre "Elbereth" Devilliers
 LegalTrademarks=Mozilla Public Licence 1.1
 OriginalFilename=dpackc
 ProductName=D5P Maker
-ProductVersion=3.0.0 Beta 1
+ProductVersion=3.0.0
 Comments=Allows you to create .D5P files that are installable packages by Duppi of Dragon UnPACKer 5
 [Excluded Packages]
 C:\Program Files\RemObjects Software\Everwood\Bin\RemObjects_Everwood_D7.bpl=RemObjects Everwood for Delphi
@@ -136,3 +136,9 @@ P:\Program Files\Pascal Script for Delphi\Dcu\D7\PascalScript_Core_D7.bpl=RemObj
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlUnitOutputDirectory]
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-dcu
+[HistoryLists\hlOutputDirectorry]
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-compiled\utils

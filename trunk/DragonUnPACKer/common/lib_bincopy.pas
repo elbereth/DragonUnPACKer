@@ -1,6 +1,6 @@
 unit lib_bincopy;
 
-// $Id: lib_bincopy.pas,v 1.2 2005-12-13 07:13:56 elbereth Exp $
+// $Id: lib_bincopy.pas,v 1.3 2008-10-01 04:46:39 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_bincopy.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -17,22 +17,15 @@ unit lib_bincopy;
 // (elbereth@users.sourceforge.net, http://www.elberethzone.net).
 //
 // =============================================================================
-// Binary Copy library                                               version 3.0
+// Binary Copy library                                               version 4.0
 // =============================================================================
 //
-//  Types:  
-//  DULK_Header
-//  DULK_IndexEntry
-//  
-//  Const:
-//  DULK_Version
-//  DULK_IndexNum
-//  
 //  Functions:
-//  procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64;
+//  procedure BinCopyToStream(src, dst : TStream; soff : Int64; ssize : Int64;
 //                    doff : Int64; bufsize : Integer; silent: boolean);
 //
 //  Version history:
+//  v4.0: Improved to drop GetMem & pointers
 //  v3.0: Updated for Stream support
 //  v2.0: Updated for Int64 support (very huge files supported)
 //        Added silent flag
@@ -42,124 +35,83 @@ unit lib_bincopy;
 
 interface
 
-uses SysUtils, Dialogs, Classes;
+uses SysUtils, Classes;
 
 type TPercentCallback = procedure(p: byte);
 
-//procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean);
 procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
-//procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean);
-procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
+procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback); overload;
+procedure BinCopyToStream(src, dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback); overload;
 
 implementation
 
-procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
+procedure BinCopyToStream(src, dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback); overload;
 var
-  //sFileLength: Integer;
-  Buffer: PChar;
   i,numbuf, restbuf: Integer;
   per, oldper: word;
   real1, real2: real;
 begin
 
-try
-
-  if not(silent) then
-    DisplayPercent(0);
-
-  FileSeek(src,soff,0);
-  numbuf := ssize div bufsize;
-  restbuf := ssize mod bufsize;
-
-  GetMem(Buffer,bufsize);
-
-  oldper := 0;
-
-  for i := 1 to numbuf do
-  begin
-    FileRead(src, Buffer^, bufsize);
-    FileWrite(dst, Buffer^, bufsize);
     if not(silent) then
+      DisplayPercent(0);
+
+    src.Seek(soff,0);
+    numbuf := ssize div bufsize;
+    restbuf := ssize mod bufsize;
+
+    oldper := 0;
+
+    dst.Seek(doff,soFromBeginning);
+
+    for i := 1 to numbuf do
     begin
-      real1 := i;
-      real2 := numbuf;
-      real1 := (real1 / real2)*100;
-      per := Round(real1);
-      if per >= oldper + 10 then
+      dst.CopyFrom(src, bufsize);
+      if not(silent) then
       begin
-        DisplayPercent(per);
-        oldper := per;
+        real1 := i;
+        real2 := numbuf;
+        real1 := (real1 / real2)*100;
+        per := Round(real1);
+        if per >= oldper + 10 then
+        begin
+          DisplayPercent(per);
+          oldper := per;
+        end;
       end;
     end;
-  end;
 
-  if not(silent) then
-    DisplayPercent(100);
+    dst.CopyFrom(src,restbuf);
 
-  FileRead(src, Buffer^, restbuf);
-  FileWrite(dst, Buffer^, restbuf);
-
-  FreeMem(Buffer);
-
-except
-  on E: Exception do MessageDlg(E.Message, mtError, [mbOk], E.HelpContext);
-end;
+    if not(silent) then
+      DisplayPercent(100);
 
 end;
 
-procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
-var
-  //sFileLength: Integer;
-  Buffer: PChar;
-  i,numbuf, restbuf: Integer;
-  per, oldper: word;
-  real1, real2: real;
+procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback); overload;
+var srcStm: THandleStream;
 begin
 
-try
-
-  if not(silent) then
-    DisplayPercent(0);
-
-  FileSeek(src,soff,0);
-  numbuf := ssize div bufsize;
-  restbuf := ssize mod bufsize;
-
-  GetMem(Buffer,bufsize);
-
-  oldper := 0;
-
-  dst.Seek(doff,soFromBeginning);
-
-  for i := 1 to numbuf do
-  begin
-    FileRead(src, Buffer^, bufsize);
-    dst.WriteBuffer(Buffer^, bufsize);
-    if not(silent) then
-    begin
-      real1 := i;
-      real2 := numbuf;
-      real1 := (real1 / real2)*100;
-      per := Round(real1);
-      if per >= oldper + 10 then
-      begin
-        DisplayPercent(per);
-        oldper := per;
-      end;
-    end;
+  srcStm := THandleStream.Create(src);
+  try
+    BinCopyToStream(srcStm,dst,soff,ssize,doff,bufsize,silent,DisplayPercent);
+  finally
+    srcStm.Free;
   end;
 
-  if not(silent) then
-    DisplayPercent(100);
-
-  FileRead(src, Buffer^, restbuf);
-  dst.WriteBuffer(Buffer^, restbuf);
-
-  FreeMem(Buffer);
-
-except
-  on E: Exception do MessageDlg(E.Message, mtError, [mbOk], E.HelpContext);
 end;
+
+procedure BinCopy(src,dst : integer; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
+var srcStm, dstStm: THandleStream;
+begin
+
+  srcStm := THandleStream.Create(src);
+  dstStm := THandleStream.Create(dst);
+  try
+    BinCopyToStream(srcStm,dstStm,soff,ssize,doff,bufsize,silent,DisplayPercent);
+  finally
+    srcStm.Free;
+    dstStm.Free;
+  end;
 
 end;
 

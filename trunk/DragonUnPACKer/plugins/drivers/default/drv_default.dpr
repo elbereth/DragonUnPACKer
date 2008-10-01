@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.37 2008-09-06 05:33:25 elbereth Exp $
+// $Id: drv_default.dpr,v 1.38 2008-10-01 04:43:29 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -27,6 +27,8 @@ uses
   U_IntList in '..\..\..\common\U_IntList.pas',
   spec_DDS in '..\..\..\common\spec_DDS.pas',
   spec_HRF in '..\..\..\common\spec_HRF.pas',
+  lib_BinUtils in '..\..\..\common\lib_BinUtils.pas',
+  lib_bincopy in '..\..\..\common\lib_bincopy.pas',
   lib_version in '..\..\..\common\lib_version.pas';
 
 {$E d5d}
@@ -173,6 +175,10 @@ type FSE = ^element;
                  Added detection of DXT5 textures in .XTC files of Riddick
                  Fixed F-22 Air Dominance Fighter .DAT detection to work with did.dat of ADF & Total Air War
                  Added detection of Super EF2000 .DAT files (same structure than F-22 ADF)
+    20515        Cleaned the code, using lib_BinUtils instead of local functions
+                 All the types are now just before each function using them
+                 Same goes for special functions
+                 Improved detection of Riddick .XTC files (retail version of the game)  
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -190,1170 +196,12 @@ type FSE = ^element;
 
   //////////////////////////////////////////////////////////////////////////// }
 
-
-type N007Header = packed record
-       Magic: Integer;   // Always 1 ?
-       Version: Integer; // 1 = Used in Nightfire Demo
-                         // 3 = Used in Nightfire Retail
-       Magic2: Integer;
-       ID: array[0..3] of char;
-       NumRootDirs: Integer;
-     end;
-     // If version = 3 then following the header is an integer giving the number of entries
-     // Get32 filename
-     N007Entry = packed record
-       Compressed: byte;
-       Size: integer;
-       CompSize: integer;
-     end;
-     // If version = 1 then follows Size bytes of data (if Compressed = 0) or CompSize (if Compressed = 1)
-
-type NRMHeader = packed record
-       ID: array[0..17] of char;
-     end;
-     NRMEntry = packed record
-       ID: array[0..4] of char;
-       PacketSize: integer;
-       Size: integer;
-     end;
-     // Get32 Filename
-
-type M4BHeader = packed record
-       SigSize: cardinal;
-       SigName: array[0..10] of char;
-     end;
-
-type MDK1Header = packed record
-       Magic: integer;
-       Filename: array[0..11] of char;
-       TestOffset: integer;
-       Dirnum: integer;
-     end;
-     MDK1Index = record
-       Filename: array[0..11] of char;
-       Flag: integer;
-       Offset: integer;
-       Size: integer;
-     end;
-
-type MTFCompress = packed record
-        ID1: Byte;
-        ID2: Byte;
-        Reserved1 : Byte;
-        Reserved2 : Byte;
-        NumBlocks : integer ;
-        Flags : integer;
-     end;
-
-type NascarDAT_Entry = packed record
-       Unknow: word;
-       Size: integer;
-       Size2: integer;
-       Filename: array[0..12] of char;
-       Offset: integer;
-     end;
-
-type APUKHeader = packed record
-       ID: array[0..3] of char;
-       Dirnum: integer;
-       Unknown: array[1..24] of byte;
-     end;
-     APUKEntry = packed record
-       Size: integer;
-       Offset: integer;
-       Unknown1: integer;
-       Unknown2: integer;
-       Filename: array[0..15] of char;
-     end;
-
-type ARCH00_Header = packed record
-       ID: array[0..3] of char;     // LTAR
-       Unknown1: Integer;           // Always 3 ? Version ?
-       NameSize: Integer;
-       NumDirectories: Integer;
-       NumEntries: Integer;
-       Unknown3: Integer;
-       Unknown4: Integer;
-       Unknown5: Integer;
-       Unknown6: Integer;
-       Unknown7: Integer;
-       Unknown8: Integer;
-       Unknown9: Integer;
-     end;
-     ARCH00_Entry = packed record
-       NamePos: Integer;
-       Offset: Int64;
-       Size: Int64;
-       Size2: Int64;       // UncSize ?
-       Dummy: Integer;
-     end;
-     ARCH00_Directory = packed record
-       NamePos: Integer;
-       Unknown1: Integer;
-       Unknown2: Integer;
-       NumEntries: Integer;
-     end;
-
-type ARTHeader = packed record
-       ARTVersion: integer;
-       Numtiles: integer;
-       LocalTileStart: integer;
-       LocalTileEnd: integer;
-     end;
-
-type AWFEntry = packed record
-       Offset: integer;
-       Filename: array[0..259] of char;
-     end;
-
-type BAGHeader = packed record
-        ID: array[0..3] of char;
-        Unknown1: integer;
-        DirNum: integer;
-        EntrySize: integer;
-     end;
-     BAGEntry = packed record
-        FileName: array[0..31] of char;
-        Offset: integer;
-        Size: integer;
-        Freq: integer;
-        MType: integer;
-        Unknown: array[1..4] of integer;
-     end;
-     BAGEntry16 = packed record
-        FileName: array[0..15] of char;
-        Offset: integer;
-        Size: integer;
-        Freq: integer;
-        MType: integer;
-        Unknown: integer;
-     end;
-
-type BARHeader = packed record
-       ID: array[0..7] of char;
-       Unknown: integer;  // Checksum/CRC ?
-       NumEntries: integer;
-       DirSize: integer;
-       DirOffset: integer;
-       Unknown2: integer; // Always 8 .. flags ?
-     end;
-     BAREntry = packed record
-       Offset: integer;
-       Size: integer;
-       Size2: integer;
-       Unknow1: integer;
-       Unknow2: integer;
-     end;
-     // get0 filename
-
-type AOE3BAR_Header = packed record
-       ID: array[0..3] of char;       // "ESPN"
-       Unknown1: integer;             // Always 2 (version?)
-       Unknown2: integer;             // Always 11 22 33 44 ?
-       Unknown3: array[0..65] of integer;
-       Unknown4: integer;
-       NumEntries: integer;
-       DirOffset: integer;
-       Unknown6: integer;
-     end;
-     // BasedirName: get32w
-     // NumEntries: integer;
-     AOE3BAR_Entry = packed record
-       Offset: integer;
-       Size: integer;
-       Size2: integer;                // Uncompressed size?
-       Unknown1: integer;
-       Unknown2: integer;
-       Unknown3: integer;
-       Unknown4: integer;
-     end;
-     // Filename: get32w
-
-type BIGHeader = packed record
-       ID: array[0..3] of char;  // BIGF
-       TotFileSize: integer;
-       NumFiles: array[0..3] of byte;   // Inverse Integer
-       DataOffset: array[0..3] of byte; // Inverse Integer
-     end;
-     BIGEntry = packed record
-       Offset: array[0..3] of byte; // Inverse Integer
-       Size: array[0..3] of byte;   // Inverse Integer
-     end;
-     // Get0 filename
-
-     // Fable BIGB files
-type FBIG_Header = packed record
-       ID: array[0..3] of char;              // "BIGB"
-       Unknown: integer;                     // Always 0x64 ?
-       FooterOffset: Integer;
-     end;
-     // EntryName: Get0
-     FBIG_FooterEntry = packed record
-       Unknown1: Integer;
-       NumEntries: Integer;
-       Offset: Integer;
-       Unknown2: Integer;
-       Unknown3: Integer;
-     end;
-     // NumUnknownEntries: integer;
-     FBIG_EntryUnknown = packed record
-       Unknown1: integer;
-       Unknown2: integer;
-     end;
-     FBIG_Entry = packed record
-       Unknown1: integer;                  // 0x2A ?
-       Unknown2: integer;                  // Counter
-       Unknown3: integer;
-       Size: integer;
-       Offset: integer;
-       Unknown4: integer;                  // Probably a checksum of some sort
-     end;
-     // EntryName: Get32
-     // Unknown5: integer;
-     // Unknown6: integer;
-     // DescriptionName: Get32
-     
-type BIN_Entry = packed record
-       Filename: array[0..15] of char;
-       Offset: cardinal;
-       Size: cardinal;
-     end;
-
-type BKF_Entry = packed record
-       Filename: array[0..35] of char;
-       Offset: integer;
-       Size: integer;
-     end;
-
-type DIRIMG_Entry = packed record
-       StartBlock: Longword;
-       BlockCount: Longword;
-       Name: array[0..23] of Char;
-     end;
-
-type LEMBOXHeader = packed record
-       ID: array[0..5] of char;
-       Dirnum: integer;
-       DirSize: integer;
-     end;
-// DirNum * Get32
-// n as Long (n = DirNum)
-// DirNum * Entry
-     LEMBOXEntry = record
-       Offset: integer;
-     end;
-
-type FPKHeader = packed record
-       Unknown1: Integer;
-       ID: array[0..3] of char;
-       Unknown2: Byte;
-       NumEntries: integer;
-     end;
-     FPKEntry = packed record
-       FileTime: Integer;
-       Unknown: Integer;
-       Size: Integer;
-       Offset: Integer;
-     end;
-
-type GDATHeader = packed record
-       ID: array[0..7] of char;
-       FileSize: Integer;
-       Unknown1: integer;
-       NumEntries: integer;
-     end;
-     GDATEntry = packed record
-       Unknown1: integer;
-       Unknown2: integer;
-       WAVCHUNKPos: integer;
-     end;
-     GDATWAVEEntry = packed record
-       ID: array[0..7] of char;
-       ChunkSize: Integer;
-       Unknown1: integer;
-       Unknown2: integer;
-       Unknown3: integer;
-       Unknown4: integer;
-       Unknown5: integer;
-       Unknown6: integer;
-       Unknown7: integer;
-       Unknown8: integer;
-       CHUNKType: array[0..3] of char;
-     end;
-
-type HPIHeader = packed record
-       HPIMarker: array[0..3] of char;
-       SaveMarker: array[0..3] of char;
-       DirectorySize: integer;
-       HeaderKey: integer;
-       Start: integer;
-     end;
-     HPIEntry = packed record
-       NameOffset : integer;
-       DirDataOffset : integer;
-       Flag : byte;
-     end;
-     HPIFileData = packed record
-       DataOffset : integer;
-       FileSize : integer;
-       Flag : byte;
-     end;
-     HPIChunk = packed record
-       Marker : array[0..3] of char;
-       Unknown1 : byte;
-       CompMethod : byte;
-       Encrypt : byte;
-       CompressedSize : integer;
-       DecompressedSize : integer;
-       Checksum : integer;
-     end;
-
-type PACKHeader = packed record
-        ID: array[1..4] of Char;
-        DirOffset: longword ;
-        DirSize : longword;
-     end;
-     PACKEntry = packed record
-        FileName: array[1..56] of Char;
-        Offset: longword;
-        Size: longword;
-     end;
-     PACKEntryX = packed record
-        Unknown1: longword;
-        Unknown2: longword;
-     end;
-     SINHeader = packed record
-        ID: array[1..4] of char;
-        DirOffset: longword;
-        DirNum: word;
-     end;
-     SINEntry = packed record
-        Filename: array[1..120] of char;
-        Offset: longword;
-        Size: longword;
-     end;
-
-type PAKEntry = packed record
-        Offset: longword;
-        FileName: array[1..8] of Char;
-     end;
-
-type PKPAKHeader = packed record
-        ID: byte;
-        Offset: longword;
-     end;
-
-type TMPAK_Header = packed record
-       ID: integer;            // 0x05 00 00 00
-       DataOffset: Integer;
-       Unknown1: integer;
-       NumEntries: Integer;
-       DirTableNum: Integer;
-       DirNum: Integer;
-       DirSize: Integer;
-       Unknown5: Integer;     // Always Null ?
-       Unknown6: Integer;     // Always Null ?
-       Unknown7: Integer;     // Always Null ?
-       Unknown8: Integer;     // Always 0x34 ?
-       DirTableOffset: Integer;
-       DirOffset: Integer;
-     end;
-     TMPAK_Entry = packed record
-       Unknown1: Integer;
-       Unknown2: Integer;
-       Offset: integer;
-       CmpSize: Integer;
-       UncSize: Integer;
-       DirPos: Integer;
-       EntryName: array[0..31] of char;   // Null terminated
-     end;
-     TMPAK_CompHeader = packed record
-       TotSize: Integer;   // Size of compressed data + header
-       UncSize: Integer;   // Size of uncompressed data
-       CmpSize: integer;   // Size of compressed data alone
-       NotCompressed: Integer;   // 1 = True, 0 = False
-     end;
-
-type MFHeader = packed record
-        VersionNum: integer;
-        ID: array[0..23] of char;  // 'MASSIVE PAKFILE V 4.0'
-        Unknown: array[0..43] of byte;
-        Unknown2: integer;
-        NbFatEntry: integer;
-        Unknown3: integer;
-        DataOffset: integer;
-        FileSize: integer;
-     end;
-     MFEntry = packed record
-        Size: integer;
-        RelOffset: integer;
-        NameOffset: integer;
-        DirNameOffset: integer;
-     end;
-
-// Get0
-type PBO_Entry = packed record
-       EmptyVal: array[0..11] of byte;
-       Unknown: integer;
-       Size: integer;
-     end;
-
-type PCKEntry = packed record
-       Name: array[0..35] of char;
-       Flag: integer;              // $00 = File
-                                   // $01 = Directory
-                                   // $FF = End of directory
-       Size: longword;             // $FFFFFFFF = Not a file
-       Offset: longword;           // $FFFFFFFF = End of directory
-     end;
-
-type BUNHeader = packed record
-        ID: array[1..4] of Char;
-        DirOffset: longword;
-        DirSize: longword;
-        CreationDate: integer;
-     end;
-     BUNEntry = packed record
-        FileName: Array[1..8] of Char;
-        Ext: Array[1..4] of char;
-     end;
-
-type BW2STUFFEntry = packed record
-       Filename: array[0..255] of char;  // Null terminated
-       Offset: integer;
-       Size: integer;
-       CDateTime: integer;
-     end;
-
-type CBFHeader = packed record
-        ID: array[1..8] of Char;  // BIGF 0x00 ZBL
-        FileSize: int64;
-        DirNum: integer;
-        DirOffset: int64;
-        DirSize: int64;
-        Unknown: array[1..7] of integer;
-     end;
-     CBFEntry = packed record
-        Offset: int64;
-        Unknown1: integer;
-        FileTime: int64;   // CRC/Date??
-        Size: int64;
-        CompSize: integer;
-        CompType: integer;
-        Unknown2: integer; // 0x24
-     end;
-     // Get0 FileName
-
-type CPRID = packed record
-        ID: array[0..31] of char;  // "ASCARON_ARCHIVE V0.9" Right padded with 0x00
-     end;
-     CPRHeader = packed record
-        SubID: integer;
-        Size: integer;
-        NumE: integer;
-        NextRelOffset: integer;
-     end;
-     CPREntry = packed record
-        offset: integer;
-        size: integer;
-        Unknown: integer;
-     end;
-     // Get0 FileName
-
-type GRPHeader = packed record
-        ID: Array[1..12] of Char;
-        DirNum: Integer;
-     end;
-     GRPEntry = packed record
-        FileName: Array[1..12] of Char;
-        FileSize: integer;
-     end;
-
-const GRPID: String = 'KenSilverman';
-
-type PFFHeader = packed record
-        DataOffset: Integer;     // Should be &H14
-        ID: Array[1..4] of Char; // "PFF3"
-        DirNum: Integer;         // Number of entries
-        DirEntrySize: Integer;   // Known values:
-                                 // 32 & 36
-        DirOffset: Integer;      // Offset to index
-     end;
-     PFFEntry = packed record
-        Unknown1: Integer;       // Always 0 ?
-        Offset: Integer;         //
-        Size: Integer;
-        Unknown2: Integer;
-        FileName: Array[1..16] of Char;
-     end;
-
-type PKR_Header = packed record
-       ID: array[0..3] of char;
-       Version: integer;
-       DirNum: integer;
-       FilNum: integer;
-     end;
-     PKR_Dir = packed record
-       Filename: array[0..31] of char;
-       Unknown: integer;
-       NumFiles: integer;
-     end;
-     PKR_Entry = packed record
-       Filename: array[0..31] of char;
-       Unknown: integer;
-       Offset: integer;
-       Size: integer;
-       Size2: integer;
-     end;
-
-type REZHeader = packed record
-        ID: array[0..126] of Char;
-        Version: Integer;
-        DirOffset: Integer;
-        DirSize: Integer;
-        Empty1: Integer;
-        IdxOffset: Integer;
-        DateTime: Integer;
-        Empty2: Integer;
-        LongestFoldernameLength: Integer;
-        LongestFilenameLength: Integer;
-     end;
-     REZEntry = packed record
-       EntryType: Integer;
-       Offset: Integer;
-       Size: Integer;
-       DateTime: Integer;
-     end;
-
-type DRSHeader = packed record
-       ID: array[0..35] of Char;
-       EndOfFile: Integer;
-       Version: array[0..3] of char;
-       Unknown1: array[0..11] of char;
-       Unknown2: Integer;
-       DataOffset: Integer;
-       Unknown3: Integer;
-       DirOffset: Integer;
-       DirNum: integer;
-     end;
-     DRSEntry = packed record
-       Unknown: integer;
-       Offset: integer;
-       Size: integer;
-     end;
-
-type DTA_CNT_Header = packed record
-       ID: array[0..7] of char;
-       DTASize: integer;
-       Unknown1: integer;
-       Unknown2: integer;
-       Dirnum: integer;
-     end;
-     DTA_CNT_Entry = packed record
-       Offset: integer;
-       Size: integer;
-     end;
-
-type RFFLHeader = packed record
-       ID: array[0..3] of Char;
-       Version: integer;
-       Dirnum: integer;
-       DirSize: integer;
-       DataSize: integer;
-     end;
-     RFFLEntry = packed record
-       Offset: integer;
-       Size: integer;
-     end;
-
-type DGOBHeader = packed record
-       ID: array[0..3] of char;
-       DirOffset: integer;
-     end;
-     DGOBIndex = packed record
-       Offset: integer;
-       Size: integer;
-       Name: array[0..12] of char;
-     end;
-
-type WADIR_Header = packed record
-       ID: array[0..3] of char;
-       FileSize: integer;
-       DirOffset: integer;
-     end;
-     WADIR_Entry = packed record
-       Filename: array[0..29] of char;
-       Offset: integer;
-       Size: integer;
-     end;
-
-type LEGODAT_Header = packed record
-       DirOffset: Integer;
-       DirSize: Integer;
-     end;
-     LEGODAT_Entry = packed record
-       Offset: Integer;
-       Size: Integer;
-       Size2: Integer;
-       Unknown: Integer;
-     end;
-     LEGODAT_Directory = packed record
-       Info1: Word;
-       Info2: Word;
-       NamePos: Integer;
-     end;
-
-type DNIHeader = packed record
-       ID: array[0..3] of char;
-       Version: integer; // &H100
-       DIROffset: integer; // &H1C
-       FTOffset: integer;
-       NLOffset: integer;
-       DataOffset: integer;
-       FTOffsetA: integer;
-     end;
-     DNIDir = packed record
-       Offset: integer;
-       NumObj: integer;
-     end;
-     DNIFile = packed record
-       OffsetName: integer;
-       OffsetNameNext: integer;
-       Length: integer;
-       Offset: integer;
-       Empty: integer;
-     end;
-
-type H3SND_Index = packed record
-       Filename: array[0..39] of char;
-       Offset: integer;
-       Size: integer;
-     end;
-
-type H4R_Header = packed record
-       ID: array[0..3] of char;
-       DirOffset: integer;
-     end;
-     H4R_Index = packed record
-       Offset: integer;
-       Size: integer;
-       DSize: integer;
-       Unk: integer;  // Always 9C 73 86 3C
-     end;
-     // get16 filenameID
-     // get16 source directory
-     // 2 bytes 00 00
-     // Integer (Storage/Compression?)
-
-type HOGEntry = packed record
-       Filename: array[0..12] of char;
-       FileSize: integer;
-     end;
-     HOG2Header = packed record
-       NumFiles: integer;
-       Offset: integer;
-       FillData: array[0..55] of byte;
-     end;
-     HOG2Entry = packed record
-       Filename: array[0..35] of char;
-       Unknown: integer;
-       FileSize: integer;
-       Timestamp: integer;
-     end;
-
-type DWFBHeader = packed record
-       ID: array[0..3] of char;
-       Version: integer;
-       Filler: array[0..63] of byte;
-       Dirnum: integer;
-       NameOffset: integer;
-       NameSize: integer;
-       Unknown: integer;
-     end;
-     DWFBEntry = packed record
-       Unknown: integer;
-       NameOffset: integer;
-       NameSize: integer;
-       Offset: integer;
-       Size: integer;        // Compressed size in bytes
-       CompMethod: integer;  // Compression method: 0 = None
-                             //                     4 = Unknown compression method
-       UncompSize: integer;  // Decompressed size in bytes
-       Filler: array[0..11] of byte;
-     end;
-
-type SDTIndex = packed record
-       ISize: integer;
-       Size: integer;
-       Filename: array[0..15] of char;
-       Unknow1: integer;
-       Unknow2: integer;
-       Unknow3: integer;
-       Unknow4: integer;
-     end;
-
-type VOL_Header = packed record
-       ID: array[0..3] of char;
-       Version: integer;
-       Unknow: word;
-     end;
-//get16 DirList$
-     VOL_Header2 = packed record
-       DirNum: word;
-       ENTSize: Integer;
-     end;
-     VOL_Entry = packed record
-       Filename: array[0..11] of char;
-       Unknow: byte;
-       DirIndex: byte;
-       Offset: integer;
-     end;
-
-type VPHeader = packed record
-       Signature: array[0..3] of char;
-       Version: integer;
-       DirOffset: integer;
-       DirNum: integer;
-     end;
-     VPEntry = packed record
-       Offset: integer;
-       Size: integer;
-       Filename: array[0..31] of char;
-       Timestamp: integer;
-     end;
-
-type I3DGOBHeader = packed record
-       ID: array[0..3] of char;
-       Version: integer;
-       Unknown2: integer;
-       Dirnum: integer;
-     end;
-     I3DGOBIndex = packed record
-       Offset: integer;
-       Size: integer;
-       Name: array[0..127] of char;
-     end;
-
-type JFLHeader = packed record
-       ID: array[0..3] of char;   // AP32
-       Version: cardinal;         // 18
-     end;
-     JFLINDHeader = packed record
-       ID: cardinal;              // 7
-       NumEntries: cardinal;
-     end;
-
-type JAM2Header = packed record
-       ID: array[0..3] of char;   // JAM2
-       CreationDateTime: integer;
-       OffsetFirstEntry: cardinal;
-       UnknownString: array[0..15] of char;  // always "none"+chr(0)+.. ?
-       NumFiles: word;
-       NumExts: word;
-     end;
-     JAM2DirIndex = packed record
-       FileIdx: word;
-       ExtIdx: word;
-       Offset: cardinal;
-     end;
-     JAM2Entry = packed record
-       Size: cardinal;
-       SizeAlt: cardinal;
-       Unknown: array[1..6] of cardinal;  // FF    2D    42    53    8B    A2
-     end;
-
-type WAD2Header = packed record
-       ID: array[0..3] of char;
-       DirNum: integer;
-       DirOffset: integer;
-     end;
-     WAD2Entry = packed record
-       Offset: integer;
-       DSize: integer;
-       Size: integer;
-       FType: byte;
-       Compression: byte;
-       Dummy: word;
-       FileName: array[0..15] of char;
-     end;
-
-type XCR_Header = packed record
-       ID: array[0..12] of char;
-       Empty: array[1..7] of Byte;
-       DirNum: integer;
-       FilSize: integer;
-     end;
-     XCR_Entry = packed record
-       Filename: array[0..255] of char;
-       FilenameDir: array[0..255] of char;
-       Offset: integer;
-       Size: integer;
-       Unknown: array[1..12] of Byte;
-     end;
-
-type ZFSHeader = packed record
-       ID: array[0..3] of char;
-       Version: integer;
-       Unknown1: integer;
-       DirSize: integer;
-       Dirnum: integer;
-       Unknown3: integer;
-       Unknown4: integer;
-       NextOffset: integer;
-     end;
-     ZFSEntry = packed record
-       Filename: array[0..15] of char;
-       Offset: integer;
-       Unknown1: integer;
-       Size: integer;
-       Unknown2: integer;
-       Unknown3: integer;
-     end;
-
-type PODHeader = packed record
-       Dirnum: integer;
-       ID: array[0..79] of char;
-     end;
-     PODEntry = packed record
-       Filename: array[0..31] of char;
-       Size: integer;
-       Offset: integer;
-     end;
-
-type POD2Header = packed record
-       ID: array[0..3] of char;
-       Unknown1: integer;
-       Description: array[0..79] of char;
-       NumEntries: integer;
-       Unknown3: integer;
-     end;
-     POD2Entry = packed record
-       NameOffset: integer;
-       Size: integer;
-       Offset: integer;
-       Unknown1: integer;
-       Unknown2: integer;
-     end;
-
-type POD3Header = packed record
-       ID: array[0..3] of char;
-       Unknown1: integer;
-       Description: array[0..79] of char;
-       NumEntries: integer;
-       Unknown3: integer;
-       Unknown4: integer;
-       Unknown5: integer;
-       Empty: array[1..160] of byte;
-       DirOffset: integer;
-       Unknown6: integer;
-       NamesSize: integer;
-       Unknown8: integer;
-       Unknown9: integer;
-       UnknownA: integer;
-     end;
-     POD3Entry = packed record
-       NameOffset: integer;
-       Size: integer;
-       Offset: integer;
-       Unknown1: integer;
-       Unknown2: integer;
-     end;
-
-type PPRESIndex = packed record
-       FileNameLength: byte;
-       FileName: array[0..11] of char;
-       Offset: longword;
-       Length: longword;
-       FileType: byte; // 1 = Text (sort of..)
-                       // 2 = Binary
-     end;
-     PPXRSIndex = packed record
-       FileNameLength: byte;
-       FileName: array[0..11] of char;
-       Offset: longword;
-       Length: longword;
-       Unknown: array[1..11] of byte; // DOS Date & Time + ???
-     end;
-
-type PRMHeader = packed record
-       ID: cardinal;   // ID - Always $71E ?
-       DirOffset: cardinal;
-       DirOffset2: cardinal;
-       NumEntries: cardinal;
-     end;
-
-type SLFHeader = packed record
-       FileName: array[0..255] of char;
-       Directory: array[0..255] of char;
-       NumEntries: integer;
-       NumEntries2: integer;
-       ID: array[0..11] of char;
-     end;
-     SLFEntry = packed record
-       Filename: array[0..255] of char;
-       Offset: integer;
-       Size: integer;
-       Unknown: array[1..16] of byte;
-     end;
-
-type SSAHeader = packed record
-       ID: array[0..3] of char;  // rass
-       Version: integer;         // 1 ?
-       Unknown: integer;
-       DirSize: integer;         // Without the header
-     end;
-     SSAEntry = packed record
-       // get16 filename
-       Offset: integer;
-       EndOffset: integer;
-       Size: integer;
-     end;
-     SSACompress = packed record
-       ID: array[0..3] of char;  // PK01
-       DecompSize: integer;
-       Unknown1: integer;
-       Unknown2: word;
-     end;
-
-type Version = packed record
-       Major: Byte;
-       Minor: Byte;
-     end;
-     HRF_Header = packed record
-       ID: array[0..4] of char; // 'HRFi'+chr(26)
-       Version: byte;           // 0 = Version 0 (No name change support)
-                                // 1 = Version 1 (Default)
-                                // 2 = Version 2 (Security + Infos)
-       Filename: array[0..97] of char;
-       FileSize: integer;
-       HRipVer: Version;        // v0.0 = Version 32 (v2.1 Beta)
-                                // v3.0 = Version 38 (v3.0 Beta)
-                                // v3.1 = Version 39 (v3.1 Beta)
-                                // v3.5 = Version 47 (v3.5 Beta)
-                                // v4.0 = Version 71 (v4.0)
-                                // v4.1 = Version 72 (v4.1)
-                                // v4.2 = Version 74 (v4.2)
-                                // --- Rewritted from scratch ---
-                                // v5.0 = Version 5.0 Alpha
-       Dirnum: integer;
-     end;
-     HRF_Infos_v0 = packed record
-       InfoVer: byte;           // Version of Information chunk
-                                // 0 = 2 bytes Information chunk
-                                //     (only SecuritySize is present)
-                                // 1 = 258 bytes Information chunk
-       SecuritySize: byte;      // Max Size of Security Data in Directory v2
-                                // Allowed values:
-                                // 1,2,4,8 and 16
-     end;
-     HRF_Infos_v1 = packed record
-       Author: array[0..63] of char;
-       url: array[0..127] of char;
-       Title: array[0..63] of char;
-     end;
-     HRF_Index_v0 = packed record
-       FileType: byte;
-       Offset: integer;
-       Size: integer;
-     end;
-     HRF_Index_v1 = packed record
-       Filename: array[0..31] of char;
-       FileType: byte;
-       Offset: integer;
-       Size: integer;
-     end;
-     HRF_Index_v2 = packed record
-       Filename: array[0..63] of char;
-       FileType: byte;
-       Offset: integer;
-       Size: integer;
-       Security: array[0..15] of byte;
-     end;
-
-Type EIRES_Header = packed record
-       ID: integer;      // &H19CE23C
-       DirNum: integer;
-       DirOffset: integer;
-       NameSt: integer;
-     end;
-     EIRES_Entry = packed record
-       Unknown1: integer;
-       Size: integer;
-       Offset: integer;
-       Unknown2: integer;
-       NameSize: word;
-       NameOffset: integer;
-     end;
-
-type ROM2RES_Header = packed record
-       ID: array[0..3] of char;       // &H31415926
-       RootRelativeOffset: integer;
-       RootSize: integer;
-       Unknown3: integer;
-       DirOffset: integer;
-       DirSize: integer;
-     end;
-     ROM2RES_Index = packed record
-       Unknown1: integer;
-       Offset: integer;
-       Size: integer;
-       Flags: integer;       // DIR or File ?
-       FileName: array[0..15] of char;
-     end;
-
-type FARHeader = packed record
-       ID: array[0..3] of char;
-       Author: array[0..3] of char;
-       Version: integer;
-       Offset: integer;
-     end;
-     FAREntry = packed record
-       FileSize: integer;
-       ExtSize: integer;
-       Offset: integer;
-     end;
-
-type SAD_Header = packed record
-       ID: array[0..31] of char;
-       Size: integer;
-     end;
-     SAD_FileSegmentBankInfo = packed record
-       Unknown: array[0..2] of integer;
-       Comment: array[0..519] of char;
-     end;
-     SAD_Entry = packed record
-       Filename: array[0..259] of char;
-       NumID: integer;
-       NumID2: integer;
-       Size: integer;
-       Offset: integer;
-       Unknown: array[1..364] of byte;
-     end;
-
-type LUG_Chunk = packed record
-       ID: array[0..31] of char;
-       Size: integer;
-     end;
-     LUG_LHAudioBankMetaData = packed record
-       Unknown0: array[0..27] of byte;
-       NumEntries: integer;
-     end;
-     // SampleID: Integer;
-     // SampleName: get32
-     LUG_LHAudioBankMetaData_Entry = packed record
-       Size: Integer;
-       Offset: Integer;
-       Unknown1: integer;         // 01 00 01 00
-       SampleRate: Integer;
-       Unknown2: Integer;         // 00 00 00 00 or FF FF FF FF
-       Unknown3: Integer;
-     end;
-     LUG_LHFileSegmentBankInfo = packed record
-       TitleDescription: array[0..519] of char;
-     end;
-     LUG_LHAudioBankSampleTable = packed record
-       NumEntries1: word;
-       NumEntries2: word;         // Always identical to NumEntries1 ?
-     end;
-     LUG_LHAudioBankSampleTable_Entry = packed record
-       SampleName: array[0..255] of char;
-       Unknown1: integer;
-       Unknown2a: integer;
-       Unknown2b: integer;
-       Size: integer;
-       RelOffset: integer;        // Offset in WaveData of LHAudioWaveData bloc
-       Unknown3: integer;
-       Unknown4: integer;
-       Unknown5: integer;
-       Unknown6: integer;
-       Unknown7: integer;
-       SampleRate: integer;
-       Unknown8: integer;
-       Unknown9: integer;
-       Unknown10: integer;
-       Unknown11: integer;
-       Unknown12: integer;
-       SampleDescription: array[0..255] of char;
-       Unknown13: array[0..75] of byte;
-     end;
-
-
-
-
-type SAK_Header = packed record
-       ID: array[0..3] of char;
-       Version: integer;
-       NumEntries: Word;
-     end;
-
-type RFA_Entry = packed record
-       size: integer;
-       ucsize: integer;
-       offset: integer;
-       unknown: array[0..2] of integer;
-     end;
-     RFA_DataHeader = packed record
-       csize: longword;
-       ucsize: longword;
-       doffset: longword;
-     end;
-
-type RFH_Entry = packed record
-       NameLength: integer;
-       DateAdded: integer;
-       IsPacked: integer;
-       PackedSize: integer;
-       OriginalSize: integer;
-       Offset: integer;
-     end;
-
-type TEX_Header = packed record
-       IndexOffset: cardinal;
-       UnknownOffset: cardinal;
-       ID3: cardinal;   // 3
-       ID4: cardinal;   // 4
-     end;
-     TEX_Entry = packed record
-       Size: cardinal;
-       Type1: array[0..3] of char;
-       Type2: array[0..3] of char;
-       Unknown1: Cardinal;
-       Unknown2: word;
-       Unknown3: word;
-       Unknown: array[1..4] of Cardinal;
-     end;
-
-type SYN_Header = packed record
-       ID: array[0..3] of char;
-       DirNum: integer;
-       Reserved: array[1..8] of byte;
-     end;
-     SYN_Entry = packed record
-       Filename: array[0..23] of char;
-       Offset: integer;
-       Size: integer;
-     end;
-
 const
-  DRIVER_VERSION = 20514;
+  DRIVER_VERSION = 20515;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.37 $';
-  CVS_DATE = '$Date: 2008-09-06 05:33:25 $';
+  CVS_REVISION = '$Revision: 1.38 $';
+  CVS_DATE = '$Date: 2008-10-01 04:43:29 $';
   BUFFER_SIZE = 8192;
-
-  BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
-  REZID : String = #13+#10+'RezMgr Version 1 Copyright (C) 1995 MONOLITH INC.           '+#13+#10+'LithTech Resource File                                      '+#13+#10+#26;
-  REZIDOld : String = #13+#10+'RezMgr Version 1 Copyright (C) 1995 MONOLITH INC.           '+#13+#10+'                                                            '+#13+#10+#26;
-  DRSID : String = 'Copyright (c) 1997 Ensemble Studios.';
-  DRSVer : String = '1.00';
-  HOGID : String = 'DHF';
-  HOG2ID : String = 'HOG2';
-  NRMID : String = 'PakkaByRCL^DPL2000';
-  FARID : String = 'FAR!';
-  SLFID : array[0..11] of char = #255+#255+#0+#2+#1+#0+#0+#0+#0+#0+#0+#0;
-  FORGEID : array[0..9] of char = 'scimitar'+#0;
-
-  PKDECKEY : array[0..4] of integer = (-2, -1, 0, 1 ,2);
 
 var DataBloc: FSE;
     OffsetList: TInts;
@@ -1563,21 +411,6 @@ begin
 
 end;
 
-// Used to keep only all caracters up to the first chr(0) encountered
-// Ex: 'this is a pchar in string'+chr(0) will return same without chr(0)
-function strip0(str : string): string;
-var pos0: integer;
-begin
-
-  pos0 := pos(chr(0),str);
-
-  if pos0 > 0 then
-    strip0 := copy(str, 1, pos0 - 1)
-  else
-    strip0 := str;
-
-end;
-
 // Used to keep only all caracters up to the first chr(10) encountered
 // Ex: 'this is a pchar in string'+chr(10) will return same without chr(10)
 function strip0A(str : string): string;
@@ -1592,230 +425,6 @@ begin
     result := str;
 
 end;
-
-function Get0_Stream(src: TMemoryStream): string;
-var tchar: Char;
-    res: string;
-begin
-
-  repeat
-    src.Read(tchar,1);
-    res := res + tchar;
-  until tchar = chr(0);
-
-  Get0_Stream := res;
-
-end;
-
-function Get0(src: integer): string;
-var tchar: Char;
-    res: string;
-begin
-
-  repeat
-    FileRead(src,tchar,1);
-    res := res + tchar;
-  until tchar = chr(0);
-
-  Get0 := res;
-
-end;
-
-function Get0A(src: integer): string;
-var tchar: Char;
-    res: string;
-begin
-
-  repeat
-    FileRead(src,tchar,1);
-    res := res + tchar;
-  until tchar = chr(10);
-
-  result := res;
-
-end;
-
-function Get8(src: integer): string;
-var tchar: Pchar;
-    tbyte: Byte;
-    res: string;
-begin
-
-  FileRead(src,tbyte,1);
-  GetMem(tchar,tbyte);
-  FillChar(tchar^,tbyte,0);
-  FileRead(src,tchar^,tbyte);
-
-  res := tchar;
-  result := Copy(res,1,tbyte);
-
-  FreeMem(tchar);
-
-end;
-
-function Get16(src: integer): string;
-var tchar: Pchar;
-    tword: Word;
-    res: string;
-begin
-
-  FileRead(src,tword,2);
-  GetMem(tchar,tword);
-  FillChar(tchar^,tword,0);
-  FileRead(src,tchar^,tword);
-
-  res := tchar;
-  Get16 := Copy(res,1,tword);
-
-  FreeMem(tchar);
-
-end;
-
-function Get32_Stream(src: TStream): string;
-var tchar: Pchar;
-    tint: Integer;
-    res: string;
-begin
-
-  src.Read(tint,4);
-  if tint > 255 then
-  begin
-    raise Exception.Create(inttostr(tint)+' octets! t''es fou ?!'+#10+inttostr(src.Seek(0,1))+#10+inttohex(src.Seek(0,1),8));
-  end;
-  GetMem(tchar,tint);
-  FillChar(tchar^,tint,0);
-  src.Read(tchar^,tint);
-
-  res := tchar;
-  Result := Copy(res,1,tint);
-
-  FreeMem(tchar);
-
-end;
-
-function Get32(src: integer): string;
-var tchar: Pchar;
-    tint: Integer;
-    res: string;
-begin
-
-  FileRead(src,tint,4);
-  if tint > 255 then
-  begin
-    raise Exception.Create(inttostr(tint)+' octets! t''es fou ?!'+#10+inttostr(fileseek(FHandle,0,1))+#10+inttohex(fileseek(FHandle,0,1),8));
-  end;
-  GetMem(tchar,tint);
-  FillChar(tchar^,tint,0);
-  FileRead(src,tchar^,tint);
-
-  res := tchar;
-  Get32 := Copy(res,1,tint);
-
-  FreeMem(tchar);
-
-end;
-
-function Get32_FPK(src: integer): string;
-var tchar: Pchar;
-    tint, x: Integer;
-    res: string;
-begin
-
-  FileRead(src,tint,4);
-  if tint > 255 then
-  begin
-    raise Exception.Create(inttostr(tint)+' octets! t''es fou ?!'+#10+inttostr(fileseek(FHandle,0,1))+#10+inttohex(fileseek(FHandle,0,1),8));
-  end;
-  GetMem(tchar,tint);
-  FillChar(tchar^,tint,0);
-  FileRead(src,tchar^,tint);
-  for x := 0 to tint-1 do
-  begin
-    tchar[x] := chr(ord(tchar[x])-1);
-  end;
-
-  res := tchar;
-  result := Copy(res,1,tint);
-
-  FreeMem(tchar);
-
-end;
-
-function Get32v(src: integer; size: integer): string;
-var tchar: PChar;
-    res: string;
-    x: integer;
-begin
-
-  GetMem(tchar,size);
-
-  FillChar(tchar^,size,0);
-  FileRead(src,tchar^,size);
-
-  for x := 0 to size-1 do
-    res := res + tchar[x];
-
-  FreeMem(tchar);
-
-  Get32v := Copy(res,1,size);
-
-end;
-
-function Get32w(src: integer): string;
-var wString: WideString;
-    tint: Integer;
-begin
-
-  FileRead(src,tint,4);
-  SetLength(wString,tint);
-  FileRead(src,Pointer(wString)^,tint*2);
-
-  result := UTF8Encode(wString);
-
-end;
-
-function posrev(substr: string; str: string): integer;
-var res,x : integer;
-begin
-
-  res := 0;
-  x := (length(str) - length(substr) + 1);
-
-  while (x >= 1) and (res = 0) do
-  begin
-
-    if copy(str,x, length(substr)) = substr then
-      res := x;
-
-    x := x - 1;
-
-  end;
-
-  posrev := res;
-
-end;
-
-function GetSwapInt(src: integer): Integer;
-var tint: integer;
-begin
-  FileRead(src,tint,4);
-  result := swap(tint shr 16) or
-           (longint(swap(tint and $ffff)) shl 16);
-end;
-
-{  FileRead(src,tbyt,4);
-  cc := 1;
-  res := 0;
-  for x := 3 downto 0 do
-  begin
-    res := res + cc * tbyt[x];
-//    ShowMessage(IntToStr(tbyt[x])+#10+IntToStr(res));
-    cc := cc * 256;
-  end;
-
-  GetSwapInt := res;
-end;
- }
 
 procedure FSE_updateOffsets(PlusOffset: integer);
 var browseFSE: FSE;
@@ -1859,140 +468,408 @@ begin
 
 end;
 
-procedure Offset_add(Offset: Integer);
-var nouvL: TInts;
-begin
+////////////////////////////////////////////////////////////////////////////////
+// ========================================================================== //
+// ==                                                                      == //
+// ==  The following functions are the heart of this driver. Each one      == //
+// ==  read/parse a format.                                                == //
+// ==                                                                      == //
+// ==  Some of them are commented (the newer ones), others are old and     == //
+// ==  uncommented (sorry).                                                == //
+// ==                                                                      == //
+// ========================================================================== //
+////////////////////////////////////////////////////////////////////////////////
 
-  new(nouvL);
-  nouvL^.Value := Offset;
-  nouvL^.suiv := OffsetList;
-  OffsetList := nouvL;
+// -------------------------------------------------------------------------- //
+// 007: NightFire .007 support ============================================== //
+// -------------------------------------------------------------------------- //
 
-end;
+type N007Header = packed record
+       Magic: Integer;   // Always 1 ?
+       Version: Integer; // 1 = Used in Nightfire Demo
+                         // 3 = Used in Nightfire Retail
+       Magic2: Integer;
+       ID: array[0..3] of char;
+       NumRootDirs: Integer;
+     end;
+     // If version = 3 then following the header is an integer giving the number of entries
+     // Get32 filename
+     N007Entry = packed record
+       Compressed: byte;
+       Size: integer;
+       CompSize: integer;
+     end;
+     // If version = 1 then follows Size bytes of data (if Compressed = 0) or CompSize (if Compressed = 1)
 
-procedure Offset_clear();
-var a: TInts;
-begin
-
-  while OffsetList <> NIL do
-  begin
-    a := OffsetList;
-    OffsetList := OffsetList^.suiv;
-    Dispose(a);
+type
+  PN007List = ^N007List;
+  N007List = record
+    Name: string;
+    Size: integer;
+    CompSize: integer;
+    Compressed: byte;
+    Offset: Integer;
   end;
 
-end;
-
-function Offset_check(Offset: Integer): Boolean;
-var a: TInts;
-    res: Boolean;
+function ReadNightFire007_Aux(cdir: string; numDirs: integer; totFSize: integer): integer;
+var ENT: N007Entry;
+    disp : string;
+    check, curNumDirs: integer;
 begin
 
-  a := OffsetList;
-  res := false;
+  Result := 0;
+  curNumDirs := numDirs;
 
-  while (a <> NIL) and not(res) do
+  if (curNumDirs = 0) then
   begin
-    res := (a^.Value = Offset);
-    a := a^.suiv;
-  end;
-
-  Offset_check := res;
-
-end;
-
-function ReadAgeOfEmpires3BAR: Integer;
-var HDR: AOE3BAR_Header;
-    ENT: AOE3BAR_Entry;
-    disp, basedir: string;
-    NumE, oldper, x: integer;
-begin
-
-  FileSeek(Fhandle,0,0);
-  FileRead(FHandle,HDR,SizeOf(HDR));
-
-  if HDR.ID <> 'ESPN' then
-  begin
-    FileClose(Fhandle);
-    FHandle := 0;
-    Result := -3;
-    ErrInfo.Format := 'AOE3BAR';
-    ErrInfo.Games := 'Age of Empires 3';
-  end
-  else
-  begin
-
-    NumE := HDR.NumEntries;
-
-    FileSeek(FHandle,HDR.DirOffset,0);
-    basedir := Get32w(FHandle);
-    FileSeek(FHandle,4,1);
-
-    OldPer := 0;
-
-    for x:= 1 to NumE do
+    Check := 1;
+    while (FileSeek(FHandle,0,1) < TotFSize) and (Check <> 0) do
     begin
-      Per := ROund(((x / NumE)*100));
-      if (Per > OldPer + 5) then
+      FileRead(FHandle,Check,4);
+      if Check = 0 then
       begin
-        SetPercent(Per);
-        OldPer := Per;
+        FileSeek(FHandle,-4,1);
+      end
+      else
+      begin
+        FileSeek(Fhandle,-4,1);
+        disp := get32(FHandle);
+        Fileread(FHandle,ENT,SizeOf(N007Entry));
+        FSE_Add(cdir+disp,FileSeek(FHandle,0,1),ENT.Size,ENT.Compressed,ENT.CompSize);
+        if ENT.Compressed = 0 then
+          FileSeek(FHandle,ENT.Size,1)
+        else
+          FileSeek(Fhandle,ENT.CompSize,1);
+        inc(Result);
       end;
-      FileRead(FHandle,ENT,SizeOf(ENT));
-      disp := get32w(FHandle);
-
-      FSE_Add(basedir+disp,ENT.Offset,ENT.Size,0,0);
     end;
-
-    Result := NumE;
-
-    DrvInfo.ID := 'BAR';
-    DrvInfo.Sch := '\';
-    DrvInfo.FileHandle := FHandle;
-    DrvInfo.ExtractInternal := False;
-
-  end;
+  end
+  else
+    while (FileSeek(FHandle,0,1) < TotFSize) and (curNumDirs > 0) do
+    begin
+      FileRead(FHandle,Check,4);
+      if Check = 0 then
+      begin
+        disp := get32(FHandle);
+        FileRead(Fhandle,Check,4);
+        inc(Result,ReadNightFire007_Aux(cdir+disp+'\',Check,totFSize));
+        dec(curNumDirs);
+      end
+      else
+      begin
+        FileSeek(Fhandle,-4,1);
+        disp := get32(FHandle);
+        Fileread(FHandle,ENT,SizeOf(N007Entry));
+        FSE_Add(cdir+disp,FileSeek(FHandle,0,1),ENT.Size,ENT.Compressed,ENT.CompSize);
+        if ENT.Compressed = 0 then
+          FileSeek(FHandle,ENT.Size,1)
+        else
+          FileSeek(Fhandle,ENT.CompSize,1);
+        inc(Result);
+      end;
+    end;
 
 end;
 
-function ReadAgeOfMythologyBAR: Integer;
-var HDR: BARHeader;
-    ENT: BAREntry;
-    disp: string;
-    NumE, x: integer;
+function ReadNightFire007_Aux_v3(EList: TList; cdir: string; numDirs: integer; numEnt: integer; totFSize: integer): integer;
+var ENT: N007Entry;
+    disp : string;
+    check, checkEnt, curNumDirs: integer;
+    ENTL: PN007List;
 begin
 
-  FileSeek(Fhandle,0,0);
-  FileRead(FHandle,HDR,SizeOf(BARHeader));
+  Result := 0;
+  curNumDirs := numDirs;
 
-  if HDR.ID <> BARID then
+  //ShowMessage('Start:'+#10+cdir+#10+inttostr(numDirs)+' '+inttostr(numEnt));
+
+  if (curNumDirs = 0) then
+  begin
+    Check := 1;
+    while (FileSeek(FHandle,0,1) < TotFSize) and (Check <> 0) do
+    begin
+      FileRead(FHandle,Check,4);
+      if Check = 0 then
+      begin
+        FileSeek(FHandle,-4,1);
+      end
+      else
+      begin
+        FileSeek(Fhandle,-4,1);
+        disp := get32(FHandle);
+        Fileread(FHandle,ENT,SizeOf(N007Entry));
+        New(ENTL);
+        ENTL^.Name := cdir+disp;
+        ENTL^.Size := ENT.Size;
+        ENTL^.CompSize := ENT.CompSize;
+        ENTL^.Compressed := ENT.Compressed;
+        EList.Add(ENTL);
+        inc(Result);
+      end;
+    end;
+  end
+  else
+    while (FileSeek(FHandle,0,1) < TotFSize) and (curNumDirs > 0) do
+    begin
+      FileRead(FHandle,Check,4);
+      if Check = 0 then
+      begin
+        disp := get32(FHandle);
+        FileRead(Fhandle,Check,4);
+        FileRead(Fhandle,CheckEnt,4);
+        ReadNightFire007_Aux_v3(EList,cdir+disp+'\',Check,CheckEnt,totFSize);
+        dec(curNumDirs);
+      end
+      else
+      begin
+        FileSeek(Fhandle,-4,1);
+        disp := get32(FHandle);
+        Fileread(FHandle,ENT,SizeOf(N007Entry));
+        New(ENTL);
+        ENTL^.Name := cdir +disp;
+        ENTL^.Size := ENT.Size;
+        ENTL^.CompSize := ENT.CompSize;
+        ENTL^.Compressed := ENT.Compressed;
+        EList.Add(ENTL);
+        inc(Result);
+      end;
+    end;
+
+end;
+
+function ReadNightFire007(src: string): Integer;
+var HDR: N007Header;
+    NumE,HDR_NumE,DataOffset,y : integer;
+    cdir : string;
+    EList: TList;
+    ENTL: PN007List;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, SizeOf(N007Header));
+
+    Result := 0;
+
+    if (HDR.Magic <> 1) or (HDR.ID <> 'ROOT') or ((HDR.Version <> 1) and (HDR.Version <> 3)) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := '007';
+      ErrInfo.Games := 'James Bond Nightfire (Demo & Retail)';
+    end
+    else if (HDR.Version = 1) then
+    begin
+      cdir := '';
+
+      NumE := ReadNightFire007_Aux(cdir,HDR.NumRootDirs, totFSize);
+
+      //ShowMessage(IntTosTr(NumE));
+
+      Result := NumE;
+
+      DrvInfo.ID := '007';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := True;
+
+    end
+    else if (HDR.Version = 3) then
+    begin
+      cdir := '';
+      FileRead(FHandle,HDR_NumE,4);
+
+      EList := TList.Create;
+      try
+        ReadNightFire007_Aux_v3(EList,cdir,HDR.NumRootDirs,HDR_NumE,totFSize);
+        DataOffset := FileSeek(FHandle,0,1)+4;
+        NumE := EList.Count;
+        for y := 0 to EList.Count-1 do
+        begin
+          ENTL := EList.Items[y];
+          FSE_Add(ENTL^.Name,DataOffset,ENTL^.Size,ENTL^.Compressed,ENTL^.CompSize);
+          if (ENTL^.Compressed = 0) then
+            inc(DataOffset,ENTL^.Size)
+          else
+            inc(DataOffset,ENTL^.CompSize);
+          Dispose(ENTL);
+        end;
+      finally
+        EList.Free;
+      end;
+
+      //ShowMessage(IntTosTr(NumE));
+
+      Result := NumE;
+
+      DrvInfo.ID := '007';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := True;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Act of War .DAT support ================================================== //
+// -------------------------------------------------------------------------- //
+
+// Support added thanks to the Xentax wiki page:
+// http://wiki.xentax.com/index.php?title=GRAF:Act_Of_War_DAT
+
+type AOWHeader = packed record
+       ID: array[0..3] of char;                // edat
+       Version: integer;                       // Always 0x12?
+       CreationDate: integer;                  // Date in a weird format: yyyymmdd (ex: 20050204 --> 0x0131F11C)
+       Unknown1Null: integer;                  // Always 0?
+       Unknown2Null: integer;                  // Always 0?
+       Unknown3_65K: integer;                  // Always 65536?
+       Unknown4Null: byte;                     // Always 0?
+       DirOffset: integer;                     // Offset to entries directory
+       DirSize: integer;                       // Size of directory entries
+     end;
+     AOWFileInfo = packed record
+       LastFileIndicator: integer;
+       Offset: integer;
+       Size: integer;
+       Unknown1Null: byte;
+     end;
+
+function ReadActOfWarDAT_aux(dirBuffer: TMemoryStream; EndOffset: Integer; curgroup: string): integer;
+var FIL: AOWFileInfo;
+    disp: string;
+    indicator, groupSize, curOffset, oldOffset: integer;
+begin
+
+  result := 0;
+
+  if (dirBuffer.Seek(0,1) < EndOffset) then
+  repeat
+
+    oldOffset := dirBuffer.Seek(0,1);
+    dirBuffer.ReadBuffer(indicator,4);
+
+    // This is a group
+    if (indicator > 0) then
+    begin
+      dirBuffer.ReadBuffer(groupSize,4);
+      disp := strip0(get0(dirBuffer));
+      if odd(length(disp)+1) then
+        dirBuffer.Seek(1,1);
+      inc(result,ReadActOfWarDAT_aux(dirBuffer,dirBuffer.seek(0,1)+groupSize,curgroup+disp));
+    end
+    // This is a file
+    else if (indicator = 0) then
+    begin
+
+      // We read the file info structure
+      dirBuffer.ReadBuffer(FIL,SizeOf(AOWFileInfo));
+
+      // Retrieve the filename
+      disp := strip0(get0(dirBuffer));
+
+      // If the length of the file is odd we skip one byte
+      if odd(length(disp)+2) then
+        dirBuffer.Seek(1,1);
+
+      // Add the file to the list
+      FSE_Add(curGroup+disp,FIL.Offset,FIL.Size,0,0);
+      inc(result);
+
+      // If the indicator is 0 then we get out of the group
+      if (FIL.LastFileIndicator = 0) then
+        break;
+    end
+    // This is a file re-using a previous filename
+    else
+    begin
+      // We read the file info structure
+      dirBuffer.ReadBuffer(FIL,SizeOf(AOWFileInfo));
+
+      // Skip 1 bytes (padding)
+      dirBuffer.Seek(1,1);
+
+      // Store current offset
+      curOffset := dirBuffer.Seek(0,1);
+
+      // Seek to filename position (back in buffer)
+      dirBuffer.Seek(oldOffset+indicator,0);
+
+      // Retrieve the filename
+      disp := strip0(get0(dirBuffer));
+
+      // Add the file to the list
+      FSE_Add(curGroup+disp,FIL.Offset,FIL.Size,0,0);
+      inc(result);
+
+      // Go back to current offset
+      dirBuffer.Seek(curOffset,0);
+
+      // If the indicator is 0 then we get out of the group
+      if (FIL.LastFileIndicator = 0) then
+        break;
+
+    end;
+
+  until (dirBuffer.Seek(0,1) >= EndOffset);
+
+end;
+
+function ReadActOfWarDAT(): Integer;
+var HDR: AOWHeader;
+    TotSize: Int64;
+    handle_stm: THandleStream;
+    dirBuffer: TMemoryStream;
+begin
+
+  TotSize := FileSeek(Fhandle, 0, 2);
+  FileSeek(Fhandle,0,0);
+  FileRead(FHandle, HDR, SizeOf(AOWHeader));
+
+  // Some verifications of the header to be sure it is an Act of War .DAT file
+  if (HDR.ID <> 'edat') or (HDR.Version <> $12) or (HDR.DirOffset > TotSize) or ((HDR.DirOffset + HDR.DirSize) <> TotSize) then
   begin
     FileClose(Fhandle);
     FHandle := 0;
     Result := -3;
-    ErrInfo.Format := 'BAR';
-    ErrInfo.Games := 'Age of Mythology';
+    ErrInfo.Format := 'EDAT';
+    ErrInfo.Games := 'Act of War';
   end
   else
   begin
 
-    NumE := HDR.NumEntries;
+    // Create a HandleStream from the source file
+    handle_stm := THandleStream.Create(Fhandle);
 
-    FileSeek(FHandle,HDR.DirOffset+(4*NumE),0);
+    // Seek to the Directory Offset
+    handle_stm.Seek(HDR.DirOffset,soFromBeginning);
 
-    for x:= 1 to NumE do
-    begin
-      Per := ROund(((x / NumE)*100));
-      SetPercent(Per);
-      FileRead(FHandle,ENT,SizeOf(BAREntry));
-      disp := strip0(get0(FHandle));
+    // Create the Directory buffer stream
+    dirBuffer := TMemoryStream.Create;
 
-      FSE_Add(disp,ENT.Offset,ENT.Size,ENT.Unknow1,ENT.Unknow2);
-    end;
+    // Read the complete directory to the buffer
+    dirBuffer.CopyFrom(handle_stm,HDR.DirSize);
 
-    Result := NumE;
+    // Free the HandleStream as we don't need it anymore
+    handle_stm.Free;
 
-    DrvInfo.ID := 'BAR';
+    // Seek to the start of the buffer
+    dirBuffer.Seek(0,soFromBeginning);
+
+    Result := ReadActOfWarDAT_aux(dirBuffer,HDR.DirSize,'');
+
+    DrvInfo.ID := 'EDAT';
     DrvInfo.Sch := '\';
     DrvInfo.FileHandle := FHandle;
     DrvInfo.ExtractInternal := False;
@@ -2000,6 +877,31 @@ begin
   end;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Age of Empire 2 .DRS support ============================================= //
+// -------------------------------------------------------------------------- //
+
+type DRSHeader = packed record
+       ID: array[0..35] of Char;
+       EndOfFile: Integer;
+       Version: array[0..3] of char;
+       Unknown1: array[0..11] of char;
+       Unknown2: Integer;
+       DataOffset: Integer;
+       Unknown3: Integer;
+       DirOffset: Integer;
+       DirNum: integer;
+     end;
+     DRSEntry = packed record
+       Unknown: integer;
+       Offset: integer;
+       Size: integer;
+     end;
+
+const
+  DRSID : String = 'Copyright (c) 1997 Ensemble Studios.';
+  DRSVer : String = '1.00';
 
 function ReadAoe2DRS(src: string): Integer;
 var HDR: DRSHeader;
@@ -2083,151 +985,92 @@ begin
 
 end;
 
-// Act of War .DAT
-// Support added thanks to the Xentax wiki page:
-// http://wiki.xentax.com/index.php?title=GRAF:Act_Of_War_DAT
-type AOWHeader = packed record
-       ID: array[0..3] of char;                // edat
-       Version: integer;                       // Always 0x12?
-       CreationDate: integer;                  // Date in a weird format: yyyymmdd (ex: 20050204 --> 0x0131F11C)
-       Unknown1Null: integer;                  // Always 0?
-       Unknown2Null: integer;                  // Always 0?
-       Unknown3_65K: integer;                  // Always 65536?
-       Unknown4Null: byte;                     // Always 0?
-       DirOffset: integer;                     // Offset to entries directory
-       DirSize: integer;                       // Size of directory entries
+// -------------------------------------------------------------------------- //
+// Age of Empire 3 .BAR support ============================================= //
+// -------------------------------------------------------------------------- //
+
+type AOE3BAR_Header = packed record
+       ID: array[0..3] of char;       // "ESPN"
+       Unknown1: integer;             // Always 2 (version?)
+       Unknown2: integer;             // Always 11 22 33 44 ?
+       Unknown3: array[0..65] of integer;
+       Unknown4: integer;
+       NumEntries: integer;
+       DirOffset: integer;
+       Unknown6: integer;
      end;
-     AOWFileInfo = packed record
-       LastFileIndicator: integer;
+     // BasedirName: get32w
+     // NumEntries: integer;
+     AOE3BAR_Entry = packed record
        Offset: integer;
        Size: integer;
-       Unknown1Null: byte;
+       Size2: integer;                // Uncompressed size?
+       Unknown1: integer;
+       Unknown2: integer;
+       Unknown3: integer;
+       Unknown4: integer;
      end;
+     // Filename: get32w
 
-function ReadActOfWarDAT_aux(dirBuffer: TMemoryStream; EndOffset: Integer; curgroup: string): integer;
-var FIL: AOWFileInfo;
-    disp: string;
-    indicator, groupSize, curOffset, oldOffset: integer;
+function Get32w(src: integer): string;
+var wString: WideString;
+    tint: Integer;
 begin
 
-  result := 0;
+  FileRead(src,tint,4);
+  SetLength(wString,tint);
+  FileRead(src,Pointer(wString)^,tint*2);
 
-  if (dirBuffer.Seek(0,1) < EndOffset) then
-  repeat
-
-    oldOffset := dirBuffer.Seek(0,1);
-    dirBuffer.ReadBuffer(indicator,4);
-
-    // This is a group
-    if (indicator > 0) then
-    begin
-      dirBuffer.ReadBuffer(groupSize,4);
-      disp := strip0(get0_stream(dirBuffer));
-      if odd(length(disp)+1) then
-        dirBuffer.Seek(1,1);
-      inc(result,ReadActOfWarDAT_aux(dirBuffer,dirBuffer.seek(0,1)+groupSize,curgroup+disp));
-    end
-    // This is a file
-    else if (indicator = 0) then
-    begin
-
-      // We read the file info structure
-      dirBuffer.ReadBuffer(FIL,SizeOf(AOWFileInfo));
-
-      // Retrieve the filename
-      disp := strip0(get0_stream(dirBuffer));
-
-      // If the length of the file is odd we skip one byte
-      if odd(length(disp)+2) then
-        dirBuffer.Seek(1,1);
-
-      // Add the file to the list
-      FSE_Add(curGroup+disp,FIL.Offset,FIL.Size,0,0);
-      inc(result);
-
-      // If the indicator is 0 then we get out of the group
-      if (FIL.LastFileIndicator = 0) then
-        break;
-    end
-    // This is a file re-using a previous filename
-    else
-    begin
-      // We read the file info structure
-      dirBuffer.ReadBuffer(FIL,SizeOf(AOWFileInfo));
-
-      // Skip 1 bytes (padding)
-      dirBuffer.Seek(1,1);
-
-      // Store current offset
-      curOffset := dirBuffer.Seek(0,1);
-
-      // Seek to filename position (back in buffer)
-      dirBuffer.Seek(oldOffset+indicator,0);
-
-      // Retrieve the filename
-      disp := strip0(get0_stream(dirBuffer));
-
-      // Add the file to the list
-      FSE_Add(curGroup+disp,FIL.Offset,FIL.Size,0,0);
-      inc(result);
-
-      // Go back to current offset
-      dirBuffer.Seek(curOffset,0);
-
-      // If the indicator is 0 then we get out of the group
-      if (FIL.LastFileIndicator = 0) then
-        break;
-
-    end;
-
-  until (dirBuffer.Seek(0,1) >= EndOffset);
+  result := UTF8Encode(wString);
 
 end;
 
-function ReadActOfWarDAT(): Integer;
-var HDR: AOWHeader;
-    TotSize: Int64;
-    handle_stm: THandleStream;
-    dirBuffer: TMemoryStream;
+function ReadAgeOfEmpires3BAR: Integer;
+var HDR: AOE3BAR_Header;
+    ENT: AOE3BAR_Entry;
+    disp, basedir: string;
+    NumE, oldper, x: integer;
 begin
 
-  TotSize := FileSeek(Fhandle, 0, 2);
   FileSeek(Fhandle,0,0);
-  FileRead(FHandle, HDR, SizeOf(AOWHeader));
+  FileRead(FHandle,HDR,SizeOf(HDR));
 
-  // Some verifications of the header to be sure it is an Act of War .DAT file
-  if (HDR.ID <> 'edat') or (HDR.Version <> $12) or (HDR.DirOffset > TotSize) or ((HDR.DirOffset + HDR.DirSize) <> TotSize) then
+  if HDR.ID <> 'ESPN' then
   begin
     FileClose(Fhandle);
     FHandle := 0;
     Result := -3;
-    ErrInfo.Format := 'EDAT';
-    ErrInfo.Games := 'Act of War';
+    ErrInfo.Format := 'AOE3BAR';
+    ErrInfo.Games := 'Age of Empires 3';
   end
   else
   begin
 
-    // Create a HandleStream from the source file
-    handle_stm := THandleStream.Create(Fhandle);
+    NumE := HDR.NumEntries;
 
-    // Seek to the Directory Offset
-    handle_stm.Seek(HDR.DirOffset,soFromBeginning);
+    FileSeek(FHandle,HDR.DirOffset,0);
+    basedir := Get32w(FHandle);
+    FileSeek(FHandle,4,1);
 
-    // Create the Directory buffer stream
-    dirBuffer := TMemoryStream.Create;
+    OldPer := 0;
 
-    // Read the complete directory to the buffer
-    dirBuffer.CopyFrom(handle_stm,HDR.DirSize);
+    for x:= 1 to NumE do
+    begin
+      Per := ROund(((x / NumE)*100));
+      if (Per > OldPer + 5) then
+      begin
+        SetPercent(Per);
+        OldPer := Per;
+      end;
+      FileRead(FHandle,ENT,SizeOf(ENT));
+      disp := get32w(FHandle);
 
-    // Free the HandleStream as we don't need it anymore
-    handle_stm.Free;
+      FSE_Add(basedir+disp,ENT.Offset,ENT.Size,0,0);
+    end;
 
-    // Seek to the start of the buffer
-    dirBuffer.Seek(0,soFromBeginning);
+    Result := NumE;
 
-    Result := ReadActOfWarDAT_aux(dirBuffer,HDR.DirSize,'');
-
-    DrvInfo.ID := 'EDAT';
+    DrvInfo.ID := 'BAR';
     DrvInfo.Sch := '\';
     DrvInfo.FileHandle := FHandle;
     DrvInfo.ExtractInternal := False;
@@ -2236,7 +1079,79 @@ begin
 
 end;
 
-// AGON .SFL
+// -------------------------------------------------------------------------- //
+// Age of Mythology .BAR support ============================================ //
+// -------------------------------------------------------------------------- //
+
+type BARHeader = packed record
+       ID: array[0..7] of char;
+       Unknown: integer;  // Checksum/CRC ?
+       NumEntries: integer;
+       DirSize: integer;
+       DirOffset: integer;
+       Unknown2: integer; // Always 8 .. flags ?
+     end;
+     BAREntry = packed record
+       Offset: integer;
+       Size: integer;
+       Size2: integer;
+       Unknow1: integer;
+       Unknow2: integer;
+     end;
+     // get0 filename
+
+const BARID : array[0..7] of char = #0+#0+#0+#0+#0+#0+#0+#0;
+
+function ReadAgeOfMythologyBAR: Integer;
+var HDR: BARHeader;
+    ENT: BAREntry;
+    disp: string;
+    NumE, x: integer;
+begin
+
+  FileSeek(Fhandle,0,0);
+  FileRead(FHandle,HDR,SizeOf(BARHeader));
+
+  if HDR.ID <> BARID then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'BAR';
+    ErrInfo.Games := 'Age of Mythology';
+  end
+  else
+  begin
+
+    NumE := HDR.NumEntries;
+
+    FileSeek(FHandle,HDR.DirOffset+(4*NumE),0);
+
+    for x:= 1 to NumE do
+    begin
+      Per := ROund(((x / NumE)*100));
+      SetPercent(Per);
+      FileRead(FHandle,ENT,SizeOf(BAREntry));
+      disp := strip0(get0(FHandle));
+
+      FSE_Add(disp,ENT.Offset,ENT.Size,ENT.Unknow1,ENT.Unknow2);
+    end;
+
+    Result := NumE;
+
+    DrvInfo.ID := 'BAR';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// AGON .SFL ================================================================ //
+// -------------------------------------------------------------------------- //
+
 // Support added thanks to the Xentax wiki page:
 // http://wiki.xentax.com/index.php?title=GRAF:AGON_SFL
 type SFLHeader = packed record
@@ -2314,6 +1229,7 @@ begin
       filesBuffer.Seek(0,0);
       nameBuffer.Seek(0,0);
 
+// This is the directory names support, but I don't know how to link the directory with the filenames
 {      setLength(dirNames,HDR.NumberOfFolders);
 
       for x := 0 to HDR.NumberOfFolders-1 do
@@ -2325,7 +1241,7 @@ begin
       begin
         foldersBuffer.Read(NameOffset,4);
         nameBuffer.Seek(NameOffset,0);
-        nameStr := strip0(get0_Stream(nameBuffer));
+        nameStr := strip0(get0(nameBuffer));
         dirNames[x-1] := dirNames[x-1]+'-'+nameStr;
         foldersBuffer.Read(FileID,4);
         foldersBuffer.Read(ParentID,4);
@@ -2346,7 +1262,7 @@ begin
         filesBuffer.Read(NameOffset,4);
         filesBuffer.Seek(1,1);
         nameBuffer.Seek(NameOffset,0);
-        nameStr := strip0(get0_Stream(nameBuffer));
+        nameStr := strip0(get0(nameBuffer));
         filesBuffer.Read(FileID,4);
         filesBuffer.Read(Offset,4);
         filesBuffer.Read(Size,4);
@@ -2367,6 +1283,158 @@ begin
     Result := -2;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Alien vs Predator .FFL support =========================================== //
+// -------------------------------------------------------------------------- //
+
+function ReadAvpCFFL(): Integer;
+var ENT: word;
+    numE,offset,size: integer;
+    disp: string;
+    ID: array[0..3] of char;
+begin
+
+  FileSeek(FHandle,0,0);
+  FileRead(Fhandle,ENT,2);
+  numE := 0;
+
+  while ENT <> 65535 do
+  begin
+    disp := strip0(get0(FHandle));
+    Offset := FileSeek(FHandle,0,1);
+    FileRead(FHandle,ID,4);
+    FileRead(FHandle,Size,4);
+
+    FSE_Add(disp,Offset,Size+8,0,0);
+
+    inc(numE);
+    FileSeek(FHandle,Size,1);
+    FileRead(Fhandle,ENT,2);
+  end;
+
+  if numE = 0 then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    ReadAvpCFFL := -3;
+    ErrInfo.Format := 'CFFL';
+    ErrInfo.Games := 'Alien vs Predator';
+  end
+  else
+  begin
+
+    DrvInfo.ID := 'CFFL';
+    DrvInfo.Sch := '';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+    ReadAvpCFFL := numE;
+
+  end;
+
+end;
+
+type RFFLHeader = packed record
+       ID: array[0..3] of Char;
+       Version: integer;
+       Dirnum: integer;
+       DirSize: integer;
+       DataSize: integer;
+     end;
+     RFFLEntry = packed record
+       Offset: integer;
+       Size: integer;
+     end;
+
+function ReadAvpRFFL(src: string): Integer;
+var HDR: RFFLHeader;
+    ENT: RFFLEntry;
+    disp: string;
+    NumE, x: integer;
+    NSize: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    FileSeek(Fhandle,0,0);
+    FileRead(FHandle,HDR.ID,4);
+    FileRead(FHandle,HDR.Version,4);
+    FileRead(FHandle,HDR.DirNum,4);
+    FileRead(FHandle,HDR.DirSize,4);
+    FileRead(FHandle,HDR.DataSize,4);
+
+    if HDR.ID <> 'RFFL' then
+    begin
+      if Uppercase(ExtractFileName(src)) = 'COMMON.FFL' then
+        ReadAvpRFFL := ReadAvpCFFL
+      else
+      begin
+        FileClose(Fhandle);
+        FHandle := 0;
+        ReadAvpRFFL := -3;
+        ErrInfo.Format := 'RFFL';
+        ErrInfo.Games := 'Alien vs Predator';
+      end;
+    end
+    else
+    begin
+
+      NumE := HDR.DirNum;
+
+      for x:= 1 to NumE do
+      begin
+        Per := ROund(((x / NumE)*100));
+        SetPercent(Per);
+        FileRead(FHandle,ENT.Offset,4);
+        FileRead(FHandle,ENT.Size,4);
+        disp := Strip0(Get0(FHandle));
+
+        if ((length(disp)+1) mod 4) > 0 then
+        begin
+          NSize := ((Trunc(((length(disp)+1) / 4)) + 1) * 4) - (length(disp)+1);
+          FileSeek(FHandle,NSize,1);
+        end;
+
+        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
+      end;
+
+      ReadAvpRFFL := NumE;
+
+      DrvInfo.ID := 'RFFL';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+  end
+  else
+    ReadAvpRFFL := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Ascaron .CPR support ===================================================== //
+// -------------------------------------------------------------------------- //
+
+type CPRID = packed record
+        ID: array[0..31] of char;  // "ASCARON_ARCHIVE V0.9" Right padded with 0x00
+     end;
+     CPRHeader = packed record
+        SubID: integer;
+        Size: integer;
+        NumE: integer;
+        NextRelOffset: integer;
+     end;
+     CPREntry = packed record
+        offset: integer;
+        size: integer;
+        Unknown: integer;
+     end;
+     // Get0 FileName
 
 function ReadAscaronCPR(src: string): Integer;
 var ID: CPRID;
@@ -2440,6 +1508,10 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Assassin's Creed .FORGE support ================================== PARTIAL //
+// -------------------------------------------------------------------------- //
+
 type FORGEHeader = packed record
         MagicID: array[0..8] of char; // 'scimitar' + #0
         Unknown1: integer;
@@ -2493,6 +1565,9 @@ type FORGEHeader = packed record
      // 13CEE       EE 3C 01 00
      // 1C1800      00 18 1C 00
      // 03 38 21 E0     E0 21 38 03         54010336
+
+const
+  FORGEID : array[0..9] of char = 'scimitar'+#0;
 
 function ReadAssassinsCreedFORGE(src: string): Integer;
 var HDR: FORGEHeader;
@@ -2555,1997 +1630,21 @@ begin
 
 end;
 
-function ReadAvpCFFL(): Integer;
-var ENT: word;
-    numE,offset,size: integer;
-    disp: string;
-    ID: array[0..3] of char;
-begin
-
-  FileSeek(FHandle,0,0);
-  FileRead(Fhandle,ENT,2);
-  numE := 0;
-
-  while ENT <> 65535 do
-  begin
-    disp := strip0(get0(FHandle));
-    Offset := FileSeek(FHandle,0,1);
-    FileRead(FHandle,ID,4);
-    FileRead(FHandle,Size,4);
-
-    FSE_Add(disp,Offset,Size+8,0,0);
-
-    inc(numE);
-    FileSeek(FHandle,Size,1);
-    FileRead(Fhandle,ENT,2);
-  end;
-
-  if numE = 0 then
-  begin
-    FileClose(Fhandle);
-    FHandle := 0;
-    ReadAvpCFFL := -3;
-    ErrInfo.Format := 'FFL';
-    ErrInfo.Games := 'Alien vs Predator';
-  end
-  else
-  begin
-
-    DrvInfo.ID := 'CFFL';
-    DrvInfo.Sch := '';
-    DrvInfo.FileHandle := FHandle;
-    DrvInfo.ExtractInternal := False;
-
-    ReadAvpCFFL := numE;
-
-  end;
-
-end;
-
-function ReadAvpRFFL(src: string): Integer;
-var HDR: RFFLHeader;
-    ENT: RFFLEntry;
-    disp: string;
-    NumE, x: integer;
-    NSize: integer;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-
-    FileSeek(Fhandle,0,0);
-    FileRead(FHandle,HDR.ID,4);
-    FileRead(FHandle,HDR.Version,4);
-    FileRead(FHandle,HDR.DirNum,4);
-    FileRead(FHandle,HDR.DirSize,4);
-    FileRead(FHandle,HDR.DataSize,4);
-
-    if HDR.ID <> 'RFFL' then
-    begin
-      if Uppercase(ExtractFileName(src)) = 'COMMON.FFL' then
-        ReadAvpRFFL := ReadAvpCFFL
-      else
-      begin
-        FileClose(Fhandle);
-        FHandle := 0;
-        ReadAvpRFFL := -3;
-        ErrInfo.Format := 'RFFL';
-        ErrInfo.Games := 'Alien vs Predator';
-      end;
-    end
-    else
-    begin
-
-      NumE := HDR.DirNum;
-
-      for x:= 1 to NumE do
-      begin
-        Per := ROund(((x / NumE)*100));
-        SetPercent(Per);
-        FileRead(FHandle,ENT.Offset,4);
-        FileRead(FHandle,ENT.Size,4);
-        disp := Strip0(Get0(FHandle));
-
-        if ((length(disp)+1) mod 4) > 0 then
-        begin
-          NSize := ((Trunc(((length(disp)+1) / 4)) + 1) * 4) - (length(disp)+1);
-          FileSeek(FHandle,NSize,1);
-        end;
-
-        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
-      end;
-
-      ReadAvpRFFL := NumE;
-
-      DrvInfo.ID := 'RFFL';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-  end
-  else
-    ReadAvpRFFL := -2;
-
-end;
-
-function revInt(tab: array of byte): integer;
-begin
-
-  result := tab[3] + tab[2] * $100 + tab[1] * $10000 + tab[0] * $1000000;
-
-//  ShowMessage(inttostr(tab[0])+#10+inttostr(tab[1])+#10+inttostr(tab[2])+#10+inttostr(tab[3]));
-end;
-
-function ReadCivilization4FPK(src: string): Integer;
-var HDR: FPKHeader;
-    ENT: FPKEntry;
-    disp: string;
-    NumE, x, NumTest, CurP: integer;
-    NumDummy: byte;
-    TotFSize: integer;
-    OldPer: integer;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-
-    // We retrieve the full size of the file
-    TotFSize := FileSeek(Fhandle,0,2);
-    FileSeek(FHandle,0,0);
-
-    // We read the header
-    FileRead(FHandle,HDR,SizeOf(HDR));
-
-    // If the ID is "FPK_"
-    if (HDR.ID <> 'FPK_') then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'FPK';
-      ErrInfo.Games := 'Cibilization 4';
-    end
-    else
-    begin
-
-      // We store number of entries
-      NumE := HDR.NumEntries;
-
-      OldPer := 0;
-
-      // We go throught the directory
-      for x:= 1 to NumE do
-      begin
-
-        // Code to display the progress into Dragon UnPACKer
-        // The If section is done so the update is not done too often
-        // (which slows down everything)
-        Per := ROund(((x / NumE)*100));
-        if Per >= OldPer + 5 then
-        begin
-          SetPercent(Per);
-          OldPer := Per;
-        end;
-
-        // We retrieve the filename, which is a Get32 format (32bit for size then the string)
-        // But with an encryption (they added 1 to each char), so Get32_FPK is decrypting "on-the-fly" (lol)
-        disp := Strip0(Get32_FPK(FHandle));
-
-        // We store current offset in directoy
-        CurP := FileSeek(FHandle,0,1);
-
-        // We read the entry information
-        FileRead(FHandle,ENT,SizeOf(ENT));
-
-        // We also read the 32bit integer of the next Get32 filename as a test number
-        FileRead(FHandle,NumTest,4);
-
-        // If the NumTest is more than 0 and less than MAXPATH (255 chars)
-        // If the Offset is between start & end of file
-        // If the Size is lower than whole file size
-        // If the Offset + Size is not going over the end of file
-        if (NumTest <= 255) and (NumTest >= 0) and (ENT.Offset > 12) and (ENT.Offset < TotFSize) and (ENT.Size < TotFSize) and (ENT.Offset + ENT.Size <= TotFSize) then
-        begin
-
-          // Then the Entry was read correctly so we just seek 4 bytes before (because of the NumTest reading)
-          FileSeek(FHandle,-4,1);
-
-        end
-        // Else then the entry info is not directly after the filename, we then need
-        // to read one byte with the length of that useless junk and skip that number of bytes
-        else
-        begin
-
-          // We seek to the stored position
-          FileSeek(FHandle,CurP,0);
-
-          // We read how many dummy bytes we need to skip
-          FileRead(FHandle,NumDummy,1);
-          // We skip them (minus one because the dummy number is included in it)
-          FileSeek(FHandle,NumDummy-1,1);
-
-          // We read the entry info again
-          FileRead(FHandle,ENT,SizeOf(ENT));
-        end;
-
-        // We store the entry
-        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
-
-      end;
-
-      // We return the number of entries found
-      Result := NumE;
-
-      // ID is FPK
-      DrvInfo.ID := 'FPK';
-      // Directory separator is '\'
-      DrvInfo.Sch := '\';
-      // Extraction will be handled by Dragon UnPACKer core
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-  end
-  else
-    Result := -2;
-
-end;
-
-function ReadCommandAndConquerGeneralsBIG: Integer;
-var HDR: BIGHeader;
-    ENT: BIGEntry;
-    disp: string;
-    NumE, x, OldPer: integer;
-    TotFSize: Integer;
-    isAntiSlash: Boolean;
-begin
-
-  TotFSize := FileSeek(Fhandle,0,2);
-  FileSeek(FHandle,0,0);
-  FileRead(FHandle,HDR,SizeOf(HDR));
-
-  if ((HDR.ID <> 'BIGF') and (HDR.ID <> 'BIG4')) or (TotFSize <> HDR.TotFileSize) then
-  begin
-    FileClose(Fhandle);
-    FHandle := 0;
-    Result := -3;
-    ErrInfo.Format := 'BIGF';
-    ErrInfo.Games := 'Command & Conquer: Generals, The Lord of the Rings: Battle for Middle Earth';
-  end
-  else
-  begin
-
-    NumE := revInt(HDR.NumFiles);
-    OldPer := 0;
-
-    isAntiSlash := false;
-
-    for x:= 1 to NumE do
-    begin
-      Per := ROund(((x / NumE)*100));
-      if Per >= (OldPer + 5) then
-      begin
-        SetPercent(Per);
-        OldPer := Per;
-      end;
-      FileRead(FHandle,ENT,8);
-      disp := Strip0(Get0(FHandle));
-      if not(isAntiSlash) and (pos('/',disp) > 0) then
-        isAntiSlash := true;
-      FSE_Add(disp,revInt(ENT.Offset),revInt(ENT.Size),0,0);
-    end;
-
-    Result := NumE;
-
-    DrvInfo.ID := 'BIGF';
-    if isAntiSlash then
-      DrvInfo.Sch := '/'
-    else
-      DrvInfo.Sch := '\';
-    DrvInfo.FileHandle := FHandle;
-    DrvInfo.ExtractInternal := False;
-
-  end;
-
-end;
-
-function ReadCommandos3PCK_aux(curDir: string): Integer;
-var ENT: PCKEntry;
-    disp, disp2: string;
-    tbyt,tmode: byte;
-begin
-
-  result := 0;
-
-  repeat
-
-    FileRead(FHandle,ENT,SizeOf(ENT));
-
-    if (ENT.Flag = 0) then
-    begin
-      disp := strip0(ENT.Name);
-      disp2 := Uppercase(ExtractFileExt(disp));
-      tmode := 0;
-      tbyt := 0;
-      if disp2 = '.WAV' then
-        tbyt := $52
-      else if disp2 = '.STR' then
-        tbyt := $FF
-      else if disp2 = '.FAC' then
-        tbyt := $5B
-      else if disp2 = '.CFG' then
-        tbyt := $5B
-      else if disp2 = '.ABI' then
-        tbyt := $4C
-      else if disp2 = '.GRL' then
-        tbyt := $47
-      else if disp2 = '.MAN' then
-        tbyt := $28
-      else if disp2 = '.MAC' then
-        tbyt := $54
-      else if disp2 = '.TUT' then
-        tbyt := $5B
-      else if disp2 = '.MBI' then
-        tbyt := $32
-      else if disp2 = '.SEC' then
-        tbyt := $2
-      else if (disp2 = '.FNC') or (disp2 = '.FNM') then
-        tmode := 1
-      else if (disp2 = '.ANI') or (disp2 = '.AN2') or (disp2 = '.MSB') or (disp2 = '.BRI') or (uppercase(disp) = 'FILE.BIN') or (uppercase(disp) = 'CHUSMA.DAT') or (uppercase(disp) = 'BER2.MIS') then
-        tbyt := $42
-      else if (uppercase(disp) = 'VAR.DAT') then
-        tbyt := $23
-      else if (uppercase(disp) = 'MISIONES.DAT') then
-        tbyt := $2F
-      else if (uppercase(disp) = 'PRGE.DAT') then
-        tbyt := $28
-      else if (uppercase(disp) = 'PARGLOBAL.DAT') then
-        tbyt := $5B
-      else if disp2 = '.OGC' then
-        tbyt := $20
-      else if disp2 = '.MIS' then
-        tbyt := $5B
-      else if disp2 = '.LIS' then
-        tbyt := $5B
-      else if disp2 = '.GMT' then
-        tbyt := $5B
-      else if disp2 = '.MA2' then
-        tbyt := $3
-      else if (disp2 = '.GSC') or (disp2 = '.BAS') then
-      begin
-        tbyt := $5B;
-        tmode := 2;
-      end
-      else
-        tbyt := 0;
-      FSE_Add(curDir+disp,ENT.Offset, ENT.Size,tbyt,tmode);
-//      FSE_Add(curDir+strip0(ENT.Name),ENT.Offset, tbyt, tbyt,0);
-//      FSE_Add(curDir+strip0(ENT.Name),curPos, tbyt, tbyt,0);
-      inc(result);
-    end
-    else if (ENT.Flag = 1) then
-    begin
-      disp := curDir + strip0(ENT.Name)+'\';
-      inc(result,readCommandos3PCK_aux(disp));
-    end;
-
-  until (ENT.Flag = $FF);
-
-end;
-
-function ReadCommandos3PCK(src: string): Integer;
-var ENT: PCKEntry;
-    disp: string;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-
-    FileSeek(FHandle,0,0);
-
-    FileRead(FHandle,ENT,SizeOf(ENT));
-
-    if (ENT.Flag <> 1) or (ENT.Size <> $FFFFFFFF) or (ENT.Offset <> $30) then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'PCK';
-      ErrInfo.Games := 'Commandos 3';
-    end
-    else
-    begin
-
-      Disp := Strip0(ENT.Name);
-      if length(Disp) > 0 then
-        Disp := Disp + '\';
-
-      Result := ReadCommandos3PCK_aux(Disp);
-
-      DrvInfo.ID := 'PCK';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := True;
-
-    end;
-  end
-  else
-    Result := -2;
-
-end;
-
-function ReadCyberBykesBIN(src: string): Integer;
-var ENT: BIN_Entry;
-    disp: string;
-    NumE, x, preval: integer;
-    curOffset: int64;
-    TotFSize: integer;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-
-    TotFSize := FileSeek(Fhandle,0,2);
-    FileSeek(FHandle,0,0);
-    FileRead(FHandle,NumE,4);
-
-    if (((NumE*4)+4) > TotFSize) or (NumE < 0) then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'CBIN';
-      ErrInfo.Games := 'CyberBykes, Shadow Racer VR';
-    end
-    else
-    begin
-
-      try
-
-        for x:= 1 to NumE do
-        begin
-          Per := ROund(((x / NumE)*100));
-          SetPercent(Per);
-          FileRead(FHandle,ENT,SizeOf(BIN_Entry));
-          CurOffset := FileSeek(FHandle,0,1);
-          FileSeek(FHandle,ENT.Offset,0);
-          FileRead(FHandle,preval,4);
-          FileSeek(FHandle,curOffset,0);
-          disp := Strip0(ENT.Filename);
-          FSE_Add(disp,ENT.Offset+4,ENT.Size-4,preval,0);
-        end;
-
-        Result := NumE;
-
-        DrvInfo.ID := 'CBIN';
-        DrvInfo.Sch := '';
-        DrvInfo.FileHandle := FHandle;
-        DrvInfo.ExtractInternal := False;
-
-      except
-        on E:EBadFormat do
-        begin
-          FileClose(Fhandle);
-          FSE_Free;
-          FHandle := 0;
-          Result := -3;
-          ErrInfo.Format := 'CBIN';
-          ErrInfo.Games := 'CyberBykes, Shadow Racer VR';
-        end;
-        on E:Exception do
-        begin
-          raise e;
-        end;
-      end;
-    end;
-  end
-  else
-    Result := -2;
-
-end;
-
-function ReadDarkForcesGOB(): Integer;
-var HDR: DGOBHeader;
-    ENT: DGOBIndex;
-    disp: string;
-    NumE, x: integer;
-begin
-
-  FileSeek(Fhandle, 0, 0);
-  FileRead(FHandle, HDR, 8);
-
-  FileSeek(FHandle,HDR.DirOffset,0);
-  FileRead(FHandle,NumE,4);
-
-  for x:= 1 to NumE do
-  begin
-
-    Per := ROund(((x / NumE)*100));
-    SetPercent(Per);
-    FileRead(Fhandle,ENT.Offset,4);
-    FileRead(Fhandle,ENT.Size,4);
-    FileRead(Fhandle,ENT.Name,13);
-    disp := Strip0(ENT.Name);
-
-    FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
-
-  end;
-
-  ReadDarkForcesGOB := NumE;
-
-  DrvInfo.ID := 'DGOB';
-  DrvInfo.Sch := '';
-  DrvInfo.FileHandle := FHandle;
-  DrvInfo.ExtractInternal := False;
-
-end;
-
-function ReadDescentHOG(src: string): Integer;
-var HDR: HOG2Header;
-    ENT: HOGEntry;
-    ENT2: HOG2Entry;
-    disp: string;
-    NumE, TotSize, CurPos, x: integer;
-    ID: array[0..2] of char;
-    IDF: array[0..3] of char;
-    PerInfo: integer;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, ID, 3);
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, IDF, 4);
-
-    if ID = HOGID then
-    begin
-
-      CurPos := 3;
-      TotSize := FileSeek(FHandle,0,2);
-      PerInfo := TotSize - CurPos; 
-      NumE := 0;
-
-      repeat
-        Per := ROund((((PerInfo) / TotSize)*100));
-        SetPercent(Per);
-        FileSeek(FHandle,CurPos,0);
-
-        FileRead(FHandle,ENT.Filename,13);
-        FileRead(FHandle,ENT.FileSize,4);
-
-        CurPos := CurPos + 17;
-        disp := Strip0(ENT.Filename);
-
-        FSE_Add(disp,CurPos,ENT.FileSize,0,0);
-        Inc(NumE);
-
-        CurPos := CurPos + ENT.FileSize;
-      until (CurPos >= TotSize);
-
-      ReadDescentHOG := NumE;
-
-      DrvInfo.ID := 'HOG';
-      DrvInfo.Sch := '';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end
-    else if IDF = HOG2ID then
-    begin
-
-      FileRead(FHandle,HDR,64);
-      CurPos := HDR.Offset;
-      NumE := HDR.NumFiles;
-
-      for x := 1 to NumE do
-      begin
-        Per := ROund(((x / NumE)*100));
-        SetPercent(Per);
-        FileRead(FHandle,ENT2,48);
-
-        disp := strip0(ENT2.Filename);
-
-        FSE_add(disp,CurPos+48,ENT2.FileSize,0,0);
-
-        CurPos := CurPos + ENT2.FileSize;
-      end;
-
-      ReadDescentHOG := NumE;
-
-      DrvInfo.ID := 'HOG2';
-      DrvInfo.Sch := '';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end
-    else
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      ReadDescentHOG := -3;
-      ErrInfo.Format := 'HOG';
-      ErrInfo.Games := 'Descent, Descent 2, Descent 3';
-    end;
-  end
-  else
-    ReadDescentHOG := -2;
-
-end;
-
-type HDRDreamfallTLJPAK = packed record
-       ID: array[0..11] of char;
-       NumberOfEntries: integer;
-       Unknown2: integer;
-       Unknown3: integer;
+// -------------------------------------------------------------------------- //
+// Battlefield 1942 .RFA support ============================================ //
+// -------------------------------------------------------------------------- //
+
+type RFA_Entry = packed record
+       size: integer;
+       ucsize: integer;
+       offset: integer;
+       unknown: array[0..2] of integer;
      end;
-     ENTDreamfallTLJPAK = packed record
-       Offset: integer;
-       Size: integer;
-       Unknown1: integer;
-       Unknown2: integer;
-       Unknown3: integer;
+     RFA_DataHeader = packed record
+       csize: longword;
+       ucsize: longword;
+       doffset: longword;
      end;
-
-function ReadDreamfallTLJPAK(filename: string): integer;
-var HDR: HDRDreamfallTLJPAK;
-    ENT: ENTDreamfallTLJPAK;
-    x, NumE, tmpInt, MaxLength: integer;
-    ENTBuffer: TMemoryStream;
-    TmpBuffer: THandleStream;
-    Disp, DispPre, DispFill: String;
-begin
-
-  FileSeek(Fhandle, 0, 0);
-  FileRead(Fhandle, HDR, Sizeof(HDRDreamfallTLJPAK));
-
-  if HDR.ID <> 'tlj_pack0001' then
-  begin
-    FileClose(Fhandle);
-    FHandle := 0;
-    Result := -3;
-    ErrInfo.Format := 'TLJPAK';
-    ErrInfo.Games := 'Dreamfall: The Longest Journey';
-  end
-  else
-  begin
-
-    TmpBuffer := THandleStream.Create(FHandle);
-    ENTBuffer := TMemoryStream.Create;
-    ENTBuffer.CopyFrom(TmpBuffer,HDR.NumberOfEntries * SizeOf(ENTDreamfallTLJPAK));
-    ENTBuffer.Seek(0,0);
-    TmpBuffer.Free;
-
-    NumE := 0;
-    DispPre := ExtractFileExt(filename);
-    if (length(DispPre) > 1) then
-      DispPre := '_'+rightstr(DispPre,length(DispPre)-1)
-    else
-      DispPre := '';
-    DispPre := ChangeFileExt(ExtractFileName(filename),DispPre);
-
-    MaxLength := length(inttostr(HDR.NumberOfEntries));
-    DispFill := stringofchar('0',MaxLength);
-
-    for x:= 1 to HDR.NumberOfEntries do
-    begin
-
-      Per := ROund(((x / HDR.NumberOfEntries)*100));
-      SetPercent(Per);
-
-      ENTBuffer.ReadBuffer(ENT,Sizeof(ENTDreamfallTLJPAK));
-
-      if (ENT.Size > 0) then
-      begin
-        FileSeek(FHandle,ENT.Offset,0);
-        FileRead(FHandle,tmpInt,4);
-        if (tmpInt = $20534444) then
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.dds'
-        else if ((tmpInt and $E0FF) = $E0FF) then
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.mp3'
-        else if (tmpInt = $73760A0D) or (tmpInt = $312E7376) or (tmpInt = $31157376) or (tmpInt = $315F7376) then
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.vs1'
-        else if (tmpInt = $322E7376) or (tmpInt = $6E69203B) then
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.vs2'
-        else if (tmpInt = $0A0D2F2F) then
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.vsc'
-        else if (tmpInt = $312E7370) or (tmpInt = $696C203B) or (tmpInt = $6576203B) then
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.ps1'
-        else if (tmpInt = $322E7370) or (tmpInt = $6170203B) then
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.ps2'
-        else if (tmpInt = $615F7376) or (tmpInt = $332E7370) then
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.ps3'
-        else if (tmpInt = $5367674F) then
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.ogg'
-        else if (tmpInt = $626A6C74) then
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.tljbone2d'
-        else if (tmpInt = $55465453) then
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.stfu'
-        else if (tmpInt = $72616873) then
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.shark3d'
-        else if (tmpInt = $46464952) then
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.wav'
-        else
-          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.unk'+inttohex(tmpInt,8);
-        // This below I used to identify more easily the file types
-        // inttohex(x,8)+'-'+inttohex(ENT.Unknown1,8)+'-'+inttohex(ENT.Unknown2,8)+'-'+inttohex(ENT.Unknown3,8)+ '.'+inttohex(tmpInt,8);
-        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
-        Inc(NumE);
-      end;
-
-    end;
-
-    ENTBuffer.Free;
-
-    Result := NumE;
-
-    DrvInfo.ID := 'TLJPAK';
-    DrvInfo.Sch := '/';
-    DrvInfo.FileHandle := FHandle;
-    DrvInfo.ExtractInternal := False;
-
-  end;
-
-end;
-
-function ReadDuke3DART(src: string): Integer;
-var HDR: ARTHeader;
-    NumE, x: integer;
-    Offset: integer;
-    XList: array of word;
-    YList: array of word;
-    PicAnm: array of integer;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle,HDR.ARTVersion,4);
-    FileRead(FHandle,HDR.Numtiles,4);
-    FileRead(FHandle,HDR.LocalTileStart,4);
-    FileRead(FHandle,HDR.LocalTileEnd,4);
-    
-    if HDR.ARTVersion <> 1 then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'ART';
-      ErrInfo.Games := 'Duke Nukem 3D & Shadow Warrior';
-    end
-    else
-    begin
-
-      NumE := HDR.LocalTileEnd - HDR.LocalTileStart + 1;
-      Offset := 16 + NumE * 8;
-
-      SetLength(XList,NumE);
-      SetLength(YList,NumE);
-      SetLength(PicAnm,NumE);
-
-      for x:=0 to NumE-1 do
-        FileRead(FHandle,XList[x],2);
-      for x:=0 to NumE-1 do
-        FileRead(FHandle,YList[x],2);
-      for x:=0 to NumE-1 do
-        FileRead(FHandle,PicAnm[x],4);
-
-//      ShowMessage(IntToStr(NumE)+#10+IntToStr(Offset)+#10+inttostr(FileSeek(FHandle,0,1)));
-
-      for x:= 0 to NumE-1 do
-      begin
-
-        Per := ROund(((x / NumE)*100));
-        SetPercent(Per);
-
-        if (XList[x]*YList[x]) > 0 then
-        begin
-          FSE_Add('texture #'+RightStr('00000'+IntToStr(x + HDR.LocalTileStart),6)+'.tex',Offset,(XList[x]*YList[x]),XList[x],YList[x]);
-          Inc(Offset,(XList[x]*YList[x]));
-        end;
-      end;
-
-      Result := NumE;
-
-      DrvInfo.ID := 'ART';
-      DrvInfo.Sch := '';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-  end
-  else
-    Result := -2;
-
-end;
-
-function ReadDuke3DGRP(src: string): Integer;
-var HDR: GRPHeader;
-    ENT: GRPEntry;
-    disp: string;
-    NumE, x: integer;
-    Offset: integer;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR, 16);
-
-    if HDR.ID <> GRPID then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      ReadDuke3DGRP := -3;
-      ErrInfo.Format := 'GRP';
-      ErrInfo.Games := 'Duke Nukem 3D & Shadow Warrior';
-    end
-    else
-    begin
-
-      NumE := HDR.DirNum;
-      Offset := NumE * 16 + 16;
-
-      for x:= 1 to NumE do
-      begin
-
-        Per := ROund(((x / NumE)*100));
-        SetPercent(Per);
-        FileRead(Fhandle,ENT,16);
-        disp := Strip0(ENT.FileName);
-
-        FSE_Add(disp,Offset,ENT.FileSize,0,0);
-
-        Offset := Offset + ENT.FileSize;
-      end;
-
-      ReadDuke3DGRP := NumE;
-
-      DrvInfo.ID := 'KSGRP';
-      DrvInfo.Sch := '';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-  end
-  else
-    ReadDuke3DGRP := -2;
-
-end;
-
-function ReadDungeonKeeper2DWFB(): Integer;
-var HDR: DWFBHeader;
-    ENT: DWFBEntry;
-    disp: string;
-    NumE, x: integer;
-begin
-
-  FileSeek(Fhandle, 0, 0);
-  FileRead(Fhandle, HDR, 88);
-
-  if HDR.ID <> 'DWFB' then
-  begin
-    FileClose(Fhandle);
-    FHandle := 0;
-    ReadDungeonKeeper2DWFB := -3;
-    ErrInfo.Format := 'DWFB';
-    ErrInfo.Games := 'Dungeon Keeper 2, ..';
-  end
-  else
-  begin
-
-    NumE := HDR.Dirnum;
-
-    str(NumE, disp);
-
-    for x:= 1 to NumE do
-    begin
-
-      Per := ROund(((x / NumE)*100));
-      SetPercent(Per);
-      FileSeek(Fhandle, SizeOf(DWFBHeader) + (x - 1) * SizeOf(DWFBEntry), 0);
-      FileRead(Fhandle, ENT, 40);
-
-      FileSeek(FHandle, ENT.NameOffset,0);
-      disp := Get32v(FHandle,ENT.NameSize);
-
-      FSE_Add(Strip0(disp),ENT.Offset,ENT.Size,ENT.CompMethod,ENT.UncompSize);
-
-    end;
-
-    ReadDungeonKeeper2DWFB := NumE;
-
-    DrvInfo.ID := 'DWFB';
-    DrvInfo.Sch := '\';
-    DrvInfo.FileHandle := FHandle;
-    DrvInfo.ExtractInternal := False;
-
-  end;
-
-end;
-
-function ReadDungeonKeeper2SDT(src: string): Integer;
-var ENT: SDTIndex;
-    disp: string;
-    NumE, x: integer;
-    Offset: integer;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, NumE, 4);
-
-    if NumE <= 0 then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      ReadDungeonKeeper2SDT := -3;
-      ErrInfo.Format := 'SDT';
-      ErrInfo.Games := 'Dungeon Keeper 2';
-    end
-    else
-    begin
-
-      for x:= 1 to NumE do
-      begin
-
-        Per := ROund(((x / NumE)*100));
-        SetPercent(Per);
-        FileSeek(FHandle,x*4,0);
-        FileRead(FHandle,Offset,4);
-        FileSeek(FHandle,Offset,0);
-        FileRead(Fhandle,ENT,40);
-        Offset := Offset + ENT.ISize;
-        disp := Strip0(ENT.Filename);
-        disp := ChangeFileExt(disp,'.mp2');
-
-        FSE_Add(disp,Offset,ENT.Size,0,0);
-
-      end;
-
-      ReadDungeonKeeper2SDT := NumE;
-
-      DrvInfo.ID := 'SDT';
-      DrvInfo.Sch := '';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-  end
-  else
-    ReadDungeonKeeper2SDT := -2;
-
-end;
-
-function ReadEarthSiege2VOL: Integer;
-var HDR: VOL_Header;
-    HDR2: VOL_Header2;
-    ENT, OLD: VOL_Entry;
-    NumE,x,p: integer;
-    BufNam: string;
-    EList: TStringList;
-    FSize: word;
-begin
-
-    TotFSize := FileSeek(FHandle,0,2);
-
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR.ID, 4);
-    FileRead(FHandle, HDR.Version, 4);
-    FileRead(FHandle, HDR.Unknow, 2);
-
-    if (HDR.ID <> 'VOLN') then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'VOL';
-      ErrInfo.Games := 'Earth Siege 2';
-    end
-    else
-    begin
-      FileRead(FHandle,FSize,2);
-//      BufNam := Get16(FHandle);
-
-      EList := TStringList.Create;
-      try
-        p := 0;
-        while p <= FSize do
-        begin
-          BufNam := Get0(FHandle);
-          Inc(p,Length(BufNam));
-          EList.Add(Strip0(BufNam));
-        end;
-
-        FileSeek(FHandle, 12+FSize,0);
-
-        FileRead(FHandle, HDR2.DirNum, 2);
-        FileRead(FHandle, HDR2.ENTSize, 4);
-
-        NumE := HDR2.DirNum;
-
-        for x := 1 to NumE do
-        begin
-          FileRead(FHandle,ENT.Filename,12);
-          FileRead(FHandle,ENT.Unknow,1);
-          FileRead(FHandle,ENT.DirIndex,1);
-          FileRead(FHandle,ENT.Offset,4);
-
-          if x>1 then
-          begin
-            FSE_Add(EList.Strings[OLD.DirIndex]+Strip0(OLD.Filename),OLD.Offset,ENT.Offset-OLD.Offset,OLD.Unknow,0);
-          end;
-
-          OLD.Filename := ENT.Filename;
-          OLD.Unknow := ENT.Unknow;
-          OLD.DirIndex := ENT.DirIndex;
-          OLD.Offset := ENT.Offset;
-        end;
-        FSE_Add(EList.Strings[ENT.DirIndex]+Strip0(ENT.Filename),ENT.Offset,TotFSize-ENT.Offset,ENT.Unknow,0);
-      finally
-        EList.Free;
-      end;
-
-      //ShowMessage(IntTosTr(NumE));
-
-      Result := NumE;
-
-      DrvInfo.ID := 'VOL';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-
-end;
-
-type MOSChunk = packed record
-       ID: array[0..23] of char;
-       NextChunkOffset: integer;
-     end;
-     MOSSoundEntry = packed record
-       Offset: integer;
-       Size: integer;
-     end;
-     MOSTextureEntry_Init = packed record
-       Unk1: integer;   // Always 0?
-       MipMapNum: integer;        // Number of mipmap entries
-       Unk3: integer;   // Always 512?
-       Unk4: integer;
-       FirstMipMapSize: integer;
-       Width: integer;
-       Height: integer;
-     end;
-     // Riddick have an integer here for unknown purpose...
-     MOSTextureEntry_End = packed record
-       TextureType: integer;
-       Offset: integer;
-       Unk10: integer;
-       Unk11: integer;
-       Unk12: integer;
-       Unk13: integer;
-       Unk14: integer;
-       Unk15: integer;
-       Unk16: word;
-     end;
-
-type MOSDTextureLocalHeader_Init = packed record
-       Unk1: integer;
-       Unk2: integer;
-       Unk3: integer;
-       Width: integer;
-       Height: integer;
-     end;
-     // Riddick have an integer here for unknown purpose...
-     MOSDTextureLocalHeader_End = packed record
-       Unk4: integer;      // Depth?
-       TextureType: integer;
-       Size: integer;
-       Unk6: integer;
-       Unk7: integer;
-     end;
-
-// MOS DATAFILE2.0 support
-// Only WAVEDATA and TEXTURES are supported (XWC and XTC)
-// In order to speed up reading from XTC files there is a buffering of the whole directory
-// and then a parse through the directory
-function ReadEnclaveMOS(src: string): Integer;
-var HDR: MOSChunk;
-    SND: MOSSoundEntry;
-    TEX1: MOSTextureEntry_Init;
-    TEX2: MOSTextureEntry_End;
-    TEXHDR1: MOSDTextureLocalHeader_Init;
-    TEXHDR2: MOSDTextureLocalHeader_End;
-    DirCache: TMemoryStream;
-    DirFile: THandleStream;
-    disp: string;
-    NumE, x, DirOffset, DirNum, NextOffset, Offset, Per, OldPer, FormatCheck, EntrySize: integer;
-//    fileType, Test1, Test2: integer;
-    OggCheck: array[0..3] of char;
-    isWave: boolean;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR, SizeOf(MOSChunk));
-
-    if strip0(HDR.ID) <> 'MOS DATAFILE2.0' then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'MOSD';
-      ErrInfo.Games := 'Enclave, The Chronicles of Riddick: Butcher Bay';
-    end
-    else
-    begin
-
-      NumE := 0;
-
-      isWave := false;
-
-      repeat
-        Fileseek(FHandle, HDR.NextChunkOffset, 0);
-        FileRead(FHandle, HDR, SizeOf(MOSChunk));
-        if (strip0(HDR.ID) = 'WAVEDATA') then
-        begin
-          FileSeek(FHandle,8,1);
-          FileRead(Fhandle,DirOffset,4);
-          FileRead(Fhandle,DirNum,4);
-          NextOffset := DirOffset+48;
-          for x := 1 to DirNum do
-          begin
-            FileSeek(FHandle,NextOffset,0);
-            FileRead(Fhandle,SND,SizeOf(MOSSoundEntry));
-            disp := Get32(Fhandle);
-            if (length(disp) mod 4) <> 0 then
-              NextOffset := FileSeek(Fhandle,4 - (Length(disp) mod 4),1)
-            else
-              NextOffset := FileSeek(Fhandle,0,1);
-            if SND.Size >= 40 then
-            begin
-              FileSeek(Fhandle,SND.Offset+36,0);
-              FileRead(Fhandle,OggCheck,4);
-              if strip0(OggCheck) = 'OggS' then // Enclave
-              begin
-                disp := disp + '.ogg';
-                dec(SND.Size,36);
-                inc(SND.Offset,36);
-              end
-              else if SND.Size >= 44 then // Chronicles of Riddick
-              begin
-                FileSeek(Fhandle,SND.Offset+40,0);
-                FileRead(Fhandle,OggCheck,4);
-                if strip0(OggCheck) = 'OggS' then
-                begin
-                  disp := disp + '.ogg';
-                  dec(SND.Size,40);
-                  inc(SND.Offset,40);
-                end
-              end;
-            end;
-            FSE_Add(disp,SND.Offset,SND.Size,0,0);
-            inc(NumE);
-          end;
-          isWave := true;
-        end;
-        if (strip0(HDR.ID) = 'TEXTURES') then
-        begin
-          FileSeek(FHandle,8,1);
-          FileRead(Fhandle,DirOffset,4);
-          FileRead(Fhandle,DirNum,4);
-          DirFile := THandleStream.Create(Fhandle);
-          Offset := DirFile.Seek(0,1);
-          DirFile.Seek(DirOffset,0);
-          DirFile.Read(FormatCheck,4);  // 512 = Enclave?    20480 = Riddick?
-          DirFile.Seek(52,1);
-          DirCache := TMemoryStream.Create;
-          DirCache.CopyFrom(DirFile,Offset-DirOffset-24-56);
-          NextOffset := 0;
-          OldPer := -6;
-          EntrySize := SizeOf(MOSTextureEntry_Init)+SizeOf(MOSTextureEntry_End);
-          if FormatCheck = 20480 then // Riddick
-            inc(EntrySize,4);
-          for x := 1 to DirNum do
-          begin
-            Per := ROund(((x / DirNum)*100));
-            if (Per > OldPer + 5) then
-            begin
-              SetPercent(Per);
-              OldPer := Per;
-            end;
-            Dircache.Seek(NextOffset,0);
-//            FileSeek(FHandle,NextOffset,0);
-            disp := Get32_Stream(DirCache);
-            if (length(disp) mod 4) <> 0 then
-              NextOffset := Dircache.Seek(4 - (Length(disp) mod 4),1)+EntrySize
-            else
-              NextOffset := DirCache.Seek(0,1)+EntrySize;
-            Dircache.Read(TEX1,SizeOf(MOSTextureEntry_Init));
-            if FormatCheck = 20480 then // Riddick...
-              Dircache.Seek(4,1);
-            Dircache.Read(TEX2,SizeOf(MOSTextureEntry_End));
-            inc(NumE);
-            FileSeek(Fhandle,TEX2.Offset,0);
-            FileRead(Fhandle,Offset,4);
-            FileSeek(Fhandle,Offset,0);
-            FileRead(FHandle,TEXHDR1,SizeOf(MOSDTextureLocalHeader_Init));
-            if FormatCheck = 20480 then // Riddick...
-              FileSeek(Fhandle,4,1);
-            FileRead(FHandle,TEXHDR2,SizeOf(MOSDTextureLocalHeader_End));
-
-            if (TEXHDR1.Width > 0) and (TEXHDR1.Height > 0) and ((TEXHDR2.TextureType = 0) or (TEXHDR2.TextureType = 2) or (TEXHDR2.TextureType = 4)) then
-              FSE_Add(disp+'.dds',TEX2.Offset,TEX1.FirstMipMapSize,1,TEX1.MipMapNum)
-            else
-              FSE_Add(disp,TEX2.Offset,TEX1.FirstMipMapSize,0,0)
-          end;
-        end;
-      until HDR.NextChunkOffset = 0;
-
-      Result := NumE;
-
-      if isWave then
-      begin
-        DrvInfo.ID := 'MOSD';
-        DrvInfo.ExtractInternal := False;
-      end
-      else
-      begin
-        if formatCheck = 20480 then
-          DrvInfo.ID := 'MOSDr'
-        else
-          DrvInfo.ID := 'MOSDe';
-        DrvInfo.ExtractInternal := True;
-      end;
-
-      DrvInfo.Sch := '';
-      DrvInfo.FileHandle := FHandle;
-
-    end;
-  end
-  else
-    Result := -2;
-
-end;
-
-function ReadEmpiresDawnOfTheModernWorldSSA(src: string): Integer;
-var HDR: SSAHeader;
-    ENT: SSAEntry;
-    NumE, curPos: integer;
-    disp: string;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    TotFSize := FileSeek(FHandle,0,2);
-
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR, SizeOf(HDR));
-
-    if (HDR.ID <> 'rass') then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'SSA';
-      ErrInfo.Games := 'Empires: Dawn of the Modern World';
-    end
-    else
-    begin
-      curPos := FileSeek(FHandle,0,1);
-      NumE := 0;
-
-      while curPos < (HDR.DirSize + 12) do
-      begin
-        disp := strip0(get32(FHandle));
-        FileRead(FHandle,ENT,SizeOf(ENT));
-        inc(NumE);
-        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
-        curPos := FileSeek(FHandle,0,1);
-      end;
-
-      Result := NumE;
-
-      DrvInfo.ID := 'SSA';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-
-  end
-  else
-    Result := -2;
-
-end;
-
-// Entropia Universe .BNT support
-// Go end of file, the 8 last bytes are:
-//   Index of Directory entries (4 bytes - Interger/Cardinal)
-//   Magic ID (4 bytes - "BNT2")
-
-type BNT2Entry = packed record
-      Size: integer;
-      Offset: integer;
-      Unknown01CRC: integer;   // CRC or Checksum?
-      Unknown02Null: integer;  // 00 00 00 00
-    end;
-
-function ReadEntropiaUniverseBNT(src: string): Integer;
-var ID: array[0..3] of char;
-    DirOffset: integer;
-    ENT: BNT2Entry;
-    NumE, x: integer;
-    disp: string;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-
-    // Go to end of file minus 4 bytes
-    FileSeek(Fhandle, -4, 2);
-
-    // Read the ID
-    FileRead(FHandle, ID, 4);
-
-    // If the ID is not BNT2 then this is not an Entropia Universe BNT file
-    if (ID <> 'BNT2') then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'BNT2';
-      ErrInfo.Games := 'Entropia Universe';
-    end
-    else
-    begin
-
-      // Go to end of file minus 8 bytes
-      FileSeek(FHandle,-8,2);
-
-      // Read the directory offset
-      FileRead(FHandle,DirOffset,4);
-
-      // Go to directory offset
-      FileSeek(FHandle,DirOffset,0);
-
-      // Read number of entries in the file
-      FileRead(FHandle,NumE,4);
-
-      // Read each entry
-      for x := 1 to NumE do
-      begin
-
-        // Filename (ending with 0x0A)
-        disp := strip0A(get0A(FHandle));
-
-        // Entry info
-        FileRead(FHandle,ENT,SizeOf(ENT));
-
-        // Add entry to FSE
-        FSE_Add(disp,ENT.Offset,ENT.Size,ENT.Unknown01CRC,ENT.Unknown02Null);
-
-      end;
-
-      Result := NumE;
-
-      DrvInfo.ID := 'BNT2';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-
-  end
-  else
-    Result := -2;
-
-end;
-
-type
-  STUFFList = record
-    Name: string;
-    Size: integer;
-  end;
-
-function ReadEveOnlineSTUFF : Integer;
-var NumE,Size,DataOffset,x : integer;
-    disp : string;
-    ENTL: array of STUFFList;
-begin
-
-  TotFSize := FileSeek(FHandle,0,2);
-
-  FileSeek(Fhandle, 0, 0);
-  FileRead(FHandle, NumE, 4);
-
-//  Result := 0;
-
-  if (NumE > TotFSize) or (NumE < 1) then
-  begin
-    FileClose(Fhandle);
-    FHandle := 0;
-    Result := -3;
-    ErrInfo.Format := 'STUFF';
-    ErrInfo.Games := 'Eve Online';
-  end
-  else
-  begin
-
-    SetLength(ENTL,NumE);
-    for x := 0 to NumE-1 do
-    begin
-      FileRead(FHandle,Size,4);
-      FileSeek(FHandle,4,1);
-      Disp := strip0(get0(Fhandle));
-      ENTL[x].Name := Disp;
-      ENTL[x].Size := Size;
-    end;
-
-    DataOffset := FileSeek(FHandle,0,1);
-
-    for x := 0 to NumE-1 do
-    begin
-      FSE_Add(ENTL[x].Name,DataOffset,ENTL[x].Size,0,0);
-      inc(DataOffset,ENTL[x].Size);
-    end;
-
-    SetLength(ENTL,0);
-
-    Result := NumE;
-
-    DrvInfo.ID := 'STUFF';
-    DrvInfo.Sch := '\';
-    DrvInfo.FileHandle := FHandle;
-    DrvInfo.ExtractInternal := True;
-
-  end;
-
-end;
-
-function ReadEvilIslandsRES(): Integer;
-var HDR: EIRES_Header;
-    ENT: EIRES_Entry;
-    NumE,x,z : integer;
-    BufName: PChar;
-    nam: string;
-begin
-
-  if FHandle > 0 then
-  begin
-    TotFSize := FileSeek(FHandle,0,2);
-
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR.ID, 4);
-    FileRead(FHandle, HDR.DirNum, 4);
-    FileRead(FHandle, HDR.DirOffset, 4);
-    FileRead(FHandle, HDR.NameSt, 4);
-
-    if (IntToHex(HDR.ID,7) <> '19CE23C') or (HDR.DirOffset > TotFSize) then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'EIRES';
-      ErrInfo.Games := 'Evil Islands';
-    end
-    else
-    begin
-      GetMem(BufName,HDR.NameSt);
-      try
-        FileSeek(FHandle,TotFSize-HDR.NameSt,0);
-        FileRead(FHandle,BufName^,HDR.NameSt);
-
-        FileSeek(FHandle,HDR.DirOffset,0);
-
-        NumE := HDR.DirNum;
-
-        for x := 1 to NumE do
-        begin
-
-          FileRead(FHandle,ENT.Unknown1, 4);
-          FileRead(FHandle,ENT.Size,4);
-          FileRead(FHandle,ENT.Offset,4);
-          FileRead(FHandle,ENT.Unknown2, 4);
-          FileRead(FHandle,ENT.NameSize,2);
-          FileRead(FHandle,ENT.NameOffset,4);
-
-          nam := '';
-          for z := ENT.NameOffset to ENT.NameOffset + ENT.NameSize-1 do
-            nam := nam + BufName[z];
-
-          FSE_Add(Strip0(nam),ENT.Offset,ENT.Size,0,0);
-
-      end;
-      finally
-        Freemem(BufName);
-      end;
-
-      //ShowMessage(IntTosTr(NumE));
-
-      Result := NumE;
-
-      DrvInfo.ID := 'EIRES';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-
-  end
-  else
-    Result := -2;
-
-end;
-
-// Experimental and PARTIAL F-22 Advanced Dominance Fighter .DAT files
-// The filenames are stored in the EXE files of the game
-// The DAT file only use some sort of Hash value, this function only retrieve
-// the hash and that's all... It is dirty but better than nothing! :)
-
-type F22adfDAT_Entry = packed record
-       Hash: integer;
-       Offset: integer;
-       Size: integer;
-     end;
-
-function ReadF22adfDAT(): Integer;
-var ENT: F22adfDAT_Entry;
-    DirNames: array of string;
-    ExtNames: array of string;
-    DirOffset,EntOffset,NumE,x : integer;
-    DirNum,NameSize,DirNameNum,ExtNameNum : word;
-begin
-
-  FileSeek(Fhandle, 0, 0);
-
-  // Read & seek to the offset to the directory structure
-  FileRead(FHandle, DirOffset, 4);
-  FileSeek(Fhandle, DirOffset,0);
-
-  // Read the number of entries
-  FileRead(FHandle, DirNum,2);
-  // Read the number of directory names
-  FileRead(FHandle, DirNameNum,2);
-  // Read the number of extension names
-  FileRead(FHandle, ExtNameNum,2);
-  // Read the size of the directory+extension names block
-  FileRead(FHandle, NameSize,2);
-
-  // Read the directory names
-  setLength(DirNames,DirNameNum);
-  for x := 1 to DirNameNum do
-    DirNames[x-1] := Get8(Fhandle);
-
-  // Read the extension names
-  setLength(ExtNames,ExtNameNum);
-  for x := 1 to ExtNameNum do
-    ExtNames[x-1] := Get8(Fhandle);
-
-  // Just to be sure, we calculate the offset of the entries and seek there
-  EntOffset := DirOffset+NameSize+8;
-  fileSeek(FHandle,EntOffset,0);
-
-  // For each entry read the hash, offset and size
-  NumE := DirNum;
-
-  for x := 1 to NumE do
-  begin
-
-    FileRead(FHandle,ENT,SizeOf(F22adfDAT_Entry));
-
-    FSE_Add(IntToHex(ENT.Hash,8),ENT.Offset,ENT.Size,0,0);
-
-  end;
-
-  Result := NumE;
-
-  DrvInfo.ID := 'F22DAT';
-  DrvInfo.Sch := '';
-  DrvInfo.FileHandle := FHandle;
-  DrvInfo.ExtractInternal := False;
-
-end;
-
-// This is experimental, I don't think it is working correctly, but I keep it
-// activated if someone is willing to use it, to figure it out a little bit more
-// There is so many fields I am just skipping...
-function ReadFableTheLostChaptersBIG: Integer;
-var HDR: FBIG_Header;
-    FTR: FBIG_FooterEntry;
-//    UNK: FBIG_EntryUnknown;
-    ENT: FBIG_Entry;
-    base, disp: string;
-    NumE, x, y, z, NumFooter, NumDesc, SizeDesc, CurP, Unknown5, UnknownJunkSize, NumUnknownEntries: integer;
-    TotFSize: integer;
-begin
-
-  TotFSize := FileSeek(Fhandle,0,2);
-  FileSeek(FHandle,0,0);
-  FileRead(FHandle,HDR,SizeOf(HDR));
-
-  if (HDR.ID <> 'BIGB') or (TotFSize < HDR.FooterOffset) then
-  begin
-    FileClose(Fhandle);
-    FHandle := 0;
-    Result := -3;
-    ErrInfo.Format := 'BIGB';
-    ErrInfo.Games := 'Fable: The Lost Chapters';
-  end
-  else
-  begin
-
-    FileSeek(FHandle,HDR.FooterOffset,0);
-    FileRead(FHandle,NumFooter,4);
-
-    NumE := 0;
-
-    for x := 1 to NumFooter do
-    begin
-      base := strip0(get0(FHandle));
-      FileRead(FHandle,FTR,SizeOf(FTR));
-      CurP := FileSeek(FHandle,0,1);
-      FileSeek(FHandle,FTR.Offset,0);
-      FileRead(FHandle,NumUnknownEntries,4);
-      FileSeek(FHandle,NumUnknownEntries*8,1);
-      for y := 1 to FTR.NumEntries do
-      begin
-        FileRead(FHandle,ENT,SizeOf(ENT));
-        disp := Get32(FHandle);
-        FileRead(FHandle,Unknown5,4);
-        FileRead(FHandle,NumDesc,4);
-        for z := 1 to NumDesc do
-        begin
-          FileRead(FHandle,SizeDesc,4);
-          FileSeek(FHandle,SizeDesc,1);
-        end;
-        FileRead(FHandle,UnknownJunkSize,4);
-        FileSeek(Fhandle,UnknownJunkSize,1);
-        FSE_Add(base+'\'+disp,ENT.Offset,ENT.Size,ENT.Unknown2,ENT.Unknown4);
-        inc(NumE);
-      end;
-      FileSeek(FHandle,CurP,0);
-    end;
-
-    Result := NumE;
-
-    DrvInfo.ID := 'BIGB';
-    DrvInfo.Sch := '\';
-    DrvInfo.FileHandle := FHandle;
-    DrvInfo.ExtractInternal := False;
-
-  end;
-
-end;
-
-function ReadFearARCH00(src: string): Integer;
-var HDR: ARCH00_Header;
-    ENT: ARCH00_Entry;
-    DIR: ARCH00_Directory;
-    disp, dirname: string;
-    NumE, x, curDir, curP, oldPer: integer;
-    namStream, dirStream: TMemoryStream;
-    filStream: THandleStream;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-
-    // We read the header
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR, SizeOf(HDR));
-
-    // If the ID in the header is not LTAR, then this is not a FEAR .ARCH00 file
-    if (HDR.ID <> 'LTAR') then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'LTAR';
-      ErrInfo.Games := 'F.E.A.R.';
-    end
-    else
-    begin
-
-      // We will first store both name chunks and whole directory chunk
-      // in two TMemoryStreams for later use
-      namStream := TMemoryStream.Create;
-      dirStream := TMemoryStream.Create;
-
-      try
-
-        // We will enclose the handle in a THandleStream so we can copy from it
-        filStream := THandleStream.Create(FHandle);
-
-        try
-
-          // We copy the names chunk to the memory stream
-          namStream.CopyFrom(filStream,HDR.NameSize);
-
-          // We store current offset
-          curP := filStream.Seek(0,soFromCurrent);
-
-          // We seek to the directory chunk offset
-          filStream.Seek(HDR.NumEntries*SizeOf(ENT),soFromCurrent);
-
-          // We copy the directory chunk to the memory stream
-          dirStream.CopyFrom(filStream,SizeOf(DIR)*HDR.NumDirectories);
-
-          // We go back to the stored offset
-          filStream.Seek(curP,soFromBeginning);
-
-        finally
-
-          // We free the handle stream
-          filStream.Free;
-
-        end;
-
-        NumE := HDR.NumEntries;
-
-        // This variable will be used to know in which directory we are
-        // we start at -1 in advance for the forced first update
-        curDir := -1;
-
-        // We fill the directory entry variable with zeros to force an update
-        // on first "for" run
-        FillChar(DIR,SizeOf(DIR),0);
-
-        OldPer := 0;
-
-        // We will go through all entries
-        for x := 1 to HDR.NumEntries do
-        begin
-
-          // Display progress
-          Per := ROund(((x / HDR.NumEntries)*100));
-          if (Per >= OldPer + 5) then
-          begin
-            SetPercent(Per);
-            OldPer := Per;
-          end;
-
-          // This is used to retrieve current directory entry
-          // It is enclosed in a while-do structure instead of if structure
-          // because some directory entries have the NumEntries field already
-          // at zero in the file...
-          while (DIR.NumEntries = 0) do
-          begin
-
-            // We go to the next entry
-            inc(curDir);
-            dirStream.Seek(curDir*SizeOf(DIR),soFromBeginning);
-
-            // We read it
-            dirStream.ReadBuffer(DIR,SizeOf(DIR));
-
-            // We retrieve the name
-            namStream.Seek(DIR.NamePos,soFromBeginning);
-            dirname := strip0(get0_Stream(namStream));
-
-            // We include the trailing slash is needed
-            if length(dirname)>0 then
-              dirname := dirname + '\';
-
-          end;
-
-          // We read the entry
-          FileRead(FHandle,ENT,SizeOf(ENT));
-
-          // We retrieve the name
-          namStream.Seek(ENT.NamePos,soFromBeginning);
-          disp := strip0(get0_Stream(namStream));
-
-          // We store the entry
-          FSE_Add(dirname+disp,ENT.Offset,ENT.Size,0,0);
-
-          // We decrease the directory entry counter
-          dec(DIR.NumEntries);
-
-        end;
-
-      finally
-
-        // We free both memory streams
-        namStream.Free;
-        dirStream.Free;
-
-      end;
-
-      Result := NumE;
-
-      DrvInfo.ID := 'LTAR';
-      DrvInfo.Sch := '\';
-      // Extraction will be handled by Dragon UnPACKer core
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-  end
-  else
-    Result := -2;
-
-end;
-
-function ReadFreespaceVP(src: string): Integer;
-var HDR: VPHeader;
-    ENT: VPEntry;
-    disp, currep: string;
-    NumE, x: integer;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR, 16);
-
-    if (HDR.Signature <> 'VPVP') or (HDR.Version <> 2) then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      ReadFreespaceVP := -3;
-      ErrInfo.Format := 'VP';
-      ErrInfo.Games := 'Conflict Freespace, Freespace 2';
-    end
-    else
-    begin
-
-      FileSeek(FHandle,HDR.DirOffset,0);
-      CurRep := '';
-      NumE := 0;
-
-      for x:= 1 to HDR.DirNum do
-      begin
-
-        Per := ROund(((x / HDR.DirNum)*100));
-        SetPercent(Per);
-        FileRead(Fhandle,ENT,44);
-        disp := Strip0(ENT.Filename);
-
-        if ENT.Size = 0 then
-        begin
-          if disp = '..' then
-          begin
-            CurRep := Copy(CurRep,1,length(CurRep)-1);
-            if Pos('\',CurRep) > 0 then
-              CurRep := Copy(CurRep,1,PosRev('\',CurRep))
-            else
-              CurRep := '';
-          end
-          else
-            CurRep := CurRep + disp + '\';
-        end
-        else
-        begin
-          inc(NumE);
-          FSE_Add(CurRep + disp,ENT.Offset,ENT.Size,0,0);
-        end;
-
-      end;
-
-      ReadFreespaceVP := NumE;
-
-      DrvInfo.ID := 'VP';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-  end
-  else
-    ReadFreespaceVP := -2;
-
-end;
-
-function ReplacePoints(src: string): string;
-var x: integer;
-begin
-
-  x := Pos('.',src);
-  while (x > 0) do
-  begin
-    src := Copy(src,1,x-1)+'_'+Copy(src,x+1,length(src)-x);
-    x := Pos('.',src);
-  end;
-
-  ReplacePoints := src;
-
-end;
-
-function GetHRFExt(ftype: byte): string;
-begin
-
-  case ftype of
-    0: GetHRFExt := '.raw';
-    1: GetHRFExt := '.bmp';
-    2: GetHRFExt := '.iff';
-    3: GetHRFExt := '.png';
-    4: GetHRFExt := '.gif';
-    5: GetHRFExt := '.wmf';
-    6: GetHRFExt := '.emf';
-    7: GetHRFExt := '.jpg';
-  100: GetHRFExt := '.mid';
-  101: GetHRFExt := '.voc';
-  102: GetHRFExt := '.wav';
-  103: GetHRFExt := '.669';
-  104: GetHRFExt := '.xm';
-  105: GetHRFExt := '.it';
-  106: GetHRFExt := '.s3m';
-  111: GetHRFExt := '.mp1';
-  112: GetHRFExt := '.mp2';
-  113: GetHRFExt := '.mp3';
-  199: GetHRFExt := '';
-  200: GetHRFExt := '.avi';
-  201: GetHRFExt := '.mov';
-  202: GetHRFExt := '.fli';
-  203: GetHRFExt := '.flc';
-  204: GetHRFExt := '.bik';
-  else
-    GetHRFExt := '.unk'+inttostr(ftype);
-  end;
-
-end;
-
-function NumberPadding(src: integer): string;
-var res: string;
-    x: integer;
-begin
-
-  res := inttostr(src);
-  if length(res) < 10 then
-    for x := 1 to 10-length(res) do
-      res := '0'+res;
-
-  NumberPadding := res;
-
-end;
-
-function CompareBytes(buf1, buf2: array of byte; size: byte): boolean;
-var res : boolean;
-    x: byte;
-begin
-
-  res := buf1[0] = buf2[0];
-  x := 1;
-
-  while res and (x < size) do
-  begin
-    res := buf1[x] = buf2[x];
-    Inc(x);
-  end;
-
-  CompareBytes := res;
-
-end;
 
 function ReadBattlefield1942(src: string): integer;
 var ENT: RFA_Entry;
@@ -4627,6 +1726,57 @@ begin
     Result := -2;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Black & White, Black & White 2, Fable: The Lost Chapters .LUG support ==== //
+// -------------------------------------------------------------------------- //
+
+type LUG_Chunk = packed record
+       ID: array[0..31] of char;
+       Size: integer;
+     end;
+     LUG_LHAudioBankMetaData = packed record
+       Unknown0: array[0..27] of byte;
+       NumEntries: integer;
+     end;
+     // SampleID: Integer;
+     // SampleName: get32
+     LUG_LHAudioBankMetaData_Entry = packed record
+       Size: Integer;
+       Offset: Integer;
+       Unknown1: integer;         // 01 00 01 00
+       SampleRate: Integer;
+       Unknown2: Integer;         // 00 00 00 00 or FF FF FF FF
+       Unknown3: Integer;
+     end;
+     LUG_LHFileSegmentBankInfo = packed record
+       TitleDescription: array[0..519] of char;
+     end;
+     LUG_LHAudioBankSampleTable = packed record
+       NumEntries1: word;
+       NumEntries2: word;         // Always identical to NumEntries1 ?
+     end;
+     LUG_LHAudioBankSampleTable_Entry = packed record
+       SampleName: array[0..255] of char;
+       Unknown1: integer;
+       Unknown2a: integer;
+       Unknown2b: integer;
+       Size: integer;
+       RelOffset: integer;        // Offset in WaveData of LHAudioWaveData bloc
+       Unknown3: integer;
+       Unknown4: integer;
+       Unknown5: integer;
+       Unknown6: integer;
+       Unknown7: integer;
+       SampleRate: integer;
+       Unknown8: integer;
+       Unknown9: integer;
+       Unknown10: integer;
+       Unknown11: integer;
+       Unknown12: integer;
+       SampleDescription: array[0..255] of char;
+       Unknown13: array[0..75] of byte;
+     end;
 
 function ReadLionheadAudioBank(src: string): Integer;
 var HDR: LUG_Chunk;
@@ -4870,6 +2020,17 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Black & White 2 .STUFF support =========================================== //
+// -------------------------------------------------------------------------- //
+
+type BW2STUFFEntry = packed record
+       Filename: array[0..255] of char;  // Null terminated
+       Offset: integer;
+       Size: integer;
+       CDateTime: integer;
+     end;
+
 function ReadBlackAndWhite2STUFF: Integer;
 var NumE, x, TotFSize, DirOffset : integer;
     disp : string;
@@ -4911,6 +2072,34 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Bloodrayne .POD support ================================================== //
+// -------------------------------------------------------------------------- //
+
+type POD3Header = packed record
+       ID: array[0..3] of char;
+       Unknown1: integer;
+       Description: array[0..79] of char;
+       NumEntries: integer;
+       Unknown3: integer;
+       Unknown4: integer;
+       Unknown5: integer;
+       Empty: array[1..160] of byte;
+       DirOffset: integer;
+       Unknown6: integer;
+       NamesSize: integer;
+       Unknown8: integer;
+       Unknown9: integer;
+       UnknownA: integer;
+     end;
+     POD3Entry = packed record
+       NameOffset: integer;
+       Size: integer;
+       Offset: integer;
+       Unknown1: integer;
+       Unknown2: integer;
+     end;
+
 function ReadBloodRaynePOD(): Integer;
 var HDR: POD3Header;
     ENT: POD3Entry;
@@ -4946,7 +2135,7 @@ begin
 
     FileRead(Fhandle, ENT, SizeOf(POD3Entry));
     NameStream.Seek(ENT.NameOffset,0);
-    disp := Get0_Stream(NameStream);
+    disp := Get0(NameStream);
 
     FSE_Add(Strip0(disp),ENT.Offset,ENT.Size,0,0);
 
@@ -4960,6 +2149,2774 @@ begin
   DrvInfo.Sch := '\';
   DrvInfo.FileHandle := FHandle;
   DrvInfo.ExtractInternal := False;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Civilization IV .FPK support ============================================= //
+// -------------------------------------------------------------------------- //
+
+type FPKHeader = packed record
+       Unknown1: Integer;
+       ID: array[0..3] of char;
+       Unknown2: Byte;
+       NumEntries: integer;
+     end;
+     FPKEntry = packed record
+       FileTime: Integer;
+       Unknown: Integer;
+       Size: Integer;
+       Offset: Integer;
+     end;
+
+function Get32_FPK(src: integer): string;
+var tchar: Pchar;
+    tint, x: Integer;
+    res: string;
+begin
+
+  FileRead(src,tint,4);
+  if tint > 255 then
+  begin
+    raise Exception.Create(inttostr(tint)+' octets! t''es fou ?!'+#10+inttostr(fileseek(FHandle,0,1))+#10+inttohex(fileseek(FHandle,0,1),8));
+  end;
+  GetMem(tchar,tint);
+  FillChar(tchar^,tint,0);
+  FileRead(src,tchar^,tint);
+  for x := 0 to tint-1 do
+  begin
+    tchar[x] := chr(ord(tchar[x])-1);
+  end;
+
+  res := tchar;
+  result := Copy(res,1,tint);
+
+  FreeMem(tchar);
+
+end;
+
+function ReadCivilization4FPK(src: string): Integer;
+var HDR: FPKHeader;
+    ENT: FPKEntry;
+    disp: string;
+    NumE, x, NumTest, CurP: integer;
+    NumDummy: byte;
+    TotFSize: integer;
+    OldPer: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    // We retrieve the full size of the file
+    TotFSize := FileSeek(Fhandle,0,2);
+    FileSeek(FHandle,0,0);
+
+    // We read the header
+    FileRead(FHandle,HDR,SizeOf(HDR));
+
+    // If the ID is "FPK_"
+    if (HDR.ID <> 'FPK_') then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'FPK';
+      ErrInfo.Games := 'Cibilization 4';
+    end
+    else
+    begin
+
+      // We store number of entries
+      NumE := HDR.NumEntries;
+
+      OldPer := 0;
+
+      // We go throught the directory
+      for x:= 1 to NumE do
+      begin
+
+        // Code to display the progress into Dragon UnPACKer
+        // The If section is done so the update is not done too often
+        // (which slows down everything)
+        Per := ROund(((x / NumE)*100));
+        if Per >= OldPer + 5 then
+        begin
+          SetPercent(Per);
+          OldPer := Per;
+        end;
+
+        // We retrieve the filename, which is a Get32 format (32bit for size then the string)
+        // But with an encryption (they added 1 to each char), so Get32_FPK is decrypting "on-the-fly" (lol)
+        disp := Strip0(Get32_FPK(FHandle));
+
+        // We store current offset in directoy
+        CurP := FileSeek(FHandle,0,1);
+
+        // We read the entry information
+        FileRead(FHandle,ENT,SizeOf(ENT));
+
+        // We also read the 32bit integer of the next Get32 filename as a test number
+        FileRead(FHandle,NumTest,4);
+
+        // If the NumTest is more than 0 and less than MAXPATH (255 chars)
+        // If the Offset is between start & end of file
+        // If the Size is lower than whole file size
+        // If the Offset + Size is not going over the end of file
+        if (NumTest <= 255) and (NumTest >= 0) and (ENT.Offset > 12) and (ENT.Offset < TotFSize) and (ENT.Size < TotFSize) and (ENT.Offset + ENT.Size <= TotFSize) then
+        begin
+
+          // Then the Entry was read correctly so we just seek 4 bytes before (because of the NumTest reading)
+          FileSeek(FHandle,-4,1);
+
+        end
+        // Else then the entry info is not directly after the filename, we then need
+        // to read one byte with the length of that useless junk and skip that number of bytes
+        else
+        begin
+
+          // We seek to the stored position
+          FileSeek(FHandle,CurP,0);
+
+          // We read how many dummy bytes we need to skip
+          FileRead(FHandle,NumDummy,1);
+          // We skip them (minus one because the dummy number is included in it)
+          FileSeek(FHandle,NumDummy-1,1);
+
+          // We read the entry info again
+          FileRead(FHandle,ENT,SizeOf(ENT));
+        end;
+
+        // We store the entry
+        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
+
+      end;
+
+      // We return the number of entries found
+      Result := NumE;
+
+      // ID is FPK
+      DrvInfo.ID := 'FPK';
+      // Directory separator is '\'
+      DrvInfo.Sch := '\';
+      // Extraction will be handled by Dragon UnPACKer core
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Command & Conquer: Generals .BIG support ================================= //
+// -------------------------------------------------------------------------- //
+
+function revInt(tab: array of byte): integer;
+begin
+
+  result := tab[3] + tab[2] * $100 + tab[1] * $10000 + tab[0] * $1000000;
+
+//  ShowMessage(inttostr(tab[0])+#10+inttostr(tab[1])+#10+inttostr(tab[2])+#10+inttostr(tab[3]));
+end;
+
+type BIGHeader = packed record
+       ID: array[0..3] of char;  // BIGF
+       TotFileSize: integer;
+       NumFiles: array[0..3] of byte;   // Inverse Integer
+       DataOffset: array[0..3] of byte; // Inverse Integer
+     end;
+     BIGEntry = packed record
+       Offset: array[0..3] of byte; // Inverse Integer
+       Size: array[0..3] of byte;   // Inverse Integer
+     end;
+     // Get0 filename
+
+function ReadCommandAndConquerGeneralsBIG: Integer;
+var HDR: BIGHeader;
+    ENT: BIGEntry;
+    disp: string;
+    NumE, x, OldPer: integer;
+    TotFSize: Integer;
+    isAntiSlash: Boolean;
+begin
+
+  TotFSize := FileSeek(Fhandle,0,2);
+  FileSeek(FHandle,0,0);
+  FileRead(FHandle,HDR,SizeOf(HDR));
+
+  if ((HDR.ID <> 'BIGF') and (HDR.ID <> 'BIG4')) or (TotFSize <> HDR.TotFileSize) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'BIGF';
+    ErrInfo.Games := 'Command & Conquer: Generals, The Lord of the Rings: Battle for Middle Earth';
+  end
+  else
+  begin
+
+    NumE := revInt(HDR.NumFiles);
+    OldPer := 0;
+
+    isAntiSlash := false;
+
+    for x:= 1 to NumE do
+    begin
+      Per := ROund(((x / NumE)*100));
+      if Per >= (OldPer + 5) then
+      begin
+        SetPercent(Per);
+        OldPer := Per;
+      end;
+      FileRead(FHandle,ENT,8);
+      disp := Strip0(Get0(FHandle));
+      if not(isAntiSlash) and (pos('/',disp) > 0) then
+        isAntiSlash := true;
+      FSE_Add(disp,revInt(ENT.Offset),revInt(ENT.Size),0,0);
+    end;
+
+    Result := NumE;
+
+    DrvInfo.ID := 'BIGF';
+    if isAntiSlash then
+      DrvInfo.Sch := '/'
+    else
+      DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Commandos 3 .PCK support ================================================= //
+// -------------------------------------------------------------------------- //
+
+type PCKEntry = packed record
+       Name: array[0..35] of char;
+       Flag: integer;              // $00 = File
+                                   // $01 = Directory
+                                   // $FF = End of directory
+       Size: longword;             // $FFFFFFFF = Not a file
+       Offset: longword;           // $FFFFFFFF = End of directory
+     end;
+
+function ReadCommandos3PCK_aux(curDir: string): Integer;
+var ENT: PCKEntry;
+    disp, disp2: string;
+    tbyt,tmode: byte;
+begin
+
+  result := 0;
+
+  repeat
+
+    FileRead(FHandle,ENT,SizeOf(ENT));
+
+    if (ENT.Flag = 0) then
+    begin
+      disp := strip0(ENT.Name);
+      disp2 := Uppercase(ExtractFileExt(disp));
+      tmode := 0;
+      tbyt := 0;
+      if disp2 = '.WAV' then
+        tbyt := $52
+      else if disp2 = '.STR' then
+        tbyt := $FF
+      else if disp2 = '.FAC' then
+        tbyt := $5B
+      else if disp2 = '.CFG' then
+        tbyt := $5B
+      else if disp2 = '.ABI' then
+        tbyt := $4C
+      else if disp2 = '.GRL' then
+        tbyt := $47
+      else if disp2 = '.MAN' then
+        tbyt := $28
+      else if disp2 = '.MAC' then
+        tbyt := $54
+      else if disp2 = '.TUT' then
+        tbyt := $5B
+      else if disp2 = '.MBI' then
+        tbyt := $32
+      else if disp2 = '.SEC' then
+        tbyt := $2
+      else if (disp2 = '.FNC') or (disp2 = '.FNM') then
+        tmode := 1
+      else if (disp2 = '.ANI') or (disp2 = '.AN2') or (disp2 = '.MSB') or (disp2 = '.BRI') or (uppercase(disp) = 'FILE.BIN') or (uppercase(disp) = 'CHUSMA.DAT') or (uppercase(disp) = 'BER2.MIS') then
+        tbyt := $42
+      else if (uppercase(disp) = 'VAR.DAT') then
+        tbyt := $23
+      else if (uppercase(disp) = 'MISIONES.DAT') then
+        tbyt := $2F
+      else if (uppercase(disp) = 'PRGE.DAT') then
+        tbyt := $28
+      else if (uppercase(disp) = 'PARGLOBAL.DAT') then
+        tbyt := $5B
+      else if disp2 = '.OGC' then
+        tbyt := $20
+      else if disp2 = '.MIS' then
+        tbyt := $5B
+      else if disp2 = '.LIS' then
+        tbyt := $5B
+      else if disp2 = '.GMT' then
+        tbyt := $5B
+      else if disp2 = '.MA2' then
+        tbyt := $3
+      else if (disp2 = '.GSC') or (disp2 = '.BAS') then
+      begin
+        tbyt := $5B;
+        tmode := 2;
+      end
+      else
+        tbyt := 0;
+      FSE_Add(curDir+disp,ENT.Offset, ENT.Size,tbyt,tmode);
+//      FSE_Add(curDir+strip0(ENT.Name),ENT.Offset, tbyt, tbyt,0);
+//      FSE_Add(curDir+strip0(ENT.Name),curPos, tbyt, tbyt,0);
+      inc(result);
+    end
+    else if (ENT.Flag = 1) then
+    begin
+      disp := curDir + strip0(ENT.Name)+'\';
+      inc(result,readCommandos3PCK_aux(disp));
+    end;
+
+  until (ENT.Flag = $FF);
+
+end;
+
+function ReadCommandos3PCK(src: string): Integer;
+var ENT: PCKEntry;
+    disp: string;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    FileSeek(FHandle,0,0);
+
+    FileRead(FHandle,ENT,SizeOf(ENT));
+
+    if (ENT.Flag <> 1) or (ENT.Size <> $FFFFFFFF) or (ENT.Offset <> $30) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'PCK';
+      ErrInfo.Games := 'Commandos 3';
+    end
+    else
+    begin
+
+      Disp := Strip0(ENT.Name);
+      if length(Disp) > 0 then
+        Disp := Disp + '\';
+
+      Result := ReadCommandos3PCK_aux(Disp);
+
+      DrvInfo.ID := 'PCK';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := True;
+
+    end;
+  end
+  else
+    Result := -2;
+
+end;
+
+
+procedure DecryptPCKToStream(src : integer; dst : TStream; soff : Int64; ssize : Int64; seed: integer; silent: boolean);
+var
+  //sFileLength: Integer;
+  Buffer: PByteArray;
+  i,x,numbuf, restbuf: Integer;
+  per, oldper, perstep: word;
+  real1, real2: real;
+  key: byte;
+  skeleton: byte;
+  foundkey: boolean;
+begin
+
+  //sFileLength := FileSeek(src,0,2);
+  FileSeek(src,soff,0);
+  numbuf := ssize div 1024;
+  if (numbuf > 25000) then
+    perstep := 2
+  else if (numbuf > 12500) then
+    perstep := 5
+  else if (numbuf > 6000) then
+    perstep := 10
+  else
+    perstep := 15;
+  restbuf := ssize mod 1024;
+
+  key := 0;
+  skeleton := 0;
+  foundkey := false;
+
+  GetMem(Buffer,1024);
+  try
+    oldper := 0;
+
+    for i := 1 to numbuf do
+    begin
+      FileRead(src, Buffer^, 1024);
+      if not(foundkey) then
+      begin
+        key := buffer^[0] xor seed;
+        foundkey := true;
+      end;
+      for x := 0 to (1023 div 16) do
+      begin
+        Buffer^[x*16] := Buffer^[x*16] xor (key+skeleton);
+//      showmessage(inttostr(x*16)+' '+inttohex(key+skeleton,2));
+        if (skeleton = 240) then
+          skeleton := 0
+        else
+          inc(skeleton,16);
+        inc(key);
+        if (key = 7) then
+          key := 8;
+        if (key >= 15) then
+          key := 0;
+      end;
+      dst.WriteBuffer(Buffer^,1024);
+      if not silent then
+      begin
+        real1 := i;
+        real2 := numbuf;
+        real1 := (real1 / real2)*100;
+        per := Round(real1);
+        if per >= oldper + perstep then
+        begin
+          oldper := per;
+          SetPercent(per);
+        end;
+      end;
+    end;
+
+    if not silent then
+      SetPercent(100);
+
+    FileRead(src, Buffer^, restbuf);
+    for x := 0 to ((restbuf-1) div 16) do
+    begin
+      if not(foundkey) then
+      begin
+        key := buffer^[0] xor seed;
+        foundkey := true;
+      end;
+      Buffer^[x*16] := Buffer^[x*16] xor (key+skeleton);
+      if (skeleton = 240) then
+        skeleton := 0
+      else
+        inc(skeleton,16);
+      inc(key);
+      if (key = 7) then
+        key := 8;
+      if (key >= 15) then
+        key := 0;
+    end;
+    dst.WriteBuffer(Buffer^, restbuf);
+
+  finally
+    FreeMem(Buffer);
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Cyberbykes .BIN support ================================================== //
+// -------------------------------------------------------------------------- //
+
+type BIN_Entry = packed record
+       Filename: array[0..15] of char;
+       Offset: cardinal;
+       Size: cardinal;
+     end;
+
+function ReadCyberBykesBIN(src: string): Integer;
+var ENT: BIN_Entry;
+    disp: string;
+    NumE, x, preval: integer;
+    curOffset: int64;
+    TotFSize: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    TotFSize := FileSeek(Fhandle,0,2);
+    FileSeek(FHandle,0,0);
+    FileRead(FHandle,NumE,4);
+
+    if (((NumE*4)+4) > TotFSize) or (NumE < 0) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'CBIN';
+      ErrInfo.Games := 'CyberBykes, Shadow Racer VR';
+    end
+    else
+    begin
+
+      try
+
+        for x:= 1 to NumE do
+        begin
+          Per := ROund(((x / NumE)*100));
+          SetPercent(Per);
+          FileRead(FHandle,ENT,SizeOf(BIN_Entry));
+          CurOffset := FileSeek(FHandle,0,1);
+          FileSeek(FHandle,ENT.Offset,0);
+          FileRead(FHandle,preval,4);
+          FileSeek(FHandle,curOffset,0);
+          disp := Strip0(ENT.Filename);
+          FSE_Add(disp,ENT.Offset+4,ENT.Size-4,preval,0);
+        end;
+
+        Result := NumE;
+
+        DrvInfo.ID := 'CBIN';
+        DrvInfo.Sch := '';
+        DrvInfo.FileHandle := FHandle;
+        DrvInfo.ExtractInternal := False;
+
+      except
+        on E:EBadFormat do
+        begin
+          FileClose(Fhandle);
+          FSE_Free;
+          FHandle := 0;
+          Result := -3;
+          ErrInfo.Format := 'CBIN';
+          ErrInfo.Games := 'CyberBykes, Shadow Racer VR';
+        end;
+        on E:Exception do
+        begin
+          raise e;
+        end;
+      end;
+    end;
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Dark Forces .GOB support ================================================= //
+// -------------------------------------------------------------------------- //
+
+type DGOBHeader = packed record
+       ID: array[0..3] of char;
+       DirOffset: integer;
+     end;
+     DGOBIndex = packed record
+       Offset: integer;
+       Size: integer;
+       Name: array[0..12] of char;
+     end;
+
+function ReadDarkForcesGOB(): Integer;
+var HDR: DGOBHeader;
+    ENT: DGOBIndex;
+    disp: string;
+    NumE, x: integer;
+begin
+
+  FileSeek(Fhandle, 0, 0);
+  FileRead(FHandle, HDR, 8);
+
+  FileSeek(FHandle,HDR.DirOffset,0);
+  FileRead(FHandle,NumE,4);
+
+  for x:= 1 to NumE do
+  begin
+
+    Per := ROund(((x / NumE)*100));
+    SetPercent(Per);
+    FileRead(Fhandle,ENT.Offset,4);
+    FileRead(Fhandle,ENT.Size,4);
+    FileRead(Fhandle,ENT.Name,13);
+    disp := Strip0(ENT.Name);
+
+    FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
+
+  end;
+
+  ReadDarkForcesGOB := NumE;
+
+  DrvInfo.ID := 'DGOB';
+  DrvInfo.Sch := '';
+  DrvInfo.FileHandle := FHandle;
+  DrvInfo.ExtractInternal := False;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Darkstone .MTF support =================================================== //
+// -------------------------------------------------------------------------- //
+
+type MTFCompress = packed record
+        ID1: Byte;
+        ID2: Byte;
+        Reserved1 : Byte;
+        Reserved2 : Byte;
+        NumBlocks : integer ;
+        Flags : integer;
+     end;
+
+function ReadDarkstoneMTF(src: string): integer;
+var filnam: string;
+    NumE, x: word;
+    Offset, Size, Per, PerOld: integer;
+    //filesize: Cardinal;
+begin
+
+  FHandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileSeek(FHandle, 0, 0);
+    FileRead(FHandle, NumE, 4);
+
+    if NumE < 1 then
+    begin
+      FileClose(FHandle);
+      FHandle := 0;
+      ReadDarkstoneMTF := -3;
+      ErrInfo.Format := 'MTF';
+      ErrInfo.Games := 'Darkstone';
+    end
+    else
+    begin
+
+      PerOld := 0;
+
+      for x:= 1 to NumE do
+      begin
+        Per := Round((x / NumE)*100);
+        if Per >= PerOld + 5 then
+        begin
+          PerOld:= Per;
+          SetPercent(Per);
+        end;
+        filnam := Get32(FHandle);
+        FileRead(FHandle,Offset,4);
+        FileRead(FHandle,Size,4);
+
+        FSE_add(strip0(filnam),Offset,Size,0,0);
+      end;
+
+      ReadDarkstoneMTF := NumE;
+
+      DrvInfo.ID := 'MTF';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := True;
+    end;
+  end
+  else
+    ReadDarkstoneMTF := -2;
+
+end;
+
+Function ReloadBuffer(Offset: int64; BufSize: integer; Buffer: PByteArray): integer;
+begin
+
+  FileSeek(FHandle,Offset,0);
+  ReloadBuffer := FileRead(FHandle,Buffer^,BufSize);
+
+end;
+
+function Puiss2(x: byte): integer;
+begin
+  Result := 0;
+
+  case x of
+    0: Puiss2 := 1;
+    1: Puiss2 := 2;
+    2: Puiss2 := 4;
+    3: Puiss2 := 8;
+    4: Puiss2 :=16;
+    5: Puiss2 :=32;
+    6: Puiss2 :=64;
+    7: Puiss2 :=128;
+  end;
+
+end;
+
+procedure DecompressMTFToStream(outputstream: TStream; Offset, Size: int64);
+var
+  Buf: PByteArray;
+  BufEnd: PByteArray;
+  CurPos: int64;
+  BufPos, DstPos, tmpL, Copie, Retour, y: integer;
+  x, tmpb: byte;
+//  T: TextFile;
+begin
+
+//  AssignFile(T, 'h:\testmtf.log');
+//  Rewrite(T);
+
+  CurPos := Offset;
+
+  GetMem(Buf,16384);
+  GetMem(BufEnd,Size);
+
+  CurPos := CurPos + ReloadBuffer(Offset,16384,Buf);
+  BufPos := 0;
+  DstPos := 0;
+
+  repeat
+
+    tmpb := Buf^[BufPos];
+//    Writeln(T,IntToStr(BufPos)+'/16384 = '+IntToStr(tmpb));
+
+    for x:=0 to 7 do
+      if (tmpb and Puiss2(x)) = Puiss2(x) then
+      begin
+//       Write(T,' for-if -> '+inttostr(x)+' '+inttostr(Puiss2(x)));
+        //ShowMessage(IntToStr(BufPos));
+        BufPos := BufPos + 1;
+        if BufPos = 16384 then
+        begin
+//          Write(T,'<REBUFFERING> '+inttostr(CurPos));
+          CurPos := CurPos + ReloadBuffer(CurPos,16384,Buf);
+//          Writeln(' '+inttostr(CurPos));
+          BufPos := 0;
+        end;
+        BufEnd^[DstPos] := Buf^[BufPos];
+        DstPos := DstPos + 1;
+//        Writeln(T,' end-for-if');
+      end
+      else
+      begin
+//        Write(T,' for-else -> '+inttostr(x)+' '+inttostr(Puiss2(x)));
+        BufPos := BufPos + 1;
+        if BufPos = 16384 then
+        begin
+//          Write(T,'<REBUFFERING> '+inttostr(CurPos));
+          CurPos := CurPos + ReloadBuffer(CurPos,16384,Buf);
+//          Writeln(T,' '+inttostr(CurPos));
+          BufPos := 0;
+        end;
+        TmpL := Integer(Buf^[BufPos]);
+        BufPos := BufPos + 1;
+        if BufPos = 16384 then
+        begin
+//          Write(T,'<REBUFFERING> '+inttostr(CurPos));
+          CurPos := CurPos + ReloadBuffer(CurPos,16384,Buf);
+//          Writeln(T,' '+inttostr(CurPos));
+          BufPos := 0;
+        end;
+        TmpL := TmpL + 256 * Integer(Buf^[BufPos]);
+        Copie := TmpL div 1024;
+        Retour := TmpL mod 1024;
+//        ShowMessage(IntToStr(TmpB)+#10+IntToStr(BufPos)+#10+IntToStr(DstPos)+#10+IntToStr(TmpL)+#10+IntToStr(Copie)+#10+IntToStr(Retour));
+        For y := 1 to Copie + 3 do
+        begin
+          BufEnd^[DstPos] := BufEnd^[DstPos - Retour];
+          Inc(DstPos);
+        end;
+//        Writeln(T,' end-for-else');
+      end;
+
+    Inc(BufPos);
+    if BufPos = 16384 then
+    begin
+//      Write(T,'<REBUFFERING> '+inttostr(CurPos));
+      CurPos := CurPos + ReloadBuffer(CurPos,16384,Buf);
+//      Writeln(T,' '+inttostr(CurPos));
+      BufPos := 0;
+    end;
+//    ShowMessage(IntToStr(DstPos) + #10 + IntToStr(Size) + #10);
+  until (DstPos > Size);
+
+//  CloseFile(T);
+
+  outputstream.WriteBuffer(BufEnd^, Size);
+
+  FreeMem(Buf);
+  FreeMem(BufEnd);
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Descent .HOG support ===================================================== //
+// -------------------------------------------------------------------------- //
+
+type HOGEntry = packed record
+       Filename: array[0..12] of char;
+       FileSize: integer;
+     end;
+     HOG2Header = packed record
+       NumFiles: integer;
+       Offset: integer;
+       FillData: array[0..55] of byte;
+     end;
+     HOG2Entry = packed record
+       Filename: array[0..35] of char;
+       Unknown: integer;
+       FileSize: integer;
+       Timestamp: integer;
+     end;
+
+const
+  HOGID : String = 'DHF';
+  HOG2ID : String = 'HOG2';
+
+function ReadDescentHOG(src: string): Integer;
+var HDR: HOG2Header;
+    ENT: HOGEntry;
+    ENT2: HOG2Entry;
+    disp: string;
+    NumE, TotSize, CurPos, x: integer;
+    ID: array[0..2] of char;
+    IDF: array[0..3] of char;
+    PerInfo: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, ID, 3);
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, IDF, 4);
+
+    if ID = HOGID then
+    begin
+
+      CurPos := 3;
+      TotSize := FileSeek(FHandle,0,2);
+      PerInfo := TotSize - CurPos; 
+      NumE := 0;
+
+      repeat
+        Per := ROund((((PerInfo) / TotSize)*100));
+        SetPercent(Per);
+        FileSeek(FHandle,CurPos,0);
+
+        FileRead(FHandle,ENT.Filename,13);
+        FileRead(FHandle,ENT.FileSize,4);
+
+        CurPos := CurPos + 17;
+        disp := Strip0(ENT.Filename);
+
+        FSE_Add(disp,CurPos,ENT.FileSize,0,0);
+        Inc(NumE);
+
+        CurPos := CurPos + ENT.FileSize;
+      until (CurPos >= TotSize);
+
+      ReadDescentHOG := NumE;
+
+      DrvInfo.ID := 'HOG';
+      DrvInfo.Sch := '';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end
+    else if IDF = HOG2ID then
+    begin
+
+      FileRead(FHandle,HDR,64);
+      CurPos := HDR.Offset;
+      NumE := HDR.NumFiles;
+
+      for x := 1 to NumE do
+      begin
+        Per := ROund(((x / NumE)*100));
+        SetPercent(Per);
+        FileRead(FHandle,ENT2,48);
+
+        disp := strip0(ENT2.Filename);
+
+        FSE_add(disp,CurPos+48,ENT2.FileSize,0,0);
+
+        CurPos := CurPos + ENT2.FileSize;
+      end;
+
+      ReadDescentHOG := NumE;
+
+      DrvInfo.ID := 'HOG2';
+      DrvInfo.Sch := '';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end
+    else
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      ReadDescentHOG := -3;
+      ErrInfo.Format := 'HOG';
+      ErrInfo.Games := 'Descent, Descent 2, Descent 3';
+    end;
+  end
+  else
+    ReadDescentHOG := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Dreamfall .PAK support =================================================== //
+// -------------------------------------------------------------------------- //
+
+type HDRDreamfallTLJPAK = packed record
+       ID: array[0..11] of char;
+       NumberOfEntries: integer;
+       Unknown2: integer;
+       Unknown3: integer;
+     end;
+     ENTDreamfallTLJPAK = packed record
+       Offset: integer;
+       Size: integer;
+       Unknown1: integer;
+       Unknown2: integer;
+       Unknown3: integer;
+     end;
+
+function ReadDreamfallTLJPAK(filename: string): integer;
+var HDR: HDRDreamfallTLJPAK;
+    ENT: ENTDreamfallTLJPAK;
+    x, NumE, tmpInt, MaxLength: integer;
+    ENTBuffer: TMemoryStream;
+    TmpBuffer: THandleStream;
+    Disp, DispPre, DispFill: String;
+begin
+
+  FileSeek(Fhandle, 0, 0);
+  FileRead(Fhandle, HDR, Sizeof(HDRDreamfallTLJPAK));
+
+  if HDR.ID <> 'tlj_pack0001' then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'TLJPAK';
+    ErrInfo.Games := 'Dreamfall: The Longest Journey';
+  end
+  else
+  begin
+
+    TmpBuffer := THandleStream.Create(FHandle);
+    ENTBuffer := TMemoryStream.Create;
+    ENTBuffer.CopyFrom(TmpBuffer,HDR.NumberOfEntries * SizeOf(ENTDreamfallTLJPAK));
+    ENTBuffer.Seek(0,0);
+    TmpBuffer.Free;
+
+    NumE := 0;
+    DispPre := ExtractFileExt(filename);
+    if (length(DispPre) > 1) then
+      DispPre := '_'+rightstr(DispPre,length(DispPre)-1)
+    else
+      DispPre := '';
+    DispPre := ChangeFileExt(ExtractFileName(filename),DispPre);
+
+    MaxLength := length(inttostr(HDR.NumberOfEntries));
+    DispFill := stringofchar('0',MaxLength);
+
+    for x:= 1 to HDR.NumberOfEntries do
+    begin
+
+      Per := ROund(((x / HDR.NumberOfEntries)*100));
+      SetPercent(Per);
+
+      ENTBuffer.ReadBuffer(ENT,Sizeof(ENTDreamfallTLJPAK));
+
+      if (ENT.Size > 0) then
+      begin
+        FileSeek(FHandle,ENT.Offset,0);
+        FileRead(FHandle,tmpInt,4);
+        if (tmpInt = $20534444) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.dds'
+        else if ((tmpInt and $E0FF) = $E0FF) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.mp3'
+        else if (tmpInt = $73760A0D) or (tmpInt = $312E7376) or (tmpInt = $31157376) or (tmpInt = $315F7376) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.vs1'
+        else if (tmpInt = $322E7376) or (tmpInt = $6E69203B) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.vs2'
+        else if (tmpInt = $0A0D2F2F) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.vsc'
+        else if (tmpInt = $312E7370) or (tmpInt = $696C203B) or (tmpInt = $6576203B) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.ps1'
+        else if (tmpInt = $322E7370) or (tmpInt = $6170203B) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.ps2'
+        else if (tmpInt = $615F7376) or (tmpInt = $332E7370) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.ps3'
+        else if (tmpInt = $5367674F) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.ogg'
+        else if (tmpInt = $626A6C74) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.tljbone2d'
+        else if (tmpInt = $55465453) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.stfu'
+        else if (tmpInt = $72616873) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.shark3d'
+        else if (tmpInt = $46464952) then
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.wav'
+        else
+          Disp := DispPre + '-'+RightStr(DispFill+inttostr(x),MaxLength)+'.unk'+inttohex(tmpInt,8);
+        // This below I used to identify more easily the file types
+        // inttohex(x,8)+'-'+inttohex(ENT.Unknown1,8)+'-'+inttohex(ENT.Unknown2,8)+'-'+inttohex(ENT.Unknown3,8)+ '.'+inttohex(tmpInt,8);
+        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
+        Inc(NumE);
+      end;
+
+    end;
+
+    ENTBuffer.Free;
+
+    Result := NumE;
+
+    DrvInfo.ID := 'TLJPAK';
+    DrvInfo.Sch := '/';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Duke Nukem 3D .ART support =============================================== //
+// -------------------------------------------------------------------------- //
+
+type ARTHeader = packed record
+       ARTVersion: integer;
+       Numtiles: integer;
+       LocalTileStart: integer;
+       LocalTileEnd: integer;
+     end;
+
+function ReadDuke3DART(src: string): Integer;
+var HDR: ARTHeader;
+    NumE, x: integer;
+    Offset: integer;
+    XList: array of word;
+    YList: array of word;
+    PicAnm: array of integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle,HDR.ARTVersion,4);
+    FileRead(FHandle,HDR.Numtiles,4);
+    FileRead(FHandle,HDR.LocalTileStart,4);
+    FileRead(FHandle,HDR.LocalTileEnd,4);
+    
+    if HDR.ARTVersion <> 1 then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'ART';
+      ErrInfo.Games := 'Duke Nukem 3D & Shadow Warrior';
+    end
+    else
+    begin
+
+      NumE := HDR.LocalTileEnd - HDR.LocalTileStart + 1;
+      Offset := 16 + NumE * 8;
+
+      SetLength(XList,NumE);
+      SetLength(YList,NumE);
+      SetLength(PicAnm,NumE);
+
+      for x:=0 to NumE-1 do
+        FileRead(FHandle,XList[x],2);
+      for x:=0 to NumE-1 do
+        FileRead(FHandle,YList[x],2);
+      for x:=0 to NumE-1 do
+        FileRead(FHandle,PicAnm[x],4);
+
+//      ShowMessage(IntToStr(NumE)+#10+IntToStr(Offset)+#10+inttostr(FileSeek(FHandle,0,1)));
+
+      for x:= 0 to NumE-1 do
+      begin
+
+        Per := ROund(((x / NumE)*100));
+        SetPercent(Per);
+
+        if (XList[x]*YList[x]) > 0 then
+        begin
+          FSE_Add('texture #'+RightStr('00000'+IntToStr(x + HDR.LocalTileStart),6)+'.tex',Offset,(XList[x]*YList[x]),XList[x],YList[x]);
+          Inc(Offset,(XList[x]*YList[x]));
+        end;
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'ART';
+      DrvInfo.Sch := '';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Duke Nukem 3D .GRP support =============================================== //
+// -------------------------------------------------------------------------- //
+
+type GRPHeader = packed record
+        ID: Array[1..12] of Char;
+        DirNum: Integer;
+     end;
+     GRPEntry = packed record
+        FileName: Array[1..12] of Char;
+        FileSize: integer;
+     end;
+
+const GRPID: String = 'KenSilverman';
+
+function ReadDuke3DGRP(src: string): Integer;
+var HDR: GRPHeader;
+    ENT: GRPEntry;
+    disp: string;
+    NumE, x: integer;
+    Offset: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, 16);
+
+    if HDR.ID <> GRPID then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      ReadDuke3DGRP := -3;
+      ErrInfo.Format := 'GRP';
+      ErrInfo.Games := 'Duke Nukem 3D & Shadow Warrior';
+    end
+    else
+    begin
+
+      NumE := HDR.DirNum;
+      Offset := NumE * 16 + 16;
+
+      for x:= 1 to NumE do
+      begin
+
+        Per := ROund(((x / NumE)*100));
+        SetPercent(Per);
+        FileRead(Fhandle,ENT,16);
+        disp := Strip0(ENT.FileName);
+
+        FSE_Add(disp,Offset,ENT.FileSize,0,0);
+
+        Offset := Offset + ENT.FileSize;
+      end;
+
+      ReadDuke3DGRP := NumE;
+
+      DrvInfo.ID := 'KSGRP';
+      DrvInfo.Sch := '';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+  end
+  else
+    ReadDuke3DGRP := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Dune 3 .RFH support ====================================================== //
+// -------------------------------------------------------------------------- //
+
+type RFH_Entry = packed record
+       NameLength: integer;
+       DateAdded: integer;
+       IsPacked: integer;
+       PackedSize: integer;
+       OriginalSize: integer;
+       Offset: integer;
+     end;
+
+function ReadDune3RFH(src: string): Integer;
+var ENT: RFH_Entry;
+    disp,dfil: string;
+    NumE: integer;
+    Chandle: integer;
+    EndSize: integer;
+begin
+
+  Chandle := FileOpen(src, fmOpenRead);
+
+  if CHandle > 0 then
+  begin
+    dfil := ChangeFileExt(src,'.rfd');
+
+    if not(FileExists(dfil)) then
+    begin
+      FileClose(Chandle);
+      FHandle := 0;
+      Result := -4;
+      ErrInfo.Format := 'RFH/RFD';
+      ErrInfo.Games := dfil;
+    end
+    else
+    begin
+      Fhandle := FileOpen(dfil, fmOpenRead);
+
+      EndSize := FileSeek(CHandle, 0,2);
+      FileSeek(CHandle, 0, 0);
+
+      NumE := 0;
+
+      while FileSeek(CHandle,0,1) < EndSize do
+      begin
+        Per := ROund(((EndSize / (FileSeek(CHandle,0,1)+1))*100));
+        SetPercent(Per);
+        FileRead(CHandle, ENT, 24);
+        disp := Strip0(Get0(CHandle));
+        FSE_Add(disp,ENT.Offset,ENT.OriginalSize,ENT.IsPacked,ENT.PackedSize);
+        Inc(NumE);
+      end;
+
+      FileClose(Chandle);
+
+      Result := NumE;
+
+      DrvInfo.ID := 'RFH/RFD';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := True;
+
+    end;
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Dune 3 .BAG support ====================================================== //
+// -------------------------------------------------------------------------- //
+
+type BAGHeader = packed record
+        ID: array[0..3] of char;
+        Unknown1: integer;
+        DirNum: integer;
+        EntrySize: integer;
+     end;
+     BAGEntry = packed record
+        FileName: array[0..31] of char;
+        Offset: integer;
+        Size: integer;
+        Freq: integer;
+        MType: integer;
+        Unknown: array[1..4] of integer;
+     end;
+     BAGEntry16 = packed record
+        FileName: array[0..15] of char;
+        Offset: integer;
+        Size: integer;
+        Freq: integer;
+        MType: integer;
+        Unknown: integer;
+     end;
+
+function ReadDune3BAG(src: string): Integer;
+var HDR: BAGHeader;
+    ENT: BAGEntry;
+    ENT16: BAGEntry16;
+    NumE,x,hIDX : integer;
+    ext: string;
+    IsIDX: Boolean;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    IsIDX := FileExists(ChangeFileExt(src,'.idx'));
+
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR.ID, 4);
+    FileRead(FHandle, HDR.Unknown1, 4);
+    FileRead(FHandle, HDR.DirNum, 4);
+    FileRead(FHandle, HDR.EntrySize, 4);
+
+    if (HDR.ID = 'GABA') then
+    begin
+      if (HDR.EntrySize <> 64) then
+      begin
+        FileClose(Fhandle);
+        FHandle := 0;
+        Result := -3;
+        ErrInfo.Format := 'BAG';
+        ErrInfo.Games := 'Emperor: Battle for Dune, Nox';
+      end
+      else
+      begin
+        NumE := HDR.DirNum;
+
+        for x := 1 to NumE do
+        begin
+          FileRead(FHandle,ENT.FileName, 32);
+          FileRead(FHandle,ENT.Offset,4);
+          FileRead(FHandle,ENT.Size,4);
+          FileRead(FHandle,ENT.Freq,4);
+          FileRead(FHandle,ENT.MType,4);
+          FileRead(FHandle,ENT.Unknown,16);
+
+          case ENT.MType of
+            2: ext := 'w';
+            6: ext := 'w';
+            12: ext := 'cmp';
+            28: ext := 'cmp';
+            37: ext := 'mp3';
+            else
+              ext := 'raw';
+          end;
+
+          FSE_Add(Strip0(ENT.FileName)+'.'+ext,ENT.Offset,ENT.Size,0,0);
+
+        end;
+
+      //ShowMessage(IntTosTr(NumE));
+
+        Result := NumE;
+
+        DrvInfo.ID := 'BAG';
+        DrvInfo.Sch := '';
+        DrvInfo.FileHandle := FHandle;
+        DrvInfo.ExtractInternal := False;
+
+      end;
+    end
+    else if IsIDX then
+    begin
+      FileSeek(Fhandle, 0, 0);
+      hIDX := FileOpen(ChangeFileExt(src,'.idx'),fmOpenRead);
+
+      FileSeek(hIDX, 0, 0);
+      FileRead(hIDX, HDR.ID, 4);
+      FileRead(hIDX, HDR.Unknown1, 4);
+      FileRead(hIDX, HDR.DirNum, 4);
+
+      if HDR.ID = 'GABA' then
+      begin
+
+        NumE := HDR.DirNum;
+
+        for x := 1 to NumE do
+        begin
+          FileRead(hIDX,ENT16,SizeOf(ENT16));
+
+          case ENT16.MType of
+            2: ext := 'w';
+            6: ext := 'w';
+            12: ext := 'cmp';
+            28: ext := 'cmp';
+            37: ext := 'mp3';
+            else
+              ext := 'raw';
+          end;
+
+          FSE_Add(Strip0(ENT16.FileName)+'.'+ext,ENT16.Offset,ENT16.Size,0,0);
+
+        end;
+
+      //ShowMessage(IntTosTr(NumE));
+
+        Result := NumE;
+
+        DrvInfo.ID := 'BAG';
+        DrvInfo.Sch := '';
+        DrvInfo.FileHandle := FHandle;
+        DrvInfo.ExtractInternal := False;
+
+      end
+{      else if (HDR.ID[0] = #235) and (HDR.ID[1] = #188) and (HDR.ID[2] = #237) and (HDR.ID[3] = #250) then
+      begin
+
+
+
+      end}
+      else
+      begin
+        FileClose(Fhandle);
+        FileClose(hIDX);
+        FHandle := 0;
+        Result := -3;
+        ErrInfo.Format := 'BAG';
+        ErrInfo.Games := 'Emperor: Battle for Dune, Nox';
+      end;
+    end
+    else
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'BAG';
+      ErrInfo.Games := 'Emperor: Battle for Dune, Nox';
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Dungeon Keeper 2 .WAD support ==================================== PARTIAL //
+// -------------------------------------------------------------------------- //
+
+type DWFBHeader = packed record
+       ID: array[0..3] of char;
+       Version: integer;
+       Filler: array[0..63] of byte;
+       Dirnum: integer;
+       NameOffset: integer;
+       NameSize: integer;
+       Unknown: integer;
+     end;
+     DWFBEntry = packed record
+       Unknown: integer;
+       NameOffset: integer;
+       NameSize: integer;
+       Offset: integer;
+       Size: integer;        // Compressed size in bytes
+       CompMethod: integer;  // Compression method: 0 = None
+                             //                     4 = Unknown compression method
+       UncompSize: integer;  // Decompressed size in bytes
+       Filler: array[0..11] of byte;
+     end;
+
+function ReadDungeonKeeper2DWFB(): Integer;
+var HDR: DWFBHeader;
+    ENT: DWFBEntry;
+    disp: string;
+    NumE, x: integer;
+begin
+
+  FileSeek(Fhandle, 0, 0);
+  FileRead(Fhandle, HDR, 88);
+
+  if HDR.ID <> 'DWFB' then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    ReadDungeonKeeper2DWFB := -3;
+    ErrInfo.Format := 'DWFB';
+    ErrInfo.Games := 'Dungeon Keeper 2, ..';
+  end
+  else
+  begin
+
+    NumE := HDR.Dirnum;
+
+    str(NumE, disp);
+
+    for x:= 1 to NumE do
+    begin
+
+      Per := ROund(((x / NumE)*100));
+      SetPercent(Per);
+      FileSeek(Fhandle, SizeOf(DWFBHeader) + (x - 1) * SizeOf(DWFBEntry), 0);
+      FileRead(Fhandle, ENT, 40);
+
+      FileSeek(FHandle, ENT.NameOffset,0);
+      disp := Get32(FHandle,ENT.NameSize);
+
+      FSE_Add(Strip0(disp),ENT.Offset,ENT.Size,ENT.CompMethod,ENT.UncompSize);
+
+    end;
+
+    ReadDungeonKeeper2DWFB := NumE;
+
+    DrvInfo.ID := 'DWFB';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Dungeon Keeper 2 .SDT support ============================================ //
+// -------------------------------------------------------------------------- //
+
+type SDTIndex = packed record
+       ISize: integer;
+       Size: integer;
+       Filename: array[0..15] of char;
+       Unknow1: integer;
+       Unknow2: integer;
+       Unknow3: integer;
+       Unknow4: integer;
+     end;
+
+function ReadDungeonKeeper2SDT(src: string): Integer;
+var ENT: SDTIndex;
+    disp: string;
+    NumE, x: integer;
+    Offset: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, NumE, 4);
+
+    if NumE <= 0 then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      ReadDungeonKeeper2SDT := -3;
+      ErrInfo.Format := 'SDT';
+      ErrInfo.Games := 'Dungeon Keeper 2';
+    end
+    else
+    begin
+
+      for x:= 1 to NumE do
+      begin
+
+        Per := ROund(((x / NumE)*100));
+        SetPercent(Per);
+        FileSeek(FHandle,x*4,0);
+        FileRead(FHandle,Offset,4);
+        FileSeek(FHandle,Offset,0);
+        FileRead(Fhandle,ENT,40);
+        Offset := Offset + ENT.ISize;
+        disp := Strip0(ENT.Filename);
+        disp := ChangeFileExt(disp,'.mp2');
+
+        FSE_Add(disp,Offset,ENT.Size,0,0);
+
+      end;
+
+      ReadDungeonKeeper2SDT := NumE;
+
+      DrvInfo.ID := 'SDT';
+      DrvInfo.Sch := '';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+  end
+  else
+    ReadDungeonKeeper2SDT := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Earth Siege 2 .VOL support =============================================== //
+// -------------------------------------------------------------------------- //
+
+type VOL_Header = packed record
+       ID: array[0..3] of char;
+       Version: integer;
+       Unknow: word;
+     end;
+//get16 DirList$
+     VOL_Header2 = packed record
+       DirNum: word;
+       ENTSize: Integer;
+     end;
+     VOL_Entry = packed record
+       Filename: array[0..11] of char;
+       Unknow: byte;
+       DirIndex: byte;
+       Offset: integer;
+     end;
+
+function ReadEarthSiege2VOL: Integer;
+var HDR: VOL_Header;
+    HDR2: VOL_Header2;
+    ENT, OLD: VOL_Entry;
+    NumE,x,p: integer;
+    BufNam: string;
+    EList: TStringList;
+    FSize: word;
+begin
+
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR.ID, 4);
+    FileRead(FHandle, HDR.Version, 4);
+    FileRead(FHandle, HDR.Unknow, 2);
+
+    if (HDR.ID <> 'VOLN') then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'VOL';
+      ErrInfo.Games := 'Earth Siege 2';
+    end
+    else
+    begin
+      FileRead(FHandle,FSize,2);
+//      BufNam := Get16(FHandle);
+
+      EList := TStringList.Create;
+      try
+        p := 0;
+        while p <= FSize do
+        begin
+          BufNam := Get0(FHandle);
+          Inc(p,Length(BufNam));
+          EList.Add(Strip0(BufNam));
+        end;
+
+        FileSeek(FHandle, 12+FSize,0);
+
+        FileRead(FHandle, HDR2.DirNum, 2);
+        FileRead(FHandle, HDR2.ENTSize, 4);
+
+        NumE := HDR2.DirNum;
+
+        for x := 1 to NumE do
+        begin
+          FileRead(FHandle,ENT.Filename,12);
+          FileRead(FHandle,ENT.Unknow,1);
+          FileRead(FHandle,ENT.DirIndex,1);
+          FileRead(FHandle,ENT.Offset,4);
+
+          if x>1 then
+          begin
+            FSE_Add(EList.Strings[OLD.DirIndex]+Strip0(OLD.Filename),OLD.Offset,ENT.Offset-OLD.Offset,OLD.Unknow,0);
+          end;
+
+          OLD.Filename := ENT.Filename;
+          OLD.Unknow := ENT.Unknow;
+          OLD.DirIndex := ENT.DirIndex;
+          OLD.Offset := ENT.Offset;
+        end;
+        FSE_Add(EList.Strings[ENT.DirIndex]+Strip0(ENT.Filename),ENT.Offset,TotFSize-ENT.Offset,ENT.Unknow,0);
+      finally
+        EList.Free;
+      end;
+
+      //ShowMessage(IntTosTr(NumE));
+
+      Result := NumE;
+
+      DrvInfo.ID := 'VOL';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Empires: Dawn of the Modern World .SSA support =========================== //
+// -------------------------------------------------------------------------- //
+
+type SSAHeader = packed record
+       ID: array[0..3] of char;  // rass
+       Version: integer;         // 1 ?
+       Unknown: integer;
+       DirSize: integer;         // Without the header
+     end;
+     SSAEntry = packed record
+       // get16 filename
+       Offset: integer;
+       EndOffset: integer;
+       Size: integer;
+     end;
+     SSACompress = packed record
+       ID: array[0..3] of char;  // PK01
+       DecompSize: integer;
+       Unknown1: integer;
+       Unknown2: word;
+     end;
+
+function ReadEmpiresDawnOfTheModernWorldSSA(src: string): Integer;
+var HDR: SSAHeader;
+    ENT: SSAEntry;
+    NumE, curPos: integer;
+    disp: string;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, SizeOf(HDR));
+
+    if (HDR.ID <> 'rass') then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'SSA';
+      ErrInfo.Games := 'Empires: Dawn of the Modern World';
+    end
+    else
+    begin
+      curPos := FileSeek(FHandle,0,1);
+      NumE := 0;
+
+      while curPos < (HDR.DirSize + 12) do
+      begin
+        disp := strip0(get32(FHandle));
+        FileRead(FHandle,ENT,SizeOf(ENT));
+        inc(NumE);
+        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
+        curPos := FileSeek(FHandle,0,1);
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'SSA';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Enclave & Riddick .XWC/.XTC support ====================================== //
+// -------------------------------------------------------------------------- //
+
+type MOSChunk = packed record
+       ID: array[0..23] of char;
+       NextChunkOffset: integer;
+     end;
+     MOSSoundEntry = packed record
+       Offset: integer;
+       Size: integer;
+     end;
+     MOSTextureEntry_Init = packed record
+       Unk1: integer;   // Always 0?
+       MipMapNum: integer;        // Number of mipmap entries
+       Unk3: integer;   // Always 512?
+       Unk4: integer;
+       FirstMipMapSize: integer;
+       Width: integer;
+       Height: integer;
+     end;
+     // Riddick have an integer here for unknown purpose...
+     MOSTextureEntry_End = packed record
+       TextureType: integer;
+       Offset: integer;
+       Unk10: integer;
+       Unk11: integer;
+       Unk12: integer;
+       Unk13: integer;
+       Unk14: integer;
+       Unk15: integer;
+       Unk16: word;
+     end;
+
+type MOSDTextureLocalHeader_Init = packed record
+       Unk1: integer;
+       Unk2: integer;
+       Unk3: integer;
+       Width: integer;
+       Height: integer;
+     end;
+     // Riddick have an integer here for unknown purpose...
+     MOSDTextureLocalHeader_End = packed record
+       Unk4: integer;      // Depth?
+       TextureType: integer;
+       Size: integer;
+       Unk6: integer;
+       Unk7: integer;
+     end;
+
+// MOS DATAFILE2.0 support
+// Only WAVEDATA and TEXTURES are supported (XWC and XTC)
+// In order to speed up reading from XTC files there is a buffering of the whole directory
+// and then a parse through the directory
+function ReadEnclaveMOS(src: string): Integer;
+var HDR: MOSChunk;
+    SND: MOSSoundEntry;
+    TEX1: MOSTextureEntry_Init;
+    TEX2: MOSTextureEntry_End;
+    TEXHDR1: MOSDTextureLocalHeader_Init;
+    TEXHDR2: MOSDTextureLocalHeader_End;
+    DirCache: TMemoryStream;
+    DirFile: THandleStream;
+    disp: string;
+    NumE, x, DirOffset, DirNum, NextOffset, Offset, Per, OldPer, FormatCheck, EntrySize: integer;
+//    fileType, Test1, Test2: integer;
+    OggCheck: array[0..3] of char;
+    isWave: boolean;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, SizeOf(MOSChunk));
+
+    if strip0(HDR.ID) <> 'MOS DATAFILE2.0' then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'MOSD';
+      ErrInfo.Games := 'Enclave, The Chronicles of Riddick: Butcher Bay';
+    end
+    else
+    begin
+
+      NumE := 0;
+
+      isWave := false;
+
+      repeat
+        Fileseek(FHandle, HDR.NextChunkOffset, 0);
+        FileRead(FHandle, HDR, SizeOf(MOSChunk));
+        if (strip0(HDR.ID) = 'WAVEDATA') then
+        begin
+          FileSeek(FHandle,8,1);
+          FileRead(Fhandle,DirOffset,4);
+          FileRead(Fhandle,DirNum,4);
+          NextOffset := DirOffset+48;
+          for x := 1 to DirNum do
+          begin
+            FileSeek(FHandle,NextOffset,0);
+            FileRead(Fhandle,SND,SizeOf(MOSSoundEntry));
+            disp := Get32(Fhandle);
+            if (length(disp) mod 4) <> 0 then
+              NextOffset := FileSeek(Fhandle,4 - (Length(disp) mod 4),1)
+            else
+              NextOffset := FileSeek(Fhandle,0,1);
+            if SND.Size >= 40 then
+            begin
+              FileSeek(Fhandle,SND.Offset+36,0);
+              FileRead(Fhandle,OggCheck,4);
+              if strip0(OggCheck) = 'OggS' then // Enclave
+              begin
+                disp := disp + '.ogg';
+                dec(SND.Size,36);
+                inc(SND.Offset,36);
+              end
+              else if SND.Size >= 44 then // Chronicles of Riddick
+              begin
+                FileSeek(Fhandle,SND.Offset+40,0);
+                FileRead(Fhandle,OggCheck,4);
+                if strip0(OggCheck) = 'OggS' then
+                begin
+                  disp := disp + '.ogg';
+                  dec(SND.Size,40);
+                  inc(SND.Offset,40);
+                end
+              end;
+            end;
+            FSE_Add(disp,SND.Offset,SND.Size,0,0);
+            inc(NumE);
+          end;
+          isWave := true;
+        end;
+        if (strip0(HDR.ID) = 'TEXTURES') then
+        begin
+          FileSeek(FHandle,8,1);
+          FileRead(Fhandle,DirOffset,4);
+          FileRead(Fhandle,DirNum,4);
+          DirFile := THandleStream.Create(Fhandle);
+          Offset := DirFile.Seek(0,1);
+          DirFile.Seek(DirOffset,0);
+          DirFile.Read(FormatCheck,4);  // 512 = Enclave?    Else = Riddick?
+          DirFile.Seek(52,1);
+          DirCache := TMemoryStream.Create;
+          DirCache.CopyFrom(DirFile,Offset-DirOffset-24-56);
+          NextOffset := 0;
+          OldPer := -6;
+          EntrySize := SizeOf(MOSTextureEntry_Init)+SizeOf(MOSTextureEntry_End);
+          if FormatCheck <> 512 then // Riddick?
+            inc(EntrySize,4);
+          for x := 1 to DirNum do
+          begin
+            Per := ROund(((x / DirNum)*100));
+            if (Per > OldPer + 5) then
+            begin
+              SetPercent(Per);
+              OldPer := Per;
+            end;
+            Dircache.Seek(NextOffset,0);
+//            FileSeek(FHandle,NextOffset,0);
+            disp := Get32(DirCache);
+            if (length(disp) mod 4) <> 0 then
+              NextOffset := Dircache.Seek(4 - (Length(disp) mod 4),1)+EntrySize
+            else
+              NextOffset := DirCache.Seek(0,1)+EntrySize;
+            Dircache.Read(TEX1,SizeOf(MOSTextureEntry_Init));
+            if FormatCheck <> 512 then // Riddick?
+              Dircache.Seek(4,1);
+            Dircache.Read(TEX2,SizeOf(MOSTextureEntry_End));
+            inc(NumE);
+            FileSeek(Fhandle,TEX2.Offset,0);
+            FileRead(Fhandle,Offset,4);
+            FileSeek(Fhandle,Offset,0);
+            FileRead(FHandle,TEXHDR1,SizeOf(MOSDTextureLocalHeader_Init));
+            if FormatCheck <> 512 then // Riddick?
+              FileSeek(Fhandle,4,1);
+            FileRead(FHandle,TEXHDR2,SizeOf(MOSDTextureLocalHeader_End));
+
+            if (TEXHDR1.Width > 0) and (TEXHDR1.Height > 0) and ((TEXHDR2.TextureType = 0) or (TEXHDR2.TextureType = 2) or (TEXHDR2.TextureType = 4)) then
+              FSE_Add(disp+'.dds',TEX2.Offset,TEX1.FirstMipMapSize,1,TEX1.MipMapNum)
+            else
+              FSE_Add(disp,TEX2.Offset,TEX1.FirstMipMapSize,0,0)
+          end;
+        end;
+      until HDR.NextChunkOffset = 0;
+
+      Result := NumE;
+
+      if isWave then
+      begin
+        DrvInfo.ID := 'MOSD';
+        DrvInfo.ExtractInternal := False;
+      end
+      else
+      begin
+        if formatCheck <> 512 then
+          DrvInfo.ID := 'MOSDr'
+        else
+          DrvInfo.ID := 'MOSDe';
+        DrvInfo.ExtractInternal := True;
+      end;
+
+      DrvInfo.Sch := '';
+      DrvInfo.FileHandle := FHandle;
+
+    end;
+  end
+  else
+    Result := -2;
+
+end;
+
+// Function to extract textures from MOS DATAFILE2.0 to DDS
+// Only supports textures types 0, 2 & 4 (DXT1, DXT3 & DXT5)
+// If something weird is found, just do a BinCopy extraction (there are some weird entries in those files...)
+function ExtractMOSDTextureToDDS(outputstream: TStream; Offset, Size: int64; MipMapnum: integer; BufferSize: integer; silent, isRiddick: boolean): boolean;
+var DDS: DDSHeader;
+    TEXHDR1: MOSDTextureLocalHeader_Init;
+    TEXHDR2: MOSDTextureLocalHeader_End;
+    MipMapOffsets: array of integer;
+    inFile: THandleStream;
+    x: integer;
+begin
+
+  SetLength(MipMapOffsets, MipMapNum);
+
+  inFile := THandleStream.Create(FHandle);
+
+  inFile.Seek(Offset,0);
+  for x := 0 to MipMapNum - 1 do
+    inFile.Read(MipMapOffsets[x],4);
+
+  inFile.Seek(MipMapOffsets[0],0);
+  inFile.Read(TEXHDR1,SizeOf(MOSDTextureLocalHeader_Init));
+  if isRiddick then
+    inFile.Seek(4,1);
+  inFile.Read(TEXHDR2,SizeOf(MOSDTextureLocalHeader_End));
+
+  // Sanity checks, if they fail, we just extract a BinCopy
+  if (TEXHDR1.Width <= 0) or (TEXHDR1.Height <= 0) or (TEXHDR2.Size <= 0) or ((TEXHDR2.TextureType <> 0) and (TEXHDR2.TextureType <> 2) and (TEXHDR2.TextureType <> 4)) then
+  begin
+
+    inFile.Free;
+    BinCopyToStream(Fhandle,outputstream,Offset,Size,0,BufferSize,silent,SetPercent);
+
+  end
+  else
+  begin
+
+    //MipMapNum := 1;
+
+    FillChar(DDS,SizeOf(DDSHeader),0);
+    DDS.ID[0] := 'D';
+    DDS.ID[1] := 'D';
+    DDS.ID[2] := 'S';
+    DDS.ID[3] := ' ';
+    DDS.SurfaceDesc.dwSize := 124;
+    DDS.SurfaceDesc.dwFlags := DDSD_CAPS or DDSD_HEIGHT or DDSD_WIDTH or DDSD_PIXELFORMAT or DDSD_LINEARSIZE;
+    if MipMapNum > 1 then
+      DDS.SurfaceDesc.dwFlags := DDS.SurfaceDesc.dwFlags or DDSD_MIPMAPCOUNT;
+    DDS.SurfaceDesc.dwHeight := TEXHDR1.Height;
+    DDS.SurfaceDesc.dwWidth := TEXHDR1.Width;
+    DDS.SurfaceDesc.dwPitchOrLinearSize := TEXHDR2.Size;
+    DDS.SurfaceDesc.dwMipMapCount := MipMapnum;
+    DDS.SurfaceDesc.ddpfPixelFormat.dwSize := 32;
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_FOURCC;
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'D';
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[1] := 'X';
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[2] := 'T';
+    if (TEXHDR2.TextureType = 4) then
+      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '5'
+    else if (TEXHDR2.TextureType = 2) then
+      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '3'
+    else
+      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '1';
+    DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDSCAPS_TEXTURE;
+    if MipMapNum > 1 then
+      DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDS.SurfaceDesc.ddsCaps.dwCaps1 or DDSCAPS_COMPLEX or DDSCAPS_MIPMAP;
+
+    outputstream.Write(DDS,SizeOf(DDSHeader));
+
+    for x := 0 to MipMapNum - 2 do
+    begin
+      inFile.Seek(MipMapOffsets[x],0);
+      inFile.Read(TEXHDR1,SizeOf(MOSDTextureLocalHeader_Init));
+      if isRiddick then
+        inFile.Seek(4,1);
+      inFile.Read(TEXHDR2,SizeOf(MOSDTextureLocalHeader_End));
+      outputstream.CopyFrom(inFile,TEXHDR2.Size);
+    end;
+
+    inFile.Free;
+
+  end;
+
+  result := true;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Entropia Universe .BNT support =========================================== //
+// -------------------------------------------------------------------------- //
+
+// Go end of file, the 8 last bytes are:
+//   Index of Directory entries (4 bytes - Interger/Cardinal)
+//   Magic ID (4 bytes - "BNT2")
+
+type BNT2Entry = packed record
+      Size: integer;
+      Offset: integer;
+      Unknown01CRC: integer;   // CRC or Checksum?
+      Unknown02Null: integer;  // 00 00 00 00
+    end;
+
+function ReadEntropiaUniverseBNT(src: string): Integer;
+var ID: array[0..3] of char;
+    DirOffset: integer;
+    ENT: BNT2Entry;
+    NumE, x: integer;
+    disp: string;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    // Go to end of file minus 4 bytes
+    FileSeek(Fhandle, -4, 2);
+
+    // Read the ID
+    FileRead(FHandle, ID, 4);
+
+    // If the ID is not BNT2 then this is not an Entropia Universe BNT file
+    if (ID <> 'BNT2') then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'BNT2';
+      ErrInfo.Games := 'Entropia Universe';
+    end
+    else
+    begin
+
+      // Go to end of file minus 8 bytes
+      FileSeek(FHandle,-8,2);
+
+      // Read the directory offset
+      FileRead(FHandle,DirOffset,4);
+
+      // Go to directory offset
+      FileSeek(FHandle,DirOffset,0);
+
+      // Read number of entries in the file
+      FileRead(FHandle,NumE,4);
+
+      // Read each entry
+      for x := 1 to NumE do
+      begin
+
+        // Filename (ending with 0x0A)
+        disp := strip0A(get0A(FHandle));
+
+        // Entry info
+        FileRead(FHandle,ENT,SizeOf(ENT));
+
+        // Add entry to FSE
+        FSE_Add(disp,ENT.Offset,ENT.Size,ENT.Unknown01CRC,ENT.Unknown02Null);
+
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'BNT2';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// EVE Online .STUFF support ================================================ //
+// -------------------------------------------------------------------------- //
+
+type
+  STUFFList = record
+    Name: string;
+    Size: integer;
+  end;
+
+function ReadEveOnlineSTUFF : Integer;
+var NumE,Size,DataOffset,x : integer;
+    disp : string;
+    ENTL: array of STUFFList;
+begin
+
+  TotFSize := FileSeek(FHandle,0,2);
+
+  FileSeek(Fhandle, 0, 0);
+  FileRead(FHandle, NumE, 4);
+
+//  Result := 0;
+
+  if (NumE > TotFSize) or (NumE < 1) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'STUFF';
+    ErrInfo.Games := 'Eve Online';
+  end
+  else
+  begin
+
+    SetLength(ENTL,NumE);
+    for x := 0 to NumE-1 do
+    begin
+      FileRead(FHandle,Size,4);
+      FileSeek(FHandle,4,1);
+      Disp := strip0(get0(Fhandle));
+      ENTL[x].Name := Disp;
+      ENTL[x].Size := Size;
+    end;
+
+    DataOffset := FileSeek(FHandle,0,1);
+
+    for x := 0 to NumE-1 do
+    begin
+      FSE_Add(ENTL[x].Name,DataOffset,ENTL[x].Size,0,0);
+      inc(DataOffset,ENTL[x].Size);
+    end;
+
+    SetLength(ENTL,0);
+
+    Result := NumE;
+
+    DrvInfo.ID := 'STUFF';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := True;
+
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Evil Islands .RES support ================================================ //
+// -------------------------------------------------------------------------- //
+
+Type EIRES_Header = packed record
+       ID: integer;      // &H19CE23C
+       DirNum: integer;
+       DirOffset: integer;
+       NameSt: integer;
+     end;
+     EIRES_Entry = packed record
+       Unknown1: integer;
+       Size: integer;
+       Offset: integer;
+       Unknown2: integer;
+       NameSize: word;
+       NameOffset: integer;
+     end;
+
+function ReadEvilIslandsRES(): Integer;
+var HDR: EIRES_Header;
+    ENT: EIRES_Entry;
+    NumE,x,z : integer;
+    BufName: PChar;
+    nam: string;
+begin
+
+  if FHandle > 0 then
+  begin
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR.ID, 4);
+    FileRead(FHandle, HDR.DirNum, 4);
+    FileRead(FHandle, HDR.DirOffset, 4);
+    FileRead(FHandle, HDR.NameSt, 4);
+
+    if (IntToHex(HDR.ID,7) <> '19CE23C') or (HDR.DirOffset > TotFSize) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'EIRES';
+      ErrInfo.Games := 'Evil Islands';
+    end
+    else
+    begin
+      GetMem(BufName,HDR.NameSt);
+      try
+        FileSeek(FHandle,TotFSize-HDR.NameSt,0);
+        FileRead(FHandle,BufName^,HDR.NameSt);
+
+        FileSeek(FHandle,HDR.DirOffset,0);
+
+        NumE := HDR.DirNum;
+
+        for x := 1 to NumE do
+        begin
+
+          FileRead(FHandle,ENT.Unknown1, 4);
+          FileRead(FHandle,ENT.Size,4);
+          FileRead(FHandle,ENT.Offset,4);
+          FileRead(FHandle,ENT.Unknown2, 4);
+          FileRead(FHandle,ENT.NameSize,2);
+          FileRead(FHandle,ENT.NameOffset,4);
+
+          nam := '';
+          for z := ENT.NameOffset to ENT.NameOffset + ENT.NameSize-1 do
+            nam := nam + BufName[z];
+
+          FSE_Add(Strip0(nam),ENT.Offset,ENT.Size,0,0);
+
+      end;
+      finally
+        Freemem(BufName);
+      end;
+
+      //ShowMessage(IntTosTr(NumE));
+
+      Result := NumE;
+
+      DrvInfo.ID := 'EIRES';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// F-22 Advanced Dominance Fighter .DAT support ============================= //
+// F-22 Total Air War .DAT support ========================================== //
+// Super EF2000 .DAT support ================================================ //
+// -------------------------------------------------------------------------- //
+
+// Experimental and PARTIAL F-22 Advanced Dominance Fighter .DAT files
+// The filenames are stored in the EXE files of the game
+// The DAT file only use some sort of Hash value, this function only retrieve
+// the hash and that's all... It is dirty but better than nothing! :)
+
+type F22adfDAT_Entry = packed record
+       Hash: integer;
+       Offset: integer;
+       Size: integer;
+     end;
+
+function ReadF22adfDAT(): Integer;
+var ENT: F22adfDAT_Entry;
+    DirNames: array of string;
+    ExtNames: array of string;
+    DirOffset,EntOffset,NumE,x : integer;
+    DirNum,NameSize,DirNameNum,ExtNameNum : word;
+begin
+
+  FileSeek(Fhandle, 0, 0);
+
+  // Read & seek to the offset to the directory structure
+  FileRead(FHandle, DirOffset, 4);
+  FileSeek(Fhandle, DirOffset,0);
+
+  // Read the number of entries
+  FileRead(FHandle, DirNum,2);
+  // Read the number of directory names
+  FileRead(FHandle, DirNameNum,2);
+  // Read the number of extension names
+  FileRead(FHandle, ExtNameNum,2);
+  // Read the size of the directory+extension names block
+  FileRead(FHandle, NameSize,2);
+
+  // Read the directory names
+  setLength(DirNames,DirNameNum);
+  for x := 1 to DirNameNum do
+    DirNames[x-1] := Get8(Fhandle);
+
+  // Read the extension names
+  setLength(ExtNames,ExtNameNum);
+  for x := 1 to ExtNameNum do
+    ExtNames[x-1] := Get8(Fhandle);
+
+  // Just to be sure, we calculate the offset of the entries and seek there
+  EntOffset := DirOffset+NameSize+8;
+  fileSeek(FHandle,EntOffset,0);
+
+  // For each entry read the hash, offset and size
+  NumE := DirNum;
+
+  for x := 1 to NumE do
+  begin
+
+    FileRead(FHandle,ENT,SizeOf(F22adfDAT_Entry));
+
+    FSE_Add(IntToHex(ENT.Hash,8),ENT.Offset,ENT.Size,0,0);
+
+  end;
+
+  Result := NumE;
+
+  DrvInfo.ID := 'F22DAT';
+  DrvInfo.Sch := '';
+  DrvInfo.FileHandle := FHandle;
+  DrvInfo.ExtractInternal := False;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Fable: The Lost Chapters .BIG support ======================= EXPERIMENTAL //
+// -------------------------------------------------------------------------- //
+
+     // Fable BIGB files
+type FBIG_Header = packed record
+       ID: array[0..3] of char;              // "BIGB"
+       Unknown: integer;                     // Always 0x64 ?
+       FooterOffset: Integer;
+     end;
+     // EntryName: Get0
+     FBIG_FooterEntry = packed record
+       Unknown1: Integer;
+       NumEntries: Integer;
+       Offset: Integer;
+       Unknown2: Integer;
+       Unknown3: Integer;
+     end;
+     // NumUnknownEntries: integer;
+     FBIG_EntryUnknown = packed record
+       Unknown1: integer;
+       Unknown2: integer;
+     end;
+     FBIG_Entry = packed record
+       Unknown1: integer;                  // 0x2A ?
+       Unknown2: integer;                  // Counter
+       Unknown3: integer;
+       Size: integer;
+       Offset: integer;
+       Unknown4: integer;                  // Probably a checksum of some sort
+     end;
+     // EntryName: Get32
+     // Unknown5: integer;
+     // Unknown6: integer;
+     // DescriptionName: Get32
+
+// This is experimental, I don't think it is working correctly, but I keep it
+// activated if someone is willing to use it, to figure it out a little bit more
+// There is so many fields I am just skipping...
+function ReadFableTheLostChaptersBIG: Integer;
+var HDR: FBIG_Header;
+    FTR: FBIG_FooterEntry;
+//    UNK: FBIG_EntryUnknown;
+    ENT: FBIG_Entry;
+    base, disp: string;
+    NumE, x, y, z, NumFooter, NumDesc, SizeDesc, CurP, Unknown5, UnknownJunkSize, NumUnknownEntries: integer;
+    TotFSize: integer;
+begin
+
+  TotFSize := FileSeek(Fhandle,0,2);
+  FileSeek(FHandle,0,0);
+  FileRead(FHandle,HDR,SizeOf(HDR));
+
+  if (HDR.ID <> 'BIGB') or (TotFSize < HDR.FooterOffset) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'BIGB';
+    ErrInfo.Games := 'Fable: The Lost Chapters';
+  end
+  else
+  begin
+
+    FileSeek(FHandle,HDR.FooterOffset,0);
+    FileRead(FHandle,NumFooter,4);
+
+    NumE := 0;
+
+    for x := 1 to NumFooter do
+    begin
+      base := strip0(get0(FHandle));
+      FileRead(FHandle,FTR,SizeOf(FTR));
+      CurP := FileSeek(FHandle,0,1);
+      FileSeek(FHandle,FTR.Offset,0);
+      FileRead(FHandle,NumUnknownEntries,4);
+      FileSeek(FHandle,NumUnknownEntries*8,1);
+      for y := 1 to FTR.NumEntries do
+      begin
+        FileRead(FHandle,ENT,SizeOf(ENT));
+        disp := Get32(FHandle);
+        FileRead(FHandle,Unknown5,4);
+        FileRead(FHandle,NumDesc,4);
+        for z := 1 to NumDesc do
+        begin
+          FileRead(FHandle,SizeDesc,4);
+          FileSeek(FHandle,SizeDesc,1);
+        end;
+        FileRead(FHandle,UnknownJunkSize,4);
+        FileSeek(Fhandle,UnknownJunkSize,1);
+        FSE_Add(base+'\'+disp,ENT.Offset,ENT.Size,ENT.Unknown2,ENT.Unknown4);
+        inc(NumE);
+      end;
+      FileSeek(FHandle,CurP,0);
+    end;
+
+    Result := NumE;
+
+    DrvInfo.ID := 'BIGB';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// F.E.A.R. .ARCH00 support ================================================= //
+// -------------------------------------------------------------------------- //
+
+type ARCH00_Header = packed record
+       ID: array[0..3] of char;     // LTAR
+       Unknown1: Integer;           // Always 3 ? Version ?
+       NameSize: Integer;
+       NumDirectories: Integer;
+       NumEntries: Integer;
+       Unknown3: Integer;
+       Unknown4: Integer;
+       Unknown5: Integer;
+       Unknown6: Integer;
+       Unknown7: Integer;
+       Unknown8: Integer;
+       Unknown9: Integer;
+     end;
+     ARCH00_Entry = packed record
+       NamePos: Integer;
+       Offset: Int64;
+       Size: Int64;
+       Size2: Int64;       // UncSize ?
+       Dummy: Integer;
+     end;
+     ARCH00_Directory = packed record
+       NamePos: Integer;
+       Unknown1: Integer;
+       Unknown2: Integer;
+       NumEntries: Integer;
+     end;
+
+function ReadFearARCH00(src: string): Integer;
+var HDR: ARCH00_Header;
+    ENT: ARCH00_Entry;
+    DIR: ARCH00_Directory;
+    disp, dirname: string;
+    NumE, x, curDir, curP, oldPer: integer;
+    namStream, dirStream: TMemoryStream;
+    filStream: THandleStream;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    // We read the header
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, SizeOf(HDR));
+
+    // If the ID in the header is not LTAR, then this is not a FEAR .ARCH00 file
+    if (HDR.ID <> 'LTAR') then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'LTAR';
+      ErrInfo.Games := 'F.E.A.R.';
+    end
+    else
+    begin
+
+      // We will first store both name chunks and whole directory chunk
+      // in two TMemoryStreams for later use
+      namStream := TMemoryStream.Create;
+      dirStream := TMemoryStream.Create;
+
+      try
+
+        // We will enclose the handle in a THandleStream so we can copy from it
+        filStream := THandleStream.Create(FHandle);
+
+        try
+
+          // We copy the names chunk to the memory stream
+          namStream.CopyFrom(filStream,HDR.NameSize);
+
+          // We store current offset
+          curP := filStream.Seek(0,soFromCurrent);
+
+          // We seek to the directory chunk offset
+          filStream.Seek(HDR.NumEntries*SizeOf(ENT),soFromCurrent);
+
+          // We copy the directory chunk to the memory stream
+          dirStream.CopyFrom(filStream,SizeOf(DIR)*HDR.NumDirectories);
+
+          // We go back to the stored offset
+          filStream.Seek(curP,soFromBeginning);
+
+        finally
+
+          // We free the handle stream
+          filStream.Free;
+
+        end;
+
+        NumE := HDR.NumEntries;
+
+        // This variable will be used to know in which directory we are
+        // we start at -1 in advance for the forced first update
+        curDir := -1;
+
+        // We fill the directory entry variable with zeros to force an update
+        // on first "for" run
+        FillChar(DIR,SizeOf(DIR),0);
+
+        OldPer := 0;
+
+        // We will go through all entries
+        for x := 1 to HDR.NumEntries do
+        begin
+
+          // Display progress
+          Per := ROund(((x / HDR.NumEntries)*100));
+          if (Per >= OldPer + 5) then
+          begin
+            SetPercent(Per);
+            OldPer := Per;
+          end;
+
+          // This is used to retrieve current directory entry
+          // It is enclosed in a while-do structure instead of if structure
+          // because some directory entries have the NumEntries field already
+          // at zero in the file...
+          while (DIR.NumEntries = 0) do
+          begin
+
+            // We go to the next entry
+            inc(curDir);
+            dirStream.Seek(curDir*SizeOf(DIR),soFromBeginning);
+
+            // We read it
+            dirStream.ReadBuffer(DIR,SizeOf(DIR));
+
+            // We retrieve the name
+            namStream.Seek(DIR.NamePos,soFromBeginning);
+            dirname := strip0(get0(namStream));
+
+            // We include the trailing slash is needed
+            if length(dirname)>0 then
+              dirname := dirname + '\';
+
+          end;
+
+          // We read the entry
+          FileRead(FHandle,ENT,SizeOf(ENT));
+
+          // We retrieve the name
+          namStream.Seek(ENT.NamePos,soFromBeginning);
+          disp := strip0(get0(namStream));
+
+          // We store the entry
+          FSE_Add(dirname+disp,ENT.Offset,ENT.Size,0,0);
+
+          // We decrease the directory entry counter
+          dec(DIR.NumEntries);
+
+        end;
+
+      finally
+
+        // We free both memory streams
+        namStream.Free;
+        dirStream.Free;
+
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'LTAR';
+      DrvInfo.Sch := '\';
+      // Extraction will be handled by Dragon UnPACKer core
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Freespace/Conflict: Freespace .VP support ================================ //
+// -------------------------------------------------------------------------- //
+
+type VPHeader = packed record
+       Signature: array[0..3] of char;
+       Version: integer;
+       DirOffset: integer;
+       DirNum: integer;
+     end;
+     VPEntry = packed record
+       Offset: integer;
+       Size: integer;
+       Filename: array[0..31] of char;
+       Timestamp: integer;
+     end;
+
+function ReadFreespaceVP(src: string): Integer;
+var HDR: VPHeader;
+    ENT: VPEntry;
+    disp, currep: string;
+    NumE, x: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, 16);
+
+    if (HDR.Signature <> 'VPVP') or (HDR.Version <> 2) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      ReadFreespaceVP := -3;
+      ErrInfo.Format := 'VP';
+      ErrInfo.Games := 'Conflict Freespace, Freespace 2';
+    end
+    else
+    begin
+
+      FileSeek(FHandle,HDR.DirOffset,0);
+      CurRep := '';
+      NumE := 0;
+
+      for x:= 1 to HDR.DirNum do
+      begin
+
+        Per := ROund(((x / HDR.DirNum)*100));
+        SetPercent(Per);
+        FileRead(Fhandle,ENT,44);
+        disp := Strip0(ENT.Filename);
+
+        if ENT.Size = 0 then
+        begin
+          if disp = '..' then
+          begin
+            CurRep := Copy(CurRep,1,length(CurRep)-1);
+            if Pos('\',CurRep) > 0 then
+              CurRep := Copy(CurRep,1,PosRev('\',CurRep))
+            else
+              CurRep := '';
+          end
+          else
+            CurRep := CurRep + disp + '\';
+        end
+        else
+        begin
+          inc(NumE);
+          FSE_Add(CurRep + disp,ENT.Offset,ENT.Size,0,0);
+        end;
+
+      end;
+
+      ReadFreespaceVP := NumE;
+
+      DrvInfo.ID := 'VP';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+  end
+  else
+    ReadFreespaceVP := -2;
 
 end;
 
@@ -5005,6 +4962,80 @@ begin
     Result := -2;
 
 end;
+
+procedure DecryptADFToStream(src : integer; dst : TStream; soff : Int64; ssize : Int64; bufsize : Integer; silent: boolean);
+var
+  //sFileLength: Integer;
+  Buffer: PByteArray;
+  i,x,numbuf, restbuf: Integer;
+  per, oldper, perstep: word;
+  real1, real2: real;
+begin
+
+  //sFileLength := FileSeek(src,0,2);
+  FileSeek(src,soff,0);
+  numbuf := ssize div bufsize;
+  if (numbuf > 25000) then
+    perstep := 2
+  else if (numbuf > 12500) then
+    perstep := 5
+  else if (numbuf > 6000) then
+    perstep := 10
+  else
+    perstep := 15;
+  restbuf := ssize mod bufsize;
+
+  GetMem(Buffer,bufsize);
+  try
+    oldper := 0;
+
+    for i := 1 to numbuf do
+    begin
+      FileRead(src, Buffer^, bufsize);
+      for x := 0 to bufsize do
+      begin
+        Buffer^[x] := Buffer^[x] xor $22;
+      end;
+      dst.WriteBuffer(Buffer^, bufsize);
+      if not silent then
+      begin
+        real1 := i;
+        real2 := numbuf;
+        real1 := (real1 / real2)*100;
+        per := Round(real1);
+        if per >= oldper + perstep then
+        begin
+          oldper := per;
+          SetPercent(per);
+        end;
+      end;
+    end;
+
+    if not silent then
+      SetPercent(100);
+
+    FileRead(src, Buffer^, restbuf);
+    for x := 0 to restbuf do
+    begin
+      Buffer^[x] := Buffer^[x] xor $22;
+    end;
+    dst.WriteBuffer(Buffer^, restbuf);
+
+  finally
+    FreeMem(Buffer);
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Grand Theft Auto 3 .IMG/.DIR support ===================================== //
+// -------------------------------------------------------------------------- //
+
+type DIRIMG_Entry = packed record
+       StartBlock: Longword;
+       BlockCount: Longword;
+       Name: array[0..23] of Char;
+     end;
 
 function ReadGTA3IMGDIR(src: string): Integer;
 var ENT: DIRIMG_Entry;
@@ -5103,6 +5134,35 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Gunlok .GDA support ====================================================== //
+// -------------------------------------------------------------------------- //
+
+type GDATHeader = packed record
+       ID: array[0..7] of char;
+       FileSize: Integer;
+       Unknown1: integer;
+       NumEntries: integer;
+     end;
+     GDATEntry = packed record
+       Unknown1: integer;
+       Unknown2: integer;
+       WAVCHUNKPos: integer;
+     end;
+     GDATWAVEEntry = packed record
+       ID: array[0..7] of char;
+       ChunkSize: Integer;
+       Unknown1: integer;
+       Unknown2: integer;
+       Unknown3: integer;
+       Unknown4: integer;
+       Unknown5: integer;
+       Unknown6: integer;
+       Unknown7: integer;
+       Unknown8: integer;
+       CHUNKType: array[0..3] of char;
+     end;
+
 function ReadGunlokDAT(): Integer;
 var HDR: GDATHeader;
     ENT: GDATEntry;
@@ -5161,6 +5221,10 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Hardbinger .SQH support ================================================== //
+// -------------------------------------------------------------------------- //
+
 function ReadHarbingerSQH_Aux(cdir: string; totalOffset: integer; limitOffset: integer): integer;
 var disp: string;
     offset,size,test: integer;
@@ -5195,7 +5259,6 @@ begin
   end;
 
 end;
-
 
 function ReadHarbingerSQH(src: string): Integer;
 var NumE: integer;
@@ -5238,6 +5301,23 @@ begin
     Result := -2;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Heath .NRM support ======================================================= //
+// -------------------------------------------------------------------------- //
+
+type NRMHeader = packed record
+       ID: array[0..17] of char;
+     end;
+     NRMEntry = packed record
+       ID: array[0..4] of char;
+       PacketSize: integer;
+       Size: integer;
+     end;
+     // Get32 Filename
+
+const
+  NRMID : String = 'PakkaByRCL^DPL2000';
 
 function ReadHeathNRM(src: string): Integer;
 var HDR: NRMHeader;
@@ -5296,6 +5376,16 @@ begin
     Result := -2;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Heroes of Might & Magic 3 .SND support =================================== //
+// -------------------------------------------------------------------------- //
+
+type H3SND_Index = packed record
+       Filename: array[0..39] of char;
+       Offset: integer;
+       Size: integer;
+     end;
 
 function ReadHeroesOfMightAndMagic3SND(src: string): Integer;
 var ENT: H3SND_Index;
@@ -5373,6 +5463,25 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Heroes of Might & Magic 4 .H4R support =================================== //
+// -------------------------------------------------------------------------- //
+
+type H4R_Header = packed record
+       ID: array[0..3] of char;
+       DirOffset: integer;
+     end;
+     H4R_Index = packed record
+       Offset: integer;
+       Size: integer;
+       DSize: integer;
+       Unk: integer;  // Always 9C 73 86 3C
+     end;
+     // get16 filenameID
+     // get16 source directory
+     // 2 bytes 00 00
+     // Integer (Storage/Compression?)
+
 function ReadHeroesOfMightAndMagic4H4R(src: string): Integer;
 var HDR: H4R_Header;
     ENT: H4R_Index;
@@ -5435,6 +5544,22 @@ begin
     Result := -2;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Hidden and Dangerous .DTA/.CNT support =================================== //
+// -------------------------------------------------------------------------- //
+
+type DTA_CNT_Header = packed record
+       ID: array[0..7] of char;
+       DTASize: integer;
+       Unknown1: integer;
+       Unknown2: integer;
+       Dirnum: integer;
+     end;
+     DTA_CNT_Entry = packed record
+       Offset: integer;
+       Size: integer;
+     end;
 
 function ReadHiddenAndDangerousDTA(src: string): Integer;
 var HDR: DTA_CNT_Header;
@@ -5528,6 +5653,17 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Hitman: Contracts .PRM support =========================================== //
+// -------------------------------------------------------------------------- //
+
+type PRMHeader = packed record
+       ID: cardinal;   // ID - Always $71E ?
+       DirOffset: cardinal;
+       DirOffset2: cardinal;
+       NumEntries: cardinal;
+     end;
+
 function ReadHitmanContractsPRM(src: string): Integer;
 var HDR: PRMHeader;
     x: integer;
@@ -5587,6 +5723,26 @@ begin
     Result := -2;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Hitman: Contracts .TEX support =========================================== //
+// -------------------------------------------------------------------------- //
+
+type TEX_Header = packed record
+       IndexOffset: cardinal;
+       UnknownOffset: cardinal;
+       ID3: cardinal;   // 3
+       ID4: cardinal;   // 4
+     end;
+     TEX_Entry = packed record
+       Size: cardinal;
+       Type1: array[0..3] of char;
+       Type2: array[0..3] of char;
+       Unknown1: Cardinal;
+       Unknown2: word;
+       Unknown3: word;
+       Unknown: array[1..4] of Cardinal;
+     end;
 
 function ReadHitmanContractsTEX(src: string): Integer;
 var HDR: TEX_Header;
@@ -5656,6 +5812,91 @@ begin
   end
   else
     Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// HyperRipper .HRF support ================================================= //
+// -------------------------------------------------------------------------- //
+
+function ReplacePoints(src: string): string;
+var x: integer;
+begin
+
+  x := Pos('.',src);
+  while (x > 0) do
+  begin
+    src := Copy(src,1,x-1)+'_'+Copy(src,x+1,length(src)-x);
+    x := Pos('.',src);
+  end;
+
+  ReplacePoints := src;
+
+end;
+
+function GetHRFExt(ftype: byte): string;
+begin
+
+  case ftype of
+    0: GetHRFExt := '.raw';
+    1: GetHRFExt := '.bmp';
+    2: GetHRFExt := '.iff';
+    3: GetHRFExt := '.png';
+    4: GetHRFExt := '.gif';
+    5: GetHRFExt := '.wmf';
+    6: GetHRFExt := '.emf';
+    7: GetHRFExt := '.jpg';
+  100: GetHRFExt := '.mid';
+  101: GetHRFExt := '.voc';
+  102: GetHRFExt := '.wav';
+  103: GetHRFExt := '.669';
+  104: GetHRFExt := '.xm';
+  105: GetHRFExt := '.it';
+  106: GetHRFExt := '.s3m';
+  111: GetHRFExt := '.mp1';
+  112: GetHRFExt := '.mp2';
+  113: GetHRFExt := '.mp3';
+  199: GetHRFExt := '';
+  200: GetHRFExt := '.avi';
+  201: GetHRFExt := '.mov';
+  202: GetHRFExt := '.fli';
+  203: GetHRFExt := '.flc';
+  204: GetHRFExt := '.bik';
+  else
+    GetHRFExt := '.unk'+inttostr(ftype);
+  end;
+
+end;
+
+function NumberPadding(src: integer): string;
+var res: string;
+    x: integer;
+begin
+
+  res := inttostr(src);
+  if length(res) < 10 then
+    for x := 1 to 10-length(res) do
+      res := '0'+res;
+
+  NumberPadding := res;
+
+end;
+
+function CompareBytes(buf1, buf2: array of byte; size: byte): boolean;
+var res : boolean;
+    x: byte;
+begin
+
+  res := buf1[0] = buf2[0];
+  x := 1;
+
+  while res and (x < size) do
+  begin
+    res := buf1[x] = buf2[x];
+    Inc(x);
+  end;
+
+  CompareBytes := res;
 
 end;
 
@@ -5871,62 +6112,21 @@ begin
 
 end;
 
-function ReadDune3RFH(src: string): Integer;
-var ENT: RFH_Entry;
-    disp,dfil: string;
-    NumE: integer;
-    Chandle: integer;
-    EndSize: integer;
-begin
+// -------------------------------------------------------------------------- //
+// Indiana Jones 3D .GOB support ============================================ //
+// -------------------------------------------------------------------------- //
 
-  Chandle := FileOpen(src, fmOpenRead);
-
-  if CHandle > 0 then
-  begin
-    dfil := ChangeFileExt(src,'.rfd');
-
-    if not(FileExists(dfil)) then
-    begin
-      FileClose(Chandle);
-      FHandle := 0;
-      Result := -4;
-      ErrInfo.Format := 'RFH/RFD';
-      ErrInfo.Games := dfil;
-    end
-    else
-    begin
-      Fhandle := FileOpen(dfil, fmOpenRead);
-
-      EndSize := FileSeek(CHandle, 0,2);
-      FileSeek(CHandle, 0, 0);
-
-      NumE := 0;
-
-      while FileSeek(CHandle,0,1) < EndSize do
-      begin
-        Per := ROund(((EndSize / (FileSeek(CHandle,0,1)+1))*100));
-        SetPercent(Per);
-        FileRead(CHandle, ENT, 24);
-        disp := Strip0(Get0(CHandle));
-        FSE_Add(disp,ENT.Offset,ENT.OriginalSize,ENT.IsPacked,ENT.PackedSize);
-        Inc(NumE);
-      end;
-
-      FileClose(Chandle);
-
-      Result := NumE;
-
-      DrvInfo.ID := 'RFH/RFD';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := True;
-
-    end;
-  end
-  else
-    Result := -2;
-
-end;
+type I3DGOBHeader = packed record
+       ID: array[0..3] of char;
+       Version: integer;
+       Unknown2: integer;
+       Dirnum: integer;
+     end;
+     I3DGOBIndex = packed record
+       Offset: integer;
+       Size: integer;
+       Name: array[0..127] of char;
+     end;
 
 function ReadIndianaJones3dGOB(): Integer;
 var HDR: I3DGOBHeader;
@@ -5968,6 +6168,29 @@ begin
   end;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Interstate .ZFS support ================================================== //
+// -------------------------------------------------------------------------- //
+
+type ZFSHeader = packed record
+       ID: array[0..3] of char;
+       Version: integer;
+       Unknown1: integer;
+       DirSize: integer;
+       Dirnum: integer;
+       Unknown3: integer;
+       Unknown4: integer;
+       NextOffset: integer;
+     end;
+     ZFSEntry = packed record
+       Filename: array[0..15] of char;
+       Offset: integer;
+       Unknown1: integer;
+       Size: integer;
+       Unknown2: integer;
+       Unknown3: integer;
+     end;
 
 function ReadInterstateZFS(src: string): Integer;
 var HDR: ZFSHeader;
@@ -6033,6 +6256,27 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Jagged Alliance 2 .SLF support =========================================== //
+// -------------------------------------------------------------------------- //
+
+type SLFHeader = packed record
+       FileName: array[0..255] of char;
+       Directory: array[0..255] of char;
+       NumEntries: integer;
+       NumEntries2: integer;
+       ID: array[0..11] of char;
+     end;
+     SLFEntry = packed record
+       Filename: array[0..255] of char;
+       Offset: integer;
+       Size: integer;
+       Unknown: array[1..16] of byte;
+     end;
+
+const
+  SLFID : array[0..11] of char = #255+#255+#0+#2+#1+#0+#0+#0+#0+#0+#0+#0;
+
 function ReadJaggedAlliance2SLF(src: string): Integer;
 var HDR: SLFHeader;
     ENT: SLFEntry;
@@ -6094,6 +6338,26 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// LEGO Star Wars .DAT support ============================================== //
+// -------------------------------------------------------------------------- //
+
+type LEGODAT_Header = packed record
+       DirOffset: Integer;
+       DirSize: Integer;
+     end;
+     LEGODAT_Entry = packed record
+       Offset: Integer;
+       Size: Integer;
+       Size2: Integer;
+       Unknown: Integer;
+     end;
+     LEGODAT_Directory = packed record
+       Info1: Word;
+       Info2: Word;
+       NamePos: Integer;
+     end;
+
 function ReadLegoStarWarsDAT: Integer;
 var HDR: LEGODAT_Header;
     stmNames: TMemoryStream;
@@ -6146,7 +6410,7 @@ begin
   for x := 0 to DirTableSize-1 do
   begin
     stmNames.Seek(DIR[x].NamePos,soFromBeginning);
-    disp := Strip0(Get0_Stream(stmNames));
+    disp := Strip0(Get0(stmNames));
     if length(DirName[x]) = 0 then
       DirName[x] := disp
     else
@@ -6176,6 +6440,29 @@ begin
   DrvInfo.ExtractInternal := False;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Leisure Suit Larry Magna Cum Laude .JAM support ========================== //
+// -------------------------------------------------------------------------- //
+
+type JAM2Header = packed record
+       ID: array[0..3] of char;   // JAM2
+       CreationDateTime: integer;
+       OffsetFirstEntry: cardinal;
+       UnknownString: array[0..15] of char;  // always "none"+chr(0)+.. ?
+       NumFiles: word;
+       NumExts: word;
+     end;
+     JAM2DirIndex = packed record
+       FileIdx: word;
+       ExtIdx: word;
+       Offset: cardinal;
+     end;
+     JAM2Entry = packed record
+       Size: cardinal;
+       SizeAlt: cardinal;
+       Unknown: array[1..6] of cardinal;  // FF    2D    42    53    8B    A2
+     end;
 
 // Auxiliary function that will recursevely read the directory index of a JAM2 file
 function ReadLeisureSuitLarryMagnaCumLaudeJAM_alt(curDir: string; OList: TIntList; firstData: cardinal; FList, EList: TStringList): Integer;
@@ -6422,6 +6709,22 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Lemmings Revolution .BOX support ========================================= //
+// -------------------------------------------------------------------------- //
+
+type LEMBOXHeader = packed record
+       ID: array[0..5] of char;
+       Dirnum: integer;
+       DirSize: integer;
+     end;
+// DirNum * Get32
+// n as Long (n = DirNum)
+// DirNum * Entry
+     LEMBOXEntry = record
+       Offset: integer;
+     end;
+
 function ReadLemmingsRevolutionBOX(src: string): Integer;
 var HDR: LEMBOXHeader;
     ENT: LEMBOXEntry;
@@ -6494,157 +6797,138 @@ begin
 
 end;
 
-function ReadQuakePAK(): Integer;
-var HDR: PACKHeader;
-    ENT: PACKEntry;
-//    ENTX: PACKEntryX;
-    disp: string;
-    NumE, x: integer;
-    rest: longword;
+
+// -------------------------------------------------------------------------- //
+// LithTech .REZ support ==================================================== //
+// -------------------------------------------------------------------------- //
+
+type REZHeader = packed record
+        ID: array[0..126] of Char;
+        Version: Integer;
+        DirOffset: Integer;
+        DirSize: Integer;
+        Empty1: Integer;
+        IdxOffset: Integer;
+        DateTime: Integer;
+        Empty2: Integer;
+        LongestFoldernameLength: Integer;
+        LongestFilenameLength: Integer;
+     end;
+     REZEntry = packed record
+       EntryType: Integer;
+       Offset: Integer;
+       Size: Integer;
+       DateTime: Integer;
+     end;
+const
+  REZID : String = #13+#10+'RezMgr Version 1 Copyright (C) 1995 MONOLITH INC.           '+#13+#10+'LithTech Resource File                                      '+#13+#10+#26;
+  REZIDOld : String = #13+#10+'RezMgr Version 1 Copyright (C) 1995 MONOLITH INC.           '+#13+#10+'                                                            '+#13+#10+#26;
+
+procedure Offset_add(Offset: Integer);
+var nouvL: TInts;
 begin
 
-  FileSeek(Fhandle, 0, 0);
-  FileRead(Fhandle, HDR, 12);
+  new(nouvL);
+  nouvL^.Value := Offset;
+  nouvL^.suiv := OffsetList;
+  OffsetList := nouvL;
 
-  if HDR.ID <> 'PACK' then
+end;
+
+procedure Offset_clear();
+var a: TInts;
+begin
+
+  while OffsetList <> NIL do
   begin
-    FileClose(Fhandle);
-    FHandle := 0;
-    ReadQuakePAK := -3;
-    ErrInfo.Format := 'PACK';
-    ErrInfo.Games := 'Half-Life, Quake, Quake 2, Trickstyle, ..';
-  end
-  else
-  begin
-
-    rest := HDR.DirSize mod 64;
-    if rest <> 0 then
-    begin
-      rest := HDR.DirSize mod 72;
-      if rest <> 0 then
-        Rest := 0
-      else
-        Rest := 72;
-    end
-    else
-      rest := 64;
-
-    if rest > 0 then
-    begin
-
-      NumE := HDR.DirSize div rest;
-
-      FileSeek(Fhandle, HDR.DirOffset, 0);
-      str(NumE, disp);
-
-      for x:= 1 to NumE do
-      begin
-
-        Per := ROund(((x / NumE)*100));
-        SetPercent(Per);
-
-        FileRead(Fhandle, ENT, 64);
-        if rest = 72 then
-          FileSeek(Fhandle,8,1);
-//          FileRead(Fhandle, ENTX, 8);
-      //ShowMessage(ENT.FileName);
-
-        FSE_Add(Strip0(ENT.FileName),ENT.Offset,ENT.Size,0,0);
-
-      end;
-
-      ReadQuakePAK := NumE;
-
-      DrvInfo.ID := 'PACK';
-      DrvInfo.Sch := '/';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end
-    else
-    begin
-      FileClose(FHandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'PACK';
-      ErrInfo.Games := 'Half-Life, Quake, Quake 2, Trickstyle, ..';
-    end;
-
+    a := OffsetList;
+    OffsetList := OffsetList^.suiv;
+    Dispose(a);
   end;
 
 end;
 
-function ReadQuakeWAD2(): Integer;
-var HDR: WAD2Header;
-    ENT: WAD2Entry;
-//    ENTX: PACKEntryX;
-    ext: string;
-    NumE, x: integer;
+function Offset_check(Offset: Integer): Boolean;
+var a: TInts;
+    res: Boolean;
 begin
 
-  FileSeek(Fhandle, 0, 0);
-  FileRead(Fhandle, HDR, 12);
+  a := OffsetList;
+  res := false;
 
-  if (HDR.ID <> 'WAD2') and (HDR.ID <> 'WAD3') then
+  while (a <> NIL) and not(res) do
   begin
-    FileClose(Fhandle);
-    FHandle := 0;
-    Result := -3;
-    ErrInfo.Format := 'WAD2/WAD3';
-    ErrInfo.Games := 'Quake, Quake 2, Half-Life, ..';
-  end
-  else
-  begin
-
-    NumE := HDR.DirNum;
-
-    FileSeek(FHandle,HDR.DirOffset,0);
-
-    for x:= 1 to NumE do
-    begin
-
-      FileRead(FHandle,ENT.Offset,4);
-      FileRead(FHandle,ENT.DSize,4);
-      FileRead(FHandle,ENT.Size,4);
-      FileRead(FHandle,ENT.FType,1);
-      FileRead(FHandle,ENT.Compression,1);
-      FileRead(FHandle,ENT.Dummy,2);
-      FileRead(FHandle,ENT.FileName,16);
-
-      Per := ROund(((x / NumE)*100));
-      SetPercent(Per);
-
-      case ENT.FType of
-        64: ext := 'pal';
-        66: ext := 'psb';
-        67: ext := 'pmm';
-        68: ext := 'mm';
-        69: ext := 'cp';
-        70: ext := 'pcp';
-        else
-          ext := 'unk'+IntToHex(ENT.FType,2);
-      end;
-
-
-      FSE_Add(Strip0(ENT.FileName)+'.'+ext,ENT.Offset,ENT.Size,ENT.FType,ENT.Compression);
-
-    end;
-
-    Result := NumE;
-
-    DrvInfo.ID := HDR.ID;
-    DrvInfo.Sch := '';
-    DrvInfo.FileHandle := FHandle;
-    DrvInfo.ExtractInternal := False;
-
+    res := (a^.Value = Offset);
+    a := a^.suiv;
   end;
+
+  Offset_check := res;
 
 end;
 
-function ReadQuiVeutGagnerDesMillionsAWF(src: string): Integer;
-var ENT: AWFEntry;
-    NumE,x,OldOffset : integer;
-    nam: string;
+function Parse_REZ(offset: integer; cdir: string): integer;
+var ENT: REZEntry;
+    tstr,nam,ext,pcdir: string;
+    tint,res: integer;
+    extbuf: array[1..4] of Char;
+begin
+
+  res := 0;
+
+  if Offset < FileSeek(FHandle,0,2) then
+  begin
+
+    FileSeek(FHandle,Offset,0);
+    FileRead(FHandle,ENT,16);
+
+    case ENT.EntryType of
+      1: begin
+           pcdir := cdir;
+           tstr := Strip0(Get0(FHandle));
+           if ENT.Size > 0 then
+             if Not(Offset_check(ENT.Offset)) then
+             begin
+               cdir := cdir + tstr + '\';
+               Offset_add(ENT.Offset);
+               res := Parse_REZ(ENT.Offset,cdir);
+             end;
+           res := res + Parse_REZ(Offset + 16 + Length(tstr) + 1,pcdir);
+           Per := Per + 1;
+           if Per > 100 then
+             Per := 0;
+           SetPercent(Per);
+         end;
+      0: begin
+           FileRead(FHandle,tint,4);  // Numeric ID
+           FileRead(Fhandle,extbuf,4);
+           ext := extbuf;
+           ext := RevStr(Strip0(ext));
+           FileRead(FHandle,tint,4);  // Blank
+           nam := Strip0(Get0(FHandle));
+           if (length(nam) > 0) and (ENT.Offset > 0) and (ENT.Size > 0) and (extbuf[4] = #0) and (ENT.Offset < TotFSize) and (ENT.Offset + ENT.Size < TotFSize) and (ENT.Offset > 162) then
+           begin
+             if (ext = '') then
+               tstr := cdir + nam
+             else
+               tstr := cdir + nam + '.' + ext;
+//             ShowMessage('File'+#10+cdir+nam+'.'+ext+#10+inttoStr(ENT.Offset)+#10+inttostr(ENT.Size));
+             FSE_Add(tstr,ENT.Offset,ENT.Size,0,0);
+           end;
+           Inc(Res);
+           res := res + Parse_REZ(Offset + 30 + Length(nam),cdir);
+         end;
+    end;
+
+    Parse_REZ := res;
+  end
+  else
+    Parse_REZ := 0;
+
+end;
+
+function ReadLithTechREZ(src: string): Integer;
+var HDR: REZHeader;
+    NumE: integer;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead);
@@ -6654,194 +6938,35 @@ begin
     TotFSize := FileSeek(FHandle,0,2);
 
     FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, NumE, 4);
-
-    OldOffset := 0;
-
-    for x := 1 to NumE do
-    begin
-      FileRead(FHandle,ENT.Offset,4);
-      FileRead(FHandle,ENT.Filename,260);
-      if x > 1 then
-        FSE_Add(nam,OldOffset,ENT.Offset - OldOffset,0,0);
-
-      nam := strip0(ENT.Filename);
-      OldOffset := ENT.Offset;
-
-    end;
-
-    FSE_Add(nam,ENT.Offset,TotFSize-ENT.Offset,0,0);
-
-      //ShowMessage(IntTosTr(NumE));
-
-    Result := NumE;
-
-    DrvInfo.ID := 'AWF';
-    DrvInfo.Sch := '';
-    DrvInfo.FileHandle := FHandle;
-    DrvInfo.ExtractInternal := False;
-
-  end
-  else
-    Result := -2;
-
-end;
-
-procedure DNIDirectory(cdir: string; coffset: integer; ftoffset:integer);
-var DIR: DNIDir;
-    FIL: DNIFile;
-    cdir2, cdirp, nam: string;
-    x, ObjOffset: integer;
-begin
-
-  FileSeek(FHandle, coffset,0);
-
-  FileRead(FHandle,DIR.Offset,4);
-  FileRead(FHandle,DIR.NumObj,4);
-
-  FileSeek(FHandle,DIR.Offset,0);
-
-  cdir2 := strip0(Get0(Fhandle));
-  cdirp := cdir + cdir2 + '\';
-  if cdirp = '\' then
-    cdirp := '';
-
-  inc(coffset,8);
-
-  for x := 1 to DIR.NumObj do
-  begin
-    FileSeek(FHandle,coffset,0);
-    FileRead(FHandle, ObjOffset, 4);
-    if ObjOffset < FTOffset then
-      DNIDirectory(cdirp,ObjOffset,FTOffset)
-    else
-    begin
-      FileSeek(FHandle,ObjOffset,0);
-      FileRead(FHandle,FIL.OffsetName, 4);
-      FileRead(FHandle,FIL.OffsetNameNext, 4);
-      FileRead(FHandle,FIL.Length, 4);
-      FileRead(FHandle,FIL.Offset, 4);
-      FileRead(FHandle,FIL.Empty, 4);
-      FileSeek(FHandle,FIL.OffsetName,0);
-      nam := strip0(get0(FHandle));
-      Inc(DNISize);
-      FSE_Add(cdir + nam,FIL.Offset, FIL.Length, 0, 0);
-    end;
-    Inc(coffset,4);
-  end;
-
-end;
-
-function ReadRageOfMages2RES_Aux(cdir: string; startoffset: integer; reloffset: integer; localNumE: integer): integer;
-var ENT: ROM2RES_Index;
-    disp : string;
-    x: integer;
-begin
-
-  Result := 0;
-
-  for x := 1 to localNumE do
-  begin
-    FileSeek(FHandle,startOffset+((RelOffset+x-1)*SizeOf(ROM2RES_Index)),0);
-    FileRead(FHandle,ENT,SizeOf(ROM2RES_Index));
-    if (ENT.Flags = 1) then
-    begin
-      disp := strip0(ent.FileName);
-      inc(result,ReadRageOfMages2RES_Aux(cdir+disp+'\',startoffset,ENT.Offset,ENT.Size));
-    end
-    else
-    begin
-      inc(result);
-      FSE_Add(cdir+strip0(ENT.FileName),ENT.Offset,ENT.Size,ENT.Unknown1,ENT.Flags);
-    end;
-  end;
-
-//  ShowMessage(cdir+' = '+inttostr(result)+' files');
-
-end;
-
-function ReadRageOfMages2RES(): Integer;
-var HDR: ROM2RES_Header;
-    numE: integer;
-    cdir : string;
-begin
-
-  if FHandle > 0 then
-  begin
-    TotFSize := FileSeek(FHandle,0,2);
-
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR, SizeOf(ROM2RES_Header));
-
-    if (HDR.ID <> '&YA1') then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'RoM2RES';
-      ErrInfo.Games := 'Rage of Mages 2';
-    end
-    else
-    begin
-      cdir := '';
-
-      NumE := ReadRageOfMages2RES_Aux(cdir,HDR.DirOffset,HDR.RootRelativeOffset, HDR.RootSize);
-
-      //ShowMessage(IntTosTr(NumE));
-
-      Result := NumE;
-
-      DrvInfo.ID := 'RoM2RES';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := True;
-
-    end;
-
-  end
-  else
-    Result := -2;
-
-end;
-
-function ReadRealMystDNI(src: string): Integer;
-var HDR: DNIHeader;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    TotFSize := FileSeek(FHandle,0,2);
-
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR.ID, 4);
+    FileRead(FHandle, HDR.ID, 127);
     FileRead(FHandle, HDR.Version, 4);
-    FileRead(FHandle, HDR.DIROffset, 4);
-    FileRead(FHandle, HDR.FTOffset, 4);
-    FileRead(FHandle, HDR.NLOffset, 4);
-    FileRead(FHandle, HDR.DataOffset, 4);
-    FileRead(FHandle, HDR.FTOffsetA, 4);
+    FileRead(FHandle, HDR.DirOffset, 4);
+    FileRead(FHandle, HDR.DirSize, 4);
+    FileRead(FHandle, HDR.Empty1, 4);
+    FileRead(FHandle, HDR.IdxOffset, 4);
+    FileRead(FHandle, HDR.DateTime, 4);
+    FileRead(FHandle, HDR.Empty2, 4);
+    FileRead(FHandle, HDR.LongestFoldernameLength, 4);
+    FileRead(FHandle, HDR.LongestFilenameLength, 4);
 
-    if (HDR.ID <> 'Dirt') or (HDR.Version <> 65536) then
+    if ((HDR.ID <> REZID) and (HDR.ID <> REZIDOld)) or (HDR.Version <> 1) then
     begin
       FileClose(Fhandle);
       FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'DNI';
-      ErrInfo.Games := 'realMyst 3D';
+      ReadLithTechREZ := -3;
+      ErrInfo.Format := 'REZ';
+      ErrInfo.Games := 'Alien vs Predator 2, No One Lives Forever, Shogo, ..';
     end
     else
     begin
+      NumE := Parse_REZ(HDR.DirOffset,'');
 
-      DNISize := 0;
-
-      DNIDirectory('',HDR.DIROffset,HDR.FTOffset);
+      Offset_clear;
       //ShowMessage(IntTosTr(NumE));
 
-      Result := DNISize;
+      ReadLithTechREZ := NumE;
 
-      DrvInfo.ID := 'DNI';
+      DrvInfo.ID := 'REZ';
       DrvInfo.Sch := '\';
       DrvInfo.FileHandle := FHandle;
       DrvInfo.ExtractInternal := False;
@@ -6850,333 +6975,26 @@ begin
 
   end
   else
-    Result := -2;
+    ReadLithTechREZ := -2;
 
 end;
 
-function ReadNocturnePOD(): Integer;
-var HDR: POD2Header;
-    ENT: POD2Entry;
-    disp: string;
-    NumE, x, NamesSize: integer;
-    buf: PByteArray;
-    NameStream: TMemoryStream;
-begin
-
-  FileSeek(Fhandle, 0, 0);
-  FileRead(Fhandle, HDR, SizeOf(POD2Header));
-
-  FileRead(FHandle, ENT, SizeOf(POD2Entry));
-
-  NamesSize := ENT.Offset - ($60+HDR.NumEntries*SizeOf(POD2Entry));
-
-  GetMem(buf,NamesSize);
-  NameStream := TMemoryStream.Create;
-  try
-    FileSeek(FHandle,$60+HDR.NumEntries*SizeOf(POD2Entry),0);
-    FileRead(FHandle,Buf^,NamesSize);
-    NameStream.Write(buf^,NamesSize);
-    NameStream.Seek(0,0);
-  finally
-    FreeMem(buf);
-  end;
-
-  NumE := HDR.NumEntries;
-
-  FileSeek(Fhandle, $60, 0);
-
-  for x := 1 to NumE do
-  begin
-
-    Per := ROund(((x / NumE)*100));
-    SetPercent(Per);
-
-    FileRead(Fhandle, ENT, SizeOf(POD2Entry));
-    NameStream.Seek(ENT.NameOffset,0);
-    disp := Get0_Stream(NameStream);
-
-    FSE_Add(Strip0(disp),ENT.Offset,ENT.Size,0,0);
-
-  end;
-
-  NameStream.Free;
-
-  Result := NumE;
-
-  DrvInfo.ID := 'POD2';
-  DrvInfo.Sch := '\';
-  DrvInfo.FileHandle := FHandle;
-  DrvInfo.ExtractInternal := False;
-
-end;
-
-function ReadNovalogicPFF3(src: string): Integer;
-var HDR: PFFHeader;
-    ENT: PFFEntry;
-    disp: string;
-    NumE, x: integer;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR, 20);
-
-    if (HDR.ID <> 'PFF3') or (HDR.DirEntrySize < 32) then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      ReadNovalogicPFF3 := -3;
-      ErrInfo.Format := 'PFF3';
-      ErrInfo.Games := 'Comanche 4, Delta Force 1/2, Delta Force: Land Warrior, ..';
-    end
-    else
-    begin
-
-      NumE := HDR.DirNum;
-
-      for x:= 1 to NumE do
-      begin
-
-        Per := ROund(((x / NumE)*100));
-        SetPercent(Per);
-
-        FileSeek(Fhandle,HDR.DirOffset+((x-1)*HDR.DirEntrySize),0);
-        FileRead(Fhandle,ENT,32);
-        disp := Strip0(ENT.FileName);
-
-        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
-      end;
-
-      ReadNovalogicPFF3 := NumE;
-
-      DrvInfo.ID := 'PFF3';
-      DrvInfo.Sch := '';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-
-  end
-  else
-    ReadNovalogicPFF3 := -2;
-
-end;
-
-function ReadSinSIN(src: string): Integer;
-var HDR: SINHeader;
-    ENT: SINEntry;
-    disp: string;
-    NumE, x: integer;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR, 10);
-
-    if HDR.ID <> 'SPAK' then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'SIN';
-      ErrInfo.Games := 'Sin';
-    end
-    else
-    begin
-
-      NumE := HDR.DirNum;
-      FileSeek(FHandle,HDR.DirOffset,0);
-
-      for x:= 1 to NumE do
-      begin
-
-        Per := ROund(((x / NumE)*100));
-        SetPercent(Per);
-        FileRead(Fhandle,ENT.Filename,120);
-        FileRead(Fhandle,ENT.Offset,4);
-        FileRead(Fhandle,ENT.Size,4);
-        disp := Strip0(ENT.FileName);
-
-        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
-      end;
-
-      Result := NumE;
-
-      DrvInfo.ID := 'SIN';
-      DrvInfo.Sch := '/';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-  end
-  else
-    Result := -2;
-
-end;
-
-function ReadSpellforcePAK(): Integer;
-var HDR: MFHeader;
-    ENT: MFEntry;
-    disp: string;
-    x: integer;
-    nameoffset: integer;
-    HF: THandleStream;
-    FAT: TMemoryStream;
-begin
-
-  FileSeek(Fhandle, 0, 0);
-  FileRead(Fhandle, HDR, SizeOf(HDR));
-
-  if (HDR.VersionNum <> 4) or (HDR.ID <> 'MASSIVE PAKFILE V 4.0'+#13+#10) then
-  begin
-    FileClose(Fhandle);
-    FHandle := 0;
-    Result := -3;
-    ErrInfo.Format := 'MPF4';
-    ErrInfo.Games := 'Spellforce';
-  end
-  else
-  begin
-
-    HF := THandleStream.Create(FHandle);
-    FAT := TMemoryStream.Create;
-    try
-      FAT.CopyFrom(HF,HDR.NbFatEntry*16);
-      FAT.Seek(0,0);
-      nameoffset := 92+HDR.NbFatEntry*16;
-      for x := 1 to HDR.NbFatEntry do
-      begin
-        FAT.Read(ENT,SizeOf(ENT));
-        ENT.NameOffset := ENT.NameOffset and $FFFFFF;
-        ENT.DirNameOffset := ENT.DirNameOffset and $FFFFFF;
-
-        FileSeek(FHandle,ENT.NameOffset+nameoffset+2,0);
-        disp := revstr(Strip0(Get0(FHandle)));
-
-        FileSeek(FHandle,ENT.DirNameOffset+nameoffset,0);
-        disp := revstr(Strip0(Get0(FHandle)))+'\'+disp;
-
-        FSE_Add(disp,ENT.RelOffset+HDR.DataOffset,ENT.Size,0,0);
-      end;
-
-    finally
-      HF.Free;
-      FAT.Free;
-    end;
-
-    Result := HDR.NbFatEntry;
-
-    DrvInfo.ID := 'MPF4';
-    DrvInfo.Sch := '\';
-    DrvInfo.FileHandle := FHandle;
-    DrvInfo.ExtractInternal := False;
-
-  end;
-
-end;
-
-function isStarCrusaderPAK(Offset, TotSize: integer): boolean;
-var SaveOffset: integer;
-    NumE: word;
-    DirOffset: integer;
-begin
-
-  SaveOffset := FileSeek(FHandle,0,1);
-  FileSeek(FHandle,Offset,0);
-  FileRead(FHandle,NumE,2);
-  FileRead(FHandle,DirOffset,4);
-
-  result := ((DirOffset + NumE*12) <= TotSize);
-
-  FileSeek(FHandle,SaveOffset,0);
-
-end;
-
-function ReadStarCrusaderPAK(IsGL: Boolean): Integer;
-var disp: string;
-    NumE: word;
-    x, Offset, OldOffset, TotSize: integer;
-    ENT: PAKEntry;
-begin
-
-  TotSize := FileSeek(FHandle, 0,2);
-  FileSeek(Fhandle, 0, 0);
-  FileRead(Fhandle,NumE,2);
-  FileRead(Fhandle,Offset,4);
-
-  if ((Offset + NumE*12) > TotSize) then
-  begin
-    if (IsGL) then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-    end;
-    Result := -3;
-    ErrInfo.Format := 'GL';
-    ErrInfo.Games := 'Star Crusader';
-  end
-  else
-  begin
-
-    FileSeek(Fhandle, Offset, 0);
-    OldOffset := Offset;
-
-    for x := 1 to NumE do
-    begin
-      FileRead(Fhandle,ENT,12);
-      if (x > 1) then
-      begin
-        if (IsGl and isStarCrusaderPAK(OldOffset,ENT.Offset-OldOffset)) then
-        begin
-          disp := ChangeFileExt(disp,'.gl');
-        end;
-        FSE_Add(disp,OldOffset,ENT.Offset-OldOffset,0,0);
-      end;
-      OldOffset := ENT.Offset;
-      if (IsGL) then
-        disp := strip0(ENT.FileName)
-      else
-        disp := strip0(ENT.FileName)+'.wav';
-      if TotFSize < Offset then
-        break;
-    end;
-    FSE_Add(disp,OldOffset,Offset-OldOffset,0,0);
-
-    if TotFSize < Offset then
-    begin
-
-      FSE_free;
-      FileClose(FHandle);
-      FHandle := 0;
-      result := -3;
-      ErrInfo.Format := 'GL';
-      ErrInfo.Games := 'Star Crusader';
-
-    end
-    else
-    begin
-
-      result := NumE;
-
-      if (IsGL) then
-        DrvInfo.ID := 'SCPAK'
-      else
-        DrvInfo.ID := 'SCGL';
-      DrvInfo.Sch := '';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-
-  end;
-
-end;
+// -------------------------------------------------------------------------- //
+// MDK .SNI support ========================================================= //
+// -------------------------------------------------------------------------- //
+
+type MDK1Header = packed record
+       Magic: integer;
+       Filename: array[0..11] of char;
+       TestOffset: integer;
+       Dirnum: integer;
+     end;
+     MDK1Index = record
+       Filename: array[0..11] of char;
+       Flag: integer;
+       Offset: integer;
+       Size: integer;
+     end;
 
 function ReadMDKSNI(src: string): Integer;
 var HDR: MDK1Header;
@@ -7243,6 +7061,21 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Monkey Island 3 .BUN support ============================================= //
+// -------------------------------------------------------------------------- //
+
+type BUNHeader = packed record
+        ID: array[1..4] of Char;
+        DirOffset: longword;
+        DirSize: longword;
+        CreationDate: integer;
+     end;
+     BUNEntry = packed record
+        FileName: Array[1..8] of Char;
+        Ext: Array[1..4] of char;
+     end;
+
 function ReadMonkeyIsland3BUN(src: string): Integer;
 var HDR: BUNHeader;
     ENT: BUNEntry;
@@ -7306,6 +7139,23 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Mortyr .HAL support ====================================================== //
+// -------------------------------------------------------------------------- //
+
+type APUKHeader = packed record
+       ID: array[0..3] of char;
+       Dirnum: integer;
+       Unknown: array[1..24] of byte;
+     end;
+     APUKEntry = packed record
+       Size: integer;
+       Offset: integer;
+       Unknown1: integer;
+       Unknown2: integer;
+       Filename: array[0..15] of char;
+     end;
+
 function ReadMortyrHAL(src: string): Integer;
 var HDR: APUKHeader;
     ENT: APUKEntry;
@@ -7365,6 +7215,16 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Moto Racer .BKF support ================================================== //
+// -------------------------------------------------------------------------- //
+
+type BKF_Entry = packed record
+       Filename: array[0..35] of char;
+       Offset: integer;
+       Size: integer;
+     end;
+
 function ReadMotoRacerBKF(src: string): Integer;
 var ENT: BKF_Entry;
     NumE,x, DirNum: integer;
@@ -7404,6 +7264,10 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Myst IV: Revelation .M4B support ========================================= //
+// -------------------------------------------------------------------------- //
+
 function ReadMystIVRevelationM4B_Alt(dir: string): Integer;
 var tByt, x: Byte;
     y, NumE, Size, Offset, tInt: cardinal;
@@ -7430,7 +7294,10 @@ begin
   begin
     for x := 1 to tByt do
     begin
-      disp := Strip0(Get32(FHandle));
+      FileRead(FHandle,tInt,4);
+      if (tInt > 65535) then
+        raise EOverflow.Create(inttostr(tInt));
+      disp := Strip0(Get32(FHandle,tInt));
       if length(dir) > 0 then
         disp := dir + '\' + disp;
       inc(result,ReadMystIVRevelationM4B_Alt(disp));
@@ -7441,6 +7308,11 @@ begin
   end;
 
 end;
+
+type M4BHeader = packed record
+       SigSize: cardinal;
+       SigName: array[0..10] of char;
+     end;
 
 function ReadMystIVRevelationM4B(src: string): Integer;
 var HDR: M4BHeader;
@@ -7486,6 +7358,19 @@ begin
     Result := -2;
 
 end;
+
+
+// -------------------------------------------------------------------------- //
+// Nascar .DAT support ====================================================== //
+// -------------------------------------------------------------------------- //
+
+type NascarDAT_Entry = packed record
+       Unknow: word;
+       Size: integer;
+       Size2: integer;
+       Filename: array[0..12] of char;
+       Offset: integer;
+     end;
 
 function ReadNascarDAT(): Integer;
 var ENT: NascarDAT_Entry;
@@ -7533,6 +7418,21 @@ begin
   end;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// N.I.C.E. 2 .SYN support ================================================== //
+// -------------------------------------------------------------------------- //
+
+type SYN_Header = packed record
+       ID: array[0..3] of char;
+       DirNum: integer;
+       Reserved: array[1..8] of byte;
+     end;
+     SYN_Entry = packed record
+       Filename: array[0..23] of char;
+       Offset: integer;
+       Size: integer;
+     end;
 
 function ReadNICE2SYN(src: string): Integer;
 var HDR: SYN_Header;
@@ -7590,226 +7490,167 @@ begin
 
 end;
 
-function ReadNightFire007_Aux(cdir: string; numDirs: integer; totFSize: integer): integer;
-var ENT: N007Entry;
-    disp : string;
-    check, curNumDirs: integer;
+// -------------------------------------------------------------------------- //
+// Nocturne .POD support ==================================================== //
+// -------------------------------------------------------------------------- //
+
+type POD2Header = packed record
+       ID: array[0..3] of char;
+       Unknown1: integer;
+       Description: array[0..79] of char;
+       NumEntries: integer;
+       Unknown3: integer;
+     end;
+     POD2Entry = packed record
+       NameOffset: integer;
+       Size: integer;
+       Offset: integer;
+       Unknown1: integer;
+       Unknown2: integer;
+     end;
+
+function ReadNocturnePOD(): Integer;
+var HDR: POD2Header;
+    ENT: POD2Entry;
+    disp: string;
+    NumE, x, NamesSize: integer;
+    buf: PByteArray;
+    NameStream: TMemoryStream;
 begin
 
-  Result := 0;
-  curNumDirs := numDirs;
+  FileSeek(Fhandle, 0, 0);
+  FileRead(Fhandle, HDR, SizeOf(POD2Header));
 
-  if (curNumDirs = 0) then
-  begin
-    Check := 1;
-    while (FileSeek(FHandle,0,1) < TotFSize) and (Check <> 0) do
-    begin
-      FileRead(FHandle,Check,4);
-      if Check = 0 then
-      begin
-        FileSeek(FHandle,-4,1);
-      end
-      else
-      begin
-        FileSeek(Fhandle,-4,1);
-        disp := get32(FHandle);
-        Fileread(FHandle,ENT,SizeOf(N007Entry));
-        FSE_Add(cdir+disp,FileSeek(FHandle,0,1),ENT.Size,ENT.Compressed,ENT.CompSize);
-        if ENT.Compressed = 0 then
-          FileSeek(FHandle,ENT.Size,1)
-        else
-          FileSeek(Fhandle,ENT.CompSize,1);
-        inc(Result);
-      end;
-    end;
-  end
-  else
-    while (FileSeek(FHandle,0,1) < TotFSize) and (curNumDirs > 0) do
-    begin
-      FileRead(FHandle,Check,4);
-      if Check = 0 then
-      begin
-        disp := get32(FHandle);
-        FileRead(Fhandle,Check,4);
-        inc(Result,ReadNightFire007_Aux(cdir+disp+'\',Check,totFSize));
-        dec(curNumDirs);
-      end
-      else
-      begin
-        FileSeek(Fhandle,-4,1);
-        disp := get32(FHandle);
-        Fileread(FHandle,ENT,SizeOf(N007Entry));
-        FSE_Add(cdir+disp,FileSeek(FHandle,0,1),ENT.Size,ENT.Compressed,ENT.CompSize);
-        if ENT.Compressed = 0 then
-          FileSeek(FHandle,ENT.Size,1)
-        else
-          FileSeek(Fhandle,ENT.CompSize,1);
-        inc(Result);
-      end;
-    end;
+  FileRead(FHandle, ENT, SizeOf(POD2Entry));
 
-end;
+  NamesSize := ENT.Offset - ($60+HDR.NumEntries*SizeOf(POD2Entry));
 
-type
-  PN007List = ^N007List;
-  N007List = record
-    Name: string;
-    Size: integer;
-    CompSize: integer;
-    Compressed: byte;
-    Offset: Integer;
+  GetMem(buf,NamesSize);
+  NameStream := TMemoryStream.Create;
+  try
+    FileSeek(FHandle,$60+HDR.NumEntries*SizeOf(POD2Entry),0);
+    FileRead(FHandle,Buf^,NamesSize);
+    NameStream.Write(buf^,NamesSize);
+    NameStream.Seek(0,0);
+  finally
+    FreeMem(buf);
   end;
 
+  NumE := HDR.NumEntries;
 
-function ReadNightFire007_Aux_v3(EList: TList; cdir: string; numDirs: integer; numEnt: integer; totFSize: integer): integer;
-var ENT: N007Entry;
-    disp : string;
-    check, checkEnt, curNumDirs: integer;
-    ENTL: PN007List;
-begin
+  FileSeek(Fhandle, $60, 0);
 
-  Result := 0;
-  curNumDirs := numDirs;
-
-  //ShowMessage('Start:'+#10+cdir+#10+inttostr(numDirs)+' '+inttostr(numEnt));
-
-  if (curNumDirs = 0) then
+  for x := 1 to NumE do
   begin
-    Check := 1;
-    while (FileSeek(FHandle,0,1) < TotFSize) and (Check <> 0) do
-    begin
-      FileRead(FHandle,Check,4);
-      if Check = 0 then
-      begin
-        FileSeek(FHandle,-4,1);
-      end
-      else
-      begin
-        FileSeek(Fhandle,-4,1);
-        disp := get32(FHandle);
-        Fileread(FHandle,ENT,SizeOf(N007Entry));
-        New(ENTL);
-        ENTL^.Name := cdir+disp;
-        ENTL^.Size := ENT.Size;
-        ENTL^.CompSize := ENT.CompSize;
-        ENTL^.Compressed := ENT.Compressed;
-        EList.Add(ENTL);
-        inc(Result);
-      end;
-    end;
-  end
-  else
-    while (FileSeek(FHandle,0,1) < TotFSize) and (curNumDirs > 0) do
-    begin
-      FileRead(FHandle,Check,4);
-      if Check = 0 then
-      begin
-        disp := get32(FHandle);
-        FileRead(Fhandle,Check,4);
-        FileRead(Fhandle,CheckEnt,4);
-        ReadNightFire007_Aux_v3(EList,cdir+disp+'\',Check,CheckEnt,totFSize);
-        dec(curNumDirs);
-      end
-      else
-      begin
-        FileSeek(Fhandle,-4,1);
-        disp := get32(FHandle);
-        Fileread(FHandle,ENT,SizeOf(N007Entry));
-        New(ENTL);
-        ENTL^.Name := cdir +disp;
-        ENTL^.Size := ENT.Size;
-        ENTL^.CompSize := ENT.CompSize;
-        ENTL^.Compressed := ENT.Compressed;
-        EList.Add(ENTL);
-        inc(Result);
-      end;
-    end;
+
+    Per := ROund(((x / NumE)*100));
+    SetPercent(Per);
+
+    FileRead(Fhandle, ENT, SizeOf(POD2Entry));
+    NameStream.Seek(ENT.NameOffset,0);
+    disp := Get0(NameStream);
+
+    FSE_Add(Strip0(disp),ENT.Offset,ENT.Size,0,0);
+
+  end;
+
+  NameStream.Free;
+
+  Result := NumE;
+
+  DrvInfo.ID := 'POD2';
+  DrvInfo.Sch := '\';
+  DrvInfo.FileHandle := FHandle;
+  DrvInfo.ExtractInternal := False;
 
 end;
 
-function ReadNightFire007(src: string): Integer;
-var HDR: N007Header;
-    NumE,HDR_NumE,DataOffset,y : integer;
-    cdir : string;
-    EList: TList;
-    ENTL: PN007List;
+// -------------------------------------------------------------------------- //
+// Novalogic PFF support (PFF3 only) ======================================== //
+// -------------------------------------------------------------------------- //
+
+type PFFHeader = packed record
+        DataOffset: Integer;     // Should be &H14
+        ID: Array[1..4] of Char; // "PFF3"
+        DirNum: Integer;         // Number of entries
+        DirEntrySize: Integer;   // Known values:
+                                 // 32 & 36
+        DirOffset: Integer;      // Offset to index
+     end;
+     PFFEntry = packed record
+        Unknown1: Integer;       // Always 0 ?
+        Offset: Integer;         //
+        Size: Integer;
+        Unknown2: Integer;
+        FileName: Array[1..16] of Char;
+     end;
+
+function ReadNovalogicPFF3(src: string): Integer;
+var HDR: PFFHeader;
+    ENT: PFFEntry;
+    disp: string;
+    NumE, x: integer;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead);
 
   if FHandle > 0 then
   begin
-    TotFSize := FileSeek(FHandle,0,2);
-
     FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR, SizeOf(N007Header));
+    FileRead(FHandle, HDR, 20);
 
-    Result := 0;
-
-    if (HDR.Magic <> 1) or (HDR.ID <> 'ROOT') or ((HDR.Version <> 1) and (HDR.Version <> 3)) then
+    if (HDR.ID <> 'PFF3') or (HDR.DirEntrySize < 32) then
     begin
       FileClose(Fhandle);
       FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := '007';
-      ErrInfo.Games := 'James Bond Nightfire (Demo & Retail)';
+      ReadNovalogicPFF3 := -3;
+      ErrInfo.Format := 'PFF3';
+      ErrInfo.Games := 'Comanche 4, Delta Force 1/2, Delta Force: Land Warrior, ..';
     end
-    else if (HDR.Version = 1) then
+    else
     begin
-      cdir := '';
 
-      NumE := ReadNightFire007_Aux(cdir,HDR.NumRootDirs, totFSize);
+      NumE := HDR.DirNum;
 
-      //ShowMessage(IntTosTr(NumE));
+      for x:= 1 to NumE do
+      begin
 
-      Result := NumE;
+        Per := ROund(((x / NumE)*100));
+        SetPercent(Per);
 
-      DrvInfo.ID := '007';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := True;
+        FileSeek(Fhandle,HDR.DirOffset+((x-1)*HDR.DirEntrySize),0);
+        FileRead(Fhandle,ENT,32);
+        disp := Strip0(ENT.FileName);
 
-    end
-    else if (HDR.Version = 3) then
-    begin
-      cdir := '';
-      FileRead(FHandle,HDR_NumE,4);
-
-      EList := TList.Create;
-      try
-        ReadNightFire007_Aux_v3(EList,cdir,HDR.NumRootDirs,HDR_NumE,totFSize);
-        DataOffset := FileSeek(FHandle,0,1)+4;
-        NumE := EList.Count;
-        for y := 0 to EList.Count-1 do
-        begin
-          ENTL := EList.Items[y];
-          FSE_Add(ENTL^.Name,DataOffset,ENTL^.Size,ENTL^.Compressed,ENTL^.CompSize);
-          if (ENTL^.Compressed = 0) then
-            inc(DataOffset,ENTL^.Size)
-          else
-            inc(DataOffset,ENTL^.CompSize);
-          Dispose(ENTL);
-        end;
-      finally
-        EList.Free;
+        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
       end;
 
-      //ShowMessage(IntTosTr(NumE));
+      ReadNovalogicPFF3 := NumE;
 
-      Result := NumE;
-
-      DrvInfo.ID := '007';
-      DrvInfo.Sch := '\';
+      DrvInfo.ID := 'PFF3';
+      DrvInfo.Sch := '';
       DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := True;
+      DrvInfo.ExtractInternal := False;
 
     end;
 
   end
   else
-    Result := -2;
+    ReadNovalogicPFF3 := -2;
 
 end;
+
+
+// -------------------------------------------------------------------------- //
+// Operation: Flashpoint .PBO support ======================================= //
+// -------------------------------------------------------------------------- //
+
+// Get0
+type PBO_Entry = packed record
+       EmptyVal: array[0..11] of byte;
+       Unknown: integer;
+       Size: integer;
+     end;
 
 function ReadOperationFlashpointPBO(src: string): Integer;
 var ENT: array[1..2000] of PBO_Entry;
@@ -7875,22 +7716,17 @@ begin
 
 end;
 
-type
-  PPostalList = ^PostalList;
-  PostalList = record
-    Name: string;
-    Offset: Integer;
-  end;
+// -------------------------------------------------------------------------- //
+// Painkiller .PAK support ================================================== //
+// -------------------------------------------------------------------------- //
 
-function PostalListCompare(Item1, Item2: Pointer): Integer;
-var PItem1, PItem2: PPostalList;
-begin
+type PKPAKHeader = packed record
+        ID: byte;
+        Offset: longword;
+     end;
 
-  PItem1 := Item1;
-  PItem2 := Item2;
-  result := PItem1^.Offset - PItem2^.Offset;
-
-end;
+const
+  PKDECKEY : array[0..4] of integer = (-2, -1, 0, 1 ,2);
 
 function ReadPainKillerPAK(): Integer;
 var HDR: PKPAKHeader;
@@ -7991,6 +7827,19 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Pixel Painters .RES support ============================================== //
+// -------------------------------------------------------------------------- //
+
+type PPRESIndex = packed record
+       FileNameLength: byte;
+       FileName: array[0..11] of char;
+       Offset: longword;
+       Length: longword;
+       FileType: byte; // 1 = Text (sort of..)
+                       // 2 = Binary
+     end;
+
 function ReadPixelPaintersRES(): Integer;
 var ENT: PPRESIndex;
     NumFiles: word;
@@ -8043,6 +7892,18 @@ begin
     Result := -2;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Pixel Painters .XRS support ============================================== //
+// -------------------------------------------------------------------------- //
+
+type PPXRSIndex = packed record
+       FileNameLength: byte;
+       FileName: array[0..11] of char;
+       Offset: longword;
+       Length: longword;
+       Unknown: array[1..11] of byte; // DOS Date & Time + ???
+     end;
 
 function ReadPixelPaintersXRS(src: string): Integer;
 var ENT: PPXRSIndex;
@@ -8098,6 +7959,33 @@ begin
     Result := -2;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Postal .SAK support ====================================================== //
+// -------------------------------------------------------------------------- //
+
+type
+  PPostalList = ^PostalList;
+  PostalList = record
+    Name: string;
+    Offset: Integer;
+  end;
+
+function PostalListCompare(Item1, Item2: Pointer): Integer;
+var PItem1, PItem2: PPostalList;
+begin
+
+  PItem1 := Item1;
+  PItem2 := Item2;
+  result := PItem1^.Offset - PItem2^.Offset;
+
+end;
+
+type SAK_Header = packed record
+       ID: array[0..3] of char;
+       Version: integer;
+       NumEntries: Word;
+     end;
 
 function ReadPostalSAK(src: string): Integer;
 var HDR: SAK_Header;
@@ -8178,8 +8066,720 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Quake .PAK support ======================================================= //
+// -------------------------------------------------------------------------- //
 
-// Sinking Island/L'Ile Noyée .OPK support
+type PACKHeader = packed record
+        ID: array[1..4] of Char;
+        DirOffset: longword ;
+        DirSize : longword;
+     end;
+     PACKEntry = packed record
+        FileName: array[1..56] of Char;
+        Offset: longword;
+        Size: longword;
+     end;
+     PACKEntryX = packed record
+        Unknown1: longword;
+        Unknown2: longword;
+     end;
+
+function ReadQuakePAK(): Integer;
+var HDR: PACKHeader;
+    ENT: PACKEntry;
+//    ENTX: PACKEntryX;
+    disp: string;
+    NumE, x: integer;
+    rest: longword;
+begin
+
+  FileSeek(Fhandle, 0, 0);
+  FileRead(Fhandle, HDR, 12);
+
+  if HDR.ID <> 'PACK' then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    ReadQuakePAK := -3;
+    ErrInfo.Format := 'PACK';
+    ErrInfo.Games := 'Half-Life, Quake, Quake 2, Trickstyle, ..';
+  end
+  else
+  begin
+
+    rest := HDR.DirSize mod 64;
+    if rest <> 0 then
+    begin
+      rest := HDR.DirSize mod 72;
+      if rest <> 0 then
+        Rest := 0
+      else
+        Rest := 72;
+    end
+    else
+      rest := 64;
+
+    if rest > 0 then
+    begin
+
+      NumE := HDR.DirSize div rest;
+
+      FileSeek(Fhandle, HDR.DirOffset, 0);
+      str(NumE, disp);
+
+      for x:= 1 to NumE do
+      begin
+
+        Per := ROund(((x / NumE)*100));
+        SetPercent(Per);
+
+        FileRead(Fhandle, ENT, 64);
+        if rest = 72 then
+          FileSeek(Fhandle,8,1);
+//          FileRead(Fhandle, ENTX, 8);
+      //ShowMessage(ENT.FileName);
+
+        FSE_Add(Strip0(ENT.FileName),ENT.Offset,ENT.Size,0,0);
+
+      end;
+
+      ReadQuakePAK := NumE;
+
+      DrvInfo.ID := 'PACK';
+      DrvInfo.Sch := '/';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end
+    else
+    begin
+      FileClose(FHandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'PACK';
+      ErrInfo.Games := 'Half-Life, Quake, Quake 2, Trickstyle, ..';
+    end;
+
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Quake .WAD support ======================================================= //
+// -------------------------------------------------------------------------- //
+
+type WAD2Header = packed record
+       ID: array[0..3] of char;
+       DirNum: integer;
+       DirOffset: integer;
+     end;
+     WAD2Entry = packed record
+       Offset: integer;
+       DSize: integer;
+       Size: integer;
+       FType: byte;
+       Compression: byte;
+       Dummy: word;
+       FileName: array[0..15] of char;
+     end;
+
+function ReadQuakeWAD2(): Integer;
+var HDR: WAD2Header;
+    ENT: WAD2Entry;
+//    ENTX: PACKEntryX;
+    ext: string;
+    NumE, x: integer;
+begin
+
+  FileSeek(Fhandle, 0, 0);
+  FileRead(Fhandle, HDR, 12);
+
+  if (HDR.ID <> 'WAD2') and (HDR.ID <> 'WAD3') then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'WAD2/WAD3';
+    ErrInfo.Games := 'Quake, Quake 2, Half-Life, ..';
+  end
+  else
+  begin
+
+    NumE := HDR.DirNum;
+
+    FileSeek(FHandle,HDR.DirOffset,0);
+
+    for x:= 1 to NumE do
+    begin
+
+      FileRead(FHandle,ENT.Offset,4);
+      FileRead(FHandle,ENT.DSize,4);
+      FileRead(FHandle,ENT.Size,4);
+      FileRead(FHandle,ENT.FType,1);
+      FileRead(FHandle,ENT.Compression,1);
+      FileRead(FHandle,ENT.Dummy,2);
+      FileRead(FHandle,ENT.FileName,16);
+
+      Per := ROund(((x / NumE)*100));
+      SetPercent(Per);
+
+      case ENT.FType of
+        64: ext := 'pal';
+        66: ext := 'psb';
+        67: ext := 'pmm';
+        68: ext := 'mm';
+        69: ext := 'cp';
+        70: ext := 'pcp';
+        else
+          ext := 'unk'+IntToHex(ENT.FType,2);
+      end;
+
+
+      FSE_Add(Strip0(ENT.FileName)+'.'+ext,ENT.Offset,ENT.Size,ENT.FType,ENT.Compression);
+
+    end;
+
+    Result := NumE;
+
+    DrvInfo.ID := HDR.ID;
+    DrvInfo.Sch := '';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Qui Veut Gagner des Millions .AWF support ================================ //
+// -------------------------------------------------------------------------- //
+
+type AWFEntry = packed record
+       Offset: integer;
+       Filename: array[0..259] of char;
+     end;
+
+function ReadQuiVeutGagnerDesMillionsAWF(src: string): Integer;
+var ENT: AWFEntry;
+    NumE,x,OldOffset : integer;
+    nam: string;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, NumE, 4);
+
+    OldOffset := 0;
+
+    for x := 1 to NumE do
+    begin
+      FileRead(FHandle,ENT.Offset,4);
+      FileRead(FHandle,ENT.Filename,260);
+      if x > 1 then
+        FSE_Add(nam,OldOffset,ENT.Offset - OldOffset,0,0);
+
+      nam := strip0(ENT.Filename);
+      OldOffset := ENT.Offset;
+
+    end;
+
+    FSE_Add(nam,ENT.Offset,TotFSize-ENT.Offset,0,0);
+
+      //ShowMessage(IntTosTr(NumE));
+
+    Result := NumE;
+
+    DrvInfo.ID := 'AWF';
+    DrvInfo.Sch := '';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Rage of Mages 2 .RES support ============================================= //
+// -------------------------------------------------------------------------- //
+
+type ROM2RES_Header = packed record
+       ID: array[0..3] of char;       // &H31415926
+       RootRelativeOffset: integer;
+       RootSize: integer;
+       Unknown3: integer;
+       DirOffset: integer;
+       DirSize: integer;
+     end;
+     ROM2RES_Index = packed record
+       Unknown1: integer;
+       Offset: integer;
+       Size: integer;
+       Flags: integer;       // DIR or File ?
+       FileName: array[0..15] of char;
+     end;
+
+function ReadRageOfMages2RES_Aux(cdir: string; startoffset: integer; reloffset: integer; localNumE: integer): integer;
+var ENT: ROM2RES_Index;
+    disp : string;
+    x: integer;
+begin
+
+  Result := 0;
+
+  for x := 1 to localNumE do
+  begin
+    FileSeek(FHandle,startOffset+((RelOffset+x-1)*SizeOf(ROM2RES_Index)),0);
+    FileRead(FHandle,ENT,SizeOf(ROM2RES_Index));
+    if (ENT.Flags = 1) then
+    begin
+      disp := strip0(ent.FileName);
+      inc(result,ReadRageOfMages2RES_Aux(cdir+disp+'\',startoffset,ENT.Offset,ENT.Size));
+    end
+    else
+    begin
+      inc(result);
+      FSE_Add(cdir+strip0(ENT.FileName),ENT.Offset,ENT.Size,ENT.Unknown1,ENT.Flags);
+    end;
+  end;
+
+//  ShowMessage(cdir+' = '+inttostr(result)+' files');
+
+end;
+
+function ReadRageOfMages2RES(): Integer;
+var HDR: ROM2RES_Header;
+    numE: integer;
+    cdir : string;
+begin
+
+  if FHandle > 0 then
+  begin
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, SizeOf(ROM2RES_Header));
+
+    if (HDR.ID <> '&YA1') then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'RoM2RES';
+      ErrInfo.Games := 'Rage of Mages 2';
+    end
+    else
+    begin
+      cdir := '';
+
+      NumE := ReadRageOfMages2RES_Aux(cdir,HDR.DirOffset,HDR.RootRelativeOffset, HDR.RootSize);
+
+      //ShowMessage(IntTosTr(NumE));
+
+      Result := NumE;
+
+      DrvInfo.ID := 'RoM2RES';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := True;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// realMyst 3D DNI support ================================================== //
+// -------------------------------------------------------------------------- //
+
+type DNIHeader = packed record
+       ID: array[0..3] of char;
+       Version: integer; // &H100
+       DIROffset: integer; // &H1C
+       FTOffset: integer;
+       NLOffset: integer;
+       DataOffset: integer;
+       FTOffsetA: integer;
+     end;
+     DNIDir = packed record
+       Offset: integer;
+       NumObj: integer;
+     end;
+     DNIFile = packed record
+       OffsetName: integer;
+       OffsetNameNext: integer;
+       Length: integer;
+       Offset: integer;
+       Empty: integer;
+     end;
+
+procedure DNIDirectory(cdir: string; coffset: integer; ftoffset:integer);
+var DIR: DNIDir;
+    FIL: DNIFile;
+    cdir2, cdirp, nam: string;
+    x, ObjOffset: integer;
+begin
+
+  FileSeek(FHandle, coffset,0);
+
+  FileRead(FHandle,DIR.Offset,4);
+  FileRead(FHandle,DIR.NumObj,4);
+
+  FileSeek(FHandle,DIR.Offset,0);
+
+  cdir2 := strip0(Get0(Fhandle));
+  cdirp := cdir + cdir2 + '\';
+  if cdirp = '\' then
+    cdirp := '';
+
+  inc(coffset,8);
+
+  for x := 1 to DIR.NumObj do
+  begin
+    FileSeek(FHandle,coffset,0);
+    FileRead(FHandle, ObjOffset, 4);
+    if ObjOffset < FTOffset then
+      DNIDirectory(cdirp,ObjOffset,FTOffset)
+    else
+    begin
+      FileSeek(FHandle,ObjOffset,0);
+      FileRead(FHandle,FIL.OffsetName, 4);
+      FileRead(FHandle,FIL.OffsetNameNext, 4);
+      FileRead(FHandle,FIL.Length, 4);
+      FileRead(FHandle,FIL.Offset, 4);
+      FileRead(FHandle,FIL.Empty, 4);
+      FileSeek(FHandle,FIL.OffsetName,0);
+      nam := strip0(get0(FHandle));
+      Inc(DNISize);
+      FSE_Add(cdir + nam,FIL.Offset, FIL.Length, 0, 0);
+    end;
+    Inc(coffset,4);
+  end;
+
+end;
+
+function ReadRealMystDNI(src: string): Integer;
+var HDR: DNIHeader;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR.ID, 4);
+    FileRead(FHandle, HDR.Version, 4);
+    FileRead(FHandle, HDR.DIROffset, 4);
+    FileRead(FHandle, HDR.FTOffset, 4);
+    FileRead(FHandle, HDR.NLOffset, 4);
+    FileRead(FHandle, HDR.DataOffset, 4);
+    FileRead(FHandle, HDR.FTOffsetA, 4);
+
+    if (HDR.ID <> 'Dirt') or (HDR.Version <> 65536) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'DNI';
+      ErrInfo.Games := 'realMyst 3D';
+    end
+    else
+    begin
+
+      DNISize := 0;
+
+      DNIDirectory('',HDR.DIROffset,HDR.FTOffset);
+      //ShowMessage(IntTosTr(NumE));
+
+      Result := DNISize;
+
+      DrvInfo.ID := 'DNI';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Sin .SIN support ========================================================= //
+// -------------------------------------------------------------------------- //
+
+type SINHeader = packed record
+        ID: array[1..4] of char;
+        DirOffset: longword;
+        DirNum: word;
+     end;
+     SINEntry = packed record
+        Filename: array[1..120] of char;
+        Offset: longword;
+        Size: longword;
+     end;
+
+function ReadSinSIN(src: string): Integer;
+var HDR: SINHeader;
+    ENT: SINEntry;
+    disp: string;
+    NumE, x: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, HDR, 10);
+
+    if HDR.ID <> 'SPAK' then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'SIN';
+      ErrInfo.Games := 'Sin';
+    end
+    else
+    begin
+
+      NumE := HDR.DirNum;
+      FileSeek(FHandle,HDR.DirOffset,0);
+
+      for x:= 1 to NumE do
+      begin
+
+        Per := ROund(((x / NumE)*100));
+        SetPercent(Per);
+        FileRead(Fhandle,ENT.Filename,120);
+        FileRead(Fhandle,ENT.Offset,4);
+        FileRead(Fhandle,ENT.Size,4);
+        disp := Strip0(ENT.FileName);
+
+        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'SIN';
+      DrvInfo.Sch := '/';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Spellforce .PAK support ================================================== //
+// -------------------------------------------------------------------------- //
+
+type MFHeader = packed record
+        VersionNum: integer;
+        ID: array[0..23] of char;  // 'MASSIVE PAKFILE V 4.0'
+        Unknown: array[0..43] of byte;
+        Unknown2: integer;
+        NbFatEntry: integer;
+        Unknown3: integer;
+        DataOffset: integer;
+        FileSize: integer;
+     end;
+     MFEntry = packed record
+        Size: integer;
+        RelOffset: integer;
+        NameOffset: integer;
+        DirNameOffset: integer;
+     end;
+
+function ReadSpellforcePAK(): Integer;
+var HDR: MFHeader;
+    ENT: MFEntry;
+    disp: string;
+    x: integer;
+    nameoffset: integer;
+    HF: THandleStream;
+    FAT: TMemoryStream;
+begin
+
+  FileSeek(Fhandle, 0, 0);
+  FileRead(Fhandle, HDR, SizeOf(HDR));
+
+  if (HDR.VersionNum <> 4) or (HDR.ID <> 'MASSIVE PAKFILE V 4.0'+#13+#10) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'MPF4';
+    ErrInfo.Games := 'Spellforce';
+  end
+  else
+  begin
+
+    HF := THandleStream.Create(FHandle);
+    FAT := TMemoryStream.Create;
+    try
+      FAT.CopyFrom(HF,HDR.NbFatEntry*16);
+      FAT.Seek(0,0);
+      nameoffset := 92+HDR.NbFatEntry*16;
+      for x := 1 to HDR.NbFatEntry do
+      begin
+        FAT.Read(ENT,SizeOf(ENT));
+        ENT.NameOffset := ENT.NameOffset and $FFFFFF;
+        ENT.DirNameOffset := ENT.DirNameOffset and $FFFFFF;
+
+        FileSeek(FHandle,ENT.NameOffset+nameoffset+2,0);
+        disp := revstr(Strip0(Get0(FHandle)));
+
+        FileSeek(FHandle,ENT.DirNameOffset+nameoffset,0);
+        disp := revstr(Strip0(Get0(FHandle)))+'\'+disp;
+
+        FSE_Add(disp,ENT.RelOffset+HDR.DataOffset,ENT.Size,0,0);
+      end;
+
+    finally
+      HF.Free;
+      FAT.Free;
+    end;
+
+    Result := HDR.NbFatEntry;
+
+    DrvInfo.ID := 'MPF4';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Star Crusader .PAK support =============================================== //
+// -------------------------------------------------------------------------- //
+
+function isStarCrusaderPAK(Offset, TotSize: integer): boolean;
+var SaveOffset: integer;
+    NumE: word;
+    DirOffset: integer;
+begin
+
+  SaveOffset := FileSeek(FHandle,0,1);
+  FileSeek(FHandle,Offset,0);
+  FileRead(FHandle,NumE,2);
+  FileRead(FHandle,DirOffset,4);
+
+  result := ((DirOffset + NumE*12) <= TotSize);
+
+  FileSeek(FHandle,SaveOffset,0);
+
+end;
+
+type PAKEntry = packed record
+        Offset: longword;
+        FileName: array[1..8] of Char;
+     end;
+
+function ReadStarCrusaderPAK(IsGL: Boolean): Integer;
+var disp: string;
+    NumE: word;
+    x, Offset, OldOffset, TotSize: integer;
+    ENT: PAKEntry;
+begin
+
+  TotSize := FileSeek(FHandle, 0,2);
+  FileSeek(Fhandle, 0, 0);
+  FileRead(Fhandle,NumE,2);
+  FileRead(Fhandle,Offset,4);
+
+  if ((Offset + NumE*12) > TotSize) then
+  begin
+    if (IsGL) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+    end;
+    Result := -3;
+    ErrInfo.Format := 'GL';
+    ErrInfo.Games := 'Star Crusader';
+  end
+  else
+  begin
+
+    FileSeek(Fhandle, Offset, 0);
+    OldOffset := Offset;
+
+    for x := 1 to NumE do
+    begin
+      FileRead(Fhandle,ENT,12);
+      if (x > 1) then
+      begin
+        if (IsGl and isStarCrusaderPAK(OldOffset,ENT.Offset-OldOffset)) then
+        begin
+          disp := ChangeFileExt(disp,'.gl');
+        end;
+        FSE_Add(disp,OldOffset,ENT.Offset-OldOffset,0,0);
+      end;
+      OldOffset := ENT.Offset;
+      if (IsGL) then
+        disp := strip0(ENT.FileName)
+      else
+        disp := strip0(ENT.FileName)+'.wav';
+      if TotFSize < Offset then
+        break;
+    end;
+    FSE_Add(disp,OldOffset,Offset-OldOffset,0,0);
+
+    if TotFSize < Offset then
+    begin
+
+      FSE_free;
+      FileClose(FHandle);
+      FHandle := 0;
+      result := -3;
+      ErrInfo.Format := 'GL';
+      ErrInfo.Games := 'Star Crusader';
+
+    end
+    else
+    begin
+
+      result := NumE;
+
+      if (IsGL) then
+        DrvInfo.ID := 'SCPAK'
+      else
+        DrvInfo.ID := 'SCGL';
+      DrvInfo.Sch := '';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Sinking Island/L'Ile Noyée .OPK support ================================== //
+// -------------------------------------------------------------------------- //
+
 // Very easy format:
 //   Header (see below OPKHeader structure)
 //   N times: (N times entries as stated in the Header)
@@ -8284,7 +8884,10 @@ begin
 
 end;
 
-// Starsiege: Tribes .VOL support
+// -------------------------------------------------------------------------- //
+// Starsiege: Tribes .VOL support =========================================== //
+// -------------------------------------------------------------------------- //
+
 // Completely coded thanks to the information found on:
 // http://wiki.xentax.com/index.php?title=Star_Siege
 
@@ -8416,7 +9019,7 @@ begin
           begin
 
             // Retrieve filename from first buffer
-            disp := strip0(get0_Stream(BufferNam));
+            disp := strip0(get0(BufferNam));
 
             // Retrieve Offset & Size from second buffer
             BufferIdx.Read(ENT,SizeOf(PVOL_Entry));
@@ -8442,6 +9045,20 @@ begin
   end;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Terminal Velocity .POD support =========================================== //
+// -------------------------------------------------------------------------- //
+
+type PODHeader = packed record
+       Dirnum: integer;
+       ID: array[0..79] of char;
+     end;
+     PODEntry = packed record
+       Filename: array[0..31] of char;
+       Size: integer;
+       Offset: integer;
+     end;
 
 function ReadTerminalVelocityPOD(): Integer;
 var HDR: PODHeader;
@@ -8496,6 +9113,10 @@ begin
     Result := -2;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// The Elder Scrolls IV: Oblivion .BSA support ============================== //
+// -------------------------------------------------------------------------- //
 
 type TES4BSAHeader = packed record
         Field: array[0..3] of char; // 'BSA' + #0
@@ -8577,7 +9198,7 @@ begin
         // 2. Parse filenames to the TStringList
         for x := 1 to HDR.FileCount do
         begin
-          FileNames.Add(strip0(Get0_Stream(Buffer)));
+          FileNames.Add(strip0(Get0(Buffer)));
         end;
 
         // 3. Free the buffer as we don't need it anymore
@@ -8661,6 +9282,41 @@ begin
     Result := -2;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// The Movies .PAK support ================================================== //
+// -------------------------------------------------------------------------- //
+
+type TMPAK_Header = packed record
+       ID: integer;            // 0x05 00 00 00
+       DataOffset: Integer;
+       Unknown1: integer;
+       NumEntries: Integer;
+       DirTableNum: Integer;
+       DirNum: Integer;
+       DirSize: Integer;
+       Unknown5: Integer;     // Always Null ?
+       Unknown6: Integer;     // Always Null ?
+       Unknown7: Integer;     // Always Null ?
+       Unknown8: Integer;     // Always 0x34 ?
+       DirTableOffset: Integer;
+       DirOffset: Integer;
+     end;
+     TMPAK_Entry = packed record
+       Unknown1: Integer;
+       Unknown2: Integer;
+       Offset: integer;
+       CmpSize: Integer;
+       UncSize: Integer;
+       DirPos: Integer;
+       EntryName: array[0..31] of char;   // Null terminated
+     end;
+     TMPAK_CompHeader = packed record
+       TotSize: Integer;   // Size of compressed data + header
+       UncSize: Integer;   // Size of uncompressed data
+       CmpSize: integer;   // Size of compressed data alone
+       NotCompressed: Integer;   // 1 = True, 0 = False
+     end;
 
 function ReadTheMoviesPAK: Integer;
 var HDR: TMPAK_Header;
@@ -8747,7 +9403,7 @@ begin
         DirData.Seek((ENT.DirPos and $7FFF) shr 1, soFromBeginning);
 
         // We get the directory (null terminated)
-        disp := Strip0(Get0_Stream(DirData));
+        disp := Strip0(Get0(DirData));
 
         // We concatenate the directory and the entry name
         disp := disp + strip0(ENT.EntryName);
@@ -8775,6 +9431,25 @@ begin
   end;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// The Sims .FAR support ==================================================== //
+// -------------------------------------------------------------------------- //
+
+type FARHeader = packed record
+       ID: array[0..3] of char;
+       Author: array[0..3] of char;
+       Version: integer;
+       Offset: integer;
+     end;
+     FAREntry = packed record
+       FileSize: integer;
+       ExtSize: integer;
+       Offset: integer;
+     end;
+
+const
+   FARID : String = 'FAR!';
 
 function ReadTheSimsFAR(src: string): Integer;
 var HDR: FARHeader;
@@ -8830,6 +9505,29 @@ begin
     ReadTheSimsFAR := -2;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Tony Hawk Pro Skater 2 .PKR support ====================================== //
+// -------------------------------------------------------------------------- //
+
+type PKR_Header = packed record
+       ID: array[0..3] of char;
+       Version: integer;
+       DirNum: integer;
+       FilNum: integer;
+     end;
+     PKR_Dir = packed record
+       Filename: array[0..31] of char;
+       Unknown: integer;
+       NumFiles: integer;
+     end;
+     PKR_Entry = packed record
+       Filename: array[0..31] of char;
+       Unknown: integer;
+       Offset: integer;
+       Size: integer;
+       Size2: integer;
+     end;
 
 function ReadTonyHawkPKR(src: string): Integer;
 var HDR: PKR_Header;
@@ -8914,6 +9612,10 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Total Annihilation .HPI support ========================================== //
+// -------------------------------------------------------------------------- //
+
 function HPIRead(fpos: integer; buff: PByteArray; Size: integer; key: integer): integer;
 var count, tkey: integer;
 begin
@@ -8989,6 +9691,33 @@ begin
 //  ShowMessage(IntToStr(Entries)+#10+IntToStr(EntryOffset));
 
 end;
+
+type HPIHeader = packed record
+       HPIMarker: array[0..3] of char;
+       SaveMarker: array[0..3] of char;
+       DirectorySize: integer;
+       HeaderKey: integer;
+       Start: integer;
+     end;
+     HPIEntry = packed record
+       NameOffset : integer;
+       DirDataOffset : integer;
+       Flag : byte;
+     end;
+     HPIFileData = packed record
+       DataOffset : integer;
+       FileSize : integer;
+       Flag : byte;
+     end;
+     HPIChunk = packed record
+       Marker : array[0..3] of char;
+       Unknown1 : byte;
+       CompMethod : byte;
+       Encrypt : byte;
+       CompressedSize : integer;
+       DecompressedSize : integer;
+       Checksum : integer;
+     end;
 
 function ReadTotalAnnihilationHPI(src: string): Integer;
 var HDR: HPIHeader;
@@ -9071,6 +9800,215 @@ begin
     Result := -2;
 
 end;
+
+function DecompressLZ77(outbuf: PByteArray; inbuf: PByteArray; len: integer): integer;
+var x,outbufptr,mask,tag,inptr,outptr,count,inbufptr: integer;
+    Window: array[0..4095] of byte;
+    Done: boolean;
+begin
+
+  done := false;
+  inptr := 0;
+  outptr := 0;
+  outbufptr := 1;
+  mask := 1;
+  tag := inbuf^[inptr];
+  inc(inptr);
+
+  while not(done) do
+  begin
+    if (mask and tag) = 0 then
+    begin
+      outbuf^[outptr] := inbuf^[inptr];
+      inc(outptr);
+      Window[outbufptr] := inbuf^[inptr];
+      outbufptr := (outbufptr + 1) and $FFF;
+      inc(inptr);
+    end
+    else
+    begin
+      count := inbuf^[inptr] + inbuf^[inptr+1]*$100;
+      inc(inptr,2);
+      inbufptr := (count and $FFF0) shr 4;
+      if (inbufptr = 0) then
+        Done := true
+      else
+      begin
+        count := (count and $F) + 2;
+        if (count >= 0) then
+          for x := 0 to count-1 do
+          begin
+            outbuf^[outptr] := Window[inbufptr];
+            inc(outptr);
+            Window[outbufptr] := Window[inbufptr];
+            outbufptr := (outbufptr + 1) and $FFF;
+            inbufptr := (inbufptr + 1) and $FFF;
+          end;
+      end;
+    end;
+    mask := mask * 2;
+    if (mask and $100) = $100 then
+    begin
+      mask := 1;
+      tag := inbuf^[inptr];
+      inc(inptr);
+    end;
+    done := done or (inptr > len-1);
+  end;
+
+  if (inptr >= len-1) then
+    result := len
+  else
+    result := inptr+1;
+
+end;
+
+procedure DecompressHPIToStream(outputstream: TStream; Offset, Size: int64; Comp: integer; silent: boolean);
+var chunks, x,y: integer;
+    HDR: HPIChunk;
+    Buffer: PByteArray;
+    DecompBuffer: PByteArray;
+    BufMem: TMemoryStream;
+    c: Byte;
+   // ftmp: integer;
+    ChunkSize: array of Integer;
+//    OutputStream: TMemoryStream;
+    DStream: TDecompressionStream;
+    per, oldper: word;
+    real1, real2: real;
+begin
+
+  chunks := Size div 65536;
+  if (Size mod 65536) <> 0 then
+    inc(chunks);
+
+  BufMem := TMemoryStream.Create;
+  try
+
+  SetLength(ChunkSize,chunks);
+
+  GetMem(Buffer,chunks*4);
+  HPIRead(Offset,Buffer,chunks*4,HPIKey);
+  BufMem.Write(Buffer^,chunks*4);
+  BufMem.Seek(0,0);
+  for x := 1 to chunks do
+    BufMem.Read(ChunkSize[x-1],4);
+
+  FreeMem(Buffer);
+  BufMem.Clear;
+
+  Inc(Offset,chunks*4);
+
+  OldPer := 0;
+
+  for x := 1 to chunks do
+    begin
+      GetMem(Buffer,19);
+      try
+        HPIRead(Offset,Buffer,19,HPIKey);
+
+        BufMem.Clear;
+        BufMem.Write(Buffer^,19);
+        BufMem.Seek(0,0);
+        BufMem.Read(HDR.Marker,4);
+        BufMem.Read(HDR.Unknown1,1);
+        BufMem.Read(HDR.CompMethod,1);
+        BufMem.Read(HDR.Encrypt,1);
+        BufMem.Read(HDR.CompressedSize,4);
+        BufMem.Read(HDR.DecompressedSize,4);
+        BufMem.Read(HDR.Checksum,4);
+
+//        ShowMessage(inttostr(x)+#10+HDR.Marker+#10+inttostr(ChunkSize[x-1]));
+
+        FreeMem(Buffer);
+        GetMem(Buffer,HDR.CompressedSize);
+        HPIRead(Offset+19,Buffer,HDR.CompressedSize,HPIKey);
+
+        BufMem.Clear;
+        BufMem.Write(Buffer^,HDR.CompressedSize);
+        BufMem.Seek(0,0);
+
+//        BufMem.SaveToFile('h:\testhpi-zlib-'+inttostr(x)+'-U.bin');
+
+        if (HDR.Encrypt = 1) then
+        begin
+          for y := 0 to HDR.CompressedSize-1 do
+          begin
+            BufMem.Seek(y,0);
+            BufMem.Read(c,1);
+            BufMem.Seek(y,0);
+            c := (c - y) xor y;
+            BufMem.Write(c,1);
+          end;
+        end;
+
+        if (HDR.CompMethod = 1) then
+        begin
+          BufMem.Seek(0,0);
+          BufMem.Read(Buffer^,HDR.CompressedSize);
+          GetMem(DecompBuffer,HDR.DecompressedSize);
+          DecompressLZ77(DecompBuffer,Buffer,HDR.CompressedSize);
+          outputstream.WriteBuffer(DecompBuffer^,HDR.DecompressedSize);
+          FreeMem(DecompBuffer);
+        end
+        else
+        begin
+
+  //        BufMem.SaveToFile('h:\testhpi-zlib-'+inttostr(x)+'.bin');
+//          OutputStream := TMemoryStream.Create;
+          try
+            BufMem.Seek(0,0);
+            DStream := TDecompressionStream.Create(BufMem);
+            try
+//              DStream.Read(TestID,2);
+  //            ShowMessage(IntToStr(TestID));
+              OutputStream.CopyFrom(DStream,HDR.DecompressedSize);
+            finally
+              DStream.Free;
+            end;
+//            GetMem(DecompBuffer,HDR.DecompressedSize);
+//            OutputStream.SaveToFile('h:\testhpi-zlib-'+inttostr(x)+'-decomp.bin');
+//            OutputStream.Seek(0,0);
+//            OutputStream.Read(DecompBuffer^,HDR.DecompressedSize);
+//            FileWrite(fil,DecompBuffer^,HDR.DecompressedSize);
+//            FreeMem(DecompBuffer);
+          finally
+            OutputStream.Free;
+          end;
+          //ShowMessage(IntToStr(FinalSize));
+        end;
+
+        Inc(Offset,ChunkSize[x-1]);
+      finally
+        FreeMem(Buffer);
+      end;
+
+      if not silent then
+      begin
+        real1 := x;
+        real2 := chunks;
+        real1 := (real1 / real2)*100;
+        per := Round(real1);
+        if per >= oldper + 10 then
+        begin
+          SetPercent(per);
+          oldper := per;
+        end;
+      end;
+    end;
+
+    if not silent then
+      SetPercent(100);
+
+  finally
+    BufMem.Destroy;
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// UFO Aftermath/Aftershock/Afterlight .VFS support ========================= //
+// -------------------------------------------------------------------------- //
 
 type VFSHeader = packed record     // Some of the info from http://wiki.xentax.com --> WATTO <-- (Thanks!)
        VersionID: Single;          // $0000803F
@@ -9266,6 +10204,113 @@ begin
 
 end;
 
+// UFO: Aftermath/Aftershock/Afterlight .VFS
+// Decompression function
+//   Compressed file data in UFO: Aftermath/Aftershock/Afterlight .VFS file is break down into chunks
+//   So we just go through that chunks decompressing each one separatly
+//   But we skip the 8 bytes chunks which purpose is unknown and occurs every
+//   2 "normal" compressed chunks
+//   Here is the process for a 3 chunks entry:
+//     Read ChunkSize (Integer)
+//     Read ChunkZlibData array[1..ChunkSize] of Byte
+//       Decompress ChunkZlibData (original size of the chunk is CompressionWindow [usually 50000, check header of VFS])
+//       Decrease still to be read data by Chunksize + 4
+//       Decrease still to be decompressed original data by CompressionWindow
+//     Read ChunkSize (Integer)
+//     Read ChunkZlibData array[1..ChunkSize] of Byte
+//       Decompress ChunkZlibData (original size of the chunk is CompressionWindow [usually 50000, check header of VFS])
+//       Decrease still to be read data by Chunksize + 4
+//       Decrease still to be decompressed original data by CompressionWindow
+//     Read ChunkSize (Integer) [8 bytes]
+//     Read Unknown1 (Integer)
+//     Read Unknown2 (Integer)
+//       Decrease still to be read data by Chunksize + 4
+//     Read ChunkSize (Integer)
+//     Read ChunkZlibData array[1..ChunkSize] of Byte
+//       Decompress ChunkZlibData (original size of the chunk is still to be decompressed size)
+//       Decrease still to be read data by Chunksize + 4
+//       Decrease still to be decompressed original data by CompressionWindow
+// Enjoy... ;)
+function DecompressZlibVFSChunksToStream(OutputStream: TStream; Offset: Int64; Size:  Int64; OSize: Int64) : Boolean;
+var
+  Buf: PChar;
+  InputStream: TMemoryStream;
+  DStream: TDecompressionStream;
+  FinalSize, chunkSize,checkValue: integer;
+begin
+
+  FinalSize := 0;
+
+  GetMem(Buf,Size);
+  try
+
+      FileSeek(FHandle,Offset,0);
+
+      repeat
+        FileRead(FHandle,chunkSize,4);
+        if (chunkSize = 8) then
+        begin
+          FileRead(Fhandle,checkValue,4);
+          FileRead(Fhandle,checkValue,4);
+        end
+        else
+        begin
+          FileRead(FHandle,Buf^,chunkSize);
+          InputStream := TMemoryStream.Create;
+          try
+            InputStream.Write(Buf^,chunkSize);
+            InputStream.Seek(0, soFromBeginning);
+
+            DStream := TDecompressionStream.Create(InputStream);
+            try
+              if (OSize < CompressionWindow) then
+                FinalSize := OutputStream.CopyFrom(DStream,OSize)
+              else
+                FinalSize := OutputStream.CopyFrom(DStream,CompressionWindow);
+            finally
+              DStream.Free;
+            end
+
+          finally
+            InputStream.Free;
+          end;
+
+          Dec(OSize,CompressionWindow);
+
+        end;
+        Dec(Size,chunkSize+4);
+      until Size = 0;
+  finally
+    FreeMem(Buf);
+  end;
+
+  Result := FinalSize = OSize;
+
+End;
+
+// -------------------------------------------------------------------------- //
+// Vietcong .CBF support ==================================================== //
+// -------------------------------------------------------------------------- //
+
+type CBFHeader = packed record
+        ID: array[1..8] of Char;  // BIGF 0x00 ZBL
+        FileSize: int64;
+        DirNum: integer;
+        DirOffset: int64;
+        DirSize: int64;
+        Unknown: array[1..7] of integer;
+     end;
+     CBFEntry = packed record
+        Offset: int64;
+        Unknown1: integer;
+        FileTime: int64;   // CRC/Date??
+        Size: int64;
+        CompSize: integer;
+        CompType: integer;
+        Unknown2: integer; // 0x24
+     end;
+     // Get0 FileName
+
 function ReadVietcongCBF(src: string): Integer;
 var HDR: CBFHeader;
     ENT: CBFEntry;
@@ -9318,6 +10363,24 @@ begin
     Result := -2;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Warlords Battlecry .XCR support ========================================== //
+// -------------------------------------------------------------------------- //
+
+type XCR_Header = packed record
+       ID: array[0..12] of char;
+       Empty: array[1..7] of Byte;
+       DirNum: integer;
+       FilSize: integer;
+     end;
+     XCR_Entry = packed record
+       Filename: array[0..255] of char;
+       FilenameDir: array[0..255] of char;
+       Offset: integer;
+       Size: integer;
+       Unknown: array[1..12] of Byte;
+     end;
 
 function ReadWarlordsBattlecryXCR(src: string): Integer;
 var HDR: XCR_Header;
@@ -9383,6 +10446,10 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// West Wood .PAK support =================================================== //
+// -------------------------------------------------------------------------- //
+
 function ReadWestWoodPAK(): Integer;
 var disp: string;
     NumE: integer;
@@ -9433,6 +10500,21 @@ begin
     ReadWestWoodPAK := -3;
 
 end;
+
+// -------------------------------------------------------------------------- //
+// Worms Armageddon .DIR support ============================================ //
+// -------------------------------------------------------------------------- //
+
+type WADIR_Header = packed record
+       ID: array[0..3] of char;
+       FileSize: integer;
+       DirOffset: integer;
+     end;
+     WADIR_Entry = packed record
+       Filename: array[0..29] of char;
+       Offset: integer;
+       Size: integer;
+     end;
 
 function ReadWormsArmageddonDIR(src: string): Integer;
 var HDR: WADIR_Header;
@@ -9506,6 +10588,10 @@ begin
 
 end;
 
+// -------------------------------------------------------------------------- //
+// Zanzarah .PAK support ==================================================== //
+// -------------------------------------------------------------------------- //
+
 function ReadZanzarahPAK(): Integer;
 var disp: string;
     NumE: integer;
@@ -9543,351 +10629,13 @@ begin
 
 end;
 
-function Parse_REZ(offset: integer; cdir: string): integer;
-var ENT: REZEntry;
-    tstr,nam,ext,pcdir: string;
-    tint,res: integer;
-    extbuf: array[1..4] of Char;
-begin
-
-  res := 0;
-
-  if Offset < FileSeek(FHandle,0,2) then
-  begin
-
-    FileSeek(FHandle,Offset,0);
-    FileRead(FHandle,ENT,16);
-
-    case ENT.EntryType of
-      1: begin
-           pcdir := cdir;
-           tstr := Strip0(Get0(FHandle));
-           if ENT.Size > 0 then
-             if Not(Offset_check(ENT.Offset)) then
-             begin
-               cdir := cdir + tstr + '\';
-               Offset_add(ENT.Offset);
-               res := Parse_REZ(ENT.Offset,cdir);
-             end;
-           res := res + Parse_REZ(Offset + 16 + Length(tstr) + 1,pcdir);
-           Per := Per + 1;
-           if Per > 100 then
-             Per := 0;
-           SetPercent(Per);
-         end;
-      0: begin
-           FileRead(FHandle,tint,4);  // Numeric ID
-           FileRead(Fhandle,extbuf,4);
-           ext := extbuf;
-           ext := RevStr(Strip0(ext));
-           FileRead(FHandle,tint,4);  // Blank
-           nam := Strip0(Get0(FHandle));
-           if (length(nam) > 0) and (ENT.Offset > 0) and (ENT.Size > 0) and (extbuf[4] = #0) and (ENT.Offset < TotFSize) and (ENT.Offset + ENT.Size < TotFSize) and (ENT.Offset > 162) then
-           begin
-             if (ext = '') then
-               tstr := cdir + nam
-             else
-               tstr := cdir + nam + '.' + ext;
-//             ShowMessage('File'+#10+cdir+nam+'.'+ext+#10+inttoStr(ENT.Offset)+#10+inttostr(ENT.Size));
-             FSE_Add(tstr,ENT.Offset,ENT.Size,0,0);
-           end;
-           Inc(Res);
-           res := res + Parse_REZ(Offset + 30 + Length(nam),cdir);
-         end;
-    end;
-
-    Parse_REZ := res;
-  end
-  else
-    Parse_REZ := 0;
-
-end;
-
-function ReadLithTechREZ(src: string): Integer;
-var HDR: REZHeader;
-    NumE: integer;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    TotFSize := FileSeek(FHandle,0,2);
-
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR.ID, 127);
-    FileRead(FHandle, HDR.Version, 4);
-    FileRead(FHandle, HDR.DirOffset, 4);
-    FileRead(FHandle, HDR.DirSize, 4);
-    FileRead(FHandle, HDR.Empty1, 4);
-    FileRead(FHandle, HDR.IdxOffset, 4);
-    FileRead(FHandle, HDR.DateTime, 4);
-    FileRead(FHandle, HDR.Empty2, 4);
-    FileRead(FHandle, HDR.LongestFoldernameLength, 4);
-    FileRead(FHandle, HDR.LongestFilenameLength, 4);
-
-    if ((HDR.ID <> REZID) and (HDR.ID <> REZIDOld)) or (HDR.Version <> 1) then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      ReadLithTechREZ := -3;
-      ErrInfo.Format := 'REZ';
-      ErrInfo.Games := 'Alien vs Predator 2, No One Lives Forever, Shogo, ..';
-    end
-    else
-    begin
-      NumE := Parse_REZ(HDR.DirOffset,'');
-
-      Offset_clear;
-      //ShowMessage(IntTosTr(NumE));
-
-      ReadLithTechREZ := NumE;
-
-      DrvInfo.ID := 'REZ';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
-
-    end;
-
-  end
-  else
-    ReadLithTechREZ := -2;
-
-end;
-
-function ReadDune3BAG(src: string): Integer;
-var HDR: BAGHeader;
-    ENT: BAGEntry;
-    ENT16: BAGEntry16;
-    NumE,x,hIDX : integer;
-    ext: string;
-    IsIDX: Boolean;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    IsIDX := FileExists(ChangeFileExt(src,'.idx'));
-
-    TotFSize := FileSeek(FHandle,0,2);
-
-    FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR.ID, 4);
-    FileRead(FHandle, HDR.Unknown1, 4);
-    FileRead(FHandle, HDR.DirNum, 4);
-    FileRead(FHandle, HDR.EntrySize, 4);
-
-    if (HDR.ID = 'GABA') then
-    begin
-      if (HDR.EntrySize <> 64) then
-      begin
-        FileClose(Fhandle);
-        FHandle := 0;
-        Result := -3;
-        ErrInfo.Format := 'BAG';
-        ErrInfo.Games := 'Emperor: Battle for Dune, Nox';
-      end
-      else
-      begin
-        NumE := HDR.DirNum;
-
-        for x := 1 to NumE do
-        begin
-          FileRead(FHandle,ENT.FileName, 32);
-          FileRead(FHandle,ENT.Offset,4);
-          FileRead(FHandle,ENT.Size,4);
-          FileRead(FHandle,ENT.Freq,4);
-          FileRead(FHandle,ENT.MType,4);
-          FileRead(FHandle,ENT.Unknown,16);
-
-          case ENT.MType of
-            2: ext := 'w';
-            6: ext := 'w';
-            12: ext := 'cmp';
-            28: ext := 'cmp';
-            37: ext := 'mp3';
-            else
-              ext := 'raw';
-          end;
-
-          FSE_Add(Strip0(ENT.FileName)+'.'+ext,ENT.Offset,ENT.Size,0,0);
-
-        end;
-
-      //ShowMessage(IntTosTr(NumE));
-
-        Result := NumE;
-
-        DrvInfo.ID := 'BAG';
-        DrvInfo.Sch := '';
-        DrvInfo.FileHandle := FHandle;
-        DrvInfo.ExtractInternal := False;
-
-      end;
-    end
-    else if IsIDX then
-    begin
-      FileSeek(Fhandle, 0, 0);
-      hIDX := FileOpen(ChangeFileExt(src,'.idx'),fmOpenRead);
-
-      FileSeek(hIDX, 0, 0);
-      FileRead(hIDX, HDR.ID, 4);
-      FileRead(hIDX, HDR.Unknown1, 4);
-      FileRead(hIDX, HDR.DirNum, 4);
-
-      if HDR.ID = 'GABA' then
-      begin
-
-        NumE := HDR.DirNum;
-
-        for x := 1 to NumE do
-        begin
-          FileRead(hIDX,ENT16,SizeOf(ENT16));
-
-          case ENT16.MType of
-            2: ext := 'w';
-            6: ext := 'w';
-            12: ext := 'cmp';
-            28: ext := 'cmp';
-            37: ext := 'mp3';
-            else
-              ext := 'raw';
-          end;
-
-          FSE_Add(Strip0(ENT16.FileName)+'.'+ext,ENT16.Offset,ENT16.Size,0,0);
-
-        end;
-
-      //ShowMessage(IntTosTr(NumE));
-
-        Result := NumE;
-
-        DrvInfo.ID := 'BAG';
-        DrvInfo.Sch := '';
-        DrvInfo.FileHandle := FHandle;
-        DrvInfo.ExtractInternal := False;
-
-      end
-{      else if (HDR.ID[0] = #235) and (HDR.ID[1] = #188) and (HDR.ID[2] = #237) and (HDR.ID[3] = #250) then
-      begin
-
-
-
-      end}
-      else
-      begin
-        FileClose(Fhandle);
-        FileClose(hIDX);
-        FHandle := 0;
-        Result := -3;
-        ErrInfo.Format := 'BAG';
-        ErrInfo.Games := 'Emperor: Battle for Dune, Nox';
-      end;
-    end
-    else
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'BAG';
-      ErrInfo.Games := 'Emperor: Battle for Dune, Nox';
-    end;
-
-  end
-  else
-    Result := -2;
-
-end;
-
-function ReadDarkstoneMTF(src: string): integer;
-var filnam: string;
-    NumE, x: word;
-    Offset, Size, Per, PerOld: integer;
-    //filesize: Cardinal;
-begin
-
-  FHandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    FileSeek(FHandle, 0, 0);
-    FileRead(FHandle, NumE, 4);
-
-    if NumE < 1 then
-    begin
-      FileClose(FHandle);
-      FHandle := 0;
-      ReadDarkstoneMTF := -3;
-      ErrInfo.Format := 'MTF';
-      ErrInfo.Games := 'Darkstone';
-    end
-    else
-    begin
-
-      PerOld := 0;
-
-      for x:= 1 to NumE do
-      begin
-        Per := Round((x / NumE)*100);
-        if Per >= PerOld + 5 then
-        begin
-          PerOld:= Per;
-          SetPercent(Per);
-        end;
-        filnam := Get32(FHandle);
-        FileRead(FHandle,Offset,4);
-        FileRead(FHandle,Size,4);
-
-        FSE_add(strip0(filnam),Offset,Size,0,0);
-      end;
-
-      ReadDarkstoneMTF := NumE;
-
-      DrvInfo.ID := 'MTF';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := True;
-    end;
-  end
-  else
-    ReadDarkstoneMTF := -2;
-
-end;
-
-function ReadHubGOB(src: String): Integer;
-var ID: array[0..3] of char;
-    res: integer;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    FileRead(FHandle,ID,4);
-    if ID = ('GOB'+#10) then
-      res := ReadDarkForcesGOB
-    else if ID = ('GOB ') then
-      res := ReadIndianaJones3dGOB
-    else
-      res := -3;
-
-    if res = -3 then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      ReadHubGOB := -3;
-      ErrInfo.Format := 'GOB';
-      ErrInfo.Games := 'Dark Forces, Indiana Jones 3D, ..';
-    end
-    else
-      ReadHubGOB := res;
-  end
-  else
-    ReadHubGOB := -2;
-
-end;
+// -------------------------------------------------------------------------- //
+// -------------------------------------------------------------------------- //
+// -------------------------------------------------------------------------- //
+// -------------------------------------------------------------------------- //
+// -------------------------------------------------------------------------- //
+// -------------------------------------------------------------------------- //
+// -------------------------------------------------------------------------- //
 
 function ReadHubBAR(src: String): Integer;
 var ID: array[0..3] of char;
@@ -10023,6 +10771,39 @@ begin
 
 end;
 
+function ReadHubGOB(src: String): Integer;
+var ID: array[0..3] of char;
+    res: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileRead(FHandle,ID,4);
+    if ID = ('GOB'+#10) then
+      res := ReadDarkForcesGOB
+    else if ID = ('GOB ') then
+      res := ReadIndianaJones3dGOB
+    else
+      res := -3;
+
+    if res = -3 then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      ReadHubGOB := -3;
+      ErrInfo.Format := 'GOB';
+      ErrInfo.Games := 'Dark Forces, Indiana Jones 3D, ..';
+    end
+    else
+      ReadHubGOB := res;
+  end
+  else
+    ReadHubGOB := -2;
+
+end;
+
 function ReadHubRES(src: String): Integer;
 var ID: array[0..3] of char;
     IDI: integer;
@@ -10124,6 +10905,39 @@ begin
 
 end;
 
+function ReadHubPOD(src: String): Integer;
+var ID: array[0..3] of char;
+    res: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileRead(FHandle,ID,4);
+    if ID = 'POD3' then
+      res := ReadBloodRaynePOD
+    else if ID = 'POD2' then
+      res := ReadNocturnePOD
+    else
+      res := ReadTerminalVelocityPOD;
+
+    if res = -3 then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'POD';
+      ErrInfo.Games := 'BloodRayne, Nocturne, Terminal Velocity';
+    end
+    else
+      Result := res;
+  end
+  else
+    Result := -2;
+
+end;
+
 function ReadHubSTUFF(src: String): Integer;
 var ID64: array[0..63] of char;
     res: integer;
@@ -10161,39 +10975,6 @@ begin
       Result := -3;
       ErrInfo.Format := 'STUFF';
       ErrInfo.Games := 'Eve Online, Black & White 2';
-    end
-    else
-      Result := res;
-  end
-  else
-    Result := -2;
-
-end;
-
-function ReadHubPOD(src: String): Integer;
-var ID: array[0..3] of char;
-    res: integer;
-begin
-
-  Fhandle := FileOpen(src, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    FileRead(FHandle,ID,4);
-    if ID = 'POD3' then
-      res := ReadBloodRaynePOD
-    else if ID = 'POD2' then
-      res := ReadNocturnePOD
-    else
-      res := ReadTerminalVelocityPOD;
-
-    if res = -3 then
-    begin
-      FileClose(Fhandle);
-      FHandle := 0;
-      Result := -3;
-      ErrInfo.Format := 'POD';
-      ErrInfo.Games := 'BloodRayne, Nocturne, Terminal Velocity';
     end
     else
       Result := res;
@@ -10269,67 +11050,6 @@ begin
 
 end;
 
-{function ReadFormatSMART(fil: String): integer;
-var ID4: array[0..3] of char;
-    ID36: array[0..35] of char;
-    ID127: array[0..126] of char;
-    TestFile,x: integer;
-begin
-
-  Result := -1;
-
-  FHandle := FileOpen(fil, fmOpenRead);
-
-  if FHandle > 0 then
-  begin
-    FileRead(FHandle,ID127,127);
-    FileSeek(FHandle,0,0);
-    for x := 0 to 3 do
-    begin
-      ID4[x] := ID127[x];
-      ID36[x] := ID127[x];
-    end;
-    for x := 4 to 35 do
-      ID36[x] := ID127[x];
-
-    if ID4 = ('GOB'+#10) then
-      Result := true
-    else if ID4 = ('GOB ') then
-      Result := true
-    else if ID4 = ('PACK') then
-      Result := ReadQuakePAK;
-    else if ID4 = ('LB83') then
-      Result := true
-    else if ID4 = ('PFF3') then
-      Result := true
-    else if ID4 = ('RFFL') then
-      Result := true
-    else if ID4 = ('CFFL') then
-      Result := true
-    else if ID4 = ('DWFB') then
-      Result := true
-    else if ID4 = ('VPVP') then
-      Result := true
-    else if ID4 = ('HRFi') then
-      Result := true
-    else if ID4 = ('HOG2') then
-      Result := true
-    else if ID4 = ('FAR!') then
-      Result := true
-    else if (ID4[0] = 'D') and (ID4[1] = 'H') and (ID4[2] = 'F') then
-      Result := true
-    else if ID36 = DRSID then
-      Result := true
-    else if (ID127 = REZID) or (ID127 = REZIDold) then
-      Result := true
-    else
-      Result := False;
-  end;
-
-
-end;
-}
-//function ReadFormat(fil: ShortString; percent: TPercentCallback; Deeper: boolean): Integer; stdcall;
 function ReadFormat(fil: ShortString; Deeper: boolean): Integer; stdcall;
 var ext: string;
     ID4: array[0..3] of char;
@@ -11397,127 +12117,6 @@ begin
 
 end;
 
-Function ReloadBuffer(Offset: int64; BufSize: integer; Buffer: PByteArray): integer;
-begin
-
-  FileSeek(FHandle,Offset,0);
-  ReloadBuffer := FileRead(FHandle,Buffer^,BufSize);
-
-end;
-
-function Puiss2(x: byte): integer;
-begin
-  Result := 0;
-
-  case x of
-    0: Puiss2 := 1;
-    1: Puiss2 := 2;
-    2: Puiss2 := 4;
-    3: Puiss2 := 8;
-    4: Puiss2 :=16;
-    5: Puiss2 :=32;
-    6: Puiss2 :=64;
-    7: Puiss2 :=128;
-  end;
-
-end;
-
-procedure DecompressMTFToStream(outputstream: TStream; Offset, Size: int64);
-var
-  Buf: PByteArray;
-  BufEnd: PByteArray;
-  CurPos: int64;
-  BufPos, DstPos, tmpL, Copie, Retour, y: integer;
-  x, tmpb: byte;
-//  T: TextFile;
-begin
-
-//  AssignFile(T, 'h:\testmtf.log');
-//  Rewrite(T);
-
-  CurPos := Offset;
-
-  GetMem(Buf,16384);
-  GetMem(BufEnd,Size);
-
-  CurPos := CurPos + ReloadBuffer(Offset,16384,Buf);
-  BufPos := 0;
-  DstPos := 0;
-
-  repeat
-
-    tmpb := Buf^[BufPos];
-//    Writeln(T,IntToStr(BufPos)+'/16384 = '+IntToStr(tmpb));
-
-    for x:=0 to 7 do
-      if (tmpb and Puiss2(x)) = Puiss2(x) then
-      begin
-//       Write(T,' for-if -> '+inttostr(x)+' '+inttostr(Puiss2(x)));
-        //ShowMessage(IntToStr(BufPos));
-        BufPos := BufPos + 1;
-        if BufPos = 16384 then
-        begin
-//          Write(T,'<REBUFFERING> '+inttostr(CurPos));
-          CurPos := CurPos + ReloadBuffer(CurPos,16384,Buf);
-//          Writeln(' '+inttostr(CurPos));
-          BufPos := 0;
-        end;
-        BufEnd^[DstPos] := Buf^[BufPos];
-        DstPos := DstPos + 1;
-//        Writeln(T,' end-for-if');
-      end
-      else
-      begin
-//        Write(T,' for-else -> '+inttostr(x)+' '+inttostr(Puiss2(x)));
-        BufPos := BufPos + 1;
-        if BufPos = 16384 then
-        begin
-//          Write(T,'<REBUFFERING> '+inttostr(CurPos));
-          CurPos := CurPos + ReloadBuffer(CurPos,16384,Buf);
-//          Writeln(T,' '+inttostr(CurPos));
-          BufPos := 0;
-        end;
-        TmpL := Integer(Buf^[BufPos]);
-        BufPos := BufPos + 1;
-        if BufPos = 16384 then
-        begin
-//          Write(T,'<REBUFFERING> '+inttostr(CurPos));
-          CurPos := CurPos + ReloadBuffer(CurPos,16384,Buf);
-//          Writeln(T,' '+inttostr(CurPos));
-          BufPos := 0;
-        end;
-        TmpL := TmpL + 256 * Integer(Buf^[BufPos]);
-        Copie := TmpL div 1024;
-        Retour := TmpL mod 1024;
-//        ShowMessage(IntToStr(TmpB)+#10+IntToStr(BufPos)+#10+IntToStr(DstPos)+#10+IntToStr(TmpL)+#10+IntToStr(Copie)+#10+IntToStr(Retour));
-        For y := 1 to Copie + 3 do
-        begin
-          BufEnd^[DstPos] := BufEnd^[DstPos - Retour];
-          Inc(DstPos);
-        end;
-//        Writeln(T,' end-for-else');
-      end;
-
-    Inc(BufPos);
-    if BufPos = 16384 then
-    begin
-//      Write(T,'<REBUFFERING> '+inttostr(CurPos));
-      CurPos := CurPos + ReloadBuffer(CurPos,16384,Buf);
-//      Writeln(T,' '+inttostr(CurPos));
-      BufPos := 0;
-    end;
-//    ShowMessage(IntToStr(DstPos) + #10 + IntToStr(Size) + #10);
-  until (DstPos > Size);
-
-//  CloseFile(T);
-
-  outputstream.WriteBuffer(BufEnd^, Size);
-
-  FreeMem(Buf);
-  FreeMem(BufEnd);
-
-end;
-
 function RFA_Decomp(SBuff: PByteArray; OBuff: PByteArray; SBSize: longword; OBSize: longword): integer;
 var cb1, cbc1, distance, length, length2, sbend: integer;
     sb1, ob1, ob1b, ob2, ob2b: integer;
@@ -12003,296 +12602,6 @@ begin
 
 End;
 
-
-// UFO: Aftermath/Aftershock/Afterlight .VFS
-// Decompression function
-//   Compressed file data in UFO: Aftermath/Aftershock/Afterlight .VFS file is break down into chunks
-//   So we just go through that chunks decompressing each one separatly
-//   But we skip the 8 bytes chunks which purpose is unknown and occurs every
-//   2 "normal" compressed chunks
-//   Here is the process for a 3 chunks entry:
-//     Read ChunkSize (Integer)
-//     Read ChunkZlibData array[1..ChunkSize] of Byte
-//       Decompress ChunkZlibData (original size of the chunk is CompressionWindow [usually 50000, check header of VFS])
-//       Decrease still to be read data by Chunksize + 4
-//       Decrease still to be decompressed original data by CompressionWindow
-//     Read ChunkSize (Integer)
-//     Read ChunkZlibData array[1..ChunkSize] of Byte
-//       Decompress ChunkZlibData (original size of the chunk is CompressionWindow [usually 50000, check header of VFS])
-//       Decrease still to be read data by Chunksize + 4
-//       Decrease still to be decompressed original data by CompressionWindow
-//     Read ChunkSize (Integer) [8 bytes]
-//     Read Unknown1 (Integer)
-//     Read Unknown2 (Integer)
-//       Decrease still to be read data by Chunksize + 4
-//     Read ChunkSize (Integer)
-//     Read ChunkZlibData array[1..ChunkSize] of Byte
-//       Decompress ChunkZlibData (original size of the chunk is still to be decompressed size)
-//       Decrease still to be read data by Chunksize + 4
-//       Decrease still to be decompressed original data by CompressionWindow
-// Enjoy... ;)
-function DecompressZlibVFSChunksToStream(OutputStream: TStream; Offset: Int64; Size:  Int64; OSize: Int64) : Boolean;
-var
-  Buf: PChar;
-  InputStream: TMemoryStream;
-  DStream: TDecompressionStream;
-  FinalSize, chunkSize,checkValue: integer;
-begin
-
-  FinalSize := 0;
-
-  GetMem(Buf,Size);
-  try
-
-      FileSeek(FHandle,Offset,0);
-
-      repeat
-        FileRead(FHandle,chunkSize,4);
-        if (chunkSize = 8) then
-        begin
-          FileRead(Fhandle,checkValue,4);
-          FileRead(Fhandle,checkValue,4);
-        end
-        else
-        begin
-          FileRead(FHandle,Buf^,chunkSize);
-          InputStream := TMemoryStream.Create;
-          try
-            InputStream.Write(Buf^,chunkSize);
-            InputStream.Seek(0, soFromBeginning);
-
-            DStream := TDecompressionStream.Create(InputStream);
-            try
-              if (OSize < CompressionWindow) then
-                FinalSize := OutputStream.CopyFrom(DStream,OSize)
-              else
-                FinalSize := OutputStream.CopyFrom(DStream,CompressionWindow);
-            finally
-              DStream.Free;
-            end
-
-          finally
-            InputStream.Free;
-          end;
-
-          Dec(OSize,CompressionWindow);
-
-        end;
-        Dec(Size,chunkSize+4);
-      until Size = 0;
-  finally
-    FreeMem(Buf);
-  end;
-
-  Result := FinalSize = OSize;
-
-End;
-
-function DecompressLZ77(outbuf: PByteArray; inbuf: PByteArray; len: integer): integer;
-var x,outbufptr,mask,tag,inptr,outptr,count,inbufptr: integer;
-    Window: array[0..4095] of byte;
-    Done: boolean;
-begin
-
-  done := false;
-  inptr := 0;
-  outptr := 0;
-  outbufptr := 1;
-  mask := 1;
-  tag := inbuf^[inptr];
-  inc(inptr);
-
-  while not(done) do
-  begin
-    if (mask and tag) = 0 then
-    begin
-      outbuf^[outptr] := inbuf^[inptr];
-      inc(outptr);
-      Window[outbufptr] := inbuf^[inptr];
-      outbufptr := (outbufptr + 1) and $FFF;
-      inc(inptr);
-    end
-    else
-    begin
-      count := inbuf^[inptr] + inbuf^[inptr+1]*$100;
-      inc(inptr,2);
-      inbufptr := (count and $FFF0) shr 4;
-      if (inbufptr = 0) then
-        Done := true
-      else
-      begin
-        count := (count and $F) + 2;
-        if (count >= 0) then
-          for x := 0 to count-1 do
-          begin
-            outbuf^[outptr] := Window[inbufptr];
-            inc(outptr);
-            Window[outbufptr] := Window[inbufptr];
-            outbufptr := (outbufptr + 1) and $FFF;
-            inbufptr := (inbufptr + 1) and $FFF;
-          end;
-      end;
-    end;
-    mask := mask * 2;
-    if (mask and $100) = $100 then
-    begin
-      mask := 1;
-      tag := inbuf^[inptr];
-      inc(inptr);
-    end;
-    done := done or (inptr > len-1);
-  end;
-
-  if (inptr >= len-1) then
-    result := len
-  else
-    result := inptr+1;
-
-end;
-
-procedure DecompressHPIToStream(outputstream: TStream; Offset, Size: int64; Comp: integer; silent: boolean);
-var chunks, x,y: integer;
-    HDR: HPIChunk;
-    Buffer: PByteArray;
-    DecompBuffer: PByteArray;
-    BufMem: TMemoryStream;
-    c: Byte;
-   // ftmp: integer;
-    ChunkSize: array of Integer;
-//    OutputStream: TMemoryStream;
-    DStream: TDecompressionStream;
-    per, oldper: word;
-    real1, real2: real;
-begin
-
-  chunks := Size div 65536;
-  if (Size mod 65536) <> 0 then
-    inc(chunks);
-
-  BufMem := TMemoryStream.Create;
-  try
-
-  SetLength(ChunkSize,chunks);
-
-  GetMem(Buffer,chunks*4);
-  HPIRead(Offset,Buffer,chunks*4,HPIKey);
-  BufMem.Write(Buffer^,chunks*4);
-  BufMem.Seek(0,0);
-  for x := 1 to chunks do
-    BufMem.Read(ChunkSize[x-1],4);
-
-  FreeMem(Buffer);
-  BufMem.Clear;
-
-  Inc(Offset,chunks*4);
-
-  OldPer := 0;
-
-  for x := 1 to chunks do
-    begin
-      GetMem(Buffer,19);
-      try
-        HPIRead(Offset,Buffer,19,HPIKey);
-
-        BufMem.Clear;
-        BufMem.Write(Buffer^,19);
-        BufMem.Seek(0,0);
-        BufMem.Read(HDR.Marker,4);
-        BufMem.Read(HDR.Unknown1,1);
-        BufMem.Read(HDR.CompMethod,1);
-        BufMem.Read(HDR.Encrypt,1);
-        BufMem.Read(HDR.CompressedSize,4);
-        BufMem.Read(HDR.DecompressedSize,4);
-        BufMem.Read(HDR.Checksum,4);
-
-//        ShowMessage(inttostr(x)+#10+HDR.Marker+#10+inttostr(ChunkSize[x-1]));
-
-        FreeMem(Buffer);
-        GetMem(Buffer,HDR.CompressedSize);
-        HPIRead(Offset+19,Buffer,HDR.CompressedSize,HPIKey);
-
-        BufMem.Clear;
-        BufMem.Write(Buffer^,HDR.CompressedSize);
-        BufMem.Seek(0,0);
-
-//        BufMem.SaveToFile('h:\testhpi-zlib-'+inttostr(x)+'-U.bin');
-
-        if (HDR.Encrypt = 1) then
-        begin
-          for y := 0 to HDR.CompressedSize-1 do
-          begin
-            BufMem.Seek(y,0);
-            BufMem.Read(c,1);
-            BufMem.Seek(y,0);
-            c := (c - y) xor y;
-            BufMem.Write(c,1);
-          end;
-        end;
-
-        if (HDR.CompMethod = 1) then
-        begin
-          BufMem.Seek(0,0);
-          BufMem.Read(Buffer^,HDR.CompressedSize);
-          GetMem(DecompBuffer,HDR.DecompressedSize);
-          DecompressLZ77(DecompBuffer,Buffer,HDR.CompressedSize);
-          outputstream.WriteBuffer(DecompBuffer^,HDR.DecompressedSize);
-          FreeMem(DecompBuffer);
-        end
-        else
-        begin
-
-  //        BufMem.SaveToFile('h:\testhpi-zlib-'+inttostr(x)+'.bin');
-//          OutputStream := TMemoryStream.Create;
-          try
-            BufMem.Seek(0,0);
-            DStream := TDecompressionStream.Create(BufMem);
-            try
-//              DStream.Read(TestID,2);
-  //            ShowMessage(IntToStr(TestID));
-              OutputStream.CopyFrom(DStream,HDR.DecompressedSize);
-            finally
-              DStream.Free;
-            end;
-//            GetMem(DecompBuffer,HDR.DecompressedSize);
-//            OutputStream.SaveToFile('h:\testhpi-zlib-'+inttostr(x)+'-decomp.bin');
-//            OutputStream.Seek(0,0);
-//            OutputStream.Read(DecompBuffer^,HDR.DecompressedSize);
-//            FileWrite(fil,DecompBuffer^,HDR.DecompressedSize);
-//            FreeMem(DecompBuffer);
-          finally
-            OutputStream.Free;
-          end;
-          //ShowMessage(IntToStr(FinalSize));
-        end;
-
-        Inc(Offset,ChunkSize[x-1]);
-      finally
-        FreeMem(Buffer);
-      end;
-
-      if not silent then
-      begin
-        real1 := x;
-        real2 := chunks;
-        real1 := (real1 / real2)*100;
-        per := Round(real1);
-        if per >= oldper + 10 then
-        begin
-          SetPercent(per);
-          oldper := per;
-        end;
-      end;
-    end;
-
-    if not silent then
-      SetPercent(100);
-
-  finally
-    BufMem.Destroy;
-  end;
-
-end;
-
 procedure AboutBox; stdcall;
 begin
 
@@ -12322,7 +12631,7 @@ begin
 
 end;
 
-procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64; bufsize : Integer);
+{procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64; bufsize : Integer);
 var
   //sFileLength: Integer;
   Buffer: PByteArray;
@@ -12422,258 +12731,7 @@ begin
     FreeMem(Buffer);
   end;
 
-end;
-
-procedure DecryptADFToStream(src : integer; dst : TStream; soff : Int64; ssize : Int64; bufsize : Integer; silent: boolean);
-var
-  //sFileLength: Integer;
-  Buffer: PByteArray;
-  i,x,numbuf, restbuf: Integer;
-  per, oldper, perstep: word;
-  real1, real2: real;
-begin
-
-  //sFileLength := FileSeek(src,0,2);
-  FileSeek(src,soff,0);
-  numbuf := ssize div bufsize;
-  if (numbuf > 25000) then
-    perstep := 2
-  else if (numbuf > 12500) then
-    perstep := 5
-  else if (numbuf > 6000) then
-    perstep := 10
-  else
-    perstep := 15;
-  restbuf := ssize mod bufsize;
-
-GetMem(Buffer,bufsize);
-try
-  oldper := 0;
-
-  for i := 1 to numbuf do
-  begin
-    FileRead(src, Buffer^, bufsize);
-    for x := 0 to bufsize do
-    begin
-      Buffer^[x] := Buffer^[x] xor $22;
-    end;
-    dst.WriteBuffer(Buffer^, bufsize);
-    if not silent then
-    begin
-      real1 := i;
-      real2 := numbuf;
-      real1 := (real1 / real2)*100;
-      per := Round(real1);
-      if per >= oldper + perstep then
-      begin
-        oldper := per;
-        SetPercent(per);
-      end;
-    end;
-  end;
-
-  if not silent then
-    SetPercent(100);
-
-  FileRead(src, Buffer^, restbuf);
-  for x := 0 to restbuf do
-  begin
-    Buffer^[x] := Buffer^[x] xor $22;
-  end;
-  dst.WriteBuffer(Buffer^, restbuf);
-
-finally
-  FreeMem(Buffer);
-end;
-
-end;
-
-procedure DecryptPCKToStream(src : integer; dst : TStream; soff : Int64; ssize : Int64; seed: integer; silent: boolean);
-var
-  //sFileLength: Integer;
-  Buffer: PByteArray;
-  i,x,numbuf, restbuf: Integer;
-  per, oldper, perstep: word;
-  real1, real2: real;
-  key: byte;
-  skeleton: byte;
-  foundkey: boolean;
-begin
-
-  //sFileLength := FileSeek(src,0,2);
-  FileSeek(src,soff,0);
-  numbuf := ssize div 1024;
-  if (numbuf > 25000) then
-    perstep := 2
-  else if (numbuf > 12500) then
-    perstep := 5
-  else if (numbuf > 6000) then
-    perstep := 10
-  else
-    perstep := 15;
-  restbuf := ssize mod 1024;
-
-  key := 0;
-  skeleton := 0;
-  foundkey := false;
-
-GetMem(Buffer,1024);
-try
-  oldper := 0;
-
-  for i := 1 to numbuf do
-  begin
-    FileRead(src, Buffer^, 1024);
-    if not(foundkey) then
-    begin
-      key := buffer^[0] xor seed;
-      foundkey := true;
-    end;
-    for x := 0 to (1023 div 16) do
-    begin
-      Buffer^[x*16] := Buffer^[x*16] xor (key+skeleton);
-//      showmessage(inttostr(x*16)+' '+inttohex(key+skeleton,2));
-      if (skeleton = 240) then
-        skeleton := 0
-      else
-        inc(skeleton,16);
-      inc(key);
-      if (key = 7) then
-        key := 8;
-      if (key >= 15) then
-        key := 0;
-    end;
-    dst.WriteBuffer(Buffer^,1024);
-    if not silent then
-    begin
-      real1 := i;
-      real2 := numbuf;
-      real1 := (real1 / real2)*100;
-      per := Round(real1);
-      if per >= oldper + perstep then
-      begin
-        oldper := per;
-        SetPercent(per);
-      end;
-    end;
-  end;
-
-  if not silent then
-    SetPercent(100);
-
-  FileRead(src, Buffer^, restbuf);
-  for x := 0 to ((restbuf-1) div 16) do
-  begin
-    if not(foundkey) then
-    begin
-      key := buffer^[0] xor seed;
-      foundkey := true;
-    end;
-    Buffer^[x*16] := Buffer^[x*16] xor (key+skeleton);
-    if (skeleton = 240) then
-      skeleton := 0
-    else
-      inc(skeleton,16);
-    inc(key);
-    if (key = 7) then
-      key := 8;
-    if (key >= 15) then
-      key := 0;
-  end;
-  dst.WriteBuffer(Buffer^, restbuf);
-
-finally
-  FreeMem(Buffer);
-end;
-
-end;
-
-// Function to extract textures from MOS DATAFILE2.0 to DDS
-// Only supports textures types 0 and 2 (DXT1 and DXT3)
-// If something weird is found, just do a BinCopy extraction (there are some weird entries in those files...)
-function ExtractMOSDTextureToDDS(outputstream: TStream; Offset, Size: int64; MipMapnum: integer; BufferSize: integer; silent, isRiddick: boolean): boolean;
-var DDS: DDSHeader;
-    TEXHDR1: MOSDTextureLocalHeader_Init;
-    TEXHDR2: MOSDTextureLocalHeader_End;
-    MipMapOffsets: array of integer;
-    inFile: THandleStream;
-    x: integer;
-begin
-
-  SetLength(MipMapOffsets, MipMapNum);
-
-  inFile := THandleStream.Create(FHandle);
-
-  inFile.Seek(Offset,0);
-  for x := 0 to MipMapNum - 1 do
-    inFile.Read(MipMapOffsets[x],4);
-
-  inFile.Seek(MipMapOffsets[0],0);
-  inFile.Read(TEXHDR1,SizeOf(MOSDTextureLocalHeader_Init));
-  if isRiddick then
-    inFile.Seek(4,1);
-  inFile.Read(TEXHDR2,SizeOf(MOSDTextureLocalHeader_End));
-
-  // Sanity checks, if they fail, we just extract a BinCopy
-  if (TEXHDR1.Width <= 0) or (TEXHDR1.Height <= 0) or (TEXHDR2.Size <= 0) or ((TEXHDR2.TextureType <> 0) and (TEXHDR2.TextureType <> 2) and (TEXHDR2.TextureType <> 4)) then
-  begin
-
-    inFile.Free;
-    BinCopyToStream(Fhandle,outputstream,Offset, Size,BufferSize,silent);
-
-  end
-  else
-  begin
-
-    //MipMapNum := 1;
-
-    FillChar(DDS,SizeOf(DDSHeader),0);
-    DDS.ID[0] := 'D';
-    DDS.ID[1] := 'D';
-    DDS.ID[2] := 'S';
-    DDS.ID[3] := ' ';
-    DDS.SurfaceDesc.dwSize := 124;
-    DDS.SurfaceDesc.dwFlags := DDSD_CAPS or DDSD_HEIGHT or DDSD_WIDTH or DDSD_PIXELFORMAT or DDSD_LINEARSIZE;
-    if MipMapNum > 1 then
-      DDS.SurfaceDesc.dwFlags := DDS.SurfaceDesc.dwFlags or DDSD_MIPMAPCOUNT;
-    DDS.SurfaceDesc.dwHeight := TEXHDR1.Height;
-    DDS.SurfaceDesc.dwWidth := TEXHDR1.Width;
-    DDS.SurfaceDesc.dwPitchOrLinearSize := TEXHDR2.Size;
-    DDS.SurfaceDesc.dwMipMapCount := MipMapnum;
-    DDS.SurfaceDesc.ddpfPixelFormat.dwSize := 32;
-    DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_FOURCC;
-    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'D';
-    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[1] := 'X';
-    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[2] := 'T';
-    if (TEXHDR2.TextureType = 4) then
-      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '5'
-    else if (TEXHDR2.TextureType = 2) then
-      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '3'
-    else
-      DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '1';
-    DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDSCAPS_TEXTURE;
-    if MipMapNum > 1 then
-      DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDS.SurfaceDesc.ddsCaps.dwCaps1 or DDSCAPS_COMPLEX or DDSCAPS_MIPMAP;
-
-    outputstream.Write(DDS,SizeOf(DDSHeader));
-
-    for x := 0 to MipMapNum - 1 do
-    begin
-      inFile.Seek(MipMapOffsets[x],0);
-      inFile.Read(TEXHDR1,SizeOf(MOSDTextureLocalHeader_Init));
-      if isRiddick then
-        inFile.Seek(4,1);
-      inFile.Read(TEXHDR2,SizeOf(MOSDTextureLocalHeader_End));
-      outputstream.CopyFrom(inFile,TEXHDR2.Size);
-    end;
-
-    inFile.Free;
-
-  end;
-
-  result := true;
-
-end;
+end;}
 
 function ExtractFileToStream(outputstream: TStream; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
 var ENT: MTFCompress;
@@ -12696,7 +12754,7 @@ begin
     end
     else
     begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
     end;
   end
   else if DrvInfo.ID = '007' then
@@ -12707,7 +12765,7 @@ begin
     end
     else
     begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
     end;
   end
   else if DrvInfo.ID = 'BSA' then
@@ -12719,7 +12777,7 @@ begin
     end
     else
     begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
     end;
   end
   else if DrvInfo.ID = 'VFS' then
@@ -12730,7 +12788,7 @@ begin
     end
     else
     begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
     end;
   end
   // The Movies .PAK decompression handling
@@ -12760,14 +12818,14 @@ begin
 
           // If the file is not compressed we just copy 1:1 starting from offset+16 (without the header)
           if (TMH.NotCompressed = 1) then
-            BinCopyToStream(FHandle,outputstream,offset+16,Size,BUFFER_SIZE,silent)
+            BinCopyToStream(FHandle,outputstream,offset+16,Size,0,BUFFER_SIZE,silent,SetPercent)
           // Else we decompress the zlib data
           else
             DecompressZlibToStream(outputstream, TMH.CmpSize, Size);
 
         end
         else
-          BinCopyToStream(FHandle,outputstream,offset+16,Size,BUFFER_SIZE,silent);
+          BinCopyToStream(FHandle,outputstream,offset+16,Size,0,BUFFER_SIZE,silent,SetPercent);
 
       end
       // Else we decompress the zlib data
@@ -12778,7 +12836,7 @@ begin
     // If something is not as expected we just copy 1:1
     else
     begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
     end;
 
   end
@@ -12792,11 +12850,11 @@ begin
     begin
 //      FileSeek(FHandle,Offset+12,0);
 //      DecompressZlib(fil, DataX-12, Size);
-      BinCopyToStream(FHandle,outputstream,offset,DataX,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent);
     end
     else
     begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
     end;
   end
 //  else if DrvInfo.ID = 'H4R' then
@@ -12823,7 +12881,7 @@ begin
     end
     else
     begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
     end;
   end
   else if DrvInfo.ID = 'HPI' then
@@ -12834,7 +12892,7 @@ begin
     end
     else
     begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
     end;
   end
   else if DrvInfo.ID = 'PCK' then
@@ -12873,14 +12931,14 @@ begin
     end
     else
     begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
     end;
   end
   else if DrvInfo.ID = 'RFA' then
   begin
     if (DataX = 0) then
     begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
     end
     else if (DataX = 1) then
     begin
@@ -12897,7 +12955,7 @@ begin
     end
     else
     begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
     end;
   end
   else if DrvInfo.ID = 'PKPAK' then
@@ -12908,7 +12966,7 @@ begin
     end
     else
     begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
     end;
   end
   else if Leftstr(DrvInfo.ID,4) = 'MOSD' then
@@ -12916,11 +12974,11 @@ begin
     if DataX = 1 then
       ExtractMOSDTextureToDDS(outputstream,Offset,Size,DataY,BUFFER_SIZE,silent,Rightstr(DrvInfo.ID,1)='r')
     else
-      BinCopyToStream(FHandle,outputstream,offset,size,BUFFER_SIZE,silent);
+      BinCopyToStream(FHandle,outputstream,offset,size,0,BUFFER_SIZE,silent,SetPercent);
   end
   else
   begin
-    BinCopyToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
+    BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
   end;
 
   result := true;

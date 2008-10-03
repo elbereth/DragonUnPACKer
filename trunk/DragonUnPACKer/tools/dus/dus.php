@@ -1,6 +1,6 @@
 <?php
 
-// $Id: dus.php,v 1.5 2008-09-26 05:59:16 elbereth Exp $
+// $Id: dus.php,v 1.6 2008-10-03 17:56:07 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dus/dus.php,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,9 +18,9 @@
 //
 
   // CVS variables
-  $CVS_REVISION = '$Revision: 1.5 $';
+  $CVS_REVISION = '$Revision: 1.6 $';
   $CVS_REVISION_DISPLAY = substr($CVS_REVISION,11,strlen($CVS_REVISION)-13);
-  $CVS_DATE = '$Date: 2008-09-26 05:59:16 $';
+  $CVS_DATE = '$Date: 2008-10-03 17:56:07 $';
   $CVS_DATE_DISPLAY = substr($CVS_DATE,7,strlen($CVS_DATE)-9);
 
   // Sending the header
@@ -92,7 +92,7 @@
   mysql_free_result($queryresult);
 
   // Retrieving information about user build
-  $query = "SELECT duci, dudi, duhi, translation FROM dus_versions WHERE dup = ".$userBuild;
+  $query = "SELECT duci, dudi, duhi, translation FROM dus_versions WHERE (dupfrom <= ".$userBuild.") AND (dupto >= ".$userBuild.")";
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
   	echo "Result=M20\n";
@@ -113,14 +113,41 @@
   {
   	echo "Result=P02\n";
     echo "ResultDescription=Unknown build of Dragon UnPACKer\n\n";
+    echo "ResultQuery=".$query."\n";
     echo $dusbody;
   	return;
   }
 
   mysql_free_result($queryresult);
 
+  // Retrieving servers information
+  $query = "SELECT * FROM dus_servers WHERE serverEnabled='true' ORDER BY serverPriority";
+  $queryresult = mysql_query ($query);
+  if (mysql_errno() != 0) {
+  	echo "Result=M40\n";
+       echo "ResultQuery=".$query."\n";
+       echo "ResultDescription=".mysql_error()."\n";
+  	return;
+  }
+
+  $dusservers = '';
+  $numservers = 0;
+  $servers = array();
+  while ($line = mysql_fetch_assoc($queryresult)) {
+
+    $servers[$numservers]['id'] = $line['serverID'];
+    $servers[$numservers]['url'] = $line['serverURL'];
+    $servers[$numservers]['path'] = $line['serverUsePaths'];
+    $dusservers .= "Server".$numservers."=".$line['serverName']."\n";
+    $numservers++;
+     	
+  }
+  $dusservers = "NumServers=".$numservers."\n".$dusservers;
+
+  mysql_free_result($queryresult);
+
   // Retrieving available convert plugins
-  $query = "SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR FROM dus_convert WHERE duci = ".$userduci." ORDER BY name, version DESC";
+  $query = "SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR, DATE(date) FROM dus_convert WHERE duci = ".$userduci." AND versiontype='stable' ORDER BY name, version DESC";
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
   	echo "Result=M30\n";
@@ -130,22 +157,42 @@
   }
 
   $dusupdates = "Updates=";
+  $dusupdatesuntable = "UpdatesUnstable=";
   $lastconvertname = '';
 
   while ($line = mysql_fetch_array($queryresult, MYSQL_NUM)) {
 
     if ($lastconvertname != $line[0]) {
-      $dusbody .= '['.$line[0]."]\nAutoUpdate=1\nVersion=".$line[1]."\nVersionDisp=".$line[3]."\nDescription=".$line[2]."\nComment=".$line[8]."\nCommentFR=".$line[9]."\nURL=".$line[4]."\nSize=".$line[7]."\nFile=".$line[5]."\nFileDL=".$line[6]."\n\n";
+      $dusbody .= '['.$line[0]."]\nAutoUpdate=1\nVersion=".$line[1]."\nVersionDisp=".$line[3]."\nDescription=".$line[2]."\nComment=".$line[8]."\nCommentFR=".$line[9]."\n";
       $lastconvertname = $line[0];
       $dusupdates .= $line[0].' ';
+      for ($x=0;$x<$numservers;$x++) {
+        if ($x == 0) {
+          if ($servers[$x]['path'] == 'true') {
+            $dusbody .= "URL=".$servers[$x]['url'].$line[4]."\n";
+          }
+          else {
+            $dusbody .= "URL=".$servers[$x]['url'].$line[6]."\n";
+          }
+        }
+        else {
+          if ($servers[$x]['path'] == 'true') {
+            $dusbody .= "URL$x=".$servers[$x]['url'].$line[4]."\n";
+          }
+          else {
+            $dusbody .= "URL$x=".$servers[$x]['url'].$line[6]."\n";
+          }
+        }
+      }
+      $dusbody .= "Size=".$line[7]."\nFile=".$line[5]."\nFileDL=".$line[6]."\nDate=".$line[10]."\n\n";
     }
  	
   }
 
   mysql_free_result($queryresult);
 
-  // Retrieving available drivers plugins
-  $query = "SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR FROM dus_driver WHERE dudi = ".$userdudi." ORDER BY name, version DESC";
+  // Retrieving available stable drivers plugins
+  $query = "SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR, DATE(date) FROM dus_driver WHERE dudi = ".$userdudi." AND versiontype='stable' ORDER BY name, version DESC";
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
   	echo "Result=M31\n";
@@ -154,14 +201,83 @@
   	return;
   }
 
-  $lastconvertname = '';
+  $lastdrivertname = '';
 
   while ($line = mysql_fetch_array($queryresult, MYSQL_NUM)) {
 
-    if ($lastconvertname != $line[0]) {
-      $dusbody .= '['.$line[0]."]\nAutoUpdate=1\nVersion=".$line[1]."\nVersionDisp=".$line[3]."\nDescription=".$line[2]."\nComment=".$line[8]."\nCommentFR=".$line[9]."\nURL=".$line[4]."\nSize=".$line[7]."\nFile=".$line[5]."\nFileDL=".$line[6]."\n\n";
-      $lastconvertname = $line[0];
+    if ($lastdrivertname != $line[0]) {
+      $dusbody .= '['.$line[0]."]\nAutoUpdate=1\nVersion=".$line[1]."\nVersionDisp=".$line[3]."\nDescription=".$line[2]."\nComment=".$line[8]."\nCommentFR=".$line[9]."\n";
+      $lastdrivertname = $line[0];
+      $drivercheck[$line[9]] = $line[1];
       $dusupdates .= $line[0].' ';
+      for ($x=0;$x<$numservers;$x++) {
+        if ($x == 0) {
+          if ($servers[$x]['path'] == 'true') {
+            $dusbody .= "URL=".$servers[$x]['url'].$line[4]."\n";
+          }
+          else {
+            $dusbody .= "URL=".$servers[$x]['url'].$line[6]."\n";
+          }
+        }
+        else {
+          if ($servers[$x]['path'] == 'true') {
+            $dusbody .= "URL$x=".$servers[$x]['url'].$line[4]."\n";
+          }
+          else {
+            $dusbody .= "URL$x=".$servers[$x]['url'].$line[6]."\n";
+          }
+        }
+      }
+      $dusbody .= "Size=".$line[7]."\nFile=".$line[5]."\nFileDL=".$line[6]."\nDate=".$line[10]."\n\n";
+    }
+ 	
+  }
+
+  mysql_free_result($queryresult);
+
+  // Retrieving available unstable+stable drivers plugins
+  $query = "SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR, DATE(date) FROM dus_driver WHERE dudi = ".$userdudi." ORDER BY name, version DESC";
+  $queryresult = mysql_query ($query);
+  if (mysql_errno() != 0) {
+  	echo "Result=M41\n";
+    echo "ResultQuery=".$query."\n";
+    echo "ResultDescription=".mysql_error()."\n";
+  	return;
+  }
+
+  $lastdrivertname = '';
+
+  while ($line = mysql_fetch_array($queryresult, MYSQL_NUM)) {
+
+    if ($lastdrivertname != $line[0]) {
+      $lastdrivertname = $line[0];
+      if ($drivercheck[$line[9]] != $line[1]) {
+        $dusbody .= '[unstable:'.$line[0]."]\nAutoUpdate=1\nVersion=".$line[1]."\nVersionDisp=".$line[3]."\nDescription=".$line[2]."\nComment=".$line[8]."\nCommentFR=".$line[9]."\n";
+        $drivercheck[$line[9]] = $line[1];
+        $dusupdatesuntable .= 'unstable:'.$line[0].' ';
+        for ($x=0;$x<$numservers;$x++) {
+          if ($x == 0) {
+            if ($servers[$x]['path'] == 'true') {
+              $dusbody .= "URL=".$servers[$x]['url'].$line[4]."\n";
+            }
+            else {
+              $dusbody .= "URL=".$servers[$x]['url'].$line[6]."\n";
+            }
+          }
+          else {
+            if ($servers[$x]['path'] == 'true') {
+              $dusbody .= "URL$x=".$servers[$x]['url'].$line[4]."\n";
+            }
+            else {
+              $dusbody .= "URL$x=".$servers[$x]['url'].$line[6]."\n";
+            }
+          }
+        }
+        $dusbody .= "Size=".$line[7]."\nFile=".$line[5]."\nFileDL=".$line[6]."\nDate=".$line[10]."\n\n";
+      }
+      else {
+        $dusupdatesuntable .= $line[0].' ';
+      }
     }
  	
   }
@@ -169,7 +285,7 @@
   mysql_free_result($queryresult);
 
   // Retrieving available hyperripper plugins
-  $query = "SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR FROM dus_hyperripper WHERE duhi = ".$userduhi." ORDER BY name, version DESC";
+  $query = "SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR, DATE(date) FROM dus_hyperripper WHERE duhi = ".$userduhi." AND versiontype='stable' ORDER BY name, version DESC";
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
   	echo "Result=M32\n";
@@ -178,14 +294,33 @@
   	return;
   }
 
-  $lastconvertname = '';
+  $lasthyperrippername = '';
 
   while ($line = mysql_fetch_array($queryresult, MYSQL_NUM)) {
 
-    if ($lastconvertname != $line[0]) {
-      $dusbody .= '['.$line[0]."]\nAutoUpdate=1\nVersion=".$line[1]."\nVersionDisp=".$line[3]."\nDescription=".$line[2]."\nComment=".$line[8]."\nCommentFR=".$line[9]."\nURL=".$line[4]."\nSize=".$line[7]."\nFile=".$line[5]."\nFileDL=".$line[6]."\n\n";
-      $lastconvertname = $line[0];
+    if ($lasthyperrippername != $line[0]) {
+      $dusbody .= '['.$line[0]."]\nAutoUpdate=1\nVersion=".$line[1]."\nVersionDisp=".$line[3]."\nDescription=".$line[2]."\nComment=".$line[8]."\nCommentFR=".$line[9]."\n";
+      $lasthyperrippername = $line[0];
       $dusupdates .= $line[0].' ';
+      for ($x=0;$x<$numservers;$x++) {
+        if ($x == 0) {
+          if ($servers[$x]['path'] == 'true') {
+            $dusbody .= "URL=".$servers[$x]['url'].$line[4]."\n";
+          }
+          else {
+            $dusbody .= "URL=".$servers[$x]['url'].$line[6]."\n";
+          }
+        }
+        else {
+          if ($servers[$x]['path'] == 'true') {
+            $dusbody .= "URL$x=".$servers[$x]['url'].$line[4]."\n";
+          }
+          else {
+            $dusbody .= "URL$x=".$servers[$x]['url'].$line[6]."\n";
+          }
+        }
+      }
+      $dusbody .= "Size=".$line[7]."\nFile=".$line[5]."\nFileDL=".$line[6]."\nDate=".$line[10]."\n\n";
     }
  	
   }
@@ -208,18 +343,43 @@
   while ($line = mysql_fetch_assoc($queryresult)) {
 
     if ($lastlangname != $line['name']) {
-      $dusbody .= '['.$line['name']."]\nRelease=".$line['release']."\nDescription=".$line['description']."\nAuthor=".$line['author']."\nURL=".$line['URL']."\nSize=".$line['size']."\nFile=".$line['file']."\nFileDL=".$line['fileDL']."\nDate=".$line['date']."\n\n";
+      $dusbody .= '['.$line['name']."]\nRelease=".$line['release']."\nDescription=".$line['description']."\nAuthor=".$line['author']."\n";
       $lastlangname = $line['name'];
       $dustranslations .= $line['name'].' ';
+      $numadd = 0;
+      for ($x=0;$x<$numservers;$x++) {
+        if ($servers[$x]['id'] != 0) {
+          if ($numadd== 0) {
+            if ($servers[$x]['path'] == 'true') {
+              $dusbody .= "URL=".$servers[$x]['url'].$line['URL']."\n";
+            }
+            else {
+              $dusbody .= "URL=".$servers[$x]['url'].$line['fileDL']."\n";
+            }
+          }
+          else {
+            if ($servers[$x]['path'] == 'true') {
+              $dusbody .= "URL$numadd=".$servers[$x]['url'].$line['URL']."\n";
+            }
+            else {
+              $dusbody .= "URL$numadd=".$servers[$x]['url'].$line['fileDL']."\n";
+            }
+          }
+          $numadd++;
+        }
+      }
+      $dusbody .= "Size=".$line['size']."\nFile=".$line['file']."\nFileDL=".$line['fileDL']."\nDate=".$line['date']."\n\n";
     }
  	
   }
 
   mysql_free_result($queryresult);
 
-	echo "Result=OK\n";
+  echo "Result=OK\n";
   echo trim($dusupdates)."\n";
-  echo trim($dustranslations)."\n\n";
+  echo trim($dusupdatesuntable)."\n";
+  echo trim($dustranslations)."\n";
+  echo trim($dusservers)."\n\n";
   echo $dusbody;
   
   // Closing MYSQL connection

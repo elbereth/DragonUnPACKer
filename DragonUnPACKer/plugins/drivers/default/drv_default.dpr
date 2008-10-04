@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.38 2008-10-01 04:43:29 elbereth Exp $
+// $Id: drv_default.dpr,v 1.39 2008-10-04 06:34:57 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,7 +18,7 @@ library drv_default;
 //
 
 uses
-//  Dialogs,
+  Dialogs,
   Zlib,
   Classes,
   StrUtils,
@@ -178,7 +178,8 @@ type FSE = ^element;
     20515        Cleaned the code, using lib_BinUtils instead of local functions
                  All the types are now just before each function using them
                  Same goes for special functions
-                 Improved detection of Riddick .XTC files (retail version of the game)  
+                 Improved detection of Riddick .XTC files (retail version of the game)
+    20516        Improved LithTech .REZ support -> Fixes opening NOLF2 sound.rez
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -199,8 +200,8 @@ type FSE = ^element;
 const
   DRIVER_VERSION = 20515;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.38 $';
-  CVS_DATE = '$Date: 2008-10-01 04:43:29 $';
+  CVS_REVISION = '$Revision: 1.39 $';
+  CVS_DATE = '$Date: 2008-10-04 06:34:57 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -6802,6 +6803,9 @@ end;
 // LithTech .REZ support ==================================================== //
 // -------------------------------------------------------------------------- //
 
+// Improved in 20516: Now using max offsets instead of reading everything
+//                    dumbly... Fixes NOLF2 sound.rez and is much more reliable
+
 type REZHeader = packed record
         ID: array[0..126] of Char;
         Version: Integer;
@@ -6820,104 +6824,68 @@ type REZHeader = packed record
        Size: Integer;
        DateTime: Integer;
      end;
+
 const
   REZID : String = #13+#10+'RezMgr Version 1 Copyright (C) 1995 MONOLITH INC.           '+#13+#10+'LithTech Resource File                                      '+#13+#10+#26;
   REZIDOld : String = #13+#10+'RezMgr Version 1 Copyright (C) 1995 MONOLITH INC.           '+#13+#10+'                                                            '+#13+#10+#26;
 
-procedure Offset_add(Offset: Integer);
-var nouvL: TInts;
-begin
-
-  new(nouvL);
-  nouvL^.Value := Offset;
-  nouvL^.suiv := OffsetList;
-  OffsetList := nouvL;
-
-end;
-
-procedure Offset_clear();
-var a: TInts;
-begin
-
-  while OffsetList <> NIL do
-  begin
-    a := OffsetList;
-    OffsetList := OffsetList^.suiv;
-    Dispose(a);
-  end;
-
-end;
-
-function Offset_check(Offset: Integer): Boolean;
-var a: TInts;
-    res: Boolean;
-begin
-
-  a := OffsetList;
-  res := false;
-
-  while (a <> NIL) and not(res) do
-  begin
-    res := (a^.Value = Offset);
-    a := a^.suiv;
-  end;
-
-  Offset_check := res;
-
-end;
-
-function Parse_REZ(offset: integer; cdir: string): integer;
+function Parse_REZ(offset, maxoffset: integer; cdir: string): integer;
 var ENT: REZEntry;
-    tstr,nam,ext,pcdir: string;
-    tint,res: integer;
+    tstr,nam,ext,pcdir,fcdir: string;
+    tint,res,nextoffset: integer;
     extbuf: array[1..4] of Char;
 begin
 
   res := 0;
 
-  if Offset < FileSeek(FHandle,0,2) then
+  if Offset < TotFSize then
   begin
 
-    FileSeek(FHandle,Offset,0);
-    FileRead(FHandle,ENT,16);
+    nextoffset := offset;
+    repeat
+      FileSeek(FHandle,nextoffset,0);
+      FileRead(FHandle,ENT,SizeOf(REZEntry));
+      inc(nextoffset,SizeOf(REZEntry));
 
-    case ENT.EntryType of
-      1: begin
-           pcdir := cdir;
-           tstr := Strip0(Get0(FHandle));
-           if ENT.Size > 0 then
-             if Not(Offset_check(ENT.Offset)) then
+      case ENT.EntryType of
+        1: begin
+             pcdir := cdir;
+             tstr := Strip0(Get0(FHandle));
+             inc(nextoffset,length(tstr)+1);
+             if ENT.Size > 0 then
              begin
-               cdir := cdir + tstr + '\';
-               Offset_add(ENT.Offset);
-               res := Parse_REZ(ENT.Offset,cdir);
+               fcdir := cdir + tstr + '\';
+               inc(res,Parse_REZ(ENT.Offset,ENT.Offset+ENT.Size,fcdir));
              end;
-           res := res + Parse_REZ(Offset + 16 + Length(tstr) + 1,pcdir);
-           Per := Per + 1;
-           if Per > 100 then
-             Per := 0;
-           SetPercent(Per);
-         end;
-      0: begin
-           FileRead(FHandle,tint,4);  // Numeric ID
-           FileRead(Fhandle,extbuf,4);
-           ext := extbuf;
-           ext := RevStr(Strip0(ext));
-           FileRead(FHandle,tint,4);  // Blank
-           nam := Strip0(Get0(FHandle));
-           if (length(nam) > 0) and (ENT.Offset > 0) and (ENT.Size > 0) and (extbuf[4] = #0) and (ENT.Offset < TotFSize) and (ENT.Offset + ENT.Size < TotFSize) and (ENT.Offset > 162) then
-           begin
-             if (ext = '') then
-               tstr := cdir + nam
-             else
-               tstr := cdir + nam + '.' + ext;
-//             ShowMessage('File'+#10+cdir+nam+'.'+ext+#10+inttoStr(ENT.Offset)+#10+inttostr(ENT.Size));
-             FSE_Add(tstr,ENT.Offset,ENT.Size,0,0);
+             Per := Per + 1;
+             if Per > 100 then
+               Per := 0;
+             SetPercent(Per);
            end;
-           Inc(Res);
-           res := res + Parse_REZ(Offset + 30 + Length(nam),cdir);
-         end;
-    end;
+        0: begin
+             FileRead(FHandle,tint,4);  // Numeric ID
+             inc(nextoffset,4);
+             FileRead(Fhandle,extbuf,4);
+             inc(nextoffset,length(extbuf)+1);
+             ext := extbuf;
+             ext := RevStr(Strip0(ext));
+             FileRead(FHandle,tint,4);  // Blank
+             inc(nextoffset,4);
+             nam := Strip0(Get0(FHandle));
+             inc(nextoffset,length(nam)+1);
+             if (length(nam) > 0) and (ENT.Offset > 0) and (ENT.Size > 0) and (extbuf[4] = #0) and (ENT.Offset < TotFSize) and (ENT.Offset + ENT.Size < TotFSize) and (ENT.Offset > 162) then
+             begin
+               if (ext = '') then
+                 tstr := cdir + nam
+               else
+                 tstr := cdir + nam + '.' + ext;
+               FSE_Add(tstr,ENT.Offset,ENT.Size,0,0);
+               Inc(Res);
+             end;
+           end;
+      end;
+
+    until nextoffset >= maxoffset;
 
     Parse_REZ := res;
   end
@@ -6959,10 +6927,7 @@ begin
     end
     else
     begin
-      NumE := Parse_REZ(HDR.DirOffset,'');
-
-      Offset_clear;
-      //ShowMessage(IntTosTr(NumE));
+      NumE := Parse_REZ(HDR.DirOffset,HDR.DirOffset+HDR.DirSize,'');
 
       ReadLithTechREZ := NumE;
 

@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.14 2008-08-23 17:40:41 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.15 2008-11-09 14:11:49 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -250,6 +250,7 @@ begin
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
     begin
       Reg.WriteInteger('LastActiveTab',PageControl.ActivePageIndex);
+      Reg.WriteString('Source',txtSource.text);
       Reg.CloseKey;
     end;
   Finally
@@ -329,19 +330,19 @@ begin
   if not(loading) then
   begin
 
-  Reg := TRegistry.Create;
-  Try
-    Reg.RootKey := HKEY_CURRENT_USER;
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
-    begin
-      Reg.WriteString('Source',txtSource.text);
-      Reg.CloseKey;
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
+      begin
+        Reg.WriteString('Source',txtSource.text);
+        Reg.CloseKey;
+      end;
+    Finally
+      Reg.Free;
     end;
-  Finally
-    Reg.Free;
-  end;
 
-  txtHRF.text := ChangeFileExt(txtSource.Text,'.hrf');
+    txtHRF.text := ChangeFileExt(txtSource.Text,'.hrf');
 
   end;
 
@@ -368,10 +369,9 @@ begin
     Reg.RootKey := HKEY_CURRENT_USER;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
     begin
-      if Reg.ValueExists('Source') then
+      if (length(txtSource.text) = 0) and Reg.ValueExists('Source') then
       begin
         txtSource.Text := Reg.ReadString('Source');
-        txtHRF.text := ChangeFileExt(txtSource.Text,'.hrf');
       end;
       if Reg.ValueExists('NumThreads') then
         sliderMT.value := Reg.ReadInteger('NumThreads');
@@ -417,6 +417,9 @@ begin
   Finally
     Reg.Free;
   end;
+
+  if length(txtSource.Text) > 0 then
+    txtHRF.text := ChangeFileExt(txtSource.Text,'.hrf');
 
 {  for x := 1 to HPlug.NumPlugins do
     if not(@HPlug.Plugins[x].OptionPanel = nil) then

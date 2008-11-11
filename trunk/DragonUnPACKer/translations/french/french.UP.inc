@@ -3,20 +3,12 @@
 // =============================================================================
 //  This file was created automatically from:
 //  french.ls
-//  With Dragon Language Compiler v4.1.0 
+//  With Dragon Language Compiler v4.1.1 
 //
 // DO NOT CHANGE THIS FILE MANUALLY, EDIT THE SOURCE FILE AND RECOMPILE IT WITH
-// DLOOKC <file> /IL
+// DLOOKC <file> /IN
 //
 // -----------------------------------------------------------------------------
-
-unit lib_language_internal;
-
-interface
-
-function DLNGInternalStr(sch: string): string;
-
-implementation
 
 function DLNGInternalStr(sch: string): string;
 begin
@@ -50,7 +42,7 @@ begin
   else if sch = 'MNU2S5' then
     result := 'Convertion'
   else if sch = 'MNU2S6' then
-    result := 'Plugins'
+    result := 'Extensions'
   else if sch = 'MNU2S7' then
     result := 'Avancé'
   else if sch = 'MNU2S8' then
@@ -110,7 +102,7 @@ begin
   else if sch = 'INFO14' then
     result := 'Chargement: '
   else if sch = 'INFO20' then
-    result := 'Nom du plugin'
+    result := 'Nom de l''extension'
   else if sch = 'INFO21' then
     result := 'Version'
   else if sch = 'INFO22' then
@@ -216,15 +208,15 @@ begin
   else if sch = 'OPT124' then
     result := 'Prendre les icones dans le registre Windows (plus lent)'
   else if sch = 'OPT125' then
-    result := 'Utiliser l''HyperRipper si aucun plugin n''arrive à ouvrir le fichier'
+    result := 'Utiliser l''HyperRipper si aucune extension n''arrive à ouvrir le fichier'
   else if sch = 'OPT126' then
     result := 'Afficher le journal d''exécution'
   else if sch = 'OPT191' then
-    result := 'Ces plugins gèrent la convertion des formats de fichiers lors de l''extraction et de la prévisualisation. Exemple: Conversion des textures .ART vers .BMP'
+    result := 'Ces extensions gèrent la convertion des formats de fichiers lors de l''extraction et de la prévisualisation. Exemple: Conversion des textures .ART vers .BMP'
   else if sch = 'OPT192' then
-    result := 'Ces plugins gèrent l''ouverture des formats de fichiers pour que Dragon UnPACKer puisse les explorer. Si un fichier n''est pas supporté cela signifie qu''aucun plugin ne peut le lire (voir HyperRipper dans ce cas ci-dessous).'
+    result := 'Ces extensions gèrent l''ouverture des formats de fichiers pour que Dragon UnPACKer puisse les explorer. Si un fichier n''est pas supporté cela signifie qu''aucune extension ne peut le lire (voir HyperRipper dans ce cas ci-dessous).'
   else if sch = 'OPT193' then
-    result := 'Ces plugins gèrent les formats qu''il est possible de rechercher dans le HyperRipper (ex: MPEG Audio, BMP, etc..)'
+    result := 'Ces extensions gèrent les formats qu''il est possible de rechercher dans le HyperRipper (ex: MPEG Audio, BMP, etc..)'
   else if sch = 'OPT200' then
     result := 'Drivers'
   else if sch = 'OPT201' then
@@ -276,13 +268,13 @@ begin
   else if sch = 'OPT500' then
     result := 'Convertion'
   else if sch = 'OPT501' then
-    result := 'Plugins de convertion:'
+    result := 'Extensions de convertion:'
   else if sch = 'OPT510' then
     result := 'Informations'
   else if sch = 'OPT600' then
-    result := 'Plugins'
+    result := 'Extensions'
   else if sch = 'OPT701' then
-    result := 'Plugins HyperRipper:'
+    result := 'Extensions HyperRipper:'
   else if sch = 'OPT710' then
     result := 'Informations '
   else if sch = 'OPT800' then
@@ -382,9 +374,9 @@ begin
   else if sch = 'HR0001' then
     result := 'Le HyperRipper permet de rechercher des formats de fichiers "standard"%ndans d''autres fichiers non supportés directement par Dragon UnPACKer.'
   else if sch = 'HR0002' then
-    result := 'ATTENTION: Pour utilisateurs experts uniquement!'
+    result := 'ATTENTION: Pour utilisateurs experimentés uniquement!'
   else if sch = 'HR0003' then
-    result := 'Nombre de plugins chargés:'
+    result := 'Nombre d''extensions chargés:'
   else if sch = 'HR0004' then
     result := 'Nombre total de formats:'
   else if sch = 'HR1000' then
@@ -460,7 +452,7 @@ begin
   else if sch = 'HR4030' then
     result := 'Formattage des entrées'
   else if sch = 'HR4031' then
-    result := 'Faire des répertoires grâce au type retourné par le plugin'
+    result := 'Faire des répertoires grâce au type retourné par l''extension'
   else if sch = 'HR4050' then
     result := 'Nommage'
   else if sch = 'HR4051' then
@@ -639,194 +631,22 @@ begin
     result := 'Format inconnu (essayez de changer le format).'
   else if sch = 'CNV992' then
     result := 'Etes-vous sur de vouloir supprimer la palette?'
-  else if sch = 'PI0000' then
-    result := 'Version de DUP5 detectée:'
-  else if sch = 'PI0001' then
-    result := 'Titre'
-  else if sch = 'PI0002' then
-    result := 'Auteur'
-  else if sch = 'PI0003' then
-    result := 'Commentaire'
-  else if sch = 'PI0004' then
-    result := 'URL'
-  else if sch = 'PI0005' then
-    result := 'Informations sur le package '
-  else if sch = 'PI0006' then
-    result := 'Veuillez patientez pendant l''installation du package...'
-  else if sch = 'PI0007' then
-    result := 'Ce programme va installer le package suivant dans le répertoire de Dragon UnPACKer.'
-  else if sch = 'PI0008' then
-    result := 'Dragon UnPACKer 5 doit être fermé pour continuer.'
-  else if sch = 'PI0009' then
-    result := 'Statut:'
-  else if sch = 'PI0010' then
-    result := 'En attente de l''utilisateur...'
-  else if sch = 'PI0011' then
-    result := 'Etes-vous sur de vouloir quitter?'
-  else if sch = 'PI0012' then
-    result := 'Erreur... DUP5 est lancé...'
-  else if sch = 'PI0013' then
-    result := 'Erreur Dragon UnPACKer 5 est lancé...%nFermez le puis ré-essayez.'
-  else if sch = 'PI0014' then
-    result := 'Erreur fatale.. Version non supportée de Package Dragon UnPACKer 5 (.D5P) [version %v]'
-  else if sch = 'PI0015' then
-    result := 'Erreur fatale.. Ceci n''est pas un fichier de Package Dragon UnPACKer 5 (.D5P)'
-  else if sch = 'PI0016' then
-    result := 'Utilisation: duppi <fichier.d5p>%n%nCeci installera le package fichier.d5p dans le répertoire de Dragon UnPACKer 5.'
-  else if sch = 'PI0017' then
-    result := 'Fichier introuvable!%n%f'
-  else if sch = 'PI0018' then
-    result := 'Lecture du package...'
-  else if sch = 'PI0019' then
-    result := 'Le fichier suivant existe déjà et est plus récent (ou le même) que le fichier que vous essayez d''installer:%n%n%f%n%nVersion actuelle: %1%nFichier du package: %2%n%nInstaller quand même?'
-  else if sch = 'PI0020' then
-    result := 'Le fichier suivant a un mauvais CRC. Le fichier ne sera pas installé.%nSi vous avez téléchargez ce fichier, re-téléchargez le.%n%n%f'
-  else if sch = 'PI0021' then
-    result := 'Le fichier suivant a une mauvaise taille. Le fichier ne sera pas installé.%nSi vous avez téléchargez ce fichier, re-téléchargez le.%n%n%f'
-  else if sch = 'PI0022' then
-    result := 'Installation avec succés de %i fichier(s)...'
-  else if sch = 'PI0023' then
-    result := 'Installation teminée avec succés...'
-  else if sch = 'PI0024' then
-    result := 'Installation non réussie (%e fichier(s) ont donnés des erreurs)...'
-  else if sch = 'PI0025' then
-    result := 'Installation non réussie... %i fichier(s) installés avec succés et %e erreur(s)...'
-  else if sch = 'PI0026' then
-    result := 'Chemin d''accés a Dragon UnPACKer 5 introuvable.%nVeuillez lancer Dragon UnPACKer 5 au moins une fois avant de rééssayer.'
-  else if sch = 'PI0027' then
-    result := 'Evité...'
-  else if sch = 'PI0028' then
-    result := 'Ko'
-  else if sch = 'PI0029' then
-    result := 'Lecture...'
-  else if sch = 'PI0030' then
-    result := 'Décompression...'
-  else if sch = 'PI0031' then
-    result := 'Ecriture...'
-  else if sch = 'PI0032' then
-    result := 'OK'
-  else if sch = 'PI0033' then
-    result := 'Version'
-  else if sch = 'PI0034' then
-    result := 'Ce programme vous permet d''installer des packages de Dragon UnPACKer 5.'
-  else if sch = 'PI0035' then
-    result := 'Que voulez vous faire?'
-  else if sch = 'PI0036' then
-    result := 'Rechercher sur internet les mises a jour et les installer.'
-  else if sch = 'PI0037' then
-    result := 'Remarque: Aucune information n''est envoyé à Dragon Software.'
-  else if sch = 'PI0038' then
-    result := 'Options Proxy'
-  else if sch = 'PI0039' then
-    result := 'Installer un package depuis le disque dur:'
-  else if sch = 'PI0040' then
-    result := 'Selectionner le package a installer...'
-  else if sch = 'PI0041' then
-    result := 'Pour installer ce fichier D5P vous devez disposer d''une version de Duppi plus récente.%nVotre version de Duppi: %y%nVersion de Duppi requise: %v%n%nPour cela mettez à jour votre Dragon UnPACKer 5.'
-  else if sch = 'PI0042' then
-    result := 'Ce package ne peut pas être installé avec votre version de Dragon UnPACKer.'
-  else if sch = 'PI0043' then
-    result := 'Impossible d''enregistrer %s.'
-  else if sch = 'PI0044' then
-    result := 'Données erronnées en provenance du serveur de mises à jour!'
-  else if sch = 'PI0044' then
-    result := 'Données erronnées en provenance du serveur de mises à jour!'
-  else if sch = 'PII001' then
-    result := 'Titre'
-  else if sch = 'PII002' then
-    result := 'Votre version'
-  else if sch = 'PII003' then
-    result := 'Version disponible'
-  else if sch = 'PII004' then
-    result := 'Description'
-  else if sch = 'PII005' then
-    result := 'Taille'
-  else if sch = 'PII011' then
-    result := 'Afficher les:'
-  else if sch = 'PII012' then
-    result := 'Plugins'
-  else if sch = 'PII013' then
-    result := 'Traductions'
-  else if sch = 'PII021' then
-    result := 'Version stable actuelle :'
-  else if sch = 'PII022' then
-    result := 'Version WIP actuelle :'
-  else if sch = 'PII030' then
-    result := 'Traduction'
-  else if sch = 'PII031' then
-    result := 'Revision'
-  else if sch = 'PII032' then
-    result := 'Auteur'
-  else if sch = 'PII100' then
-    result := 'la liste des mises a jours'
-  else if sch = 'PII101' then
-    result := 'Telechargement de %f...'
-  else if sch = 'PII102' then
-    result := 'Telechargement de %f (%b octets reçus)'
-  else if sch = 'PII103' then
-    result := 'Reception terminée de %f (%b octets)'
-  else if sch = 'PII104' then
-    result := 'Erreur: %c (%d)'
-  else if sch = 'PII105' then
-    result := 'Serveur contacté avec succés!'
-  else if sch = 'PII106' then
-    result := '-Aucune description-'
-  else if sch = 'PII107' then
-    result := 'Une nouvelle version de Dragon UnPACKer est disponible en téléchargement.%n%nNouvelle version: %v%nCommentaire: %c%n%nVoulez vous aller sur la page officielle pour la télécharger?'
-  else if sch = 'PII108' then
-    result := '%p plugin(s) et %t traduction(s) disponibles!'
-  else if sch = 'PII200' then
-    result := 'Aucune mise a jour n''a pu être téléchargée.%nLe programme va maintenant s''arreter.'
-  else if sch = 'PIEM01' then
-    result := 'Connection à la base de données impossible. Réessayez ultérieurement!'
-  else if sch = 'PIEM10' then
-    result := 'Erreur serveur lors de la recherche dernière version stable!'
-  else if sch = 'PIEM11' then
-    result := 'Erreur serveur lors de la recherche dernière version WIP!'
-  else if sch = 'PIEM20' then
-    result := 'Erreur serveur lors de la recherche de votre version!'
-  else if sch = 'PIEM30' then
-    result := 'Erreur serveur lors de la recherche des plugins de convertion disponibles!'
-  else if sch = 'PIEM31' then
-    result := 'Erreur serveur lors de la recherche des plugins driver disponibles!'
-  else if sch = 'PIEM32' then
-    result := 'Erreur serveur lors de la recherche des plugins HyperRipper disponibles!'
-  else if sch = 'PIEM33' then
-    result := 'Erreur serveur lors de la recherche des traductions disponibles!'
-  else if sch = 'PIEP01' then
-    result := 'Paramètre erronnée! Si vous n''avez pas encore lancer Dragon UnPACKer faites-le, puis relancer Duppi.'
-  else if sch = 'PIEP02' then
-    result := 'Le serveur n''a pas reconnu votre version de Dragon UnPACKer.'
-  else if sch = 'PIEUNK' then
-    result := 'Erreur serveur inconnu: "%e"'
-  else if sch = 'PIP000' then
-    result := 'Configuration du proxy'
-  else if sch = 'PIP001' then
-    result := 'Proxy:'
-  else if sch = 'PIP002' then
-    result := 'Port du proxy:'
-  else if sch = 'PIP003' then
-    result := 'Le proxy requiere une identification:'
-  else if sch = 'PIP004' then
-    result := 'Utilisateur:'
-  else if sch = 'PIP005' then
-    result := 'Mot de passe:'
   else if sch = '11TH01' then
-    result := 'Pour activer le support des fichiers du jeu The 11th Hour, le plugin a besoin de copier deux fichiers que vous pouvez trouver dans le répertoire GROOVIE du CDRom de The 11th Hour.%n%nVoulez-vous continuer ?'
+    result := 'Pour activer le support des fichiers du jeu The 11th Hour, l''extension a besoin de copier deux fichiers que vous pouvez trouver dans le répertoire GROOVIE du CDRom de The 11th Hour.%n%nVoulez-vous continuer ?'
   else if sch = '11TH02' then
     result := 'Selectionnez le fichier %f de 11th Hour...'
   else if sch = '11TH03' then
-    result := 'Le plugin est désormais activé.%nMaintenant vous pouvez ouvrir les fichiers GJD de The 11th Hour!'
+    result := 'L''extension est désormais activée.%nMaintenant vous pouvez ouvrir les fichiers GJD de The 11th Hour!'
   else if sch = '11TH04' then
     result := 'La désactivation du support The 11th Hour va supprimer les fichiers suivants:%n%n%a%n%b%n%nVous pourrez les recréer plus tard en réactivant le support The 11th Hour.%n%nEtes-vous sur de vouloir continuer?'
   else if sch = '11TH05' then
-    result := 'Statut du plugin: %s%n(Activé signifie que vous pouvez ouvrir des fichiers GJD)%n(Désactivé signifie que vous devez importer les fichiers GJD.GJD et DIR.RL)'
+    result := 'Statut de l''extension: %s%n(Activée signifie que vous pouvez ouvrir des fichiers GJD)%n(Désactivée signifie que vous devez importer les fichiers GJD.GJD et DIR.RL)'
   else if sch = '11TH06' then
-    result := 'Désactivé'
+    result := 'Désactivée'
   else if sch = '11TH07' then
-    result := 'Activé'
+    result := 'Activée'
   else if sch = '11TH10' then
-    result := 'Configuration du plugin The 11th Hour'
+    result := 'Configuration de l''extension pour le support de The 11th Hour'
   else if sch = '11TH11' then
     result := 'Activer'
   else if sch = '11TH12' then
@@ -898,17 +718,17 @@ begin
   else if sch = 'EXTXT' then
     result := 'Document Texte'
   else if sch = 'LOG001' then
-    result := 'Initialisation des plugins:'
+    result := 'Initialisation des extensions:'
   else if sch = 'LOG002' then
-    result := 'Chargement des plugins Drivers...'
+    result := 'Chargement des extensions Drivers...'
   else if sch = 'LOG003' then
-    result := 'Chargement des plugins Convertions...'
+    result := 'Chargement des extensions Convertions...'
   else if sch = 'LOG004' then
-    result := 'Chargement des plugins HyperRipper...'
+    result := 'Chargement des extensions HyperRipper...'
   else if sch = 'LOG005' then
     result := 'Librairies utilisées:'
   else if sch = 'LOG009' then
-    result := '%p plugin(s)'
+    result := '%p extension(s)'
   else if sch = 'LOG101' then
     result := 'Ouverture du fichier "%f":'
   else if sch = 'LOG102' then
@@ -926,15 +746,15 @@ begin
   else if sch = 'LOG400' then
     result := 'Utilisation de la détection intelligente du format du fichier source. '
   else if sch = 'LOG500' then
-    result := 'Le plugin Driver "%d" pense pouvoir ouvrir ce fichier.'
+    result := 'L''extension Driver "%d" pense pouvoir ouvrir ce fichier.'
   else if sch = 'LOG501' then
-    result := 'Ouverture du fichier en utilisant le plugin "%d"...'
+    result := 'Ouverture du fichier en utilisant l''extension "%d"...'
   else if sch = 'LOG502' then
     result := 'Récupération de %x entrée(s)...'
   else if sch = 'LOG503' then
     result := 'Récupération des répertoires...'
   else if sch = 'LOG504' then
-    result := 'Fichier ouvert grâce au plugin "%p" (format détecté: "%f")'
+    result := 'Fichier ouvert grâce à l''extension "%p" (format détecté: "%f")'
   else if sch = 'LOG510' then
     result := 'Fait!'
   else if sch = 'LOG511' then
@@ -944,15 +764,15 @@ begin
   else if sch = 'LOG513' then
     result := 'Erreur!'
   else if sch = 'LOGC01' then
-    result := 'Libération de %p plugins...'
+    result := 'Libération de %p extension(s)...'
   else if sch = 'LOGC02' then
-    result := 'Recherche des plugins...'
+    result := 'Recherche des extensions...'
   else if sch = 'LOGC10' then
     result := 'Convertion de "%a" vers "%b"...'
   else if sch = 'LOGC11' then
     result := 'Méthode rapide!'
   else if sch = 'LOGC12' then
-    result := 'Méthode lente (plugins obsolètes)!'
+    result := 'Méthode lente (extensions obsolètes)!'
   else if sch = 'LOGC13' then
     result := 'Convertion vers "%b"...'
   else if sch = 'LOGC14' then
@@ -998,19 +818,19 @@ begin
   else if sch = 'ERRDR1' then
     result := 'Pour toute question en relation avec cette erreur veuillez contacter l''auteur du driver (%a).'
   else if sch = 'ERRC01' then
-    result := 'Le Plugin de convertion n''a pas pu etre chargé (mauvaise version de l''interface ou ce n''est pas un plugin DUP5).'
+    result := 'L''extension de convertion n''a pas pu etre chargé (mauvaise version de l''interface ou ce n''est pas une extension DUP5).'
   else if sch = 'ERRC02' then
-    result := 'Le Plugin de convertion n''a pas pu etre chargé (des fonctions importantes sont manquantes).'
+    result := 'L''extension de convertion n''a pas pu etre chargé (des fonctions importantes sont manquantes).'
   else if sch = 'ERRH01' then
-    result := 'Le Plugin HyperRipper n''a pas pu etre chargé (mauvaise version de l''interface ou ce n''est pas un plugin DUP5).'
+    result := 'L''extension HyperRipper n''a pas pu etre chargé (mauvaise version de l''interface ou ce n''est pas une extension DUP5).'
   else if sch = 'ERRH02' then
-    result := 'Le Plugin HyperRipper n''a pas pu etre chargé (des fonctions importantes sont manquantes).'
+    result := 'L''extension HyperRipper n''a pas pu etre chargé (des fonctions importantes sont manquantes).'
   else if sch = 'ERRH03' then
-    result := 'Attention: Ce plugin ne peut pas rechercher après 2Go de données (après cette limite il ne trouvera rien).'
+    result := 'Attention: Cette extension ne peut pas rechercher au delà de 2Go de données (après cette limite elle ne trouvera rien).'
   else if sch = 'ERRH04' then
-    result := 'HyperRipper plugin ID #%i inconnu'
+    result := 'Extension HyperRipper ID #%i inconnue'
   else if sch = 'ERRH05' then
-    result := 'Le plugin "%p" ne peut pas rechercher de données après la limite des 2Go.'
+    result := 'L''extension "%p" ne peut pas rechercher de données au delà des 2Go.'
   else if sch = 'ERREMP' then
     result := 'Le fichier est vide.'
   else if sch = 'ERRIO' then
@@ -1019,5 +839,3 @@ begin
     result := '--Non défini--'
 
 end;
-
-end.

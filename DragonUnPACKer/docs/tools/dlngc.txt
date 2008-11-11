@@ -1,5 +1,5 @@
-Dragon LaNGuage Compiler (DLNGC) v4.1.0                                Freeware
-Created by Alexandre "Elbereth" Devilliers                           16-04-2008
+Dragon LaNGuage Compiler (DLNGC) v4.1.1                                Freeware
+Created by Alexandre "Elbereth" Devilliers                           11-11-2008
 ===============================================================================
 
   What is DLNGC ?
@@ -36,6 +36,9 @@ Dragon UnPACKer       UP      5.1.0        (7)
 Dragon UnPACKer       UP      5.1.2        (8)
 Dragon UnPACKer       UP      5.2.0        (9)
 Dragon UnPACKer       UP      5.3.2        (10)
+Dragon UnPACKer       UP      5.3.3 Beta   (11)
+Dragon UnPACKer       UP      5.4.0        (12)
+Duppi                 PI      3.0.0        (1)
 
 DLNGC v4.1 cannot compile DLNG files version 1, 2 or 3, if needed just use
 previous DLNGC versions:
@@ -58,6 +61,16 @@ You can reach Alex Devilliers:
   What's new?
   -----------
 
+Version 4.1.1:
+
+ + Added /in /include option. This will create:
+   <outname>.<ID>.inc file instead of a DLNG v4 file.
+   This is for Dragon UnPACKer 5.4.0+ compilation. So unless you want to
+   compile it, this new option is useless for you. ;)
+   This was needed over the /il option in order to support standalone Duppi. 
+ * Improved /il even if not used anymore (the unneeded res: string declaration
+   was removed).
+   
 Version 4.1.0:
 
  i Removed beta status (worked fine for 5 years now..).

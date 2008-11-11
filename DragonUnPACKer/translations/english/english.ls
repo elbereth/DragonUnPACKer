@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-#  Program: Dragon UnPACKer v5.3.3 Beta
+#  Program: Dragon UnPACKer v5.4.0
 # Language: English
-#  Version: 11
+#  Version: 12
 #   Author: Alex Devilliers
 # ============================================================================
 #
@@ -27,6 +27,10 @@
 # ============================================================================
 # Informations about this translation
 # ============================================================================
+#
+# version 12:
+# Added missing preview keywords
+# Removed Duppi entries (now in standalone file)
 #
 # version 11a:
 # Fixed missing LOG005 keyword
@@ -139,9 +143,10 @@ URL = http://www.dragonunpacker.com
 # Dragon UnPACKer v5.3.1         UP       9
 # Dragon UnPACKer v5.3.2         UP      10
 # Dragon UnPACKer v5.3.3 Beta    UP      11
+# Dragon UnPACKer v5.4.0         UP      12
 #
 ProgramID = UP
-ProgramVer = 11
+ProgramVer = 12
 #
 # + IconFile +
 # Path & FileName of the "icon" displayed with language name (ex: c:\test.bmp)
@@ -197,6 +202,7 @@ MNU1=&File
 MNU1S1=&Open...
 MNU1S2=&Close
 MNU1S3=&Quit
+MNU1S4=&Recent files...
 MNU4=&Edit
 MNU4S1=&Search
 MNU5=&Tools
@@ -509,96 +515,6 @@ LST507=Saving file list...
 LST508=Extracting companion files from template...
 LST509=Done!
 
-PI0000=Detected version of DUP5:
-PI0001=Title
-PI0002=Author
-PI0003=Comment
-PI0004=URL
-PI0005=Package informations
-PI0006=Please wait while installing package...
-PI0007=This program will install the following package to the Dragon UnPACKer directory.
-PI0008=Dragon UnPACKer 5 must be closed to continue the installation.
-PI0009=Status:
-PI0010=Waiting for user input...
-PI0011=Are you sure you want to quit ?
-PI0012=Error.. DUP5 is running..
-PI0013=Error Dragon UnPACKer 5 is running..%nClose it and try again.
-PI0014=Fatal Error.. Unsupported version of Dragon UnPACKer 5 Package file (.D5P) [version %v]
-PI0015=Fatal Error.. This is not a Dragon UnPACKer 5 Package file (.D5P)
-PI0016=Usage: duppi <file.d5p>%n%nThis will install the package file.d5p to the Dragon UnPACKer 5 directory.
-PI0017=File not found!%n%f
-PI0018=Reading package...
-PI0019=The following file already exist and is newer or same as the file you try to install:%n%n%f%n%nCurrent version: %1%nFile in package: %2%n%nInstall anyway?
-PI0020=The following file have bad CRC. The file will be skipped.%nIf you downloaded the file, try again.%n%n%f
-PI0021=The following file have bad size. The file will be skipped.%nIf you downloaded the file, try again.%n%n%f
-PI0022=Installed successfully %i file(s)...
-PI0023=Installation terminated successfully...
-PI0024=Installation failed (%e file(s) gave errors)...
-PI0025=Installation failed... %i file(s) successfully installed and %e error(s)...
-PI0026=Path to Dragon UnPACKer 5 not found.%nPlease run Dragon UnPACKer 5 at least once before trying again.
-PI0027=Skipping...
-PI0028=Kb
-PI0029=Reading...
-PI0030=Decompressing...
-PI0031=Writing...
-PI0032=OK
-PI0033=Version
-PI0034=This program allows you to install packages for Dragon UnPACKer 5.
-PI0035=What would you like to do ?
-PI0036=Check on internet for new or updated packages and install them.
-PI0037=Note: Absolutly no data is sent to Dragon Software web site.
-PI0038=Proxy Options
-PI0039=Install a package from the hard disk:
-PI0040=Select the package to install...
-PI0041=To install this Dragon UnPACKer 5 Package (D5P) file you need a newer Duppi version.%nYour Duppi version: %y%nNeeded Duppi version: %v%n%nPlease update your Dragon UnPACKer 5!
-PI0042=This package cannot be installed with your version of Dragon UnPACKer.
-PI0043=Unable to register %s.
-PI0044=Bad data received from the update server!
-
-PII001=Title
-PII002=Your Version
-PII003=Available Version
-PII004=Description
-PII005=Size
-PII011=Show updates:
-PII012=Plugins
-PII013=Translations
-PII021=Current stable version :
-PII022=Current WIP version :
-PII030=Translation
-PII031=Revision
-PII032=Author
-PII100=updates list
-PII101=Downloading %f...
-PII102=Downloading %f (%b bytes received)
-PII103=Successfully received %f (%b bytes)
-PII104=Error: %c (%d)
-PII105=Server contacted successfully!
-PII106=-No description-
-PII107=A new version of Dragon UnPACKer is available to download.%n%nNew version: %v%nComment: %c%n%nDo you want to go to the official homepage to download it?
-PII108=%p plugin(s) and %t translation(s) available!
-
-PII200=No update could be downloaded.%nThe program will now stop.
-
-PIEM01=Database connection error. Please try again later!
-PIEM10=Error while retrieving latest stable version info!
-PIEM11=Error while retrieving latest WIP version info!
-PIEM20=Error while retrieving your version info!
-PIEM30=Error while retrieving available convert plugins!
-PIEM31=Error while retrieving available driver plugins!
-PIEM32=Error while retrieving available HyperRipper plugins!
-PIEM33=Error while retrieving available translations!
-PIEP01=Wrong parameter! If you have not run Dragon UnPACKer do it and re-run Duppi afterwards.
-PIEP02=The server did not recognize your Dragon UnPACKer version...
-PIEUNK=Unknown server error: "%e"
-
-PIP000=Proxy configuration
-PIP001=Proxy:
-PIP002=Proxy port:
-PIP003=Proxy needs Username/Password:
-PIP004=Username:
-PIP005=Password:
-
 11TH01=To activate support for 11th Hour game files the plugin needs to copy two files that can be found in the GROOVIE directory of the CDRom of The 11th Hour.%n%nDo you want to continue ?
 11TH02=Select the %f file from 11th Hour...
 11TH03=The plugin is now activated.%nNow you can open 11th Hour GJD files!
@@ -665,6 +581,18 @@ LOG510=Done!
 LOG511=Success!
 LOG512=Failed!
 LOG513=Error!
+
+PRV000=Preview:
+PRV001=Unknown! (Cannot preview)
+PRV002=Cannot preview...
+PRV003=Canceled: Size is bigger than limit (%s bytes)
+PRV004=Loading
+PRV005=Displaying
+PRV006=OK
+PRV007=Convert plugins:
+PRV008=Format: %f
+PRV009=Detecting
+PRV010=Extracting
 
 ERR000=Error
 ERR101=Error while extracting.

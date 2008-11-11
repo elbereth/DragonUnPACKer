@@ -1,6 +1,6 @@
 program duppi;
 
-// $Id: duppi.dpr,v 1.3 2008-04-19 19:18:31 elbereth Exp $
+// $Id: duppi.dpr,v 1.4 2008-11-11 15:51:19 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/duppi.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -17,6 +17,8 @@ program duppi;
 // (elbereth@users.sourceforge.net, http://www.elberethzone.net).
 //
 
+{$DEFINE DUPPI}
+
 uses
   Forms,
   Installer in 'Installer.pas' {frmInstaller},
@@ -29,8 +31,7 @@ uses
   lib_zlib in '..\..\common\lib_zlib.pas',
   spec_DLNG in '..\..\common\spec_DLNG.pas',
   spec_DUPP in '..\..\common\spec_DUPP.pas',
-  lib_BinUtils in '..\..\common\lib_BinUtils.pas',
-  lib_language_internal in '..\..\translations\french\lib_language_internal.pas';
+  lib_BinUtils in '..\..\common\lib_BinUtils.pas';
 
 {$R *.res}
 

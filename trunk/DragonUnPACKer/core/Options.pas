@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.8 2008-08-23 17:42:36 elbereth Exp $
+// $Id: Options.pas,v 1.9 2008-11-11 16:10:53 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -20,7 +20,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ComCtrls, ImgList, StdCtrls, ExtCtrls, Registry, declFSE,
+  Dialogs, ComCtrls, ImgList, StdCtrls, ExtCtrls, Registry, declFSE, JclShell,
   CheckLst, Main, lib_look, JvExCheckLst, JvCheckListBox, JvBrowseFolder;
 
 type
@@ -172,6 +172,7 @@ type
     grpPreviewDisplay: TGroupBox;
     optPreviewDisplayFull: TRadioButton;
     optPreviewDisplayStretch: TRadioButton;
+    lblFindNewLanguages: TLabel;
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cmdOkClick(Sender: TObject);
@@ -224,6 +225,9 @@ type
     procedure optPreviewLimitYesClick(Sender: TObject);
     procedure optPreviewDisplayFullClick(Sender: TObject);
     procedure optPreviewDisplayStretchClick(Sender: TObject);
+    procedure lblFindNewLanguagesMouseEnter(Sender: TObject);
+    procedure lblFindNewLanguagesMouseLeave(Sender: TObject);
+    procedure lblFindNewLanguagesClick(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -1468,6 +1472,27 @@ begin
 
   if not(Loading) then
     dup5Main.menuPreview_Display_StretchedClick(Self);
+
+end;
+
+procedure TfrmConfig.lblFindNewLanguagesMouseEnter(Sender: TObject);
+begin
+
+  lblFindNewLanguages.Font.Style := [fsUnderline];
+
+end;
+
+procedure TfrmConfig.lblFindNewLanguagesMouseLeave(Sender: TObject);
+begin
+
+  lblFindNewLanguages.Font.Style := [];
+
+end;
+
+procedure TfrmConfig.lblFindNewLanguagesClick(Sender: TObject);
+begin
+
+  ShellExec(application.Handle,'open',ExtractFilePath(Application.ExeName)+'\Utils\Duppi.exe','/checktranslations','',SW_SHOW);
 
 end;
 

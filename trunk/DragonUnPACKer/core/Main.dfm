@@ -1,6 +1,6 @@
 object dup5Main: Tdup5Main
-  Left = 457
-  Top = 119
+  Left = 398
+  Top = 705
   HelpContext = 1
   AlphaBlendValue = 128
   AutoScroll = False
@@ -5232,32 +5232,20 @@ object dup5Main: Tdup5Main
       object N9: TMenuItem
         Caption = '-'
       end
-      object menuFichier_HyperRipper: TMenuItem
-        Caption = 'HyperRipper'
-        ImageIndex = 2
-        OnClick = menuFichier_HyperRipperClick
+      object menuRecent: TMenuItem
+        Caption = 'Ouvert &r'#233'cement'
       end
       object N10: TMenuItem
         Caption = '-'
       end
-      object menuRecent0: TMenuItem
-        Caption = '1. ???'
-        Visible = False
-        OnClick = menuRecent0Click
-      end
-      object menuRecent1: TMenuItem
-        Caption = '2. ???'
-        Visible = False
-        OnClick = menuRecent1Click
-      end
-      object menuRecent2: TMenuItem
-        Caption = '3. ???'
-        Visible = False
-        OnClick = menuRecent2Click
+      object menuFichier_HyperRipper: TMenuItem
+        Caption = 'HyperRipper'
+        ImageIndex = 2
+        ShortCut = 16456
+        OnClick = menuFichier_HyperRipperClick
       end
       object N12: TMenuItem
         Caption = '-'
-        Visible = False
       end
       object menuFichier_Quitter: TMenuItem
         Caption = '&Quitter'
@@ -5343,6 +5331,13 @@ object dup5Main: Tdup5Main
         Caption = 'A Propos de...'
         ImageIndex = 12
         OnClick = menuAbout_AboutClick
+      end
+      object N4: TMenuItem
+        Caption = '-'
+      end
+      object menuAbout_NewVersions: TMenuItem
+        Caption = 'V'#233'rifier les versions... (Duppi)'
+        OnClick = menuAbout_NewVersionsClick
       end
     end
   end
@@ -5442,7 +5437,7 @@ object dup5Main: Tdup5Main
     end
   end
   object DirSelect: TJvBrowseForFolderDialog
-    Options = [odOnlyDirectory, odFileSystemDirectoryOnly, odStatusAvailable, odNewDialogStyle]
+    Options = [odOnlyDirectory, odFileSystemDirectoryOnly, odStatusAvailable, odEditBox, odNewDialogStyle]
     Position = fpFormCenter
     RootDirectory = fdMyComputer
     Left = 616
@@ -5533,6 +5528,7 @@ object dup5Main: Tdup5Main
     Top = 104
     object menuStatus_PreviewHide: TMenuItem
       Caption = 'Hide Preview'
+      OnClick = actionPreviewHide
     end
     object menuStatus_PreviewShow: TMenuItem
       Caption = 'Show Preview'

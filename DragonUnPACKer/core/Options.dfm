@@ -1,6 +1,6 @@
 object frmConfig: TfrmConfig
-  Left = 256
-  Top = 546
+  Left = 197
+  Top = 787
   BorderStyle = bsToolWindow
   Caption = 'Configuration'
   ClientHeight = 295
@@ -17,6 +17,328 @@ object frmConfig: TfrmConfig
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
+  object tabLog: TPanel
+    Left = 184
+    Top = 8
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 8
+    object grpLogVerbose: TGroupBox
+      Left = 0
+      Top = 200
+      Width = 441
+      Height = 81
+      Caption = 'Verbose Options'
+      Color = clBtnFace
+      ParentColor = False
+      TabOrder = 0
+      object strVerbose: TLabel
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 13
+        AutoSize = False
+        Caption = 'Select level of verbose for log:'
+      end
+      object lblVerbose: TLabel
+        Left = 168
+        Top = 32
+        Width = 265
+        Height = 41
+        AutoSize = False
+        Layout = tlCenter
+        WordWrap = True
+      end
+      object trackbarVerbose: TTrackBar
+        Left = 8
+        Top = 40
+        Width = 150
+        Height = 33
+        Max = 2
+        PageSize = 1
+        TabOrder = 0
+        OnChange = trackbarVerboseChange
+      end
+    end
+    object grpLogOptions: TGroupBox
+      Left = 0
+      Top = 0
+      Width = 441
+      Height = 193
+      Caption = 'Log Options'
+      TabOrder = 1
+      object chkLog: TCheckBox
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Afficher le journal d'#39'ex'#233'cution'
+        TabOrder = 0
+        OnClick = chkLogClick
+      end
+    end
+  end
+  object tabAdvanced: TPanel
+    Left = 183
+    Top = 8
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 9
+    Visible = False
+    object grpAdvOpenFile: TGroupBox
+      Left = 0
+      Top = 120
+      Width = 441
+      Height = 41
+      Caption = 'Options for '#39'Open file'#39
+      Color = clBtnFace
+      ParentColor = False
+      TabOrder = 0
+      object chkMakeExtractDefault: TCheckBox
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Make '#39'Extract file... Without conversion'#39' the default option'
+        TabOrder = 0
+        OnClick = chkMakeExtractDefaultClick
+      end
+    end
+    object grpAdvTemp: TGroupBox
+      Left = 0
+      Top = 0
+      Width = 441
+      Height = 113
+      Caption = 'Temporary Directory'
+      TabOrder = 1
+      object txtTmpDir: TEdit
+        Left = 24
+        Top = 85
+        Width = 385
+        Height = 21
+        Enabled = False
+        TabOrder = 0
+        OnChange = txtTmpDirChange
+      end
+      object butTmpDirSelect: TButton
+        Left = 408
+        Top = 85
+        Width = 21
+        Height = 21
+        Caption = '+'
+        Enabled = False
+        TabOrder = 1
+        OnClick = butTmpDirSelectClick
+      end
+      object radTmpDirDefault: TRadioButton
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Use auto-detected temporary directory'
+        Checked = True
+        TabOrder = 2
+        TabStop = True
+        OnClick = radTmpDirOtherClick
+      end
+      object radTmpDirOther: TRadioButton
+        Left = 8
+        Top = 64
+        Width = 425
+        Height = 17
+        Caption = 'Use defined temporary directory:'
+        TabOrder = 3
+        OnClick = radTmpDirOtherClick
+      end
+      object txtTmpDirDefault: TEdit
+        Left = 24
+        Top = 36
+        Width = 409
+        Height = 21
+        ReadOnly = True
+        TabOrder = 4
+      end
+    end
+    object grpAdvBufferSize: TGroupBox
+      Left = 0
+      Top = 168
+      Width = 441
+      Height = 73
+      Caption = 'Buffer memory'
+      Color = clBtnFace
+      ParentColor = False
+      TabOrder = 2
+      object lblBufferSize: TLabel
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 13
+        AutoSize = False
+        Caption = 'Select the size of the extraction buffer:'
+      end
+      object lstBufferSize: TComboBox
+        Left = 8
+        Top = 40
+        Width = 425
+        Height = 21
+        Style = csDropDownList
+        ItemHeight = 13
+        TabOrder = 0
+        OnChange = lstBufferSizeChange
+        Items.Strings = (
+          '1 byte -- No buffer'
+          '512 bytes'
+          '1 kbytes'
+          '2 kbytes'
+          '4 kbytes'
+          '8 kbytes'
+          '16 kbytes -- Default'
+          '32 kbytes'
+          '64 kbytes'
+          '128 kbytes'
+          '256 kbytes'
+          '512 kbytes'
+          '1 Mbytes')
+      end
+    end
+  end
+  object tabPreview: TPanel
+    Left = 183
+    Top = 6
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 11
+    Visible = False
+    object grpPreviewBasic: TGroupBox
+      Left = 0
+      Top = 0
+      Width = 441
+      Height = 41
+      Caption = 'Preview Options'
+      TabOrder = 0
+      object chkPreviewEnable: TCheckBox
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Enable preview'
+        Checked = True
+        State = cbChecked
+        TabOrder = 0
+        OnClick = chkPreviewEnableClick
+      end
+    end
+    object grpPreviewLimits: TGroupBox
+      Left = 0
+      Top = 48
+      Width = 441
+      Height = 89
+      Caption = 'Preview Size Limits'
+      TabOrder = 1
+      object lblPreviewLimit: TLabel
+        Left = 24
+        Top = 59
+        Width = 73
+        Height = 13
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Limit:'
+      end
+      object lblPreviewLimitBytes: TLabel
+        Left = 384
+        Top = 59
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'Bytes'
+      end
+      object txtPreviewLimitSize: TLabel
+        Left = 296
+        Top = 59
+        Width = 81
+        Height = 13
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = '1048576'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object optPreviewLimitNo: TRadioButton
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Do not limit size of detected files (not recommended)'
+        TabOrder = 0
+        OnClick = optPreviewLimitNoClick
+      end
+      object optPreviewLimitYes: TRadioButton
+        Left = 8
+        Top = 32
+        Width = 425
+        Height = 17
+        Caption = 'Limit detection of files that can be previewed (recommended)'
+        Checked = True
+        TabOrder = 1
+        TabStop = True
+        OnClick = optPreviewLimitYesClick
+      end
+      object lstPreviewLimit: TComboBox
+        Left = 104
+        Top = 56
+        Width = 185
+        Height = 21
+        AutoComplete = False
+        Style = csDropDownList
+        ItemHeight = 13
+        ItemIndex = 2
+        TabOrder = 2
+        Text = 'Medium (Recommended)'
+        OnChange = lstPreviewLimitChange
+        Items.Strings = (
+          'Very Low'
+          'Low'
+          'Medium (Recommended)'
+          'High'
+          'Very High')
+      end
+    end
+    object grpPreviewDisplay: TGroupBox
+      Left = 0
+      Top = 144
+      Width = 441
+      Height = 57
+      Caption = 'Preview Display Mode'
+      TabOrder = 2
+      object optPreviewDisplayFull: TRadioButton
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Original size with scrollbars (if needed)'
+        Checked = True
+        TabOrder = 0
+        TabStop = True
+        OnClick = optPreviewDisplayFullClick
+      end
+      object optPreviewDisplayStretch: TRadioButton
+        Left = 8
+        Top = 32
+        Width = 425
+        Height = 17
+        Caption = 'Shrinked/Streched to preview panel'
+        TabOrder = 1
+        OnClick = optPreviewDisplayStretchClick
+      end
+    end
+  end
   object tabLook: TPanel
     Left = 184
     Top = 8
@@ -1034,10 +1356,31 @@ object frmConfig: TfrmConfig
         Height = 13
         AutoSize = False
       end
+      object lblFindNewLanguages: TLabel
+        Left = 296
+        Top = 16
+        Width = 141
+        Height = 25
+        Cursor = crHandPoint
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'Trouver d'#39'autres traductions...'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlue
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = []
+        ParentFont = False
+        Transparent = True
+        WordWrap = True
+        OnClick = lblFindNewLanguagesClick
+        OnMouseEnter = lblFindNewLanguagesMouseEnter
+        OnMouseLeave = lblFindNewLanguagesMouseLeave
+      end
       object lstLangues: TComboBoxEx
         Left = 8
         Top = 16
-        Width = 425
+        Width = 281
         Height = 22
         ItemsEx = <
           item
@@ -1058,7 +1401,7 @@ object frmConfig: TfrmConfig
       Left = 0
       Top = 0
       Width = 441
-      Height = 177
+      Height = 161
       Caption = 'Options'
       TabOrder = 1
       object ChkNoSplash: TCheckBox
@@ -1114,193 +1457,6 @@ object frmConfig: TfrmConfig
       end
     end
   end
-  object tabLog: TPanel
-    Left = 184
-    Top = 8
-    Width = 449
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 8
-    object grpLogVerbose: TGroupBox
-      Left = 0
-      Top = 200
-      Width = 441
-      Height = 81
-      Caption = 'Verbose Options'
-      Color = clBtnFace
-      ParentColor = False
-      TabOrder = 0
-      object strVerbose: TLabel
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 13
-        AutoSize = False
-        Caption = 'Select level of verbose for log:'
-      end
-      object lblVerbose: TLabel
-        Left = 168
-        Top = 32
-        Width = 265
-        Height = 41
-        AutoSize = False
-        Layout = tlCenter
-        WordWrap = True
-      end
-      object trackbarVerbose: TTrackBar
-        Left = 8
-        Top = 40
-        Width = 150
-        Height = 33
-        Max = 2
-        PageSize = 1
-        TabOrder = 0
-        OnChange = trackbarVerboseChange
-      end
-    end
-    object grpLogOptions: TGroupBox
-      Left = 0
-      Top = 0
-      Width = 441
-      Height = 193
-      Caption = 'Log Options'
-      TabOrder = 1
-      object chkLog: TCheckBox
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 17
-        Caption = 'Afficher le journal d'#39'ex'#233'cution'
-        TabOrder = 0
-        OnClick = chkLogClick
-      end
-    end
-  end
-  object tabAdvanced: TPanel
-    Left = 183
-    Top = 8
-    Width = 449
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 9
-    Visible = False
-    object grpAdvOpenFile: TGroupBox
-      Left = 0
-      Top = 120
-      Width = 441
-      Height = 41
-      Caption = 'Options for '#39'Open file'#39
-      Color = clBtnFace
-      ParentColor = False
-      TabOrder = 0
-      object chkMakeExtractDefault: TCheckBox
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 17
-        Caption = 'Make '#39'Extract file... Without conversion'#39' the default option'
-        TabOrder = 0
-        OnClick = chkMakeExtractDefaultClick
-      end
-    end
-    object grpAdvTemp: TGroupBox
-      Left = 0
-      Top = 0
-      Width = 441
-      Height = 113
-      Caption = 'Temporary Directory'
-      TabOrder = 1
-      object txtTmpDir: TEdit
-        Left = 24
-        Top = 85
-        Width = 385
-        Height = 21
-        Enabled = False
-        TabOrder = 0
-        OnChange = txtTmpDirChange
-      end
-      object butTmpDirSelect: TButton
-        Left = 408
-        Top = 85
-        Width = 21
-        Height = 21
-        Caption = '+'
-        Enabled = False
-        TabOrder = 1
-        OnClick = butTmpDirSelectClick
-      end
-      object radTmpDirDefault: TRadioButton
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 17
-        Caption = 'Use auto-detected temporary directory'
-        Checked = True
-        TabOrder = 2
-        TabStop = True
-        OnClick = radTmpDirOtherClick
-      end
-      object radTmpDirOther: TRadioButton
-        Left = 8
-        Top = 64
-        Width = 425
-        Height = 17
-        Caption = 'Use defined temporary directory:'
-        TabOrder = 3
-        OnClick = radTmpDirOtherClick
-      end
-      object txtTmpDirDefault: TEdit
-        Left = 24
-        Top = 36
-        Width = 409
-        Height = 21
-        ReadOnly = True
-        TabOrder = 4
-      end
-    end
-    object grpAdvBufferSize: TGroupBox
-      Left = 0
-      Top = 168
-      Width = 441
-      Height = 73
-      Caption = 'Buffer memory'
-      Color = clBtnFace
-      ParentColor = False
-      TabOrder = 2
-      object lblBufferSize: TLabel
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 13
-        AutoSize = False
-        Caption = 'Select the size of the extraction buffer:'
-      end
-      object lstBufferSize: TComboBox
-        Left = 8
-        Top = 40
-        Width = 425
-        Height = 21
-        Style = csDropDownList
-        ItemHeight = 13
-        TabOrder = 0
-        OnChange = lstBufferSizeChange
-        Items.Strings = (
-          '1 byte -- No buffer'
-          '512 bytes'
-          '1 kbytes'
-          '2 kbytes'
-          '4 kbytes'
-          '8 kbytes'
-          '16 kbytes -- Default'
-          '32 kbytes'
-          '64 kbytes'
-          '128 kbytes'
-          '256 kbytes'
-          '512 kbytes'
-          '1 Mbytes')
-      end
-    end
-  end
   object cmdOk: TButton
     Left = 8
     Top = 264
@@ -1342,141 +1498,6 @@ object frmConfig: TfrmConfig
       250000000700000007000000FFFFFFFFFFFFFFFF00000000000000000C417373
       6F63696174696F6E73200000001100000011000000FFFFFFFFFFFFFFFF000000
       00000000000750726576696577}
-  end
-  object tabPreview: TPanel
-    Left = 183
-    Top = 6
-    Width = 449
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 11
-    Visible = False
-    object grpPreviewBasic: TGroupBox
-      Left = 0
-      Top = 0
-      Width = 441
-      Height = 41
-      Caption = 'Preview Options'
-      TabOrder = 0
-      object chkPreviewEnable: TCheckBox
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 17
-        Caption = 'Enable preview'
-        Checked = True
-        State = cbChecked
-        TabOrder = 0
-        OnClick = chkPreviewEnableClick
-      end
-    end
-    object grpPreviewLimits: TGroupBox
-      Left = 0
-      Top = 48
-      Width = 441
-      Height = 89
-      Caption = 'Preview Size Limits'
-      TabOrder = 1
-      object lblPreviewLimit: TLabel
-        Left = 24
-        Top = 59
-        Width = 73
-        Height = 13
-        Alignment = taRightJustify
-        AutoSize = False
-        Caption = 'Limit:'
-      end
-      object lblPreviewLimitBytes: TLabel
-        Left = 384
-        Top = 59
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'Bytes'
-      end
-      object txtPreviewLimitSize: TLabel
-        Left = 296
-        Top = 59
-        Width = 81
-        Height = 13
-        Alignment = taRightJustify
-        AutoSize = False
-        Caption = '1048576'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = [fsBold]
-        ParentFont = False
-      end
-      object optPreviewLimitNo: TRadioButton
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 17
-        Caption = 'Do not limit size of detected files (not recommended)'
-        TabOrder = 0
-        OnClick = optPreviewLimitNoClick
-      end
-      object optPreviewLimitYes: TRadioButton
-        Left = 8
-        Top = 32
-        Width = 425
-        Height = 17
-        Caption = 'Limit detection of files that can be previewed (recommended)'
-        Checked = True
-        TabOrder = 1
-        TabStop = True
-        OnClick = optPreviewLimitYesClick
-      end
-      object lstPreviewLimit: TComboBox
-        Left = 104
-        Top = 56
-        Width = 185
-        Height = 21
-        AutoComplete = False
-        Style = csDropDownList
-        ItemHeight = 13
-        ItemIndex = 2
-        TabOrder = 2
-        Text = 'Medium (Recommended)'
-        OnChange = lstPreviewLimitChange
-        Items.Strings = (
-          'Very Low'
-          'Low'
-          'Medium (Recommended)'
-          'High'
-          'Very High')
-      end
-    end
-    object grpPreviewDisplay: TGroupBox
-      Left = 0
-      Top = 144
-      Width = 441
-      Height = 57
-      Caption = 'Preview Display Mode'
-      TabOrder = 2
-      object optPreviewDisplayFull: TRadioButton
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 17
-        Caption = 'Original size with scrollbars (if needed)'
-        Checked = True
-        TabOrder = 0
-        TabStop = True
-        OnClick = optPreviewDisplayFullClick
-      end
-      object optPreviewDisplayStretch: TRadioButton
-        Left = 8
-        Top = 32
-        Width = 425
-        Height = 17
-        Caption = 'Shrinked/Streched to preview panel'
-        TabOrder = 1
-        OnClick = optPreviewDisplayStretchClick
-      end
-    end
   end
   object imgLstLangue: TImageList
     BlendColor = clBlack

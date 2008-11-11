@@ -1,6 +1,6 @@
 program drgunpack5;
 
-// $Id: drgunpack5.dpr,v 1.11 2008-04-16 21:04:18 elbereth Exp $
+// $Id: drgunpack5.dpr,v 1.12 2008-11-11 16:10:53 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/drgunpack5.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -15,6 +15,8 @@ program drgunpack5;
 //
 // The Initial Developer of the Original Code is Alexandre Devilliers
 // (elbereth@users.sourceforge.net, http://www.elberethzone.net).
+
+{$DEFINE DRGUNPACK}
 
 uses
   About in 'About.pas' {frmAbout},
@@ -56,8 +58,7 @@ uses
   Translation in 'Translation.pas',
   spec_HRF in '..\common\spec_HRF.pas',
   commonTypes in '..\common\commonTypes.pas',
-  U_IntList in '..\common\U_IntList.pas',
-  lib_language_internal in '..\translations\french\lib_language_internal.pas';
+  U_IntList in '..\common\U_IntList.pas';
 
 {$R *.res}
 

@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.13 2008-08-23 17:42:36 elbereth Exp $
+// $Id: Main.pas,v 1.14 2008-11-11 16:10:53 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -23,7 +23,7 @@ uses
   Dialogs, JclBase, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, ToolWin, Menus, ImgList,
   lib_language, translation, ShellApi, JvJCLUtils, VirtualTrees, lib_look,
   DropSource, XPMan, DragDrop, DragDropFile, prg_ver, JvclVer,
-  classIconsFromExt, DateUtils, JvMenus,  JvRichEdit,
+  classIconsFromExt, DateUtils, JvMenus,  JvRichEdit, JclShell,
   JvComponent, cxCpu40, JvBaseDlg, JvBrowseFolder, lib_binutils,
   JvExStdCtrls, commonTypes,
   ImagingTypes,
@@ -67,9 +67,7 @@ type
     N9: TMenuItem;
     menuFichier_HyperRipper: TMenuItem;
     N10: TMenuItem;
-    menuRecent0: TMenuItem;
-    menuRecent1: TMenuItem;
-    menuRecent2: TMenuItem;
+    menuRecent: TMenuItem;
     N12: TMenuItem;
     menuFichier_Quitter: TMenuItem;
     menuTools_List: TMenuItem;
@@ -133,6 +131,8 @@ type
     menuStatus_LogHide: TMenuItem;
     menuOptions_Preview: TMenuItem;
     menuStatus_PreviewHide: TMenuItem;
+    N4: TMenuItem;
+    menuAbout_NewVersions: TMenuItem;
     procedure FormResize(Sender: TObject);
     procedure menuFichier_QuitterClick(Sender: TObject);
     procedure menuAbout_AboutClick(Sender: TObject);
@@ -140,7 +140,6 @@ type
     procedure lstIndexChange(Sender: TObject; Node: TTreeNode);
     procedure menuFichier_FermerClick(Sender: TObject);
     procedure menuEdit_SearchClick(Sender: TObject);
-    procedure menuRecent0Click(Sender: TObject);
     procedure menuRecent1Click(Sender: TObject);
     procedure menuRecent2Click(Sender: TObject);
     procedure menuIndex_InfosClick(Sender: TObject);
@@ -240,6 +239,8 @@ type
     procedure actionPreviewOptions(Sender: TObject);
     procedure menuPreview_Display_StretchedClick(Sender: TObject);
     procedure menuPreview_Display_FullClick(Sender: TObject);
+    procedure menuRecentClick(Sender: TObject);
+    procedure menuAbout_NewVersionsClick(Sender: TObject);
   private
     FPreviewBitmap: TImagingBitmap;
     FPreviewImage: TMultiImage;
@@ -247,12 +248,18 @@ type
     verboseLevel: integer;
     AlreadyDragging: boolean;
     bottomHeight: integer;
+    RecentFiles: array of String;
     procedure Open_Hub(src: String);
     procedure setRichEditLineStyle(R: TJvRichEdit; Line: Integer;
       Style: TFontStyles);
     procedure setRichEditLineColor(R: TJvRichEdit; Line: Integer;
       Color: TColor);
     procedure InitEngine();
+    procedure RecentFiles_Display();
+    procedure RecentFiles_Save();
+    procedure RecentFiles_Load();
+    procedure RecentFiles_Add(newfile: string);
+    procedure RecentFiles_Decal(oldpos: integer);
   public
     isPreviewLimit: boolean;
     previewLimitValue: integer;
@@ -289,7 +296,6 @@ uses About, Registry, lib_utils, Search,
      HyperRipper, classConvert, classFSE, List, Error;
 
 var
-  RecentFiles: array[0..9] of String;
   TempFiles: TStrings;
   msgBuf: String;
   CListInfo: extConvertList;
@@ -359,7 +365,7 @@ begin
 
 end;
 
-procedure RecentFiles_Save();
+procedure Tdup5Main.RecentFiles_Save();
 var reg: TRegistry;
     x: integer;
 begin
@@ -369,7 +375,7 @@ begin
     Reg.RootKey := HKEY_CURRENT_USER;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Options',True) then
     begin
-      for x:=0 to 9 do
+      for x:= low(recentFiles) to high(recentFiles) do
         Reg.WriteString('Recent_'+IntToStr(x),RecentFiles[x]);
       Reg.CloseKey;
     end;
@@ -379,38 +385,53 @@ begin
 
 end;
 
-procedure RecentFiles_Display();
+procedure Tdup5Main.RecentFiles_Display();
+var itmX: TMenuItem;
+    x, num: integer;
 begin
 
-  if length(RecentFiles[0]) > 0 then
+  for x := 0 to menuRecent.Count-1 do
   begin
-    dup5Main.menuRecent0.Caption := '1. '+RecentFiles[0];
-    dup5Main.menuRecent0.Visible := true;
-  if length(RecentFiles[1]) > 0 then
-  begin
-    dup5Main.menuRecent1.Caption := '2. '+RecentFiles[1];
-    dup5Main.menuRecent1.Visible := true;
-  if length(RecentFiles[2]) > 0 then
-  begin
-    dup5Main.menuRecent2.Caption := '3. '+RecentFiles[2];
-    dup5Main.menuRecent2.Visible := true;
+    itmX := menuRecent.Items[menuRecent.Count-1];
+    menuRecent.Remove(itmX);
+    itmX.Free;
   end;
+
+  x := Low(RecentFiles);
+  num := 0;
+
+  while (x <= High(RecentFiles)) and (length(RecentFiles[x]) > 0) do
+  begin
+    itmX := TMenuItem.Create(mainMenu);
+    itmX.Tag := x;
+    itmX.OnClick := menuRecentClick;
+    itmX.Caption := inttostr(x+1)+'. '+RecentFiles[x];
+    menuRecent.Add(itmX);
+    inc(x);
+    inc(num);
   end;
+
+  if num = 0 then
+  begin
+    N9.Visible := false;
+    menuRecent.Visible := false;
   end;
 
 end;
 
-procedure RecentFiles_Load();
+procedure Tdup5Main.RecentFiles_Load();
 var reg: TRegistry;
     x: integer;
 begin
+
+  SetLength(Recentfiles,10);
 
   Reg := TRegistry.Create;
   Try
     Reg.RootKey := HKEY_CURRENT_USER;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Options',True) then
     begin
-      for x:=0 to 9 do
+      for x:= low(RecentFiles) to high(RecentFiles) do
         if Reg.ValueExists('Recent_'+IntToStr(x)) then
           RecentFiles[x] := Reg.ReadString('Recent_'+IntToStr(x));
       Reg.CloseKey;
@@ -423,13 +444,13 @@ begin
 
 end;
 
-procedure RecentFiles_Add(newfile: string);
+procedure Tdup5Main.RecentFiles_Add(newfile: string);
 var x: integer;
 begin
 
   if RecentFiles[0] <> newfile then
   begin
-    for x := 8 downto 0 do
+    for x := high(RecentFiles)-1 downto low(RecentFiles) do
       RecentFiles[x+1] := RecentFiles[x];
 
     RecentFiles[0] := newfile;
@@ -439,7 +460,7 @@ begin
 
 end;
 
-procedure RecentFiles_Decal(oldpos: integer);
+procedure Tdup5Main.RecentFiles_Decal(oldpos: integer);
 var tmps: string;
     x: integer;
 begin
@@ -744,11 +765,16 @@ begin
 
 end;
 
-procedure Tdup5Main.menuRecent0Click(Sender: TObject);
+procedure Tdup5Main.menuRecentClick(Sender: TObject);
+var itmX: TMenuItem;
 begin
 
   CloseCurrent;
-  open_HUB(RecentFiles[0]);
+  itmX := TMenuItem(Sender);
+  dup5main.writeLog(inttostr(itmX.tag)+' '+itmX.Caption);
+  open_HUB(RecentFiles[itmX.Tag]);
+  if (itmX.Tag > 0) then
+    dup5main.RecentFiles_Decal(itmX.Tag);
 
 end;
 
@@ -2778,7 +2804,7 @@ var Data: pvirtualTreeData;
     Node: PVirtualNode;
     rep,ext,filename,tmpFil,foundFormat: string;
     Offset, Size: int64;
-    i,DataX, DataY: integer;
+    i,DataX, DataY, Step,x,y: integer;
     CList: ExtConvertList;
     stmSource, stmBitmap: TMemoryStream;
     foundCnv: boolean;
@@ -2791,7 +2817,8 @@ begin
     begin
 
       isPreviewImage := false;
-      ImgPreview.Repaint;
+      scrollPreview.Visible := isPreviewImage;
+      ImgPreview.Refresh;
 
     end
     else if (lstContent.SelectedCount = 1) then
@@ -2815,7 +2842,7 @@ begin
         ext := UpperCase(ext);
       end;
 
-      dup5Main.WriteLogVerbose(2,'Preview: ');
+      dup5Main.WriteLogVerbose(2,DLNGStr('PRV000')+' ');
 
       if not(isPreviewLimit) or (Data.Data^.Size <= getPreviewLimitInBytes(previewLimitValue)) then
       begin
@@ -2828,12 +2855,12 @@ begin
         stmBitmap := TMemoryStream.Create;
         try
 
-          dup5Main.appendLogVerbose(2,'Extracting... ');
+          dup5Main.appendLogVerbose(2,DLNGStr('PRV010')+'... ');
 
           FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
           stmSource.Seek(0,soFromBeginning);
 
-          dup5Main.appendLogVerbose(2,'Detecting... ');
+          dup5Main.appendLogVerbose(2,DLNGStr('PRV009')+'... ');
 
           StartTime := Now;
           foundFormat := Imaging.DetermineStreamFormat(stmSource);
@@ -2842,22 +2869,23 @@ begin
           if (foundFormat <> '') then
           begin
 
-            dup5Main.appendLogVerbose(2,'Format: '+uppercase(foundFormat));
+            dup5Main.appendLogVerbose(2,ReplaceValue('%f',DLNGStr('PRV008'),uppercase(foundFormat)));
 
-            dup5Main.appendLogVerbose(2,'... Loading...');
+            dup5Main.appendLogVerbose(2,'... '+DLNGStr('PRV004')+'...');
             FPreviewImage.LoadMultiFromStream(stmSource);
-            dup5Main.appendLogVerbose(2,' Displaying...');
+            dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV005')+'...');
             FPreviewImage.ActiveImage := 0;
             isPreviewImage := true;
+            scrollPreview.Visible := isPreviewImage;
             ImgPreview.Picture.Graphic.Assign(FPreviewImage);
             ImgPreview.Refresh;
-            dup5Main.appendLogVerbose(2,' OK');
+            dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV006'));
 
           end
           else
           begin
 
-            dup5Main.appendLogVerbose(2,'Convert plugins:');
+            dup5Main.appendLogVerbose(2,DLNGstr('PRV007'));
 
             CList := CPlug.GetFileConvert(fileName,offset,size,FSE.DriverID,DataX, DataY);
 
@@ -2871,14 +2899,15 @@ begin
                 stmSource.Seek(0,soFromBeginning);
                 CPlug.Plugins[CList.List[i].Plugin].ConvertStream(stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true);
                 stmBitmap.Seek(0,soFromBeginning);
-                dup5Main.appendLogVerbose(2,'... Loading...');
+                dup5Main.appendLogVerbose(2,'... '+DLNGStr('PRV004')+'...');
                 FPreviewImage.LoadMultiFromStream(stmBitmap);
-                dup5Main.appendLogVerbose(2,' Displaying...');
+                dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV005')+'...');
                 FPreviewImage.ActiveImage := 0;
                 isPreviewImage := true;
                 ImgPreview.Picture.Graphic.Assign(FPreviewImage);
+                scrollPreview.Visible := isPreviewImage;
                 ImgPreview.Refresh;
-                dup5Main.appendLogVerbose(2,' OK');
+                dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV006'));
 
                 break;
               end;
@@ -2886,8 +2915,9 @@ begin
 
             if not(foundCnv) then
             begin
-              dup5Main.appendLogVerbose(2,'Unknown! (Cannot preview)');
+              dup5Main.appendLogVerbose(2,DLNGStr('PRV001'));
               isPreviewImage := false;
+              scrollPreview.Visible := isPreviewImage;
               imgPreview.Refresh;
             end;
 
@@ -2899,8 +2929,9 @@ begin
       end
       else
       begin
-        dup5Main.appendLogVerbose(2,'Canceled: Size is bigger than limit ('+inttostr(getPreviewLimitInBytes(previewLimitValue))+' bytes)');
+        dup5Main.appendLogVerbose(2,ReplaceValue('%s',DLNGStr('PRV003'),inttostr(getPreviewLimitInBytes(previewLimitValue))));
         isPreviewImage := false;
+        scrollPreview.Visible := isPreviewImage;
         imgPreview.Refresh;
       end;
     end;
@@ -2988,8 +3019,8 @@ begin
     Reg.Free;
   end;
 
-  SplitterPreview.Visible := true;
   panPreview.Visible := true;
+  SplitterPreview.Visible := true;
 //  scrollPreview.Visible := false
 
 end;
@@ -3060,6 +3091,13 @@ begin
   imgPreview.AutoSize := true;
   menuPreview_Display_Stretched.Checked := false;
   menuPreview_Display_Full.Checked := true;
+
+end;
+
+procedure Tdup5Main.menuAbout_NewVersionsClick(Sender: TObject);
+begin
+
+  ShellExec(application.Handle,'open',ExtractFilePath(Application.ExeName)+'\Utils\Duppi.exe','/checknewversions','',SW_SHOW);
 
 end;
 

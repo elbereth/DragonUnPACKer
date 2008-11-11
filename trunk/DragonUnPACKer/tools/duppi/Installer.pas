@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.10 2008-09-27 16:34:43 elbereth Exp $
+// $Id: Installer.pas,v 1.11 2008-11-11 15:51:19 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -80,7 +80,6 @@ type
     lblInternetNote: TLabel;
     strInternetComment: TLabel;
     Panel1: TPanel;
-    lblInternetComment: TLabel;
     imgCustomBanner: TImage;
     butProxy2: TButton;
     richLog: TJvRichEdit;
@@ -92,6 +91,10 @@ type
     linkToWIP: TLabel;
     Shape1: TShape;
     lstTranslations: TListView;
+    chkShowUnstable: TCheckBox;
+    lblInternetComment: TMemo;
+    lstUpdatesUnstable: TListView;
+    AutoCheckTimer: TTimer;
     procedure parseDUPP_version1to3(src: integer; version: integer);
     procedure parseDUPP_version4(src: integer);
     function infosDUPP_version1(src: integer): boolean;
@@ -128,6 +131,9 @@ type
     procedure linkToStableClick(Sender: TObject);
     procedure lstUpdatesTypesChange(Sender: TObject);
     procedure linkToWIPClick(Sender: TObject);
+    procedure chkShowUnstableClick(Sender: TObject);
+    procedure lstUpdatesUnstableClick(Sender: TObject);
+    procedure AutoCheckTimerTimer(Sender: TObject);
   private
     DUS: TIniFile;
     Dup5Path: string;
@@ -1131,7 +1137,7 @@ begin
       if clng = '*' then
         LoadInternalLanguage
       else
-        LoadLanguage(dup5path+'data\'+clng);
+        LoadLanguage(ExtractFilePath(Application.ExeName)+'\data\'+clng,false);
       Reg.CloseKey;
     end;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Duppi',True) then
@@ -1178,7 +1184,14 @@ begin
   if (ParamStr(1) = '/InstalledOK') then
   begin
 
-    ShowMessage('Update of Duppi successfull!');
+    ShowMessage(DLNGstr('PI0046'));
+
+  end
+  else if (lowercase(ParamStr(1)) = '/checknewversions') or (lowercase(ParamStr(1)) = '/checktranslations') then
+  begin
+
+    optInternet.Checked := true;
+    AutoCheckTimer.Enabled := true;
 
   end
   else if (ParamStr(1) <> '') then
@@ -1428,8 +1441,9 @@ begin
     5: result := Dup5Path + 'utils\';
     6: result := Dup5Path + 'utils\templates\';
     7: result := Dup5Path + 'utils\translation\';
+    8: result := Dup5Path + 'utils\data\';
   else
-    raise Exception.Create('Unknown destination directory!'); 
+    raise Exception.Create(DLNGStr('PI0045'));
   end;
 
 end;
@@ -1466,7 +1480,11 @@ begin
   lstUpdates.Columns.Items[1].Caption := DLNGstr('PII002');
   lstUpdates.Columns.Items[2].Caption := DLNGstr('PII003');
 //  lstUpdates.Columns.Items[3].Caption := DLNGstr('PII004');
-  lstUpdates.Columns.Items[3].Caption := DLNGstr('PII005');
+  lstUpdatesUnstable.Columns.Items[3].Caption := DLNGstr('PII005');
+  lstUpdatesUnstable.Columns.Items[0].Caption := DLNGstr('PII001');
+  lstUpdatesUnstable.Columns.Items[1].Caption := DLNGstr('PII002');
+  lstUpdatesUnstable.Columns.Items[2].Caption := DLNGstr('PII003');
+  lstUpdatesUnstable.Columns.Items[3].Caption := DLNGstr('PII005');
   strInternetComment.Caption := DLNGstr('INFO03');
 
   lstTranslations.Columns.Items[0].Caption := DLNGstr('PII030');
@@ -1500,7 +1518,10 @@ begin
 
   if optInternet.Checked then
   begin
-    lstUpdatesTypes.ItemIndex := 0;
+    if (ParamCount = 1) and (lowercase(ParamStr(1)) = '/checktranslations') then
+      lstUpdatesTypes.ItemIndex := 1
+    else
+      lstUpdatesTypes.ItemIndex := 0;
     butDownload.Visible := true;
     cmdNext.Visible := false;
     stepChoice.Visible := false;
@@ -1544,11 +1565,11 @@ begin
 end;
 
 procedure TfrmInstaller.butRefreshClick(Sender: TObject);
-Var updList: TStringList;
+Var updList,updUnstableList: TStringList;
     lngList: TStringList;
     itm: TListItem;
     x, tmpVer: integer;
-    butDl, coreUpdate: boolean;
+    butDl, butDlUnstable, coreUpdate: boolean;
     coreMessage: string;
     errCode: string;
 begin
@@ -1636,9 +1657,11 @@ begin
             end;
 
             updList := splitStr(dus.ReadString('ID','Updates',''),' ');
+            updUnstableList := splitStr(dus.ReadString('ID','UpdatesUnstable',''),' ');
             lngList := splitStr(dus.ReadString('ID','Translations',''),' ');
-            writeLog(ReplaceValue('%t',ReplaceValue('%p',DLNGStr('PII108'),inttostr(updList.Count)),inttostr(lngList.Count)));
+            writeLog(ReplaceValue('%t',ReplaceValue('%p',DLNGStr('PII108'),inttostr(updList.Count)+'['+inttostr(updUnstableList.Count)+']'),inttostr(lngList.Count)));
             lstUpdates.Clear;
+            lstUpdatesUnstable.Clear;
             lstTranslations.Clear;
             coreUpdate := false;
 
@@ -1666,6 +1689,30 @@ begin
               end;
             end;
 
+            for x:=0 to updUnstableList.Count -1 do
+            begin
+
+              if (dus.ReadBool(updUnstableList.Strings[x],'AutoUpdate',true)) then
+              begin
+                itm := lstUpdatesUnstable.Items.Add;
+                itm.Caption := dus.ReadString(updUnstableList.Strings[x],'Description',DLNGstr('PII106'));
+                tmpVer := getPluginVersion(Dup5Path+dus.ReadString(updUnstableList.Strings[x],'File',''));
+                itm.SubItems.Add(getVersionFromInt(tmpVer));
+                if tmpVer < dus.ReadInteger(updUnstableList.Strings[x],'Version',0) then
+                begin
+                  itm.Checked := true;
+                  butDlUnstable := true;
+                end;
+                itm.SubItems.Add(dus.ReadString(updUnstableList.Strings[x],'VersionDisp',''));
+                itm.SubItems.Add(inttostr(dus.ReadInteger(updUnstableList.Strings[x],'Size',0)));
+                if CurLanguage = '*' then
+                  itm.SubItems.Add(dus.ReadString(updUnstableList.Strings[x],'CommentFR',''))
+                else
+                  itm.SubItems.Add(dus.ReadString(updUnstableList.Strings[x],'Comment',''));
+                itm.SubItems.Add(updUnstableList.Strings[x]);
+              end;
+            end;
+
             for x:=0 to lngList.Count -1 do
             begin
 
@@ -1678,7 +1725,9 @@ begin
 
             end;
 
-            butDownload.Enabled := butDL;
+            butDownload.Enabled := (butDL and not(chkShowUnstable.Checked)) or (butDLUnstable and chkShowUnstable.Checked);
+
+            lstUpdatesTypesChange(lstUpdatesTypes);
 
             if dus.SectionExists('core') then
             begin
@@ -1802,45 +1851,94 @@ begin
   butRefresh.Enabled := false;
   butProxy2.Enabled := false;
 
-  for x := 0 to lstUpdates.Items.Count-1 do
+  if not(chkShowUnstable.Checked) then
   begin
-    if lstUpdates.Items.Item[x].Checked then
+    for x := 0 to lstUpdates.Items.Count-1 do
     begin
-      if dus.ValueExists(lstUpdates.Items.Item[x].SubItems[4],'URL') then
+      if lstUpdates.Items.Item[x].Checked then
       begin
-        url := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'URL','');
-        tmpFileName := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'FileDL',getTempFile(extractfileext(url)));
-        tmpFile := dup5Path+'Download\'+tmpFileName;
-        HttpCli1.URL := url;
-        HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
-        CurDL := tmpFileName;
-        CurDLSize := strtoint(lstUpdates.Items.Item[x].SubItems[2]);
-        inc(curDLSize);
-        progressDL.Position := 0;
-        progressDL.Max := CurDLSize*1024;
-        delFile := false;
-        try
+        if dus.ValueExists(lstUpdates.Items.Item[x].SubItems[4],'URL') then
+        begin
+          url := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'URL','');
+          tmpFileName := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'FileDL',getTempFile(extractfileext(url)));
+          tmpFile := dup5Path+'Download\'+tmpFileName;
+          HttpCli1.URL := url;
+          HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
+          CurDL := tmpFileName;
+          CurDLSize := strtoint(lstUpdates.Items.Item[x].SubItems[2]);
+          inc(curDLSize);
+          progressDL.Position := 0;
+          progressDL.Max := CurDLSize*1024;
+          delFile := false;
           try
-            WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
-            HttpCli1.Get;
-            lstUpd.Add(tmpFile);
-            WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
-          except
-            on E: EHttpException do begin
-                writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
-                colorLog(clRed);
-                DelFile := true;
-            end
-          else
-            raise;
-          end;
+            try
+              WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
+              HttpCli1.Get;
+              lstUpd.Add(tmpFile);
+              WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
+            except
+              on E: EHttpException do begin
+                  writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
+                  colorLog(clRed);
+                  DelFile := true;
+              end
+            else
+              raise;
+            end;
 
-        finally
-          HttpCli1.RcvdStream.Destroy;
-          HttpCli1.RcvdStream := nil;
-          ButDownload.Visible := true;
-          if DelFile and FileExists(tmpFile) then
-            DeleteFile(tmpFile);
+          finally
+            HttpCli1.RcvdStream.Destroy;
+            HttpCli1.RcvdStream := nil;
+            ButDownload.Visible := true;
+            if DelFile and FileExists(tmpFile) then
+              DeleteFile(tmpFile);
+          end;
+        end;
+      end;
+    end;
+  end
+  else
+  begin
+    for x := 0 to lstUpdatesUnstable.Items.Count-1 do
+    begin
+      if lstUpdatesUnstable.Items.Item[x].Checked then
+      begin
+        if dus.ValueExists(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL') then
+        begin
+          url := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL','');
+          tmpFileName := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'FileDL',getTempFile(extractfileext(url)));
+          tmpFile := dup5Path+'Download\'+tmpFileName;
+          HttpCli1.URL := url;
+          HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
+          CurDL := tmpFileName;
+          CurDLSize := strtoint(lstUpdatesUnstable.Items.Item[x].SubItems[2]);
+          inc(curDLSize);
+          progressDL.Position := 0;
+          progressDL.Max := CurDLSize*1024;
+          delFile := false;
+          try
+            try
+              WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
+              HttpCli1.Get;
+              lstUpd.Add(tmpFile);
+              WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
+            except
+              on E: EHttpException do begin
+                  writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
+                  colorLog(clRed);
+                  DelFile := true;
+              end
+            else
+              raise;
+            end;
+
+          finally
+            HttpCli1.RcvdStream.Destroy;
+            HttpCli1.RcvdStream := nil;
+            ButDownload.Visible := true;
+            if DelFile and FileExists(tmpFile) then
+              DeleteFile(tmpFile);
+          end;
         end;
       end;
     end;
@@ -2031,7 +2129,7 @@ procedure TfrmInstaller.lstUpdatesSelectItem(Sender: TObject;
   Item: TListItem; Selected: Boolean);
 begin
 
-  lblInternetComment.Caption := item.SubItems[3];
+  lblInternetComment.Text := item.SubItems[3];
 
 end;
 
@@ -2370,12 +2468,22 @@ begin
 
   if lstUpdatesTypes.ItemIndex = 0 then
   begin
-    lstUpdates.Visible := true;
+    if chkShowUnstable.Checked then
+    begin
+      lstUpdates.Visible := false;
+      lstUpdatesUnstable.Visible := true;
+    end
+    else
+    begin
+      lstUpdates.Visible := true;
+      lstUpdatesUnstable.Visible := false;
+    end;
     lstTranslations.Visible := false;
   end
   else
   begin
     lstUpdates.Visible := false;
+    lstUpdatesUnstable.Visible := false;
     lstTranslations.Visible := true;
   end;
 
@@ -2390,6 +2498,48 @@ begin
                         nil,
                         nil,
                         SW_SHOW);
+
+end;
+
+procedure TfrmInstaller.chkShowUnstableClick(Sender: TObject);
+begin
+
+  lstUpdatesTypesChange(Sender);
+  if chkShowUnstable.Checked then
+    lstUpdatesUnstableClick(Sender)
+  else
+    lstUpdatesClick(Sender);
+
+end;
+
+procedure TfrmInstaller.lstUpdatesUnstableClick(Sender: TObject);
+var x: integer;
+    res: boolean;
+begin
+
+  res := false;
+  x:=0;
+  while (x < lstUpdatesUnstable.Items.Count) and not(res) do
+  begin
+    res := lstUpdatesUnstable.Items.Item[x].Checked;
+    inc(x);
+  end;
+  x:=0;
+  while (x < lstTranslations.Items.Count) and not(res) do
+  begin
+    res := lstTranslations.Items.Item[x].Checked;
+    inc(x);
+  end;
+
+  butDownload.Enabled := res;
+  
+end;
+
+procedure TfrmInstaller.AutoCheckTimerTimer(Sender: TObject);
+begin
+
+  AutoCheckTimer.Enabled := false;
+  CmdNext.Click;
 
 end;
 

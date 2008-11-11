@@ -1,6 +1,6 @@
 object frmInstaller: TfrmInstaller
-  Left = 1168
-  Top = 250
+  Left = 676
+  Top = 201
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'DUP5 Package Installer'
@@ -1510,7 +1510,7 @@ object frmInstaller: TfrmInstaller
     end
     object lblUpdatesTypes: TLabel
       Left = 8
-      Top = 115
+      Top = 107
       Width = 97
       Height = 13
       Alignment = taRightJustify
@@ -1566,9 +1566,9 @@ object frmInstaller: TfrmInstaller
     end
     object lstUpdates: TListView
       Left = 8
-      Top = 136
+      Top = 152
       Width = 513
-      Height = 137
+      Height = 121
       Checkboxes = True
       Columns = <
         item
@@ -1595,9 +1595,9 @@ object frmInstaller: TfrmInstaller
     end
     object lstTranslations: TListView
       Left = 8
-      Top = 136
+      Top = 152
       Width = 513
-      Height = 137
+      Height = 121
       Checkboxes = True
       Columns = <
         item
@@ -1646,22 +1646,16 @@ object frmInstaller: TfrmInstaller
       BevelOuter = bvLowered
       Color = clWindow
       TabOrder = 3
-      object lblInternetComment: TLabel
-        Left = 2
-        Top = 2
-        Width = 388
-        Height = 25
-        AutoSize = False
-        Caption = '-'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlue
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = []
-        ParentFont = False
-        ShowAccelChar = False
-        Transparent = True
-        WordWrap = True
+      object lblInternetComment: TMemo
+        Left = 1
+        Top = 1
+        Width = 439
+        Height = 28
+        Align = alClient
+        BorderStyle = bsNone
+        ReadOnly = True
+        ScrollBars = ssVertical
+        TabOrder = 0
       end
     end
     object butProxy2: TButton
@@ -1687,7 +1681,7 @@ object frmInstaller: TfrmInstaller
     end
     object lstUpdatesTypes: TComboBox
       Left = 112
-      Top = 112
+      Top = 104
       Width = 121
       Height = 21
       AutoComplete = False
@@ -1698,6 +1692,45 @@ object frmInstaller: TfrmInstaller
       Items.Strings = (
         'Plugins'
         'Translations')
+    end
+    object chkShowUnstable: TCheckBox
+      Left = 16
+      Top = 128
+      Width = 217
+      Height = 17
+      Caption = 'Show unstables'
+      TabOrder = 8
+      OnClick = chkShowUnstableClick
+    end
+    object lstUpdatesUnstable: TListView
+      Left = 8
+      Top = 152
+      Width = 513
+      Height = 121
+      Checkboxes = True
+      Columns = <
+        item
+          Caption = 'Title'
+          Width = 245
+        end
+        item
+          Caption = 'Your Version'
+          Width = 102
+        end
+        item
+          Caption = 'Available version'
+          Width = 102
+        end
+        item
+          Alignment = taRightJustify
+          Caption = 'Size'
+          Width = 40
+        end>
+      TabOrder = 9
+      ViewStyle = vsReport
+      Visible = False
+      OnClick = lstUpdatesUnstableClick
+      OnSelectItem = lstUpdatesSelectItem
     end
   end
   object cmdClose: TButton
@@ -1790,5 +1823,12 @@ object frmInstaller: TfrmInstaller
   object OpenDialog: TOpenDialog
     Left = 384
     Top = 48
+  end
+  object AutoCheckTimer: TTimer
+    Enabled = False
+    Interval = 100
+    OnTimer = AutoCheckTimerTimer
+    Left = 352
+    Top = 328
   end
 end

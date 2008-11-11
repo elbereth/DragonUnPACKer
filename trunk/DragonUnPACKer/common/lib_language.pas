@@ -1,6 +1,6 @@
 unit lib_language;
 
-// $Id: lib_language.pas,v 1.10 2008-08-23 19:10:12 elbereth Exp $
+// $Id: lib_language.pas,v 1.11 2008-11-11 16:01:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_language.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -33,12 +33,13 @@ unit lib_language;
 // -----------------------------------------------------------------------------
 
 interface
-uses Graphics, Zlib,lib_language_internal;
+uses Graphics, Zlib;
 
 function GetIcon(fil: string): TBitmap;
 function GetFont(): String;
 function GetLanguageInfo(fil: string; out Name, Author, URL, Email, FontName: String; out IsIcon: boolean): Boolean;
-procedure LoadLanguage(fil: string);
+procedure LoadLanguage(fil: string; checkProgramVersion: boolean); overload;
+procedure LoadLanguage(fil: string); overload;
 procedure LoadInternalLanguage();
 function DLNGStr(sch: string): string;
 function ReplaceValue(substr: string; str: string; newval: string): string;
@@ -49,6 +50,14 @@ implementation
 
 uses SysUtils, forms,Dialogs,lib_zlib,lib_crc,spec_DLNG,Classes,lib_binutils;
 
+{$IFDEF DRGUNPACK}
+const DLNG_PRGID : string = 'UP';
+      DLNG_PRGVER : byte = 12;
+{$ELSE}
+const DLNG_PRGID : string = 'PI';
+      DLNG_PRGVER : byte = 1;
+{$ENDIF}
+
 type
    Internal_Tab = record
      ID: string;
@@ -56,14 +65,21 @@ type
    end;
 
 const DLNG_VERSION : byte = 4;
-      DLNG_PRGVER : byte = 11;
 
 var tabLNG: array[1..1000] of Internal_Tab;
     numLNG: integer = 0;
     UseInternalLanguage: Boolean = True;
     SelectedFontName: String;
 
-procedure LoadLanguage(fil: string);
+
+procedure LoadLanguage(fil: string); overload;
+begin
+
+  LoadLanguage(fil,true);
+
+end;
+
+procedure LoadLanguage(fil: string; checkProgramVersion: boolean); overload;
 var HDR: DLNG_Header_v4;
     HDRX: DLNG_ExtendedHeader;
     lng,x: integer;
@@ -83,31 +99,21 @@ begin
         MessageDlg('This is not a valid Dragon Software Language file.'+chr(10)+'Please remove this file:'+chr(10)+chr(10)+fil,mtWarning,[mbOk],0)
       else
         if HDR.Version <> DLNG_VERSION then
-          MessageDlg('Unsupported version of Dragon Software Language file.'+chr(10)+chr(10)+'Needed: version 4'+chr(10)+'File: version '+IntToStr(HDR.Version),mtWarning,[mbok],0)
+          MessageDlg('Unsupported version of Dragon Software Language file.'+chr(10)+chr(10)+'Needed: version '+inttostr(DLNG_VERSION)+chr(10)+'File: version '+IntToStr(HDR.Version),mtWarning,[mbok],0)
         else
-          if HDR.PrgID <> 'UP' then
-            MessageDlg('This Language file is not for Dragon UnPACKer.',mtWarning,[mbok],0)
+          if HDR.PrgID <> DLNG_PRGID then
+            MessageDlg('This Language file is not for this program.',mtWarning,[mbok],0)
           else
-            if HDR.PrgVER <> DLNG_PRGVER then
-              MessageDlg('This Language file is not for this version of Dragon UnPACKer.',mtWarning,[mbok],0)
+            if checkProgramVersion and (HDR.PrgVER <> DLNG_PRGVER) then
+              MessageDlg('This Language file is not for this version of this program.',mtWarning,[mbok],0)
             else
             begin
-
-//  MessageDlg(HDR.ID,mtInformation,[mbOk],0);
-
               HDRX.Name := Get8u(lng);
               HDRX.Author := Get8u(lng);
               HDRX.URL := Get8u(lng);
               HDRX.Email := Get8u(lng);
               HDRX.FontName := Get8u(lng);
               SelectedFontName := HDRX.FontName;
-//      messagedlg(HDRX.Name + chr(10) + HDRX.Author + chr(10) + HDRX.URL + chr(10) + HDRX.Email  ,mtInformation,[mbOk],0);
-
-//      messagedlg(inttostr(HDR.BodySizeComp),mtInformation,[mbOk],0);
-
-//      crc := getstrCrc32(HDRX.Name + HDRX.Author + HDRX.URL + HDRX.Email + BigStr);
-
-//      MessageDlg(IntToStr(crc)+chr(10)+IntToStr(HDR.FileCRC),mtInformation,[mbok],0);
 
               dataStm := TMemoryStream.Create;
               try
@@ -149,17 +155,11 @@ begin
                   dataStm.Seek(Idx[x].Offset*2,soFromBeginning);
                   setLength(tabLNG[x].Value,Idx[x].Length);
                   dataStm.ReadBuffer(tabLNG[x].value[1],Idx[x].Length*2);
-//                  ShowMessage(Idx[x].ID+' '+inttostr(Idx[x].Offset)+' '+inttostr(Idx[x].Length)+' '+tabLNG[x].value);
-//                tabLNG[x].Value :=  Get16v(lng,);
-//        if length(tabLNG[x].Value) > 100 then
                 end;
 
               finally
                 dataStm.Free;
               end;
-
-
-//      messagedlg(bigstr,mtInformation,[mbOk],0);
 
               UseInternalLanguage := False;
               curlanguage := ExtractFileName(fil);
@@ -216,7 +216,7 @@ begin
     try
       FileRead(lng,HDR,SizeOf(HDR));
 
-      res := (HDR.ID = 'DLNG'+chr(26)) and (HDR.Version = DLNG_VERSION) and (HDR.PrgID = 'UP') and (HDR.PrgVER = DLNG_PRGVER);
+      res := (HDR.ID = 'DLNG'+chr(26)) and (HDR.Version = DLNG_VERSION) and (HDR.PrgID = DLNG_PRGID) and (HDR.PrgVER = DLNG_PRGVER);
 
       if res then
       begin
@@ -265,7 +265,7 @@ begin
     try
       FileRead(lng,HDR,SizeOf(HDR));
 
-      res := (HDR.ID = 'DLNG'+chr(26)) and (HDR.Version = DLNG_VERSION) and (HDR.PrgID = 'UP') and (HDR.PrgVER = DLNG_PRGVER);
+      res := (HDR.ID = 'DLNG'+chr(26)) and (HDR.Version = DLNG_VERSION) and (HDR.PrgID = DLNG_PRGID) and (HDR.PrgVER = DLNG_PRGVER);
 
       if res then
       begin
@@ -293,6 +293,16 @@ begin
       result := result + ' ';
 end;
 
+{$IFDEF DRGUNPACK}
+  { Note: You need to run "dlngc french.ls /in" in the translations\french
+          subdirectory to generate the .inc file}
+  {$INCLUDE '..\translations\french\french.UP.inc'}
+{$ELSE}
+  { Note: You need to run "dlngc french_duppi.ls /in" in the translations\french
+          subdirectory to generate the .inc file}
+  {$INCLUDE '..\translations\french\french.PI.inc'}
+{$ENDIF}
+
 function DLNGStr(sch: string): string;
 var res: string;
     x: integer;
@@ -315,6 +325,8 @@ begin
           res := tabLNG[x].Value;
         x := x + 1;
       end;
+      if res = '' then
+        res := DLNGInternalStr(sch)
     end
   end;
 

@@ -2,7 +2,7 @@ program dlngc;
 
 {$APPTYPE CONSOLE}
 
-// $Id: dlngc.dpr,v 1.2 2008-04-16 21:08:46 elbereth Exp $
+// $Id: dlngc.dpr,v 1.3 2008-11-11 15:52:46 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dlngc/dlngc.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -26,7 +26,7 @@ uses
   Zlib,
   spec_DLNG in '..\..\common\spec_DLNG.pas';
 
-const AppVersion : string = '4.1.0';
+const AppVersion : string = '4.1.1';
       AppEdit : string = '';
       DLNG_Version : Byte = 4;
       DLNG_Manufacturer : Byte = 41;
@@ -109,7 +109,7 @@ begin
       result := result + ' ';
 end;
 
-procedure Compile(sin: string; NoCRC, NoIcon, PascalOutput: boolean);
+procedure Compile(sin: string; NoCRC, NoIcon, PascalOutput, PascalOutputInclude: boolean);
 var hin: TextFile;
     tmps,keyw,valu,outfil,iconfil: String;
     idx: array[1..2000] of DLNG_IndexEntry_v4;
@@ -283,7 +283,9 @@ begin
       writeln(' - Writing file..... '+outfil);
 
       if PascalOutput then
-        outfil := ExtractFilePath(outfil)+'lib_language_internal.pas';
+        outfil := ExtractFilePath(outfil)+'lib_language_internal.pas'
+      else if PascalOutputInclude then
+        outfil := ChangeFileExt(outfil,'.'+HDR.PrgID+'.inc');
 
       outFileStm := TFileStream.Create(outfil, fmCreate);
 //      ofil := FileCreate(outfil);
@@ -291,12 +293,28 @@ begin
       if outFileStm.Handle <> 0 then
       begin
 
-        if PascalOutput then
+        if PascalOutput or PascalOutputInclude then
         begin
 
           write('   Entries.......... ');
 
-          strTmp := '// ============================================================================='+#13+#10+'//    WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING'+#13+#10+'// ============================================================================='+#13+#10+'//  This file was created automatically from:'+#13+#10+'//  '+sin+#13+#10+'//  With Dragon Language Compiler v'+AppVersion+' '+AppEdit+#13+#10+'//'+#13+#10+'// DO NOT CHANGE THIS FILE MANUALLY, EDIT THE SOURCE FILE AND RECOMPILE IT WITH'+#13+#10+'// DLOOKC <file> /IL'+#13+#10+'//'+#13+#10+'// -----------------------------------------------------------------------------'+#13+#10+#13+#10+'unit lib_language_internal;'+#13+#10+#13+#10+'interface'+#13+#10+#13+#10+'function DLNGInternalStr(sch: string): string;'+#13+#10+#13+#10+'implementation'+#13+#10+#13+#10+'function DLNGInternalStr(sch: string): string;'+#13+#10+'var res: string;'+#13+#10+'begin'+#13+#10+#13+#10;
+
+          strTmp := '// ============================================================================='+#13+#10+'//    WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING'+#13+#10+'// ============================================================================='+#13+#10+'//  This file was created automatically from:'+#13+#10+'//  '+sin+#13+#10+'//  With Dragon Language Compiler v'+AppVersion+' '+AppEdit+#13+#10+'//'+#13+#10+'// DO NOT CHANGE THIS FILE MANUALLY, EDIT THE SOURCE FILE AND RECOMPILE IT WITH'+#13+#10;
+          outFileStm.WriteBuffer(strTmp[1],length(strTmp));
+          strTmp := '// DLOOKC <file> /I';
+          if PascalOutput then
+            strTmp := strTmp + 'L'
+          else
+            strTmp := strTmp + 'N';
+          outFileStm.WriteBuffer(strTmp[1],length(strTmp));
+          strTmp := #13+#10+'//'+#13+#10+'// -----------------------------------------------------------------------------'+#13+#10+#13+#10;
+          outFileStm.WriteBuffer(strTmp[1],length(strTmp));
+          if PascalOutput then
+          begin
+            strTmp := 'unit lib_language_internal;'+#13+#10+#13+#10+'interface'+#13+#10+#13+#10+'function DLNGInternalStr(sch: string): string;'+#13+#10+#13+#10+'implementation'+#13+#10+#13+#10;
+            outFileStm.WriteBuffer(strTmp[1],length(strTmp));
+          end;
+          strTmp := 'function DLNGInternalStr(sch: string): string;'+#13+#10+'begin'+#13+#10+#13+#10;
           outFileStm.WriteBuffer(strTmp[1],length(strTmp));
 
           for x := 1 to NumIdx do
@@ -308,8 +326,11 @@ begin
             outFileStm.WriteBuffer(strTmp[1],length(strTmp));
           end;
 
-          strTmp := '  else'+#13+#10+'    result := '+QuotedStr('--Non défini--')+#13+#10+#13+#10+'end;'+#13+#10+#13+#10+'end.'+#13+#10;
+          strTmp := '  else'+#13+#10+'    result := '+QuotedStr('--Non défini--')+#13+#10+#13+#10+'end;'+#13+#10;
           outFileStm.WriteBuffer(strTmp[1],length(strTmp));
+
+          if PascalOutput then
+            strTmp := #13+#10+'end.'+#13+#10;
 
           writeln('OK ['+InttoStr(NumIdx)+' entries]');
           tsize := outFileStm.Size;
@@ -557,7 +578,7 @@ begin
 end;
 
 var xp: integer;
-var NoCRC,NoIcon,PascalOutput: boolean;
+var NoCRC,NoIcon,PascalOutput,PascalOutputInclude: boolean;
 begin
   { TODO -oUser -cConsole Main : placez le code ici }
 
@@ -577,7 +598,8 @@ begin
      writeln;
      writeln(' Options:  /nocrc or /nc       Don''t compute CRCs');
      writeln('           /noicon or /ni      Force no icon in DLNG');
-     writeln('           /internal or /il    Output Delphi inclusion code');
+     writeln('           /internal or /il    Output Delphi inclusion code (v5.3.x)');
+     writeln('           /include or /in     Output Delphi include code (v5.4.0+)');
    end
    else
    begin
@@ -585,6 +607,7 @@ begin
 //     NoDisplay := false;
      NoIcon := false;
      PascalOutput := false;
+     PascalOutputInclude := false;
      writeln(' Parsing parameters...');
      xp := 2;
      while (xp <= ParamCount) do
@@ -595,11 +618,13 @@ begin
          NoIcon := true;
        if (lowercase(ParamStr(xp)) = '/il') or (lowercase(ParamStr(xp)) = '/internal') then
          PascalOutput := true;
+       if (lowercase(ParamStr(xp)) = '/in') or (lowercase(ParamStr(xp)) = '/include') then
+         PascalOutputInclude := true;
        writeln(' - Unknown parameter: ' + ParamStr(xp));
        xp := xp + 1;
      end;
      fcrctable := crc32gen;
-     Compile(ParamStr(1),NoCRC,NoIcon,PascalOutput);
+     Compile(ParamStr(1),NoCRC,NoIcon,PascalOutput,PascalOutputInclude);
    end;
 
 end.

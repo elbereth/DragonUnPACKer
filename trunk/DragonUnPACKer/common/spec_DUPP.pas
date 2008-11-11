@@ -1,6 +1,6 @@
 unit spec_DUPP;
 
-// $Id: spec_DUPP.pas,v 1.2 2008-09-25 20:53:45 elbereth Exp $
+// $Id: spec_DUPP.pas,v 1.3 2008-11-11 16:00:50 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/spec_DUPP.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -187,6 +187,7 @@ type
                                // 5 = Dup5Path + 'utils\';
                                // 6 = Dup5Path + 'utils\templates\';
                                // 7 = Dup5Path + 'utils\translation\';
+                               // 8 = Dup5Path + 'utils\data\';
                                // 255 = Windows
                                // 256 = Windows\System
     NameID: integer;           // Index number in Name block

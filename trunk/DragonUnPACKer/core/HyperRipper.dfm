@@ -1,6 +1,6 @@
 object frmHyperRipper: TfrmHyperRipper
-  Left = 217
-  Top = 542
+  Left = 1250
+  Top = 62
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'HyperRipper'
@@ -1263,7 +1263,7 @@ object frmHyperRipper: TfrmHyperRipper
     Top = 8
     Width = 417
     Height = 297
-    ActivePage = tabAbout
+    ActivePage = tabSearch
     TabOrder = 0
     object tabAbout: TTabSheet
       Caption = 'A Propos..'

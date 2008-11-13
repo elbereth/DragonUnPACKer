@@ -471,12 +471,16 @@ var Percent: TPercentCallback;
   * 51013 Fixed possible error in BMFind function
   *       Added file size check to avoid false positives
   * 51021 Added TGA (RGB) support (patch from Psych0phobiA)
+  * 51022 Fixed bug on missing 4 bytes at the end of AVI files
+  *       Fixed BMFind function (was missing stuff)
+  *       Improved speed & reliability by using direct searches instead of calling BMFind again:
+  *         RIFF/WAVE RIFF/AVI PNG and JPEG/JFIF
   * }
 
-const DRIVER_VERSION = 51021;
-      HR_VERSION = 55043;
-      CVS_REVISION = '$Revision: 1.10 $';
-      CVS_DATE = '$Date: 2008-08-23 17:20:33 $';
+const DRIVER_VERSION = 51022;
+      HR_VERSION = 55044;
+      CVS_REVISION = '$Revision: 1.11 $';
+      CVS_DATE = '$Date: 2008-11-13 18:55:23 $';
 
 function BigToLittle2(src: array of byte): word;
 begin
@@ -617,7 +621,7 @@ end;
 function GetVersionInfo(): VersionInfo; stdcall;
 begin
 
-  result.Name := 'Elbereth''s HyperRipper 5.5 plugin';
+  result.Name := 'Elbereth''s HyperRipper plugin v'+getVersion(DRIVER_VERSION);
   result.Version := DRIVER_VERSION;
   result.Author := 'Alexandre Devilliers (aka Elbereth)';
   result.Comment := 'Can search all file formats that were available in HyperRipper v4.2 (Dragon UnPACKer 4.22a).'+#10+'More reliable and efficient than HyperRipper 4.';
@@ -773,66 +777,64 @@ end;
 
 function BMFind(szSubStr: PChar; buf: PByteArray; iBufSize: integer; iOffset: integer = 0): integer;
 { Returns -1 if substring not found,
-  or zero-based index into buffer if substring found
-  Function copied from Mailing archives, mail from ianhinson}
-var iSubStrLen: integer;
-    skip: array [char] of integer;
-    found: boolean;
-    iMaxSubStrIdx: integer;
-    iSubStrIdx: integer;
-    iBufIdx: integer;
-    iScanSubStr: integer;
-    mismatch: boolean;
-    iBufScanStart: integer;
-    ch: char;
+   or zero-based index into buffer if substring found }
+var
+   iSubStrLen: integer;
+   skip: array [byte] of integer;
+   found: boolean;
+   iMaxSubStrIdx: integer;
+   iSubStrIdx: integer;
+   iBufIdx: integer;
+   iScanSubStr: integer;
+   mismatch: boolean;
+   iBufScanStart: integer;
+   ch: byte;
 begin
+   { Initialisations }
+   found := False;
+   Result := -1;
 
-  { Initialisations }
-  found := False;
-  Result := -1;
+   { Check if trivial scan for empty string }
+   iSubStrLen := StrLen(szSubStr);
+   if iSubStrLen = 0 then
+   begin
+     Result := 0;
+     Exit
+   end;
+   iMaxSubStrIdx := iOffset + iSubStrLen - 1;
 
-  { Check if trivial scan for empty string }
-  iSubStrLen := StrLen(szSubStr);
-  if iSubStrLen = 0 then
-  begin
-    Result := 0;
-    Exit
-  end;
+   { Initialise the skip table }
+   for ch := Low(skip) to High(skip) do skip[ch] := iSubStrLen;
+   for iSubStrIdx := 0 to (iMaxSubStrIdx - 1) do
+     skip[ord(szSubStr[iSubStrIdx])] := iMaxSubStrIdx - iSubStrIdx;
 
-  iMaxSubStrIdx := iOffset + iSubStrLen - 1;
-  { Initialise the skip table }
-  for ch := Low(skip) to High(skip) do skip[ch] := iSubStrLen;
-  for iSubStrIdx := 0 to iSubStrLen-1 do
-    skip[szSubStr[iSubStrIdx]] := iMaxSubStrIdx+1 - iSubStrIdx;
-
-  { Scan the buffer, starting comparisons at the end of the substring }
-  iBufScanStart := iMaxSubStrIdx;
-  while (not found) and (iBufScanStart < iBufSize) do
-  begin
-    iBufIdx := iBufScanStart;
-    iScanSubStr := iSubStrLen-1;
-    repeat
-      mismatch := (szSubStr[iScanSubStr] <> char(buf[iBufIdx]));
-      if not mismatch then
-        if iScanSubStr > 0 then
-        begin // more characters to scan
-          Dec(iBufIdx); Dec(iScanSubStr);
-        end
-        else
-          found := True;
-    until mismatch or found;
-    if found then
-      Result := iBufIdx
-    else
-      iBufScanStart := iBufScanStart + skip[char(buf[iBufScanStart])];
-  end;
-
+   { Scan the buffer, starting comparisons at the end of the substring }
+   iBufScanStart := iMaxSubStrIdx;
+   while (not found) and (iBufScanStart < iBufSize) do
+   begin
+     iBufIdx := iBufScanStart;
+     iScanSubStr := iMaxSubStrIdx;
+     repeat
+       mismatch := (ord(szSubStr[iScanSubStr]) <> buf[iBufIdx]);
+       if not mismatch then
+         if iScanSubStr > 0 then
+         begin // more characters to scan
+           Dec(iBufIdx); Dec(iScanSubStr)
+         end
+         else
+           found := True;
+     until mismatch or found;
+     if found then
+       Result := iBufIdx
+     else
+       iBufScanStart := iBufScanStart + skip[buf[iBufScanStart]];
+   end;
 end;
 
 // DUHI v4: SearchBufferEx(tended) that will retrieve ALL instances of selected
 // format found in the buffer and not only the first one
 function SearchBufferEx(format: Integer; buffer: PByteArray; bufSize: integer): TIntList; stdcall;
-var tmpRes,tmpPos1,tmpPos2,tmpPosMax: integer;
+var tmpRes,tmpRes2,tmpPos1,tmpPos2,tmpPosMax: integer;
 //    memBuf: TMemoryStream;
     szFind: array [0..255] of char;
 begin
@@ -851,16 +853,19 @@ begin
         1000: begin
                 strPCopy(szFind,'RIFF');
                 tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
-                strPCopy(szFind,'WAVE');
-                if (tmpRes <> -1) and (BMFind(szFind,buffer,bufSize,tmpRes+8) = (tmpRes + 8)) then
-                begin
-                  // Add found offset to the list
-                  result.Add(tmpRes);
-                  // Next searchable offset is 12 bytes after the one found
-                  inc(tmpRes,12);
-                end
-                else
-                  tmpRes := -1
+                if (tmpRes <> -1) then
+                  if ((tmpRes+11) <= bufSize) and (buffer[tmpRes+8] = 87)
+                                              and (buffer[tmpRes+9] = 65)
+                                              and (buffer[tmpRes+10] = 86)
+                                              and (buffer[tmpRes+11] = 69) then
+                  begin
+                    // Add found offset to the list
+                    result.Add(tmpRes);
+                    // Next searchable offset is 12 bytes after the one found
+                    inc(tmpRes,12);
+                  end
+                  else // Next searchable offset is 4 bytes after the last RIFF found
+                    inc(tmpRes,4);
               end;
         1001: begin
                 strPCopy(szFind,'Creative Voice File'+chr(26));
@@ -980,16 +985,18 @@ begin
         2000: begin
                 strPCopy(szFind,'RIFF');
                 tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
-                strPCopy(szFind,'AVI ');
                 if (tmpRes <> -1) then
-                  if (BMFind(szFind,buffer,bufSize,tmpRes+8) = (tmpRes + 8)) then
+                  if ((tmpRes+11) <= bufSize) and (buffer[tmpRes+8] = 65)
+                                              and (buffer[tmpRes+9] = 86)
+                                              and (buffer[tmpRes+10] = 73)
+                                              and (buffer[tmpRes+11] = 32) then
                   begin
                     // Add found offset to the list
                     result.Add(tmpRes);
                     // Next searchable offset is 12 bytes after the one found
                     inc(tmpRes,12);
                   end
-                  else
+                  else // Next searchable offset is 4 bytes after the last RIFF found
                     inc(tmpRes,4);
               end;
         2001: begin
@@ -1102,9 +1109,13 @@ begin
         3005: begin
                 strPCopy(szFind,'FORM');
                 tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
-                strPCopy(szFind,'ILBM');
+                // If magic ID is found
                 if (tmpRes <> -1) then
-                  if (BMFind(szFind,buffer,bufSize,tmpRes+8) = (tmpRes + 8)) then
+                  // Check if +8 bytes after ILBM magic ID is found
+                  if ((tmpRes+11) <= bufSize) and (buffer[tmpRes+8] = 73)
+                                              and (buffer[tmpRes+9] = 76)
+                                              and (buffer[tmpRes+10] = 66)
+                                              and (buffer[tmpRes+11] = 77) then
                   begin
                     // Add found offset to the list
                     result.Add(tmpRes);
@@ -1112,14 +1123,15 @@ begin
                     inc(tmpRes,12);
                   end
                   else
+                    // Next searchable offset is 4 bytes after the one found
                     inc(tmpRes,4);
               end;
         3006: begin
                 strPCopy(szFind,#255+#216+#255+#224);
                 tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
-                strPCopy(szFind,'JFIF');
                 if (tmpRes <> -1) then
-                  if (BMFind(szFind,buffer,bufSize,tmpRes+8) = (tmpRes + 6)) then
+                begin
+                  if ((tmpRes+9) <= bufsize) and (buffer[tmpRes+6] = 74) and (buffer[tmpRes+7] = 70) and (buffer[tmpRes+8] = 73) and (buffer[tmpRes+9] = 70) then
                   begin
                     // Add found offset to the list
                     result.Add(tmpRes);
@@ -1128,6 +1140,7 @@ begin
                   end
                   else
                     inc(tmpRes,4);
+                end;
               end;
         3007: begin
                 strPCopy(szFind,'DDS ');
@@ -1839,10 +1852,10 @@ begin
             FileRead(handle,buf1,4);
             FileRead(handle,Size,4);
             FileRead(handle,buf2,4);
-            if (buf1 = 'RIFF') and (buf2 = 'AVI ') and ((Offset + Size + 4) <= Totsize) then
+            if (buf1 = 'RIFF') and (buf2 = 'AVI ') and ((Offset + Size + 8) <= Totsize) then
             begin
                 result.Offset := offset;
-                result.Size := Size+4;
+                result.Size := Size+8;
                 result.Ext := 'avi';
                 result.GenType := HR_TYPE_VIDEO;
             end;

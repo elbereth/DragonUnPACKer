@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.15 2008-11-09 14:11:49 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.16 2008-11-13 18:56:39 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -205,20 +205,6 @@ type PFormatListElem = ^FormatsListElemEx;
     constructor Create(CreateSuspended: Boolean);
     procedure cancelSearch();
   end;
-  THRipSearchBuffer = class(TThread)
-  private
-    Buffer: PByteArray;
-    BufferSize: integer;
-    slist: SearchList;
-    Found: TList;
-    procedure doBufferSearch;
-  protected
-    procedure Execute; override;
-  public
-    procedure setBufferSearch(buf: PByteArray; sl: SearchList; bufSize: integer);
-    function getBufferSearchResult: TList;
-    constructor Create();
-  end;
 
 var
   frmHyperRipper: TfrmHyperRipper;
@@ -234,9 +220,6 @@ var prefix: string;
     Loading: Boolean = True;
     numChecked: Integer;
     counterMTOver: integer;
-    csMT: TCriticalSection;
-    MTWaitEvent: TEvent;
-    MultiRead: TMultiReadExclusiveWriteSynchronizer;
 
 procedure TfrmHyperRipper.cmdOkClick(Sender: TObject);
 var Reg: TRegistry;
@@ -279,7 +262,7 @@ begin
   prefix := ExtractFileName(txtSource.Text);
   lstResults.Items.Clear;
 
-  multiRead.BeginWrite;
+//  multiRead.BeginWrite;
 
   for x := 0 to lstFormats.Items.Count-1 do
   begin
@@ -294,7 +277,7 @@ begin
 
   slist.num := numChecked;
 
-  multiRead.EndWrite;
+//  multiRead.EndWrite;
 
   if FileExists(txtSource.Text) then
   begin
@@ -637,15 +620,14 @@ end;
 procedure THRipSearch.doSearch;
 var hSRC, x: integer;
     totsize,curpos,curposbuf: int64;
-    buffer: array of PByteArray;
-    bufsize: array of integer;
+    buffer: PByteArray;
+    bufsize: integer;
     testsize: integer;
     per, oldper: real;
     SomethingFound: Boolean;
     foundOffset: integer;
     found: FoundInfo64;
     numFound, rollback: integer;
-    flist: array of TList;
     flisttot: TList;
     fitem: PFoundItem;
     startTime: Cardinal;
@@ -657,12 +639,11 @@ var hSRC, x: integer;
     lastTimer: TDateTime;
     hrfver: byte;
     intTmp1,intTmp2,absoluteOffset,lastOffset: int64;
-    bufferOffset: array of int64;
+    bufferOffset: int64;
     foundOffsets: TIntList;
-    iNumOffset, iThreads: Integer;
+    iNumOffset: Integer;
     tmpspeedcalc: single;
-    bufSearchThread: array of THRipSearchBuffer;
-    ThreadExec: array of boolean;
+    itmX: Pointer;
 begin
 
   cancel := false;
@@ -726,21 +707,12 @@ begin
     hrip.LastResult(ReplaceValue('%f',DLNGstr('HRLG03'),ExtractFileName(filename))+' '+DLNGstr('HRLG04'));
     hrip.AddResult(DLNGstr('HRLG05'));
 
-    SetLength(buffer,numThreads);
-    SetLength(bufsize,numThreads);
-    SetLength(bufSearchThread,numThreads);
-    SetLength(FList,numThreads);
-    SetLength(ThreadExec,numThreads);
-    SetLength(bufferOffset,numThreads);
-
     flisttot := TList.Create;
-    for iThreads := 0 to numThreads - 1 do
-      flist[iThreads] := TList.Create;
 
     curPos := 0;
     totsize := FileSeek(hSRC,curPos,2);
-    for iThreads := 0 to numThreads - 1 do
-      getmem(Buffer[iThreads],MAXSIZE);
+    getmem(Buffer,MAXSIZE);
+    BufSize := MAXSIZE;
     try
      try
       FSE.PrepareHyperRipper(frmHyperRipper.getInfo);
@@ -754,121 +726,64 @@ begin
       while (CurPos < TotSize) and not(cancel) do
       begin
         curPosBuf := 0;
-        for iThreads := 0 to numThreads - 1 do
+
+        // If this is the first buffer from the file
+        // We do not do rollback
+        if curPos = 0 then
+          curposbuf := 0
+        else if not(SomethingFound) then
         begin
+          // We do rollback ONLY if the last buffer used is MAXSIZE bytes
+          if (bufsize = MAXSIZE) then
+            dec(curPosBuf,rollback);
+          // If last buffer not MAXSIZE then we reached end of file
+        end;
 
-          // If this is the first buffer from the file
-          // We do not do rollback
-          if curPos = 0 then
-            curposbuf := 0
-          else if not(SomethingFound) then
-            // We do rollback ONLY if the last buffer used is MAXSIZE bytes
-            if ((iThreads = 0) and (bufsize[numThreads-1] = MAXSIZE))
-            or ((iThreads > 0) and (bufsize[iThreads-1] = MAXSIZE)) then
-              dec(curPosBuf,rollback);
-            // If last buffer not MAXSIZE then we reached end of file
+        // Size of the buffer is:
+        //   TotalSize of file - CurrentPosition in file - Previous Buffers
+        bufsize := (TotSize - CurPos - CurPosBuf);
 
-          // Size of the buffer is:
-          //   TotalSize of file - CurrentPosition in file - Previous Buffers
-          bufsize[iThreads] := (TotSize - CurPos - CurPosBuf);
+        // If the buffer size exceeds the maximum buffer size, we use MAXSIZE instead
+        if bufsize > MAXSIZE then
+          bufsize := MAXSIZE;
 
-          // If the buffer size exceeds the maximum buffer size, we use MAXSIZE instead
-          if bufsize[iThreads] > MAXSIZE then
-            bufsize[iThreads] := MAXSIZE;
+        // Only read buffer if there is still bytes to read
+        if bufsize > 0 then
+        begin
+          // We seek into location
+          // That is Current position in file + Current Buffer
+          FileSeek(hSRC,CurPos+CurPosBuf,0);
 
-          // Only read buffer if there is still bytes to read
-          if bufsize[iThreads] > 0 then
-          begin
-            // We seek into location
-            // That is Current position in file + Current Buffer
-            FileSeek(hSRC,CurPos+CurPosBuf,0);
+          // We store the relative offset to buffer position for absolute offset calculation afterwards
+          bufferOffset := curPosBuf;
 
-            // We store the relative offset to buffer position for absolute offset calculation afterwards
-            bufferOffset[iThreads] := curPosBuf;
+          // We read the buffer
+          TestSize := FileRead(hSRC,buffer^,bufsize);
+          if (TestSize <> bufsize) then
+            raise Exception.create(ReplaceValue('%b',DLNGstr('HRLG07'),inttostr(bufsize-TestSize)));
 
-            // We read the buffer
-            TestSize := FileRead(hSRC,buffer[iThreads]^,bufsize[iThreads]);
-            if (TestSize <> bufsize[iThreads]) then
-              raise Exception.create(ReplaceValue('%b',DLNGstr('HRLG07'),inttostr(bufsize[iThreads]-TestSize)));
-
-            // We increase the Previous Buffers size with current buffer size
-            inc(CurPosBuf,bufsize[iThreads]);
-          end;
-
+          // We increase the Previous Buffers size with current buffer size
+          inc(CurPosBuf,bufsize);
         end;
 
         per := (CurPos / TotSize);
         per := per * 100;
 
-        for iThreads := 0 to numThreads - 1 do
+        for x := 1 to slist.num do
         begin
-          for x := 0 to flist[iThreads].Count-1 do
-            Dispose(flist[iThreads].Items[x]);
-          flist[iThreads].Clear;
-        end;
-        flisttot.Clear;
-//        for x := 1 to slist.num do
-//        begin
-        MTWaitEvent.ResetEvent;
-        counterMTOver := numThreads;
-        for iThreads := 0 to numThreads - 1 do
-        begin
-          if bufsize[iThreads] > 0 then
-          begin
-            bufSearchThread[iThreads] := THRipSearchBuffer.Create;
-            try
-              bufSearchThread[iThreads].setBufferSearch(buffer[iThreads],slist,bufsize[iThreads]);
-              bufSearchThread[iThreads].Resume;
-            except
-              on ex: Exception do
-              begin
-                hrip.addResult(ex.ClassName + ': '+ex.Message);
-                break;
-              end;
-            end;
-            ThreadExec[iThreads] := true;
-          end
-          else
-          begin
-            csMT.Acquire;
-            Dec(counterMTOver);
-            csMT.Release;
-            ThreadExec[iThreads] := false;
-          end;
-        end;
-
-        if MTWaitEvent.WaitFor(3600000) <> wrSignaled then
-          raise Exception.Create('Threads were not answering...'+inttostr(counterMTOver));
-
-        for iThreads := 0 to numThreads - 1 do
-          //if ThreadExec[iThreads] and (bufSearchThread[iThreads].WaitFor <> 0) then
-          begin
-            flist[iThreads] := bufSearchThread[iThreads].getBufferSearchResult;
-
-            bufSearchThread[iThreads].Free;
-          end;
-
-//          foundOffsets := HPlug.searchBuffer(slist.items[x].DriverNum,slist.items[x].ID,buffer,bufsize);
-{          if (foundOffsets is TIntList) and (foundOffsets.Count > 0) then
+          foundOffsets := HPlug.searchBuffer(slist.items[x].DriverNum,slist.items[x].ID,buffer,bufsize);
+          if (foundOffsets is TIntList) and (foundOffsets.Count > 0) then
           begin
             for iNumOffset := 0 to foundOffsets.Count - 1 do
             begin
               new(fitem);
               fitem^.Offset := foundOffsets.Integers[iNumOffset];
               fitem^.Index := x;
-              flist.Add(fitem);
+              flisttot.Add(fitem);
             end;
           end;
-          foundOffsets.Free;}
-//        end;
-
-        for iThreads := 0 to numThreads - 1 do
-          for x := 0 to flist[iThreads].Count-1 do
-          begin
-            fitem := flist[iThreads].Items[x];
-            inc(fitem^.offset,bufferOffset[iThreads]);
-            flisttot.Add(fitem);
-          end;
+          foundOffsets.Free;
+        end;
 
         if (flisttot.Count > 0) then
           flisttot.sort(@FListCompare);
@@ -880,7 +795,7 @@ begin
         begin
           fitem := flisttot.Items[x];
           absoluteOffset := fitem^.offset;
-          absoluteOffset := absoluteOffset + curPos;
+          absoluteOffset := absoluteOffset + bufferOffset + curPos;
           if LastOffset <> absoluteOffset then
           begin
             LastOffset := absoluteOffset;
@@ -931,6 +846,13 @@ begin
           end;
         end;
 
+        for x := 0 to flisttot.Count-1 do
+        begin
+          itmX := flisttot.Items[0];
+          flisttot.Remove(itmX);
+          Dispose(itmX);
+        end;
+
         Application.ProcessMessages;
 
         if (Per >= (OldPer + 1)) or (SecondsBetween(lastTimer,now) > 1) then
@@ -940,7 +862,7 @@ begin
           hrip.lblFound.Caption := IntTostr(numFound);
           hrip.lblHexDump.Caption := '';
           for x := 0 to 17 do
-            hrip.lblHexDump.Caption := hrip.lblHexDump.Caption + IntToHex(buffer[0][x],2)+' ';
+            hrip.lblHexDump.Caption := hrip.lblHexDump.Caption + IntToHex(buffer[x],2)+' ';
           OldPer := Per;
           if (GetTickCount - StartTime) > 0 then
           begin
@@ -969,17 +891,10 @@ begin
         end;
 
         if Not(SomethingFound) then
-        begin
           Inc(CurPos,CurPosBuf);
-//          if (CurPosBuf = (MAXSIZE*NumThreads)) then
-//            Dec(CurPos,rollback);
-        end;
-//        if (totsize - CurPos) < MAXSIZE then
-//          bufsize := (totsize - CurPos);
 
       end;
 
-//      raise Exception.create('bouh');
       hrip.lblFound.Caption := IntTostr(numFound);
       hrip.Progress.Position := 100;
       if (TotSize < 1024) then
@@ -1025,8 +940,7 @@ begin
       for x := 0 to flisttot.Count-1 do
         Dispose(flisttot.Items[x]);
       flisttot.Free;
-      for iThreads := 0 to numThreads - 1 do
-        freemem(Buffer[iThreads]);
+      freemem(Buffer);
 //      FileClose(hSRC);
       hrip.LastResult(DLNGstr('HRLG17')+' '+DLNGstr('HRLG04'));
       hrip.stopSearch;
@@ -1692,80 +1606,6 @@ begin
 
 end;
 
-constructor THRipSearchBuffer.Create();
-begin
-  inherited Create(true);
-  Priority := tpNormal;
-  FreeOnTerminate := False;
-  Found := TList.create;
-end;
-
-procedure THRipSearchBuffer.Execute;
-begin
-
-  doBufferSearch;
-
-  ReturnValue := 1;
-
-  csMT.Acquire;
-  Dec(counterMTOver);
-  if counterMTOver = 0 then
-    MTWaitEvent.SetEvent;
-  csMT.Release;
-
-end;
-
-procedure THRipSearchBuffer.doBufferSearch;
-var x, iNumOffset, slistID, slistDriverNum: integer;
-    foundOffsets: TIntList;
-    fitem: PFoundItem;
-begin
-
-
-  for x := 1 to slist.num do
-  begin
-
-    multiRead.BeginRead;
-
-    slistID := slist.items[x].ID;
-    slistDriverNum := slist.items[x].DriverNum;
-
-    multiRead.EndRead;
-
-    foundOffsets := HPlug.searchBuffer(slistDriverNum,slistID,buffer,buffersize);
-    if (foundOffsets is TIntList) and (foundOffsets.Count > 0) then
-    begin
-      for iNumOffset := 0 to foundOffsets.Count - 1 do
-      begin
-        new(fitem);
-        fitem^.Offset := foundOffsets.Integers[iNumOffset];
-        fitem^.Index := x;
-        Found.Add(fitem);
-      end;
-    end;
-    foundOffsets.Free;
-  end;
-
-end;
-
-procedure THRipSearchBuffer.setBufferSearch(buf: PByteArray; sl: SearchList; bufSize: integer);
-begin
-
-  Buffer := Buf;
-  Slist := sl;
-  BufferSize := bufSize;
-  if Found is TList Then
-     Found.Clear;
-
-end;
-
-function THRipSearchBuffer.getBufferSearchResult: TList;
-begin
-
-  result := Found;
-
-end;
-
 procedure TfrmHyperRipper.refreshMTText;
 var cxCPU: TcxCPU;
 begin
@@ -1815,9 +1655,5 @@ begin
 end;
 
 begin
-
- csMT := TCriticalSection.Create;
- MTWaitEvent := TEvent.Create(nil,false,false,'DragonUnPACKerHyperRipperMT');
- multiRead := TMultiReadExclusiveWriteSynchronizer.Create;
 
 end.

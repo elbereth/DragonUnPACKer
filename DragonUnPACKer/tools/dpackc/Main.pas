@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.5 2008-09-27 09:11:20 elbereth Exp $
+// $Id: Main.pas,v 1.6 2008-11-15 15:34:27 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dpackc/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -25,7 +25,7 @@ uses
   lib_crc, lib_zlib, spec_DUPP, JvComponent, JvSimpleXml, lib_version, lib_binutils,
   JvExStdCtrls, JvButton, JvCtrls, JvRichEdit,
   ULZMAEnc,UBufferedFS,DCPsha512,DCPsha256,DCPsha1,DCPmd5,DCPripemd160,DCPcrypt2,
-  JvExControls, JvLED;
+  JvExControls, JvLED,JvBrowseFolder, JvBaseDlg;
 
 type
      BMPHeader = packed record
@@ -46,6 +46,15 @@ type
        ColorsUsed: integer;
        ColorsImportant: integer;
      end;
+     DirEntry = record
+       FileName: string;
+       FileSize: integer;
+       FileHash: array[0..63] of byte;
+       Hashed: boolean;
+       Value: boolean;
+     end;
+     PDirEntry = ^DirEntry;
+
   TfrmMain = class(TForm)
     imgButtons: TImageList;
     SaveDialog: TSaveDialog;
@@ -107,9 +116,9 @@ type
     txtPackageFile: TEdit;
     butBrowsePackageFile: TButton;
     GroupBox4: TGroupBox;
-    JvImgBtn1: TJvImgBtn;
+    butNew: TJvImgBtn;
     butOpen: TJvImgBtn;
-    JvImgBtn3: TJvImgBtn;
+    butSave: TJvImgBtn;
     butCompile: TJvImgBtn;
     butExit: TButton;
     lblDUPVersion: TStaticText;
@@ -152,6 +161,40 @@ type
     Label23: TLabel;
     lblAuthorMax: TLabel;
     lblCommentMaxMax: TLabel;
+    TabSheet6: TTabSheet;
+    txtUpdateDir1: TEdit;
+    Button1: TButton;
+    txtUpdateDir2: TEdit;
+    Button2: TButton;
+    Label22: TLabel;
+    Label24: TLabel;
+    GroupBox5: TGroupBox;
+    GroupBox9: TGroupBox;
+    GroupBox10: TGroupBox;
+    Label25: TLabel;
+    Label26: TLabel;
+    lblDir1Num: TLabel;
+    lblDir1Size: TLabel;
+    Label29: TLabel;
+    Label30: TLabel;
+    lblDir2Num: TLabel;
+    Label32: TLabel;
+    lblDir2Size: TLabel;
+    Label34: TLabel;
+    Label35: TLabel;
+    lblUpdNum: TLabel;
+    Label37: TLabel;
+    lblUpdSize: TLabel;
+    Label39: TLabel;
+    Label40: TLabel;
+    lblUpdSaved: TLabel;
+    Label42: TLabel;
+    lblUpdSavedPercent: TLabel;
+    GroupBox11: TGroupBox;
+    ProgressBarUpdate: TProgressBar;
+    lblUpdateInfo: TLabel;
+    JvBrowseForFolderDialog1: TJvBrowseForFolderDialog;
+    JvImgBtn1: TJvImgBtn;
     procedure ListBox1DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure ListBox1DragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
@@ -180,7 +223,7 @@ type
     procedure txtVersionChange(Sender: TObject);
     procedure chkDUP5Click(Sender: TObject);
     procedure chkImagePersoClick(Sender: TObject);
-    procedure JvImgBtn1Click(Sender: TObject);
+    procedure butNewClick(Sender: TObject);
     procedure txtDUP5VersionChange(Sender: TObject);
     procedure butVersionPrevClick(Sender: TObject);
     procedure butVersionNextClick(Sender: TObject);
@@ -195,15 +238,23 @@ type
     procedure chkCompressNoneClick(Sender: TObject);
     procedure chkCompressZlibClick(Sender: TObject);
     procedure chkCompressLZMAClick(Sender: TObject);
+    procedure butNewUpdateClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
+    procedure JvImgBtn1Click(Sender: TObject);
 //    function convertInstallTo(val: integer): string;
   private
     { Déclarations privées }
     function getPluginVersion(filename: String): Integer;
-    function compressDUPPv4best(tmpStream: TStream; var CmpType: Byte): TMemoryStream; 
+    function compressDUPPv4best(tmpStream: TStream; var CmpType: Byte): TMemoryStream;
     procedure refreshSelectedInstallTo;
     procedure refreshAvailableOptions;
     procedure createDUPPv2_v3;
     procedure createDUPPv4;
+    procedure diffDirectories(dir1, dir2: String);
+    function getFilesTreeFromDirectory(root, dirName: string): TList;
+    procedure addFile(filename: string; installTo: integer = -1);
+    procedure reinitFilesTab();
   public
     PackVersion: Integer;
     PackDUP5Check: Boolean;
@@ -244,8 +295,8 @@ implementation
 
 uses Compile, Config;
 
-const DPSVERSION = 3;
-      VERSION = 30040;
+const DPSVERSION = 4;
+      VERSION: integer = 35040;
 
 {$R *.dfm}
 
@@ -1194,11 +1245,7 @@ begin
 end;
 
 procedure TfrmMain.butAddClick(Sender: TObject);
-var itmx: TListItem;
-    ext: string;
-    tmp: FileInfo;
-//    Handle: THandle;
-    Dialog: TOpenDialog;
+var Dialog: TOpenDialog;
     x: integer;
 begin
 
@@ -1213,52 +1260,7 @@ begin
     for x := 0 to Dialog.Files.Count - 1 do
     begin
 
-      itmx := lstFiles.Items.Add;
-      with itmx do
-      begin
-        itmx.Caption := ExtractFilename(Dialog.Files.Strings[x]);
-        itmx.SubItems.Add(IntToStr(GetFSize(Dialog.Files.Strings[x])));
-        itmx.SubItems.Add(DateTimeToStr(FileDateToDateTime(FileAge(Dialog.Files.Strings[x]))));
-        ext := lowercase(ExtractFileExt(Dialog.Files.Strings[x]));
-        tmp := FileInfo.Create(True, True, True, False, False,False,D5PCOMPRESSION_LZMA,0,-1,Dialog.Files.Strings[x],'');
-        if ext = '.d5d' then
-        begin
-          tmp.InstallTo := 2;
-          tmp.ForcedDir := true;
-          tmp.Version := getPluginVersion(Dialog.Files.Strings[x]);
-        end
-        else if (ext = '.d5c') then
-        begin
-          tmp.InstallTo := 0;
-          tmp.ForcedDir := true;
-          tmp.Version := getPluginVersion(Dialog.Files.Strings[x]);
-        end
-        else if (ext = '.d5h') then
-        begin
-          tmp.InstallTo := 3;
-          tmp.ForcedDir := true;
-          tmp.Version := getPluginVersion(Dialog.Files.Strings[x]);
-        end
-        else if (ext = '.dpal') then
-        begin
-          tmp.InstallTo := 0;
-          tmp.ForcedDir := true;
-        end
-        else if (ext = '.dulk') or (ext = '.lng') then
-        begin
-          tmp.InstallTo := 1;
-          tmp.ForcedDir := true;
-        end
-        else
-        begin
-          tmp.InstallTo := 4;
-        end;
-
-        if (tmp.Version = -1) then
-          tmp.UpgradeOnly := false;
-        itmx.SubItems.Add(txtInstallTo.Items.Strings[tmp.InstallTo]);
-        itmx.Data := tmp;
-      end;
+      addFile(Dialog.Files.Strings[x]);
 
     end;
   end;
@@ -1589,6 +1591,10 @@ begin
       sub.Properties.Add('duppversion',4);
     sub := head.Items.Add('CHECKDUP5VERSION');
     sub.Value := txtDUP5Version.Text;
+    sub := head.Items.Add('UPDATECREATOROLDDIR');
+    sub.Value := txtUpdateDir1.Text;
+    sub := head.Items.Add('UPDATECREATORNEWDIR');
+    sub.Value := txtUpdateDir2.Text;
 
     sub.Properties.Add('use',chkDUP5.Checked);
 
@@ -1693,11 +1699,12 @@ begin
     head := SimpleXML.Root.Items.ItemNamed['HEAD'];
 
     if (SimpleXML.Root.Properties.IntValue('version') <> DPSVERSION) and
+       (SimpleXML.Root.Properties.IntValue('version') <> 3) and
        (SimpleXML.Root.Properties.IntValue('version') <> 2) and
        (SimpleXML.Root.Properties.IntValue('version') <> 1) then
     begin
 
-      ShowMessage('Error: Project file must be version '+inttostr(DPSVERSION)+' (v1 and v2 are also supported).');
+      ShowMessage('Error: Project file must be version '+inttostr(DPSVERSION)+' (v1, v2 & v3 are also supported).');
 
     end
     else
@@ -1739,6 +1746,11 @@ begin
         chkCompressLZMA.Checked := head.Items.ItemNamed['COMPRESSION'].Properties.BoolValue('lzma',true);
         optFileCompressSolid.Checked := head.Items.ItemNamed['COMPRESSION'].Properties.BoolValue('solid',false);
       end;
+
+      if head.Items.IndexOf('UPDATECREATOROLDDIR') <> -1 then
+        txtUpdateDir1.Text := head.Items.ItemNamed['UPDATECREATOROLDDIR'].Value;
+      if head.Items.IndexOf('UPDATECREATORNEWDIR') <> -1 then
+        txtUpdateDir2.Text := head.Items.ItemNamed['UPDATECREATORNEWDIR'].Value;
 
       if head.Items.IndexOf('HASH') <> -1 then
       begin
@@ -1878,7 +1890,7 @@ begin
 
 end;
 
-procedure TfrmMain.JvImgBtn1Click(Sender: TObject);
+procedure TfrmMain.butNewClick(Sender: TObject);
 begin
 
   txtVersion.Text := '10000';
@@ -1896,18 +1908,7 @@ begin
   txtDUP5Version.Text := '169';
   txtDUP5Version.Enabled := false;
 
-  lstFiles.Clear;
-
-  txtInstallTo.Enabled := false;
-  txtInstallDir.Enabled := false;
-  chkCompress.Enabled := false;
-  chkUpgradeOnly.Enabled := false;
-  chkStoreDateTime.Enabled := false;
-  chkRegSvr.Enabled := false;
-  chkReadOnly.Enabled := false;
-  chkHidden.Enabled := false;
-
-  butDel.Enabled := false;
+  reinitFilesTab;
 
 end;
 
@@ -2185,6 +2186,350 @@ procedure TfrmMain.chkCompressLZMAClick(Sender: TObject);
 begin
 
   chkCompressLzma.Checked := chkCompressLzma.Checked or (not(chkCompressNone.Checked) and not(chkCompressZlib.Checked));
+
+end;
+
+procedure TfrmMain.butNewUpdateClick(Sender: TObject);
+begin
+
+  TabSheet2.Visible := false;
+  TabSheet3.Visible := false;
+  TabSheet4.Visible := false;
+  TabSheet5.Visible := false;
+  TabSheet6.Visible := true;
+
+  TabSheet6.Highlighted := true;
+
+end;
+
+
+function TfrmMain.getFilesTreeFromDirectory(root, dirName: string): TList;
+var
+  sr: TSearchRec;
+  FileAttrs, x: Integer;
+  DirItem: PDirEntry;
+  searchStr,newDir: string;
+  dirList: TList;
+begin
+
+  result := Tlist.Create;
+
+  FileAttrs := faAnyFile or faVolumeID;
+  if length(dirName) > 0 then
+    searchStr := root + '\' + dirName + '\*.*'
+  else
+    searchStr := root + '\*.*';
+
+  if FindFirst(searchStr, FileAttrs, sr) = 0 then
+  begin
+    repeat
+      if (sr.Attr and FileAttrs) = sr.Attr then
+        if (sr.Attr and faDirectory) = faDirectory then
+        begin
+          if (sr.Name <> '.') and (sr.Name <> '..') then
+          begin
+            newDir := dirName + '\' + sr.Name;
+            dirList := getFilesTreeFromDirectory(root,newDir);
+            for x := 0 to dirList.Count-1 do
+              result.Add(dirList.Items[x]);
+            dirList.Free;
+          end;
+        end
+        else
+        begin
+          New(DirItem);
+          DirItem^.FileName := dirName + '\' + sr.Name;
+          DirItem^.FileSize := sr.Size;
+          FillChar(DirItem^.FileHash,64,0);
+          DirItem^.Value := false;
+          DirItem^.Hashed := false;
+          result.Add(DirItem);
+        end;
+    until FindNext(sr) <> 0;
+    FindClose(sr);
+  end;
+
+end;
+
+procedure TfrmMain.diffDirectories(dir1, dir2: String);
+var DirList1, DirList2: TList;
+    numDir1, numDir2, x, installTo, totSize,TotSizeUpd, numUpd: integer;
+    DirItem1, DirItem2: PDirEntry;
+    Hash_SHA512: TDCP_sha512;
+    fin: TStream;
+    HashOk: boolean;
+    pathId: string;
+begin
+
+  progressBarUpdate.Position := 0;
+  lblDir1Num.Caption := '0';
+  lblDir1Size.Caption := '0';
+  lblDir2Num.Caption := '0';
+  lblDir2Size.Caption := '0';
+  lblUpdNum.Caption := '0';
+  lblUpdSize.Caption := '0';
+  lblUpdSaved.Caption := '0';
+  lblUpdSavedPercent.Caption := '0%';
+
+  frmMain.Refresh;
+
+  reinitFilesTab;
+
+  lblUpdateInfo.Caption := 'Retrieving files in old directory...';
+  lblUpdateInfo.Refresh;
+  dirList1 := getFilesTreeFromDirectory(dir1,'');
+  lblDir1Num.Caption := inttostr(dirList1.Count);
+  TotSize := 0;
+  for x := 0 to dirList1.Count-1 do
+  begin
+    dirItem1 := dirList1.Items[x];
+    inc(TotSize,dirItem1^.FileSize);
+  end;
+  lblDir1Size.Caption := inttostr(TotSize);
+  progressBarUpdate.Position := 10;
+  frmMain.Refresh;
+  lblUpdateInfo.Caption := 'Retrieving files in new directory...';
+  lblUpdateInfo.Refresh;
+  dirList2 := getFilesTreeFromDirectory(dir2,'');
+  lblDir2Num.Caption := inttostr(dirList2.Count);
+  TotSize := 0;
+  for x := 0 to dirList2.Count-1 do
+  begin
+    dirItem2 := dirList2.Items[x];
+    inc(TotSize,dirItem2^.FileSize);
+  end;
+  lblDir2Size.Caption := inttostr(TotSize);
+  progressBarUpdate.Position := 20;
+  Hash_SHA512 := TDCP_sha512.Create(self);
+  frmMain.Refresh;
+
+  NumUpd := 0;
+  for numDir2 := 0 to dirList2.Count-1 do
+  begin
+    dirItem2 := dirList2.Items[numDir2];
+    dirItem2^.Value := true;
+    lblUpdateInfo.Caption := 'Checking '+dirItem2^.FileName+'...';
+    lblUpdateInfo.Refresh;
+    for numDir1 := 0 to dirList1.Count-1 do
+    begin
+      dirItem1 := dirList1.Items[numDir1];
+      if (dirItem2^.FileName = dirItem1^.FileName) then
+      begin
+        if (dirItem2^.FileSize = dirItem1^.FileSize) then
+        begin
+          if not(dirItem1^.Hashed) then
+          begin
+            Hash_SHA512.Init;
+            fIn := TBufferedFS.Create(dir1+dirItem1^.FileName, fmOpenRead);
+            Hash_SHA512.UpdateStream(fin,fin.Size);
+            fIn.Free;
+            Hash_SHA512.Final(dirItem1^.FileHash);
+            dirItem1^.Hashed := true;
+          end;
+          if not(dirItem2^.Hashed) then
+          begin
+            Hash_SHA512.Init;
+            fIn := TBufferedFS.Create(dir2+dirItem2^.FileName, fmOpenRead);
+            Hash_SHA512.UpdateStream(fin,fin.Size);
+            fIn.Free;
+            Hash_SHA512.Final(dirItem2^.FileHash);
+            dirItem2^.Hashed := true;
+          end;
+          HashOk := true;
+          for x := 0 to 63 do
+            HashOk := HashOk and (dirItem1^.FileHash[x] = dirItem2^.FileHash[x]);
+          dirItem2^.Value := not(HashOk);
+        end;
+        break;
+      end;
+    end;
+    progressBarUpdate.Position := 20 + round(((numDir2+1) / (dirList2.Count+1))*80);
+    frmMain.Refresh;
+    if dirItem2^.Value then
+      inc(NumUpd);
+  end;
+
+  lblUpdateInfo.Caption := 'Adding files to the list...';
+  lblUpdateInfo.Refresh;
+
+  lblUpdNum.Caption := inttostr(NumUpd);
+  TotSizeUpd := 0;
+  frmMain.Refresh;
+  for x := 0 to dirList2.Count-1 do
+  begin
+    dirItem2 := dirList2.Items[x];
+    if (dirItem2^.Value) then
+    begin
+      inc(TotSizeUpd,dirItem2^.FileSize);
+      pathId := ExtractFilePath(dirItem2^.FileName);
+      if (pathId = '\data\convert\') then
+        installTo := 0
+      else if (pathId = '\data\') then
+        installTo := 1
+      else if (pathId = '\data\drivers\') then
+        installTo := 2
+      else if (pathId = '\data\hyperripper\') then
+        installTo := 3
+      else if (pathId = '\') then
+        installTo := 4
+      else if (pathId = '\utils\') then
+        installTo := 5
+      else if (pathId = '\utils\templates\') then
+        installTo := 6
+      else if (pathId = '\utils\translation\') then
+        installTo := 7
+      else if (pathId = '\utils\data\') then
+        installTo := 8
+      else
+        installTo := -1;
+
+      addFile(Dir2 + dirItem2^.FileName,installTo);
+
+    end;
+    Dispose(DirItem2);
+  end;
+  for x := 0 to dirList1.Count-1 do
+  begin
+    dirItem1 := dirList1.Items[x];
+    Dispose(DirItem1);
+  end;
+  DirList1.Free;
+  DirList2.Free;
+  lblUpdSize.Caption := inttostr(TotSizeUpd);
+  lblUpdSaved.Caption := inttostr(TotSize-TotSizeUpd);
+  lblUpdSavedPercent.Caption := inttostr(Round(((TotSize-TotSizeUpd)/TotSize)*100))+'%';
+  lblUpdateInfo.Caption := 'Finished!';
+  lblUpdateInfo.Refresh;
+
+  Hash_SHA512.Free;
+
+end;
+
+procedure TfrmMain.addFile(filename: string; installTo: integer = -1);
+var itmx: TListItem;
+    ext,datestr: string;
+    tmp: FileInfo;
+begin
+
+      itmx := lstFiles.Items.Add;
+      with itmx do
+      begin
+        itmx.Caption := ExtractFilename(filename);
+        itmx.SubItems.Add(IntToStr(GetFSize(filename)));
+        try
+          datestr := DateTimeToStr(FileDateToDateTime(FileAge(filename)));
+        except
+          datestr := '';
+        end;
+        itmx.SubItems.Add(datestr);
+        ext := lowercase(ExtractFileExt(filename));
+        if installTo <> -1 then
+          tmp := FileInfo.Create(True, True, True, False, False,False,D5PCOMPRESSION_LZMA,installTo,-1,filename,'')
+        else
+          tmp := FileInfo.Create(True, True, True, False, False,False,D5PCOMPRESSION_LZMA,0,-1,filename,'');
+        if ext = '.d5d' then
+        begin
+          if installTo = -1 then
+            tmp.InstallTo := 2;
+          tmp.ForcedDir := true;
+          tmp.Version := getPluginVersion(filename);
+        end
+        else if (ext = '.d5c') then
+        begin
+          if installTo = -1 then
+            tmp.InstallTo := 0;
+          tmp.ForcedDir := true;
+          tmp.Version := getPluginVersion(filename);
+        end
+        else if (ext = '.d5h') then
+        begin
+          if installTo = -1 then
+            tmp.InstallTo := 3;
+          tmp.ForcedDir := true;
+          tmp.Version := getPluginVersion(filename);
+        end
+        else if (ext = '.dpal') then
+        begin
+          if installTo = -1 then
+            tmp.InstallTo := 0;
+          tmp.ForcedDir := true;
+        end
+        else if (ext = '.dulk') then
+        begin
+          if installTo = -1 then
+            tmp.InstallTo := 1;
+          tmp.ForcedDir := true;
+        end
+        else if (ext = '.lng') then
+        begin
+          if installTo = -1 then
+            tmp.InstallTo := 1;
+        end
+        else if (installTo = -1) then
+        begin
+          tmp.InstallTo := 4;
+        end;
+
+        if (tmp.Version = -1) then
+          tmp.UpgradeOnly := false;
+        itmx.SubItems.Add(txtInstallTo.Items.Strings[tmp.InstallTo]);
+        itmx.Data := tmp;
+      end;
+
+end;
+
+procedure TfrmMain.reinitFilesTab();
+begin
+
+  lstFiles.Clear;
+
+  txtInstallTo.Enabled := false;
+  txtInstallDir.Enabled := false;
+  chkCompress.Enabled := false;
+  chkUpgradeOnly.Enabled := false;
+  chkStoreDateTime.Enabled := false;
+  chkRegSvr.Enabled := false;
+  chkReadOnly.Enabled := false;
+  chkHidden.Enabled := false;
+
+  butDel.Enabled := false;
+
+end;
+
+procedure TfrmMain.Button1Click(Sender: TObject);
+var dirSelect: TJvBrowseForFolderDialog;
+begin
+
+  dirSelect := TJvBrowseForFolderDialog.Create(Self);
+  dirSelect.Directory := txtUpdateDir1.Text;
+  dirSelect.Options := [odOnlyDirectory, odNewDialogStyle, odStatusAvailable];
+
+  if dirSelect.Execute then
+    txtUpdateDir1.Text := dirSelect.Directory;
+
+  dirSelect.Free;
+  
+end;
+
+procedure TfrmMain.Button2Click(Sender: TObject);
+var dirSelect: TJvBrowseForFolderDialog;
+begin
+
+  dirSelect := TJvBrowseForFolderDialog.Create(Self);
+  dirSelect.Directory := txtUpdateDir2.Text;
+  dirSelect.Options := [odOnlyDirectory, odNewDialogStyle, odStatusAvailable];
+
+  if dirSelect.Execute then
+    txtUpdateDir2.Text := dirSelect.Directory;
+
+  dirSelect.Free;
+
+end;
+
+procedure TfrmMain.JvImgBtn1Click(Sender: TObject);
+begin
+
+  diffDirectories(txtUpdateDir1.Text,txtUpdateDir2.Text);
 
 end;
 

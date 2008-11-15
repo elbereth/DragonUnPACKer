@@ -1,6 +1,6 @@
 <?php
 
-// $Id: dus.php,v 1.6 2008-10-03 17:56:07 elbereth Exp $
+// $Id: dus.php,v 1.7 2008-11-15 18:42:05 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dus/dus.php,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,16 +18,16 @@
 //
 
   // CVS variables
-  $CVS_REVISION = '$Revision: 1.6 $';
+  $CVS_REVISION = '$Revision: 1.7 $';
   $CVS_REVISION_DISPLAY = substr($CVS_REVISION,11,strlen($CVS_REVISION)-13);
-  $CVS_DATE = '$Date: 2008-10-03 17:56:07 $';
+  $CVS_DATE = '$Date: 2008-11-15 18:42:05 $';
   $CVS_DATE_DISPLAY = substr($CVS_DATE,7,strlen($CVS_DATE)-9);
 
   // Sending the header
   header('Content-type: text/plain');
   echo "[ID]\n";
   echo "DUS=3\n";
-  echo "Description=Dragon UnPACKer 5 Update Server v3.$CVS_REVISION_DISPLAY ($CVS_DATE_DISPLAY)\n";
+  echo "Description=Dragon UnPACKer 5 Update Server v3.$CVS_REVISION_DISPLAY+3 ($CVS_DATE_DISPLAY)\n";
 
   // Connect to MYSQL Database
   $link = mysql_connect("mysql4-d", "d108923ro", "rofordus3");
@@ -56,6 +56,66 @@
   // Initialize body
   $dusbody = '';
 
+  // Retrieving servers information
+  $query = "SELECT * FROM dus_servers WHERE serverEnabled='true' ORDER BY serverPriority";
+  $queryresult = mysql_query ($query);
+  if (mysql_errno() != 0) {
+  	echo "Result=M40\n";
+       echo "ResultQuery=".$query."\n";
+       echo "ResultDescription=".mysql_error()."\n";
+  	return;
+  }
+
+  $dusservers = '';
+  $numservers = 0;
+  $servers = array();
+  while ($line = mysql_fetch_assoc($queryresult)) {
+
+    $servers[$numservers]['id'] = $line['serverID'];
+    $servers[$numservers]['url'] = $line['serverURL'];
+    $servers[$numservers]['path'] = $line['serverUsePaths'];
+    $dusservers .= "Server".$numservers."=".$line['serverName']."\n";
+    $numservers++;
+     	
+  }
+  $dusservers = "NumServers=".$numservers."\n".$dusservers;
+
+  mysql_free_result($queryresult);
+
+  // Retrieving duppi information
+  $query = "SELECT * FROM dus_duppi ORDER BY version DESC";
+  $queryresult = mysql_query ($query);
+  if (mysql_errno() != 0) {
+  	echo "Result=M60\n";
+    echo "ResultDescription=".mysql_error()."\n";
+  	return;
+  }
+
+  if ($line = mysql_fetch_array($queryresult, MYSQL_NUM)) {
+
+    $dusbody .= "[duppi]\nVersion=".$line[0]."\nVersionDisp=".$line[1]."\n";
+    for ($x=0;$x<$numservers;$x++) {
+      if ($x == 0) {
+        if ($servers[$x]['path'] == 'true') {
+          $dusbody .= "URL=".$servers[$x]['url'].$line[2]."\n";
+        }
+        else {
+          $dusbody .= "URL=".$servers[$x]['url'].$line[3]."\n";
+        }
+      }
+      else {
+        if ($servers[$x]['path'] == 'true') {
+          $dusbody .= "URL$x=".$servers[$x]['url'].$line[2]."\n";
+        }
+        else {
+          $dusbody .= "URL$x=".$servers[$x]['url'].$line[3]."\n";
+        }
+      }
+    }
+    $dusbody .= "FileDL=".$line[3]."\nSize=".$line[4]."\n\n";
+
+  }
+
   // Retrieving core information
   $query = "SELECT * FROM dus_core WHERE type = 'stable' AND available = 'yes' ORDER BY build DESC";
   $queryresult = mysql_query ($query);
@@ -67,7 +127,41 @@
 
   if ($line = mysql_fetch_array($queryresult, MYSQL_NUM)) {
 
-    $dusbody .= "[core]\nVersion=".$line[0]."\nVersionDisp=".$line[3]."\nUpdateURL=".$line[4]."\n\n";
+    $duscoreupd = '';
+
+    // Retrieving core update (Duppi 3.0.0+) information
+    $query2 = "SELECT * FROM dus_core_update WHERE buildfrom=$userBuild AND buildto=".$line[0];
+    $queryresult2 = mysql_query ($query2);
+    if (mysql_errno() != 0) {
+  	echo "Result=M12\n";
+       echo "ResultDescription=".mysql_error()."\n";
+    	return;
+    }
+    if ($line2 = mysql_fetch_array($queryresult2, MYSQL_NUM)) {
+      for ($x=0;$x<$numservers;$x++) {
+        if ($x == 0) {
+          if ($servers[$x]['path'] == 'true') {
+            $duscoreupd .= "PackageURL=".$servers[$x]['url'].$line2[2]."\n";
+          }
+          else {
+            $duscoreupd .= "PackageURL=".$servers[$x]['url'].$line2[3]."\n";
+          }
+        }
+        else {
+          if ($servers[$x]['path'] == 'true') {
+            $duscoreupd .= "PackageURL$x=".$servers[$x]['url'].$line2[2]."\n";
+          }
+          else {
+            $duscoreupd .= "PackageURL$x=".$servers[$x]['url'].$line2[3]."\n";
+          }
+        }
+      }
+      $duscoreupd .= "PackageSize=".$line2[4]."\nPackageFileDL=".$line2[3]."\n";
+    }
+
+    mysql_free_result($queryresult2);
+
+    $dusbody .= "[core]\nVersion=".$line[0]."\nVersionDisp=".$line[3]."\nUpdateURL=".$line[4]."\n".$duscoreupd."\n";
      	
   }
 
@@ -85,7 +179,41 @@
 
   if ($line = mysql_fetch_array($queryresult, MYSQL_NUM)) {
 
-    $dusbody .= "[corewip]\nVersion=".$line[0]."\nVersionDisp=".$line[3]."\nUpdateURL=".$line[4]."\n\n";
+    $duscoreupd = '';
+
+    // Retrieving core update (Duppi 3.0.0+) information
+    $query2 = "SELECT * FROM dus_core_update WHERE buildfrom=$userBuild AND buildto=".$line[0];
+    $queryresult2 = mysql_query ($query2);
+    if (mysql_errno() != 0) {
+  	echo "Result=M13\n";
+       echo "ResultDescription=".mysql_error()."\n";
+    	return;
+    }
+    if ($line2 = mysql_fetch_array($queryresult2, MYSQL_NUM)) {
+      for ($x=0;$x<$numservers;$x++) {
+        if ($x == 0) {
+          if ($servers[$x]['path'] == 'true') {
+            $duscoreupd .= "PackageURL=".$servers[$x]['url'].$line2[2]."\n";
+          }
+          else {
+            $duscoreupd .= "PackageURL=".$servers[$x]['url'].$line2[3]."\n";
+          }
+        }
+        else {
+          if ($servers[$x]['path'] == 'true') {
+            $duscoreupd .= "PackageURL$x=".$servers[$x]['url'].$line2[2]."\n";
+          }
+          else {
+            $duscoreupd .= "PackageURL$x=".$servers[$x]['url'].$line2[3]."\n";
+          }
+        }
+      }
+      $duscoreupd .= "PackageSize=".$line2[4]."\nPackageFileDL=".$line2[3]."\n";
+    }
+
+    mysql_free_result($queryresult2);
+
+    $dusbody .= "[corewip]\nVersion=".$line[0]."\nVersionDisp=".$line[3]."\nUpdateURL=".$line[4]."\n".$duscoreupd."\n";
      	
   }
 
@@ -117,32 +245,6 @@
     echo $dusbody;
   	return;
   }
-
-  mysql_free_result($queryresult);
-
-  // Retrieving servers information
-  $query = "SELECT * FROM dus_servers WHERE serverEnabled='true' ORDER BY serverPriority";
-  $queryresult = mysql_query ($query);
-  if (mysql_errno() != 0) {
-  	echo "Result=M40\n";
-       echo "ResultQuery=".$query."\n";
-       echo "ResultDescription=".mysql_error()."\n";
-  	return;
-  }
-
-  $dusservers = '';
-  $numservers = 0;
-  $servers = array();
-  while ($line = mysql_fetch_assoc($queryresult)) {
-
-    $servers[$numservers]['id'] = $line['serverID'];
-    $servers[$numservers]['url'] = $line['serverURL'];
-    $servers[$numservers]['path'] = $line['serverUsePaths'];
-    $dusservers .= "Server".$numservers."=".$line['serverName']."\n";
-    $numservers++;
-     	
-  }
-  $dusservers = "NumServers=".$numservers."\n".$dusservers;
 
   mysql_free_result($queryresult);
 

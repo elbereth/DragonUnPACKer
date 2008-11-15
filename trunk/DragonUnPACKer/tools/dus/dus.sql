@@ -1,4 +1,4 @@
--- $Id: dus.sql,v 1.2 2008-10-04 08:56:33 elbereth Exp $
+-- $Id: dus.sql,v 1.3 2008-11-15 18:42:05 elbereth Exp $
 -- $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dus/dus.sql,v $
 --
 -- The contents of this file are subject to the Mozilla Public License
@@ -20,7 +20,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Oct 04, 2008 at 08:51 AM
+-- Generation Time: Nov 15, 2008 at 06:39 PM
 -- Server version: 5.0.51
 -- PHP Version: 5.2.6
 
@@ -81,6 +81,21 @@ CREATE TABLE `dus_core` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `dus_core_update`
+--
+
+CREATE TABLE `dus_core_update` (
+  `buildfrom` int(11) NOT NULL,
+  `buildto` int(11) NOT NULL,
+  `URL` text NOT NULL,
+  `fileDL` text NOT NULL,
+  `size` int(11) NOT NULL,
+  PRIMARY KEY  (`buildfrom`,`buildto`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `dus_driver`
 --
 
@@ -100,6 +115,21 @@ CREATE TABLE `dus_driver` (
   `date` timestamp NOT NULL default CURRENT_TIMESTAMP,
   PRIMARY KEY  (`name`,`version`),
   KEY `dudi` (`dudi`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `dus_duppi`
+--
+
+CREATE TABLE `dus_duppi` (
+  `version` int(11) NOT NULL,
+  `versiondisp` varchar(32) NOT NULL,
+  `URL` text NOT NULL,
+  `fileDL` text NOT NULL,
+  `size` int(11) NOT NULL,
+  PRIMARY KEY  (`version`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------

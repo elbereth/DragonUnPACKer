@@ -21,6 +21,8 @@ begin
     result := '&Fermer'
   else if sch = 'MNU1S3' then
     result := '&Quitter'
+  else if sch = 'MNU1S4' then
+    result := '&Ouvert récement...'
   else if sch = 'MNU4' then
     result := '&Edition'
   else if sch = 'MNU4S1' then
@@ -53,6 +55,8 @@ begin
     result := '&?'
   else if sch = 'MNU3S1' then
     result := 'A Propos de'
+  else if sch = 'MNU3S2' then
+    result := 'Rechercher de nouvelles versions sur Internet...'
   else if sch = 'LSTCP1' then
     result := 'Fichier'
   else if sch = 'LSTCP2' then
@@ -197,6 +201,8 @@ begin
     result := 'Options générales'
   else if sch = 'OPT110' then
     result := 'Langue'
+  else if sch = 'OPT111' then
+    result := 'Trouver d''autres traductions...'
   else if sch = 'OPT120' then
     result := 'Options'
   else if sch = 'OPT121' then

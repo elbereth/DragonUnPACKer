@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.40 2008-11-16 15:57:48 elbereth Exp $
+// $Id: drv_default.dpr,v 1.41 2008-11-16 16:19:20 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -180,7 +180,8 @@ type FSE = ^element;
                  Same goes for special functions
                  Improved detection of Riddick .XTC files (retail version of the game)
     20516        Improved LithTech .REZ support -> Fixes opening NOLF2 sound.rez
-    20540        Added support for Ascendancy .COB files
+    20540  54040 Added support for Ascendancy .COB files
+                 Added support for Florensia .PAK files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -200,9 +201,9 @@ type FSE = ^element;
 
 const
   DRIVER_VERSION = 20540;
-  DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.40 $';
-  CVS_DATE = '$Date: 2008-11-16 15:57:48 $';
+  DUP_VERSION = 54040;
+  CVS_REVISION = '$Revision: 1.41 $';
+  CVS_DATE = '$Date: 2008-11-16 16:19:20 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;

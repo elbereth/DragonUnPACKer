@@ -1,17 +1,18 @@
+# ============================================================================
 # Language Source File (pour DLNGC v4.0)
 # ============================================================================
-#  Programme: Dragon UnPACKer v5.3.3 Beta
-#     Langue: English
+#  Programme: Duppi v3.0.0 (Dragon UnPACKer)
+#     Langue: Français
 #    Version: 1
-#     Auteur: Alex Devilliers
+#     Auteur: Alexandre Devilliers
 # ============================================================================
 #
-# Ce fichier est le model pour les traductions de Dragon UnPACKer.
+# Ce fichier est le model pour les traductions de Duppi (Dragon UnPACKer).
 #
 # Il vous suffit de traduire entre les tags {BODY} et {/BODY}
 #
 # Compilez ce fichier avec DLNGC et mettez le fichier .LNG resultant dans le
-# sous-répertoire \Data\ de Dragon UnPACKer.
+# sous-répertoire Utils\Data\ de Dragon UnPACKer.
 #
 # Pour selectionner une autre langue pour Dragon UnPACKer lancez:
 # DrgUnPACK5.exe /lng
@@ -22,6 +23,11 @@
 # Si vous faite une traduction n'hésitez pas a l'envoyer a Alex Devilliers
 # afin qu'elle soit distribuée sur le site internet et avec le programme.
 #
+# ATTENTION: Une traduction complète de Dragon UnPACKer comprend DEUX
+#            fichiers:
+#              french.ls        Traduction pour Dragon UnPACKer
+#              french_duppi.ls  Traduction pour Duppi
+#
 # Vous pouvez contacter Alex Devilliers par e-mail:
 # translation@dragonunpacker.com et par ICQ: 1535372 (Elbereth)
 #
@@ -29,11 +35,9 @@
 # Informations sur cette traduction
 # ============================================================================
 #
-# version 11:
-# Nouvelles entrées pour la prévisualisation
-#
-# version 10:
-# Première version sous forme de fichier .LS
+# Version 1:
+# Version initiale (séparation entre Duppi & Dragon UnPACKer pour permettre
+# une mise à jour indépendante).
 #
 {LSF}
 {HEADER}
@@ -75,20 +79,7 @@ URL = http://www.dragonunpacker.com
 # NE CHANGEZ LES VALEURS QUE SI VOUS SAVEZ CE QUE VOUS FAITES
 #
 #                                ID      Ver
-# Dragon UnPACKer v5.0.0 Beta 1  UP       1
-# Dragon UnPACKer v5.0.0 Beta 2  UP       2
-# Dragon UnPACKer v5.0.0 Beta 3  UP       3
-# Dragon UnPACKer v5.0.0 Beta 4  UP       3
-# Dragon UnPACKer v5.0.0 RC1     UP       4
-# Dragon UnPACKer v5.0.0 RC2     UP       5
-# Dragon UnPACKer v5.0.0 RC3     UP       6
-# Dragon UnPACKer v5.1.0         UP       7
-# Dragon UnPACKer v5.1.2         UP       8
-# Dragon UnPACKer v5.2.0         UP       9
-# Dragon UnPACKer v5.2.0a        UP       9
-# Dragon UnPACKer v5.2.0b        UP       9
-# Dragon UnPACKer v5.3.2         UP      10
-# Dragon UnPACKer v5.3.3 Beta    UP      11
+# Duppi v3.0.0                   PI       1
 #
 ProgramID = PI
 ProgramVer = 1
@@ -191,13 +182,17 @@ PI0043=Impossible d'enregistrer %s.
 PI0044=Données erronnées en provenance du serveur de mises à jour!
 PI0045=Répertoire de destination inconnu!
 PI0046=Mise à jour de Duppi terminée avec succès!
+PI0047=Une nouvelle version de Duppi est disponible:%nVotre version: %a%nVersion disponible: %b%nTaille de la mise à jour: %s Ko%n%nVoulez-vous mettre à jour maintenant (Recommandé)?
+PI0048=Montrer aussi les versions instables
+PI0049=Pas d'URL pour la mise à jour de Duppi!
+
 PII001=Titre
 PII002=Votre version
 PII003=Version disponible
 PII004=Description
 PII005=Taille
 PII011=Afficher les:
-PII012=Plugins
+PII012=Extensions
 PII013=Traductions
 PII021=Version stable actuelle :
 PII022=Version WIP actuelle :
@@ -212,16 +207,25 @@ PII104=Erreur: %c (%d)
 PII105=Serveur contacté avec succés!
 PII106=-Aucune description-
 PII107=Une nouvelle version de Dragon UnPACKer est disponible en téléchargement.%n%nNouvelle version: %v%nCommentaire: %c%n%nVoulez vous aller sur la page officielle pour la télécharger?
-PII108=%p plugin(s) et %t traduction(s) disponibles!
+PII108=%p extension(s) et %t traduction(s) disponibles!
+
 PII200=Aucune mise a jour n'a pu être téléchargée.%nLe programme va maintenant s'arreter.
+
 PIEM01=Connection à la base de données impossible. Réessayez ultérieurement!
 PIEM10=Erreur serveur lors de la recherche dernière version stable!
-PIEM11=Erreur serveur lors de la recherche dernière version WIP!
+PIEM11=Erreur serveur lors de la recherche dernière version instable!
+PIEM12=Erreur serveur lors de la recherche des informations de mises à jours de la version stable!
+PIEM13=Erreur serveur lors de la recherche des informations de mises à jours de la version instable!
 PIEM20=Erreur serveur lors de la recherche de votre version!
-PIEM30=Erreur serveur lors de la recherche des plugins de convertion disponibles!
-PIEM31=Erreur serveur lors de la recherche des plugins driver disponibles!
-PIEM32=Erreur serveur lors de la recherche des plugins HyperRipper disponibles!
+PIEM30=Erreur serveur lors de la recherche des extensions de convertion disponibles!
+PIEM31=Erreur serveur lors de la recherche des extensions driver disponibles!
+PIEM32=Erreur serveur lors de la recherche des extensions HyperRipper disponibles!
 PIEM33=Erreur serveur lors de la recherche des traductions disponibles!
+PIEM40=Erreur serveur lors de la récupération de la liste des serveurs!
+PIEM41=Erreur serveur lors de la recherche des extensions driver instables disponibles!
+PIEM42=Erreur serveur lors de la recherche des extensions de convertion instables disponibles!
+PIEM43=Erreur serveur lors de la recherche des extensions HyperRipper instables disponibles!
+PIEM60=Erreur serveur lors de la recherche denière version Duppi!
 PIEP01=Paramètre erronnée! Si vous n'avez pas encore lancer Dragon UnPACKer faites-le, puis relancer Duppi.
 PIEP02=Le serveur n'a pas reconnu votre version de Dragon UnPACKer.
 PIEUNK=Erreur serveur inconnu: "%e"

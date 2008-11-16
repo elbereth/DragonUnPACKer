@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.11 2008-11-11 15:51:19 elbereth Exp $
+// $Id: Installer.pas,v 1.12 2008-11-16 14:54:45 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -1066,6 +1066,8 @@ begin
           if installFile then
           begin
 
+            if FileExists(destdir) then
+              DeleteFile(destdir);
             outfile := TBufferedFS.Create(destdir,fmCreate or fmShareExclusive);
             try
               extractDUPP_version4_file(files[x],datStream,outfile);
@@ -1097,7 +1099,7 @@ begin
   begin
 
     MessageDlg('Package installation completed successfully.'+chr(10)+'The Duppi program will now restart to update itself.',mtCustom,[mbOk],0);
-    ShellExecute(0, nil,PChar(extractfilepath(Application.EXEName)+'DuppiInstall.exe'), PChar(Application.EXEName+' '+DuppiInstallNew), nil, SW_SHOW);
+    ShellExecute(0, nil,PChar('"'+extractfilepath(Application.EXEName)+'DuppiInstall.exe"'), PChar('"'+Application.EXEName+'" "'+DuppiInstallNew+'"'), nil, SW_SHOW);
     Application.Terminate;
 
   end;
@@ -1479,13 +1481,13 @@ begin
   lstUpdates.Columns.Items[0].Caption := DLNGstr('PII001');
   lstUpdates.Columns.Items[1].Caption := DLNGstr('PII002');
   lstUpdates.Columns.Items[2].Caption := DLNGstr('PII003');
-//  lstUpdates.Columns.Items[3].Caption := DLNGstr('PII004');
-  lstUpdatesUnstable.Columns.Items[3].Caption := DLNGstr('PII005');
+  lstUpdates.Columns.Items[3].Caption := DLNGstr('PII005');
   lstUpdatesUnstable.Columns.Items[0].Caption := DLNGstr('PII001');
   lstUpdatesUnstable.Columns.Items[1].Caption := DLNGstr('PII002');
   lstUpdatesUnstable.Columns.Items[2].Caption := DLNGstr('PII003');
   lstUpdatesUnstable.Columns.Items[3].Caption := DLNGstr('PII005');
-  strInternetComment.Caption := DLNGstr('INFO03');
+  strInternetComment.Caption := DLNGstr('PI0003');
+  chkShowUnstable.Caption := DLNGStr('PI0048');
 
   lstTranslations.Columns.Items[0].Caption := DLNGstr('PII030');
   lstTranslations.Columns.Items[1].Caption := DLNGstr('PII031');
@@ -1569,8 +1571,8 @@ Var updList,updUnstableList: TStringList;
     lngList: TStringList;
     itm: TListItem;
     x, tmpVer: integer;
-    butDl, butDlUnstable, coreUpdate: boolean;
-    coreMessage: string;
+    butDl, butDlUnstable, coreUpdate, duppiUpdate, delFile: boolean;
+    coreMessage, url, tmpFileName: string;
     errCode: string;
 begin
 
@@ -1636,6 +1638,8 @@ begin
                 writeLog(DLNGStr('PIEM10'))
               else if errCode = 'M11' then
                 writeLog(DLNGStr('PIEM11'))
+              else if errCode = 'M12' then
+                writeLog(DLNGStr('PIEM12'))
               else if errCode = 'M20' then
                 writeLog(DLNGStr('PIEM20'))
               else if errCode = 'M30' then
@@ -1646,6 +1650,16 @@ begin
                 writeLog(DLNGStr('PIEM32'))
               else if errCode = 'M33' then
                 writeLog(DLNGStr('PIEM33'))
+              else if errCode = 'M40' then
+                writeLog(DLNGStr('PIEM40'))
+              else if errCode = 'M41' then
+                writeLog(DLNGStr('PIEM41'))
+              else if errCode = 'M42' then
+                writeLog(DLNGStr('PIEM42'))
+              else if errCode = 'M43' then
+                writeLog(DLNGStr('PIEM43'))
+              else if errCode = 'M60' then
+                writeLog(DLNGStr('PIEM60'))
               else if errCode = 'P01' then
                 writeLog(DLNGStr('PIEP01'))
               else if errCode = 'P02' then
@@ -1759,6 +1773,58 @@ begin
             else
               linkToWIP.Visible := false;
 
+            DuppiUpdate := dus.SectionExists('Duppi') and (VERSION < dus.ReadInteger('Duppi','Version',0));
+
+            if DuppiUpdate then
+            begin
+              coreMessage := ReplaceValue('%s',ReplaceValue('%b',ReplaceValue('%a',DLNGStr('PI0047'),getVersionFromInt(VERSION)),dus.ReadString('Duppi','VersionDisp',GetVersionFromInt(dus.ReadInteger('Duppi','Version',0)))),dus.ReadString('Duppi','Size','???'));
+              if (MessageDlg(coreMessage,mtInformation,[mbYes, mbNo],0) = mrYes) then
+              begin
+                url := dus.ReadString('Duppi','URL','');
+                if url = '' then
+                  raise Exception.Create(DLNGstr('PI0049')); 
+//                url := 'http://users.edpnet.be/elbereth/duppi300.d5p';
+                tmpFile := dup5Path+'Download';
+                if not(DirectoryExists(tmpFile)) then
+                  mkdir(tmpfile);
+                tmpFileName := dus.ReadString('Duppi','FileDL',getTempFile(extractfileext(url)));
+                tmpFile := dup5Path+'Download\'+tmpFileName;
+                HttpCli1.URL := url;
+                HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
+                CurDL := tmpFileName;
+                CurDLSize := dus.ReadInteger('Duppi','Size',1)*1024;
+                inc(curDLSize);
+                progressDL.Position := 0;
+                progressDL.Max := CurDLSize*1024;
+                delFile := false;
+                try
+                  try
+                    WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
+                    HttpCli1.Get;
+                    lstUpd.Add(tmpFile);
+                    WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
+                  except
+                    on E: EHttpException do begin
+                        writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
+                        colorLog(clRed);
+                        DelFile := true;
+                    end
+                  else
+                    raise;
+                  end;
+
+                finally
+                  HttpCli1.RcvdStream.Destroy;
+                  HttpCli1.RcvdStream := nil;
+                  ButDownload.Visible := true;
+                  if DelFile and FileExists(tmpFile) then
+                    DeleteFile(tmpFile);
+                end;
+                butDownload.Click;
+                exit;
+              end;
+            end;
+
             if (CoreUpdate) then
             begin
               coreMessage := ReplaceValue('%v',DLNGstr('PII107'),dus.ReadString('core','VersionDisp','-'));
@@ -1851,21 +1917,115 @@ begin
   butRefresh.Enabled := false;
   butProxy2.Enabled := false;
 
-  if not(chkShowUnstable.Checked) then
+  if lstUpd.Count = 0 then
   begin
-    for x := 0 to lstUpdates.Items.Count-1 do
+
+    if not(chkShowUnstable.Checked) then
     begin
-      if lstUpdates.Items.Item[x].Checked then
+      for x := 0 to lstUpdates.Items.Count-1 do
       begin
-        if dus.ValueExists(lstUpdates.Items.Item[x].SubItems[4],'URL') then
+        if lstUpdates.Items.Item[x].Checked then
         begin
-          url := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'URL','');
-          tmpFileName := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'FileDL',getTempFile(extractfileext(url)));
+          if dus.ValueExists(lstUpdates.Items.Item[x].SubItems[4],'URL') then
+          begin
+            url := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'URL','');
+            tmpFileName := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'FileDL',getTempFile(extractfileext(url)));
+            tmpFile := dup5Path+'Download\'+tmpFileName;
+            HttpCli1.URL := url;
+            HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
+            CurDL := tmpFileName;
+            CurDLSize := strtoint(lstUpdates.Items.Item[x].SubItems[2]);
+            inc(curDLSize);
+            progressDL.Position := 0;
+            progressDL.Max := CurDLSize*1024;
+            delFile := false;
+            try
+              try
+                WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
+                HttpCli1.Get;
+                lstUpd.Add(tmpFile);
+                WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
+              except
+                on E: EHttpException do begin
+                    writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
+                    colorLog(clRed);
+                    DelFile := true;
+                end
+              else
+                raise;
+              end;
+
+            finally
+              HttpCli1.RcvdStream.Destroy;
+              HttpCli1.RcvdStream := nil;
+              ButDownload.Visible := true;
+              if DelFile and FileExists(tmpFile) then
+                DeleteFile(tmpFile);
+            end;
+          end;
+        end;
+      end;
+    end
+    else
+    begin
+      for x := 0 to lstUpdatesUnstable.Items.Count-1 do
+      begin
+        if lstUpdatesUnstable.Items.Item[x].Checked then
+        begin
+          if dus.ValueExists(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL') then
+          begin
+            url := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL','');
+            tmpFileName := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'FileDL',getTempFile(extractfileext(url)));
+            tmpFile := dup5Path+'Download\'+tmpFileName;
+            HttpCli1.URL := url;
+            HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
+            CurDL := tmpFileName;
+            CurDLSize := strtoint(lstUpdatesUnstable.Items.Item[x].SubItems[2]);
+            inc(curDLSize);
+            progressDL.Position := 0;
+            progressDL.Max := CurDLSize*1024;
+            delFile := false;
+            try
+              try
+                WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
+                HttpCli1.Get;
+                lstUpd.Add(tmpFile);
+                WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
+              except
+                on E: EHttpException do begin
+                    writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
+                    colorLog(clRed);
+                    DelFile := true;
+                end
+              else
+                raise;
+              end;
+
+            finally
+              HttpCli1.RcvdStream.Destroy;
+              HttpCli1.RcvdStream := nil;
+              ButDownload.Visible := true;
+              if DelFile and FileExists(tmpFile) then
+                DeleteFile(tmpFile);
+            end;
+          end;
+        end;
+      end;
+    end;
+
+    for x := 0 to lstTranslations.Items.Count-1 do
+    begin
+      if lstTranslations.Items.Item[x].Checked then
+      begin
+        if dus.ValueExists(lstTranslations.Items.Item[x].SubItems[3],'URL') then
+        begin
+          url := dus.ReadString(lstTranslations.Items.Item[x].SubItems[3],'URL','');
+          tmpFileName := dus.ReadString(lstTranslations.Items.Item[x].SubItems[3],'FileDL',getTempFile(extractfileext(url)));
           tmpFile := dup5Path+'Download\'+tmpFileName;
           HttpCli1.URL := url;
           HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
           CurDL := tmpFileName;
-          CurDLSize := strtoint(lstUpdates.Items.Item[x].SubItems[2]);
+          CurDLSize := strtoint(lstTranslations.Items.Item[x].SubItems[2]);
           inc(curDLSize);
           progressDL.Position := 0;
           progressDL.Max := CurDLSize*1024;
@@ -1893,96 +2053,6 @@ begin
             if DelFile and FileExists(tmpFile) then
               DeleteFile(tmpFile);
           end;
-        end;
-      end;
-    end;
-  end
-  else
-  begin
-    for x := 0 to lstUpdatesUnstable.Items.Count-1 do
-    begin
-      if lstUpdatesUnstable.Items.Item[x].Checked then
-      begin
-        if dus.ValueExists(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL') then
-        begin
-          url := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL','');
-          tmpFileName := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'FileDL',getTempFile(extractfileext(url)));
-          tmpFile := dup5Path+'Download\'+tmpFileName;
-          HttpCli1.URL := url;
-          HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
-          CurDL := tmpFileName;
-          CurDLSize := strtoint(lstUpdatesUnstable.Items.Item[x].SubItems[2]);
-          inc(curDLSize);
-          progressDL.Position := 0;
-          progressDL.Max := CurDLSize*1024;
-          delFile := false;
-          try
-            try
-              WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
-              HttpCli1.Get;
-              lstUpd.Add(tmpFile);
-              WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
-            except
-              on E: EHttpException do begin
-                  writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
-                  colorLog(clRed);
-                  DelFile := true;
-              end
-            else
-              raise;
-            end;
-
-          finally
-            HttpCli1.RcvdStream.Destroy;
-            HttpCli1.RcvdStream := nil;
-            ButDownload.Visible := true;
-            if DelFile and FileExists(tmpFile) then
-              DeleteFile(tmpFile);
-          end;
-        end;
-      end;
-    end;
-  end;
-
-  for x := 0 to lstTranslations.Items.Count-1 do
-  begin
-    if lstTranslations.Items.Item[x].Checked then
-    begin
-      if dus.ValueExists(lstTranslations.Items.Item[x].SubItems[3],'URL') then
-      begin
-        url := dus.ReadString(lstTranslations.Items.Item[x].SubItems[3],'URL','');
-        tmpFileName := dus.ReadString(lstTranslations.Items.Item[x].SubItems[3],'FileDL',getTempFile(extractfileext(url)));
-        tmpFile := dup5Path+'Download\'+tmpFileName;
-        HttpCli1.URL := url;
-        HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
-        CurDL := tmpFileName;
-        CurDLSize := strtoint(lstTranslations.Items.Item[x].SubItems[2]);
-        inc(curDLSize);
-        progressDL.Position := 0;
-        progressDL.Max := CurDLSize*1024;
-        delFile := false;
-        try
-          try
-            WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
-            HttpCli1.Get;
-            lstUpd.Add(tmpFile);
-            WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
-          except
-            on E: EHttpException do begin
-                writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
-                colorLog(clRed);
-                DelFile := true;
-            end
-          else
-            raise;
-          end;
-
-        finally
-          HttpCli1.RcvdStream.Destroy;
-          HttpCli1.RcvdStream := nil;
-          ButDownload.Visible := true;
-          if DelFile and FileExists(tmpFile) then
-            DeleteFile(tmpFile);
         end;
       end;
     end;

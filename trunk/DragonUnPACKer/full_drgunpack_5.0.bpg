@@ -11,7 +11,8 @@ BRCC = $(ROOT)\bin\brcc32.exe $**
 #------------------------------------------------------------------------------
 PROJECTS = drgunpack5.exe cnv_pictex.d5c drv_11th.d5d drv_default.d5d \
   drv_giants.d5d drv_multiex.d5d drv_ut.d5d drv_zip.d5d hr_default.d5h dlngc.exe \
-  dlngcomp.exe dlookc.exe dlookd.exe dpackc.exe duhtcomp.exe duppi.exe
+  dlngcomp.exe dlookc.exe dlookd.exe dpackc.exe duhtcomp.exe duppi.exe \
+  DuppiInstall.exe
 #------------------------------------------------------------------------------
 default: drgunpack5.exe
 #------------------------------------------------------------------------------
@@ -62,6 +63,9 @@ duhtcomp.exe: tools\duhtcomp\duhtcomp.dpr
   $(DCC)
 
 duppi.exe: tools\duppi\duppi.dpr
+  $(DCC)
+
+DuppiInstall.exe: tools\duppi\DuppiInstall.dpr
   $(DCC)
 
 

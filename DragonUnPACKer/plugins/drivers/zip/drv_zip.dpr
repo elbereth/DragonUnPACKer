@@ -1,6 +1,6 @@
 library drv_zip;
 
-// $Id: drv_zip.dpr,v 1.6 2008-03-02 12:15:44 elbereth Exp $
+// $Id: drv_zip.dpr,v 1.7 2008-11-16 16:18:14 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/zip/drv_zip.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -47,10 +47,11 @@ type
                 Added Serious Sam 2 .GRO to the supported file types
                 Added Call of Duty 2 .IWD to the supported file types
   11140  52040  Added a lot of supported file types thanks to Z0oMiK
+  11240  54040  Added Call of Duty 5: World at War .IWD to the supported file types
 
   /////////////////////////////////////////////////////////////////////////////}
-const DRIVER_VERSION = 11140;
-      DUP_VERSION = 52040;
+const DRIVER_VERSION = 11240;
+      DUP_VERSION = 54040;
       COMPANY_NAME = 'Info-ZIP';
 
 var CurFormat: Integer = 0;
@@ -330,7 +331,7 @@ begin
     GetDriverInfo.Formats[12].Extensions := '*.pk4';
     GetDriverInfo.Formats[12].Name := 'Doom 3 (*.PK4)|Quake 4 (*.PK4)|Doom 3 Resurrection Of Evil (*.PK4)';
     GetDriverInfo.Formats[13].Extensions := '*.iwd';
-    GetDriverInfo.Formats[13].Name := 'Call of Duty 2 (*.IWD)';
+    GetDriverInfo.Formats[13].Name := 'Call of Duty 2 (*.IWD)|Call of Duty 3 (*.IWD)|Call of Duty 4: Modern Warfare (*.IWD)|Call of Duty: World at War (*.IWD)';
     GetDriverInfo.Formats[14].Extensions := '*.ZIPFS';
     GetDriverInfo.Formats[14].Name := '18 Wheels Of Steel Across America (*.ZIPFS)';
     GetDriverInfo.Formats[15].Extensions := '*.CSC';

@@ -111,7 +111,7 @@ AutoIncBuild=1
 MajorVer=2
 MinorVer=0
 Release=5
-Build=861
+Build=867
 Debug=0
 PreRelease=1
 Special=0
@@ -122,13 +122,13 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=Elbereth's Main Driver plugin for Dragon UnPACKer 5
-FileVersion=2.0.5.861
+FileVersion=2.0.5.867
 InternalName=drv_default
 LegalCopyright=Created by Alexandre Devilliers (aka Elbereth/Piecito)
-LegalTrademarks=
+LegalTrademarks=Mozilla Public License 1.1
 OriginalFilename=drv_default.d5d
 ProductName=Dragon UnPACKer 5
-ProductVersion=5.2
+ProductVersion=5.4
 [Excluded Packages]
 C:\Program Files\RemObjects Software\Everwood\Bin\RemObjects_Everwood_D7.bpl=RemObjects Everwood for Delphi
 P:\Program Files\Pascal Script for Delphi\Dcu\D7\PascalScript_Core_D7.bpl=RemObjects Pascal Script - Core Package

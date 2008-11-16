@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.14 2008-11-11 16:10:53 elbereth Exp $
+// $Id: Main.pas,v 1.15 2008-11-16 19:13:26 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -2231,6 +2231,8 @@ begin
       AlreadyDragging := true;
 
       tmpdir := getTemporaryDir+'dup5tmp-dragndrop\';
+      if not(DirectoryExists(tmpdir)) then
+        ForceDirectories(tmpdir);
 
       Node := lstContent.GetFirstSelected;
 

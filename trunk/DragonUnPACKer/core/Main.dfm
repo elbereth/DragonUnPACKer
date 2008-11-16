@@ -5327,17 +5327,17 @@ object dup5Main: Tdup5Main
     end
     object menuAbout: TMenuItem
       Caption = '?'
-      object menuAbout_About: TMenuItem
-        Caption = 'A Propos de...'
-        ImageIndex = 12
-        OnClick = menuAbout_AboutClick
+      object menuAbout_NewVersions: TMenuItem
+        Caption = 'Rechercher nouvelles versions sur Internet....'
+        OnClick = menuAbout_NewVersionsClick
       end
       object N4: TMenuItem
         Caption = '-'
       end
-      object menuAbout_NewVersions: TMenuItem
-        Caption = 'V'#233'rifier les versions... (Duppi)'
-        OnClick = menuAbout_NewVersionsClick
+      object menuAbout_About: TMenuItem
+        Caption = 'A Propos de...'
+        ImageIndex = 12
+        OnClick = menuAbout_AboutClick
       end
     end
   end

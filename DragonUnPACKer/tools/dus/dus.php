@@ -1,6 +1,6 @@
 <?php
 
-// $Id: dus.php,v 1.7 2008-11-15 18:42:05 elbereth Exp $
+// $Id: dus.php,v 1.8 2008-11-16 19:18:34 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dus/dus.php,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,16 +18,16 @@
 //
 
   // CVS variables
-  $CVS_REVISION = '$Revision: 1.7 $';
+  $CVS_REVISION = '$Revision: 1.8 $';
   $CVS_REVISION_DISPLAY = substr($CVS_REVISION,11,strlen($CVS_REVISION)-13);
-  $CVS_DATE = '$Date: 2008-11-15 18:42:05 $';
+  $CVS_DATE = '$Date: 2008-11-16 19:18:34 $';
   $CVS_DATE_DISPLAY = substr($CVS_DATE,7,strlen($CVS_DATE)-9);
 
   // Sending the header
   header('Content-type: text/plain');
   echo "[ID]\n";
   echo "DUS=3\n";
-  echo "Description=Dragon UnPACKer 5 Update Server v3.$CVS_REVISION_DISPLAY+3 ($CVS_DATE_DISPLAY)\n";
+  echo "Description=Dragon UnPACKer 5 Update Server v3.$CVS_REVISION_DISPLAY ($CVS_DATE_DISPLAY)\n";
 
   // Connect to MYSQL Database
   $link = mysql_connect("mysql4-d", "d108923ro", "rofordus3");

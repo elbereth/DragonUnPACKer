@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.11 2008-11-11 16:10:53 elbereth Exp $
+// $Id: Translation.pas,v 1.12 2008-11-16 19:13:26 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -63,6 +63,7 @@ begin
     menuEdit.Caption := DLNGStr('MNU4');
     menuEdit_Search.Caption := DLNGStr('MNU4S1');
     menuAbout.Caption := DLNGStr('MNU3');
+    menuAbout_NewVersions.Caption := DLNGStr('MNU3S2');
     menuAbout_About.Caption := DLNGStr('MNU3S1') + ' Dragon UnPACKer';
     menuTools.Caption := DLNGstr('MNU5');
     menuTools_List.Caption := DLNGstr('MNU5S1');
@@ -256,6 +257,9 @@ begin
 
     grpLanguage.Caption := DLNGStr('OPT110');
     grpLanguage.Font.Name := GetFont();
+
+    lblFindNewLanguages.Caption := DLNGStr('OPT111');
+    lblFindNewLanguages.Font.Name := GetFont();
 
     strAuthor.Caption := DLNGStr('INFO02');
     strAuthor.Font.Name := GetFont();
@@ -503,6 +507,7 @@ begin
     lstPreviewLimit.Items[3] := DLNGStr('OPT927');
     lstPreviewLimit.Items[4] := DLNGStr('OPT928');
     lstPreviewLimit.Font.Name := GetFont();
+    lstPreviewLimit.ItemIndex := dup5Main.previewLimitValue;
 
     lblPreviewLimitBytes.Caption := DLnGStr('HR4012');
     lblPreviewLimitBytes.Font.Name := GetFont();

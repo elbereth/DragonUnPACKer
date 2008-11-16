@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.39 2008-10-04 06:34:57 elbereth Exp $
+// $Id: drv_default.dpr,v 1.40 2008-11-16 15:57:48 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,7 +18,6 @@ library drv_default;
 //
 
 uses
-  Dialogs,
   Zlib,
   Classes,
   StrUtils,
@@ -29,7 +28,8 @@ uses
   spec_HRF in '..\..\..\common\spec_HRF.pas',
   lib_BinUtils in '..\..\..\common\lib_BinUtils.pas',
   lib_bincopy in '..\..\..\common\lib_bincopy.pas',
-  lib_version in '..\..\..\common\lib_version.pas';
+  lib_version in '..\..\..\common\lib_version.pas'{,
+  class_decompressRA in 'class_decompressRA.pas'};
 
 {$E d5d}
 
@@ -180,6 +180,7 @@ type FSE = ^element;
                  Same goes for special functions
                  Improved detection of Riddick .XTC files (retail version of the game)
     20516        Improved LithTech .REZ support -> Fixes opening NOLF2 sound.rez
+    20540        Added support for Ascendancy .COB files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -198,14 +199,13 @@ type FSE = ^element;
   //////////////////////////////////////////////////////////////////////////// }
 
 const
-  DRIVER_VERSION = 20515;
+  DRIVER_VERSION = 20540;
   DUP_VERSION = 52040;
-  CVS_REVISION = '$Revision: 1.39 $';
-  CVS_DATE = '$Date: 2008-10-04 06:34:57 $';
+  CVS_REVISION = '$Revision: 1.40 $';
+  CVS_DATE = '$Date: 2008-11-16 15:57:48 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
-    OffsetList: TInts;
     FHandle: Integer = 0;
     CurFormat: Integer = 0;
     DrvInfo: CurrentDriverInfo;
@@ -263,10 +263,10 @@ begin
   GetDriverInfo.Name := 'Elbereth''s Main Driver';
   GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 82 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 69;
+  GetDriverInfo.Comment := 'This driver support 83 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
+  GetDriverInfo.NumFormats := 70;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
-  GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)';
+  GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
   GetDriverInfo.Formats[2].Name := 'Monkey Island 3 (*.BUN)';
   GetDriverInfo.Formats[3].Extensions := '*.grp;*.art';
@@ -403,6 +403,8 @@ begin
   GetDriverInfo.Formats[68].Name := 'AGON: The Lost Sword of Toledo (*.SFL)';
   GetDriverInfo.Formats[69].Extensions := '*.XWC;.XTC';
   GetDriverInfo.Formats[69].Name := 'Enclave (*.XTC;*.XWC)|The Chronicles of Riddick: Butcher (*.XTC;*.XWC)';
+  GetDriverInfo.Formats[70].Extensions := '*.COB';
+  GetDriverInfo.Formats[70].Name := 'Ascendancy (*.COB)';
 //  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
 //  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -1503,6 +1505,103 @@ begin
       DrvInfo.ExtractInternal := False;
 
     end;
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Ascendancy .COB ========================================================== //
+// -------------------------------------------------------------------------- //
+
+function ReadAscendancyCOB(src: string): Integer;
+var entryList: array of Integer;
+    nameList: array of string;
+    headerBuffer: TMemoryStream;
+    handle_stm: THandleStream;
+    numEntries, TotSize, x: integer;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    TotSize := FileSeek(Fhandle, 0, 2);
+    FileSeek(Fhandle,0,0);
+    FileRead(FHandle, numEntries, 4);
+
+    // A small verification (better sanity checks will be done after)
+    if ((4+numEntries*54) >= TotSize) and (numEntries > 65535) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'COB';
+      ErrInfo.Games := 'Ascendancy';
+    end
+    else
+    begin
+
+      // Create a HandleStream from the source file
+      handle_stm := THandleStream.Create(Fhandle);
+
+      // Seek to the Directory Offset
+      handle_stm.Seek(4,soFromBeginning);
+
+      // Create the Directory buffer stream
+      headerBuffer := TMemoryStream.Create;
+
+      // Read the complete directory to the buffer
+      headerBuffer.CopyFrom(handle_stm,(numEntries*54));
+
+      // Free the handle stream, useless now
+      handle_stm.Free;
+
+      headerBuffer.Seek(0,0);
+
+      SetLength(entryList,numEntries);
+      SetLength(nameList,numEntries);
+
+      for x := 0 to numEntries-1 do
+      begin
+        headerBuffer.Seek(x*50,0);
+        nameList[x] := strip0(get0(headerBuffer));
+      end;
+
+      for x := 0 to numEntries-1 do
+      begin
+        headerBuffer.Seek((numEntries*50)+x*4,0);
+        headerBuffer.Read(entryList[x],4);
+        if (entryList[x] > TotSize) or ((x > 0) and (entryList[x-1] >= entryList[x])) then
+        begin
+          FileClose(Fhandle);
+          FHandle := 0;
+          Result := -3;
+          ErrInfo.Format := 'COB';
+          ErrInfo.Games := 'Ascendancy';
+          Exit;
+        end;
+      end;
+
+      for x := 1 to numEntries-1 do
+        FSE_Add(nameList[x-1],entryList[x-1],entryList[x]-entryList[x-1],0,0);
+
+      FSE_Add(nameList[numEntries-1],entryList[numEntries-1],Totsize-entryList[numEntries-1],0,0);
+
+      SetLength(nameList,0);
+      SetLength(entryList,0);
+
+      result := numEntries;
+
+      DrvInfo.ID := 'COB';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
   end
   else
     Result := -2;
@@ -4484,12 +4583,46 @@ type F22adfDAT_Entry = packed record
        Size: integer;
      end;
 
+// The DecompressRA class do not work yet (my Delphi translation from C++ is obviously wrong)
+// Will be reactivated when I get time to check what I did wrong
+{procedure DecompressF22DAT(FHandle: integer; outputstream: TStream; offset,size: int64; silent: boolean);
+var DEC: DecompressRA;
+    inMem: TStream;
+    inHandle: THandleStream;
+begin
+
+  inMem := TMemoryStream.Create;
+  inHandle := THandleStream.Create(FHandle);
+  inMem.CopyFrom(inHandle,size);
+
+  DEC := DecompressRA.Create;
+
+  inMem.Seek(0,0);
+  if DEC.isRA(inMem) then
+  begin
+    DEC.decompress(inMem,outputstream);
+  end
+  else
+  begin
+    inMem.Seek(0,0);
+    outputstream.CopyFrom(inMem,inMem.Size); 
+  end;
+
+  DEC.Free;
+
+  inHandle.Free;
+  InMem.Free;
+
+end;}
+
 function ReadF22adfDAT(): Integer;
 var ENT: F22adfDAT_Entry;
     DirNames: array of string;
     ExtNames: array of string;
+    test: array[0..1] of char;
     DirOffset,EntOffset,NumE,x : integer;
     DirNum,NameSize,DirNameNum,ExtNameNum : word;
+    Per, OldPer: Byte;
 begin
 
   FileSeek(Fhandle, 0, 0);
@@ -4524,12 +4657,28 @@ begin
   // For each entry read the hash, offset and size
   NumE := DirNum;
 
+  OldPer := 0;
+  SetPercent(0);
+
   for x := 1 to NumE do
   begin
 
-    FileRead(FHandle,ENT,SizeOf(F22adfDAT_Entry));
+    Per := round((x / NumE) * 100);
+    if (Per > OldPer + 5) then
+    begin
+      OldPer := Per;
+      SetPercent(Per);
+    end;
 
-    FSE_Add(IntToHex(ENT.Hash,8),ENT.Offset,ENT.Size,0,0);
+    FileSeek(FHandle,EntOffset+(x-1)*SizeOf(F22adfDAT_Entry),0);
+    FileRead(FHandle,ENT,SizeOf(F22adfDAT_Entry));
+    FileSeek(FHandle,ENT.Offset,0);
+    FileRead(FHandle,test,2);
+
+    if test = 'RA' then
+      FSE_Add(IntToHex(ENT.Hash,8)+'.RA',ENT.Offset,ENT.Size,0,0)
+    else
+      FSE_Add(IntToHex(ENT.Hash,8),ENT.Offset,ENT.Size,0,0);
 
   end;
 
@@ -4538,7 +4687,8 @@ begin
   DrvInfo.ID := 'F22DAT';
   DrvInfo.Sch := '';
   DrvInfo.FileHandle := FHandle;
-  DrvInfo.ExtractInternal := False;
+  // RA decompression do not work yet...
+  DrvInfo.ExtractInternal := false;
 
 end;
 
@@ -4826,6 +4976,94 @@ begin
       DrvInfo.ExtractInternal := False;
 
     end;
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Florencia .PAK support =================================================== //
+// -------------------------------------------------------------------------- //
+
+type FlorensiaPAK_Entry = packed record
+       Filename: array[0..255] of char;
+       Empty: integer;
+       Offset: integer;
+       Size: integer;
+       Unknown: array[0..6] of integer;
+     end;
+
+function checkFlorensiaPAK(inFile: integer): boolean;
+var inStm: THandleStream;
+    numEntries, testOffset, testSize, x: integer;
+    totSize: int64;
+    isFormat: boolean;
+begin
+
+  isFormat := false;
+
+  inStm := THandleStream.Create(inFile);
+  try
+    inStm.Seek(0,soFromBeginning);
+    inStm.Read(numEntries,4);
+    totSize := (numEntries * SizeOf(FlorensiaPAK_Entry)) + 4;
+    if (totSize < inStm.Size) and (numEntries > 0) then
+    begin
+      isFormat := true;
+      for x := 0 to numEntries-1 do
+      begin
+        inStm.Seek(260,soFromCurrent);
+        inStm.Read(testOffset,4);
+        inStm.Read(testSize,4);
+        inStm.Seek(28,soFromCurrent);
+        inc(totSize,testSize);
+        if ((testOffset + testSize) > inStm.Size) or (testOffset < 0) or (testSize < 0) or (totSize > inStm.Size) then
+        begin
+          isFormat := false;
+          break;
+        end;
+      end;
+      isFormat := isFormat and (totSize = inStm.Size);
+    end;
+  finally
+    inStm.Free;
+  end;
+
+  result := isFormat;
+
+end;
+
+function readFlorensiaPAK(): Integer;
+var ENT: FlorensiaPAK_Entry;
+    disp, currep: string;
+    NumE, x: integer;
+begin
+
+  if FHandle > 0 then
+  begin
+    FileSeek(Fhandle, 0, 0);
+    FileRead(FHandle, NumE, 4);
+
+    for x:= 1 to NumE do
+    begin
+
+      Per := ROund(((x / NumE)*100));
+      SetPercent(Per);
+      FileRead(Fhandle,ENT,SizeOf(FlorensiaPAK_Entry));
+      disp := Strip0(ENT.Filename);
+
+      FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
+
+    end;
+
+    Result := NumE;
+
+    DrvInfo.ID := 'FLPAK';
+    DrvInfo.Sch := '';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
   end
   else
     Result := -2;
@@ -10809,7 +11047,7 @@ function ReadHubPAK(src: String): Integer;
 var ID: array[0..3] of char;
     ID12: array[0..11] of char;
     ID21P4: array[0..20] of char;
-    res,Test1,testpko,FSize: integer;
+    res,Test1,Test3,Test4,Test5,testpko,FSize: integer;
     Test2: Word;
     testpk: byte;
 begin
@@ -10831,6 +11069,8 @@ begin
     FileSeek(FHandle,0,0);
     FileRead(FHandle,Test2,2);
     FileRead(FHandle,Test1,4);
+    FileSeek(FHandle,0,0);
+    FileRead(FHandle,Test3,4);
     if ID = 'PACK' then
       res := ReadQuakePAK
     else if ID12 = 'tlj_pack0001' then
@@ -10841,6 +11081,8 @@ begin
       res := ReadZanzarahPAK
     else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
       res := ReadSpellforcePAK
+    else if checkFlorensiaPAK(FHandle) then
+      res := ReadFlorensiaPAK
     else if ((testpk = 0) or (testpk = 1)) and (testpko <= FSize) and (testpko > 0) then
       res := ReadPainKillerPAK
     else if ((Test1 + Test2*12) <= FSize) and ((Test1 + Test2*12) > 0) then
@@ -11458,6 +11700,8 @@ begin
       ReadFormat := ReadTheElderScrolls4OblivionBSA(fil)
     else if ext = 'BUN' then
       ReadFormat := ReadMonkeyIsland3BUN(fil)
+    else if ext = 'COB' then
+      ReadFormat := ReadAscendancyCOB(fil)
     else if ext = 'CBF' then
       ReadFormat := ReadVietcongCBF(fil)
     else if ext = 'CPR' then
@@ -11919,7 +12163,7 @@ begin
   ext := UpperCase(ext);
 
   if Deeper then
-    IsFormat := IsFormatSMART(fil) or (ext = 'POD') or (ext = 'PAK') or (ext = 'TLK') or (ext = 'SDT') or (ext = 'RFH') or (ext = 'MTF') or (ext = 'BKF') or (ext = 'DAT') or (ext = 'PBO') or (ext = 'AWF') or (ext = 'SND') or (ext = 'ART') or (ext = 'SNI') or (ext = 'DIR') or (ext = 'IMG') or (ext = 'BAR') or (ext = 'BAG') or (ext = 'SQH') or (ext = 'GL') or (ext = 'RFA') or (ext = 'ADF') or (ext = 'RES') or (ext = 'XRS') or (ext = 'STUFF') or (ext = 'BIN')
+    IsFormat := IsFormatSMART(fil) or (ext = 'POD') or (ext = 'PAK') or (ext = 'TLK') or (ext = 'SDT') or (ext = 'RFH') or (ext = 'MTF') or (ext = 'BKF') or (ext = 'DAT') or (ext = 'PBO') or (ext = 'AWF') or (ext = 'SND') or (ext = 'ART') or (ext = 'SNI') or (ext = 'DIR') or (ext = 'IMG') or (ext = 'BAR') or (ext = 'BAG') or (ext = 'SQH') or (ext = 'GL') or (ext = 'RFA') or (ext = 'ADF') or (ext = 'RES') or (ext = 'XRS') or (ext = 'STUFF') or (ext = 'BIN') or (ext = 'COB')
   else
     if ext = 'PAK' then
       IsFormat := True
@@ -11954,6 +12198,8 @@ begin
     else if ext = 'CBF' then
       IsFormat := True
     else if ext = 'CCX' then
+      IsFormat := True
+    else if ext = 'COB' then   // Ascendancy
       IsFormat := True
     else if ext = 'CPR' then
       IsFormat := True
@@ -12941,6 +13187,10 @@ begin
     else
       BinCopyToStream(FHandle,outputstream,offset,size,0,BUFFER_SIZE,silent,SetPercent);
   end
+{  else if DrvInfo.ID = 'F22DAT' then
+  begin
+    DecompressF22DAT(FHandle,outputstream,offset,size,silent);
+  end}
   else
   begin
     BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);

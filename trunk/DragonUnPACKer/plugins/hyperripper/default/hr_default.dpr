@@ -475,12 +475,13 @@ var Percent: TPercentCallback;
   *       Fixed BMFind function (was missing stuff)
   *       Improved speed & reliability by using direct searches instead of calling BMFind again:
   *         RIFF/WAVE RIFF/AVI PNG and JPEG/JFIF
+  * 51040 Removed unstable status for Dragon UnPACKer v5.4.0 release
   * }
 
-const DRIVER_VERSION = 51022;
+const DRIVER_VERSION = 51040;
       HR_VERSION = 55044;
-      CVS_REVISION = '$Revision: 1.11 $';
-      CVS_DATE = '$Date: 2008-11-13 18:55:23 $';
+      CVS_REVISION = '$Revision: 1.12 $';
+      CVS_DATE = '$Date: 2008-11-16 16:13:13 $';
 
 function BigToLittle2(src: array of byte): word;
 begin
@@ -621,7 +622,7 @@ end;
 function GetVersionInfo(): VersionInfo; stdcall;
 begin
 
-  result.Name := 'Elbereth''s HyperRipper plugin v'+getVersion(DRIVER_VERSION);
+  result.Name := 'Elbereth''s HyperRipper 5.5 plugin';
   result.Version := DRIVER_VERSION;
   result.Author := 'Alexandre Devilliers (aka Elbereth)';
   result.Comment := 'Can search all file formats that were available in HyperRipper v4.2 (Dragon UnPACKer 4.22a).'+#10+'More reliable and efficient than HyperRipper 4.';

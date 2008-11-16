@@ -111,7 +111,7 @@ AutoIncBuild=1
 MajorVer=3
 MinorVer=0
 Release=0
-Build=77
+Build=82
 Debug=0
 PreRelease=0
 Special=0
@@ -122,31 +122,23 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone
 FileDescription=Duppi - The DUP5 Package Installer.
-FileVersion=3.0.0.77
+FileVersion=3.0.0.82
 InternalName=Duppi
-LegalCopyright=
-LegalTrademarks=
+LegalCopyright=Mozilla Public License 1.1
+LegalTrademarks=Mozilla Public License 1.1
 OriginalFilename=duppi.exe
 ProductName=Duppi
-ProductVersion=5.3.3
+ProductVersion=5.4.0
 Comments=Duppi - The DUP5 Package Installer.
 [Excluded Packages]
 C:\Program Files\RemObjects Software\Everwood\Bin\RemObjects_Everwood_D7.bpl=RemObjects Everwood for Delphi
 P:\Program Files\Pascal Script for Delphi\Dcu\D7\PascalScript_Core_D7.bpl=RemObjects Pascal Script - Core Package
-[HistoryLists\hlConditionals]
-Count=2
-Item0=DUPPI
-Item1=DRGUNPACK
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlSearchPath]
-Count=1
-Item0=E:\Developpement\dup-HEAD-2008\DragonUnPACKer
 [HistoryLists\hlUnitOutputDirectory]
 Count=1
 Item0=E:\Developpement\dup-dev-5.1-dcu
 [HistoryLists\hlOutputDirectorry]
-Count=2
+Count=1
 Item0=E:\Developpement\dup-dev-5.1-compiled\utils
-Item1=E:\Developpement\dup-dev-5.1-compiled

@@ -1,6 +1,6 @@
 library cnv_pictex;
 
-// $Id: cnv_pictex.dpr,v 1.9 2008-08-23 17:17:56 elbereth Exp $
+// $Id: cnv_pictex.dpr,v 1.10 2008-11-16 16:25:15 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/cnv_pictex.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -71,8 +71,8 @@ var Percent: TPercentCallback;
     AHandle: THandle;
     AOwner: TComponent;
 
-const DRIVER_VERSION = 21110;
-const DUP_VERSION = 53340;
+const DRIVER_VERSION = 21140;
+const DUP_VERSION = 54040;
 
 { * Version History:
   * v1.0.0 Alpha (10000): First version (never distributed)
@@ -93,6 +93,7 @@ const DUP_VERSION = 53340;
   * v2.1.0 Beta  (21010): Using Imaging Lib now
   *                       Added DirectX Texture DDS support
   * v2.1.1 Beta  (21110): Added BMP as output for all formats (for previewing ability)
+  * v2.1.1       (21140): Removed beta status for 5.4.0 release
   * }
 
 function DUCIVersion: Byte; stdcall;
@@ -653,7 +654,7 @@ begin
   result := 0;
 
   texFile.Read(HDR,SizeOf(HMC_Tex_Entry));
-  Get0stm(texFile);
+  Get0(texFile);
 
   if (HDR.Type1 <> 'ABGR') or (HDR.Type2 <> 'ABGR') then
     raise Exception.Create('Not an RGBA texture!');
@@ -696,7 +697,7 @@ begin
   result := 0;
 
   texFile.Read(HDR,SizeOf(HMC_Tex_Entry));
-  Get0stm(texFile);
+  Get0(texFile);
 
   if (HDR.Type1 <> (dxtchar+'TXD')) or (HDR.Type2 <> (dxtchar+'TXD')) then
     raise Exception.Create('Not an DXT'+dxtchar+' texture!');
@@ -744,7 +745,7 @@ begin
   result := 0;
 
   texFile.Read(HDR,SizeOf(HMC_Tex_Entry));
-  Get0stm(texFile);
+  Get0(texFile);
   texFile.Read(fsize,4);
 
   if (HDR.Type1 <> 'NLAP') or (HDR.Type2 <> 'NLAP') then

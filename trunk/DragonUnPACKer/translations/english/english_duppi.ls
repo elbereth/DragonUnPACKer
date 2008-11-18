@@ -228,23 +228,23 @@ PIP003=Proxy needs Username/Password:
 PIP004=Username:
 PIP005=Password:
 
-BUTOK=OK
-BUTGO=Go!
-BUTSCH=Search
-BUTDIR=New Directory
-BUTDET=More
 BUTADD=Add
-BUTDEL=Delete
-BUTCNV=Convert
-BUTINS=Install
 BUTCAN=Cancel
 BUTCLO=Close
+BUTCNV=Convert
 BUTCON=Continue
+BUTDEL=Delete
+BUTDET=More
+BUTDIR=New Directory
+BUTEDT=Edit
+BUTGO=Go!
+BUTINS=Install
 BUTNEX=Next
+BUTOK=OK
 BUTPAL=Add Palette
 BUTREF=Refresh
 BUTREM=Remove
-BUTEDT=Edit
+BUTSCH=Search
 
 {/BODY}
 #

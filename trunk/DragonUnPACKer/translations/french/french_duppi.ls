@@ -229,6 +229,7 @@ PIEM60=Erreur serveur lors de la recherche denière version Duppi!
 PIEP01=Paramètre erronnée! Si vous n'avez pas encore lancer Dragon UnPACKer faites-le, puis relancer Duppi.
 PIEP02=Le serveur n'a pas reconnu votre version de Dragon UnPACKer.
 PIEUNK=Erreur serveur inconnu: "%e"
+
 PIP000=Configuration du proxy
 PIP001=Proxy:
 PIP002=Port du proxy:
@@ -236,23 +237,24 @@ PIP003=Le proxy requiere une identification:
 PIP004=Utilisateur:
 PIP005=Mot de passe:
 
-BUTSCH=Chercher
-BUTOK=Ok
-BUTGO=Go!
-BUTDIR=Nouveau Dossier
-BUTDET=Details
-BUTDEL=Supprimer
 BUTADD=Ajouter
-BUTCNV=Convertir
 BUTCAN=Annuler
-BUTINS=Installer
 BUTCLO=Terminer
+BUTCNV=Convertir
 BUTCON=Continuer
+BUTDEL=Supprimer
+BUTDET=Details
+BUTDIR=Nouveau Dossier
+BUTEDT=Editer
+BUTGO=Go!
+BUTINS=Installer
 BUTNEX=Suivant
+BUTOK=Ok
 BUTPAL=Ajouter Palette
 BUTREF=Rafraichir
 BUTREM=Supprimer
-BUTEDT=Editer
+BUTSCH=Chercher
+
 {/BODY}
 #
 # Fin du fichier source de langue (Language Source File)

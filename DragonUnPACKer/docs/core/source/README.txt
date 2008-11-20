@@ -1,5 +1,5 @@
-Dragon UnPACKer 5.4.0 Source Code                               MPL open source
-by Alexande "Elbereth" Devilliers                                    16/11/2008
+Dragon UnPACKer 5.4.0 "Degei" Source Code                       MPL open source
+by Alexande "Elbereth" Devilliers                                    20/11/2008
 ===============================================================================
 
 This source code can be used and modified if following the Mozilla Public

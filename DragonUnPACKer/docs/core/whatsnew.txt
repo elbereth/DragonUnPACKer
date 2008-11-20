@@ -1,8 +1,8 @@
 Dragon UnPACKer v5.4.0 "Degei"                              MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    18/11/2008
+by Alexande "Elbereth" Devilliers                                    20/11/2008
 ===============================================================================
 
-  ** English ** (voir Historique.txt pour la version française)
+  ** English ** (voir Historique.txt pour la version franÃ§aise)
 
   ----------
   What's new
@@ -38,8 +38,8 @@ Elbereth's HyperRipper 5 Plugin (hr_default.d5h)        5.1.0.103
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.4.0.189
-Release [18/11/2008]
+Version 5.4.0.191
+Release [20/11/2008]
 
  i This stable release was long to come, but there are some neat additions and
    improvements! Enjoy!! :)
@@ -114,7 +114,7 @@ Release [18/11/2008]
      of the game. But I don't know how to get them...
      Super EF2000 .DAT files are also supported (same structure than F-22 ADF).
    + Added support for Florensia .PAK files.
-   + Added support for Sinking Island/L'Ile Noyée .OPK
+   + Added support for Sinking Island/L'Ile NoyÃ©e .OPK
    + Added support for The Elder Scrolls 4: Oblivion .BSA files.
      Thanks to http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format
      Please check there if you need to create this type of archives, there are

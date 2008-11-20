@@ -1,6 +1,6 @@
 library drv_11th;
 
-// $Id: drv_11th.dpr,v 1.1.1.1 2004-05-08 10:26:52 elbereth Exp $
+// $Id: drv_11th.dpr,v 1.2 2008-11-20 07:59:16 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/11th/drv_11th.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -33,6 +33,8 @@ uses
 {$E d5d}
 
 {$R *.res}
+
+{$Include datetime.inc}
 
 type FSE = ^element;
      element = record
@@ -86,10 +88,12 @@ type EDup5PathNotFound = class(Exception);
 
   //////////////////////////////////////////////////////////////////////////// }
 
-const DRIVER_VERSION = 10012;
-      DUP_VERSION = 50023;
-
-      BUFFER_SIZE = 4096;
+const
+  DRIVER_VERSION = 10040;
+  DUP_VERSION = 54040;
+  CVS_REVISION = '$Revision: 1.2 $';
+  CVS_DATE = '$Date: 2008-11-20 07:59:16 $';
+  BUFFER_SIZE = 8192;
 
 type GJD_Entry = packed record         // 32 Bytes
     Unknown: integer;
@@ -132,7 +136,7 @@ function GetDriverInfo: DriverInfo; stdcall;
 begin
 
   GetDriverInfo.Name := 'Elbereth''s 11th Hour Driver';
-  GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
+  GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth/Piecito)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
   GetDriverInfo.Comment := 'The 11th Hour GJD files support.';
   GetDriverInfo.NumFormats := 1;
@@ -523,8 +527,10 @@ begin
   OldH := Application.Handle;
   Application.Handle := AHandle;
   MessageDlg('Elbereth''s 11th Hour Driver v'+getVersion(DRIVER_VERSION)+#10+
-             '(c)Copyright 2003 Alexandre Devilliers'+#10+#10+
-             'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+#10+
+             'Created by Alexandre Devilliers (aka Elbereth/Piecito)'+#10+#10+
+             'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
+             'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+
+             'Based on CVS rev '+getCVSRevision(CVS_REVISION)+' ('+getCVSDate(CVS_DATE)+')'+#10+#10+
              ReplaceValue('%s',DLNGStr('11TH05'),status)
              ,mtInformation,[mbOk],0);
   Application.Handle := OldH;

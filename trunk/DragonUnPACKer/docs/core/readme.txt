@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.2.0b                                     MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    30/01/2006
+Dragon UnPACKer v5.4.0 "Degei"                              MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    20/11/2008
 ===============================================================================
 
   ** English Readme (voir lisezmoi.txt pour la version française)
@@ -34,8 +34,8 @@ media for distribution (ex: CD-Rom, FTP, HTTP, etc..). But all text files must
 stay intact, and no files can be added to the zip file.
 
  This program have 2 differents types of releases (same content):
-    SETUP - ~2.2MB - dup520bcinthia-setup.exe - With Install/Uninstall
-       7Z - ~1.9MB - dup520bcinthia.7z        - Plain 7-Zip (v4.32) archive
+    SETUP - ~2.4MB - dup540degei-setup.exe - With Install/Uninstall
+       7Z - ~2.3MB - dup540degei.7z        - Plain 7-Zip (v4.60) archive
 
 
 ===============================================================================
@@ -68,25 +68,25 @@ DrgUnPack5.exe and voila it is installed..
  Here is a list of files you must find in the Dragon UnPACKer distribution:
  (if not go to homepage and download it from there)
 
- drgunpack5.exe    	        2771 KB
- drgunpack5.exe.sig            1 KB  PGP Signature of drgunpack5.exe file
+*drgunpack5.exe    	        3199 KB
+ drgunpack5.exe.sig            1 KB  GPG Signature of drgunpack5.exe file
  file_id.diz       	           1 KB
- historique.txt    	          30 KB
- lisezmoi.txt      	          43 KB
- readme.txt        	          40 KB
- whatsnew.txt      	          27 KB
+ historique.txt    	          42 KB
+ lisezmoi.txt      	          61 KB
+ readme.txt        	          55 KB
+ whatsnew.txt      	          36 KB
  
  data\
  default.dulk                 40 KB  Default Look
-+english.lng                  11 KB  English translation of DUP5
+*english.lng                  10 KB  English translation of DUP5
  homepage.uht                 22 KB  Create list template "DUP4 Style"
-+spanish.lng                  11 KB  Spanish translation of DUP5
+*spanish.lng                  11 KB  Spanish translation of DUP5
  text-db.uht                   6 KB  Create list template "Text Database"
  xml-db.uht                    6 KB  Create list template "XML Database"
 
  data\convert\
  Blood.dpal                    1 KB  Blood color palette
- cnv_pictex.d5c              459 KB  Textures convert plugin (v2.0.1)
+ cnv_pictex.d5c              779 KB  Textures convert plugin (v2.1.1)
  Doom.dpal                     1 KB  Doom color palette
  Duke3D.dpal                   1 KB  Duke Nukem 3D color palette
  Quake 1.dpal                  1 KB  Quake color palette
@@ -94,21 +94,26 @@ DrgUnPack5.exe and voila it is installed..
  Shadow Warrior.dpal           1 KB  Shadow Warrior color palette
  
  data\drivers\
- drv_11th.d5d                410 KB  11th Hour driver plugin (v1.0.0 Beta 2)
- drv_default.d5d             220 KB  Main driver plugin (v2.0.0a)
+ drv_11th.d5d                412 KB  11th Hour driver plugin (v1.0.0)
+ drv_default.d5d             239 KB  Elbereth's Main driver plugin (v2.0.5)
  drv_giants.d5d               96 KB  Giants GZP driver plugin (v1.0.2)
  drv_mix.d5d                  64 KB  WestWood MIX driver plugin (v1.1.4 Beta)
                                      By Felix Riemann
  drv_ut.d5d                  669 KB  UT Packages driver plugin (v2.3.0)
- drv_zip.d5d                  98 KB  ZIP driver plugin (v1.1.0)
+ drv_zip.d5d                 103 KB  ZIP driver plugin (v1.1.2)
  unzip32.dll                 100 KB  Info-Zip's UnZip32.Dll v5.5.2
                                  
  data\hyperripper\               
- hr_default.d5h              517 KB  Default HyperRipper plugin (v5.0.2)
+ hr_default.d5h              626 KB  Elbereth's HyperRipper Plugin (v5.1.0)
                                  
  utils\                          
- duppi.exe                   885 KB  DUP5 Package installer (v2.1.0)
++duppi.exe                  1102 KB  DUP5 Package installer (v3.0.0)
++DuppiInstall.exe             50 KB  Duppi Auto-Update Installer
  hrf_30_spec.txt               7 KB  HyperRipper file 3.0 specification
+
+ utils\data\
++english.lng                   4 KB  Duppi English translation
++spanish.lng                   4 KB  Duppi Spanish translation
 
  utils\templates\
  duhtcomp.exe                116 KB  UHT file compiler
@@ -119,20 +124,29 @@ DrgUnPack5.exe and voila it is installed..
  
  utils\translation\
  dlngc.exe                   124 KB  LNG file compiler
- dlngc.txt                     3 KB  LNG file compiler documentation
- english-520-changes.txt       4 KB  Changes in english.ls 5.0.0 -> 5.2.0
- english.ls                   20 KB  English translation sources
+ dlngc.txt                     4 KB  LNG file compiler documentation
+ english.ls                   19 KB  English translation sources (Core)
+ english_duppi.ls              9 KB  English translation sources (Duppi)
  english-beta2-changes.txt     4 KB  Changes in english.ls 5.0.0 Beta 1 -> 2
  english-beta3-changes.txt     4 KB  Changes in english.ls 5.0.0 Beta 2 -> 3
  english-rc1-changes.txt       2 KB  Changes in english.ls 5.0.0 Beta 3 -> RC1
  english-rc2-changes.txt       2 KB  Changes in english.ls 5.0.0 RC1 -> RC2
  english-rc3-changes.txt       3 KB  Changes in english.ls 5.0.0 RC2 -> RC3
+ english-520-changes.txt       4 KB  Changes in english.ls 5.0.0 -> 5.2.0
+ english-532-changes.txt       3 KB  Changes in english.ls 5.2.0 -> 5.3.2 WIP
+ english-533-changes.txt       2 KB  Changes in english.ls 5.3.2 -> 5.3.3 Beta
+ english-540-changes.txt       7 KB  Changes in english.ls 5.3.3 Beta -> 5.4.0
+ flag_fr.bmp                   1 KB  France flag icon
  flag_sp.bmp                   1 KB  Spain flag icon
  flag_us.bmp                   1 KB  USA flag icon
- spanish.ls                   17 KB  Spanish translation sources
+ french.ls                    20 KB  French translation sources (Core)
+ french_duppi.ls              10 KB  French translation sources (Duppi)
+ spanish.ls                   16 KB  Spanish translation sources (Core)
+ spanish_duppi.ls              7 KB  Spanish translation sources (Duppi)
  translation.txt               2 KB  How to make a DUP5 translation
 
   * Needed files for DRGUNPACK5.EXE to work.
+  + Needed files for DUPPI.EXE to work.
 
 
 ===============================================================================
@@ -141,23 +155,27 @@ DrgUnPack5.exe and voila it is installed..
 
  You will need:
 
-  * Windows 98/ME/NT/2000/XP/2003.
-    Tested under Windows XP.
+  * Windows 98/ME/NT/2000/XP/2003/Vista/2008/Seven.
+    Tested under:
+      Windows XP SP3
     Does not work under Windows 95.
+  * The programs runs under Linux OS but by the mean of Wine and the display is
+    slow as hell...
+    The only way for a native Linux Dragon UnPACKer would be by using Lazarus
+    and FreePascal compiler (this would also bring MacOS support I guess). But
+    this is very difficult because not all libraries used by Dragon UnPACKer
+    exists for FPC.
 
  Author's computer:
 
-  * Antec P180 case
-  * Seasonic S12-600 power supply
-  * Asus A8N-SLI Deluxe (BIOS 1015)
-  * AMD Athlon 64 X2 4400+ (220Mhz x 11 = 2.4Ghz)
-    Termalright XP-120 with NoiseBlocker SX2 fan
-  * 2048MB (2x1024MB) of DDRam Corsair PC3200 Cas 2 (3-3-3-8-T1 @ 220Mhz)
-  * 1.8TB of hard disk space (8 physical hard disks)
-  * Pioneer DVR-109 DVD-RW 16x burner
-  * Sound Blaster Audigy 2 ZS sound card
-  * Asus GeForce 7800 GTX 256MB (500Mhz/1.34Ghz) graphic card
-    NV Silencer 5 rev 3
+  * Antec Solo case
+  * Seasonic S12-500 power supply
+  * Gigabyte GA-EX58-UD5 (BIOS F3)
+  * Intel Quad Core Core i7 920 2.4Ghz (Nehalem) [166Mhz x 20 = 3.3Ghz]
+    Noctua C12P
+  * 6144MB (3x2048MB) of DDR3-1333 OCZ Platinum Cas 7 (7-7-7-20)
+  * 2xWestern Digital Raptor 37GB+74GB + 2xSamsung T166 500GB
+  * Gainward GeForce 8800 GT 1024MB Golden Sample (650Mhz/900Mhz) graphic card
     
   (when i say something is fast you should test it before by yourself!! :) )
 
@@ -187,7 +205,8 @@ DrgUnPack5.exe and voila it is installed..
  Interface:
  ----------
  
- There is a Menu, a Tool Bar, 2 Explorer Lists and a Status Bar.
+ There is a Menu, a Tool Bar, 2 Explorer Lists, an optional preview panel (on
+ the right) and a Status Bar.
  
  Here is a list of all menus:
  Menu                             Description
@@ -196,21 +215,35 @@ DrgUnPack5.exe and voila it is installed..
  File > Close                     Allow to close an opened file.
                                   This action is automatic when you do
                                   File > Open.
+ File > Reopen                    The last 10 opened files are shown there.
  File > HyperRipper               Will run the HyperRipper module.
  Edit > Search                    Only displayed when a file is opened and
                                   searching is supported.
                                   Allow you to display all files which name
                                   include the string you typed.
- Tools > Create file list         Will open the Create list window.
+ Options > Basic > Basic          Open the configuration panel of Dragon
+                                  UnPACKer on Basic options tab.
+ Options > Basic > Advanced       Open the configuration panel of Dragon
+                                  UnPACKer on Advanced options tab.
+ Options > Basic > Execution Log  Open the configuration panel of Dragon
+                                  UnPACKer on Execution log options tab.
+ Options > Plugins > Convert      Open the configuration panel of Dragon
+                                  UnPACKer on Convert Plugins options tab.
+ Options > Plugins > Drivers      Open the configuration panel of Dragon
+                                  UnPACKer on Drivers Plugins options tab.
+ Options > Plugins > HyperRipper  Open the configuration panel of Dragon
+                                  UnPACKer on HyperRipper Plugins options tab.
+ Options > File Types             Open the configuration panel of Dragon
+                                  UnPACKer on File Association tab.
+ Options > Look/Icons             Open the configuration panel of Dragon
+                                  UnPACKer on Look/Icons options tab.
+ Options > Preview                Open the configuration panel of Dragon
+                                  UnPACKer on Preview options tab.
+ Tools > Create entry list        Will open the Create list window.
                                   If you want to create new templates for this
                                   you can look at the UTILS\TEMPLATES sub-dir
                                   of Dragon UnPACKer 5.
- Options > Basic                  Open the configuration panel of Dragon
-                                  UnPACKer on Basic options tab.
- Options > Plugins                Open the configuration panel of Dragon
-                                  UnPACKer on Plugins options tab.
- Options > File Association       Open the configuration panel of Dragon
-                                  UnPACKer on File Association tab.
+ ? > Check for new versions...    Runs Duppi to check new versions on Internet
  ? > About...                     Display information about the Dragon UnPACKer
                                   
  The Tool Bar have the following buttons (in order of appearence):
@@ -297,6 +330,23 @@ options:
     Allow you to extract all selected files to a directory.
 
  
+ Preview pane:
+ -------------
+
+ This is an image/texture preview pane. The image/texture can be shown stretched
+of original full size. The pane can be hidden.
+
+ By right-clicking you will have 4 options:
+ 
+  + Hide preview
+    This will hide the preview pane. To show it back, right click on the status
+    bar.
+  + Display mode > Original size with scrollbars (if needed)
+  + Display mode > Shrinked/Stretched to panel size
+  + Preview options
+    This will open the options on the Preview options tab.
+     
+
  Execution log:
  --------------
  
@@ -336,12 +386,13 @@ detail you wish in the options or just disable (hide) the log.
 
  This method for opening files allow you to scan it for embedded file formats:
 
-  669        - UNIT 669 Module
+ -669        - UNIT 669 Module
   AVI        - Audio-Video Interleace
   BIK        - BInKley Videos
   BMP        - Windows BitMap pictures
+  DDS        - Direct-X Surface file (Textures)
   EMF        - Windows Enhanced MetaFile
-  FLIC       - Autodesk Animator FLIC files
+ -FLIC       - Autodesk Animator FLIC files
   GIF        - Graphics Interchange Format pictures
   IFF        - Interchange File Format pictures
  *IT         - Impulse Tracker Module
@@ -352,12 +403,14 @@ detail you wish in the options or just disable (hide) the log.
   OGG        - Ogg Stream
   PNG        - Portable Network Graphics pictures
  *S3M        - ScreamTracker 3 Module
+  TGA        - Truevision Targa (RGB only)
   VOC        - Sounds (Creative VOice)
   WAV        - Sounds (RIFF/WAVE)
   WMF        - Windows MetaFile (Aldus Placeable format)
   XM         - Fast Tracker 2 Module
 
   * = Not sure (file size may often be wrong).
+  - = Many wrong positives (many "found" files are not true 669 files)
 
 
  How to use it:
@@ -426,6 +479,9 @@ between 3 versions of the file:
  You can test tweaking the values to get more performance. But only change the
  buffer size. The 128 bytes rollback is more than enough for all supported
  formats.
+
+ NOTE: In v5.4.0 those options are NOT modifiable anymore, the default values
+       of 128 KB for Buffer and 32 bytes for Rollback.
 
  => Entries formatting?
  
@@ -539,6 +595,48 @@ instead of having an HUGE single MPEG Audio file.
    Language change is made on-the-fly (no restart needed).
    The homepage URL displayed is the Language file author one.
    (See Utils\Translation.Txt)
+   You can click on Find more translations, this will run Duppi program and
+   show all available translations to download from the website.
+
+   NOTE: Translations (other than English/Spanish & French) are done by third
+         parties. Therefore new translations can appear months after a release.
+         Check now & then if your language is not available yet (or go ahead
+         and translate it yourself! Don't forget to send me the translation!).
+         (See Utils\Translation.Txt)
+
+
+ Advanced options:
+ -----------------
+
+ + Temporary Directory
+   This directory is used to store temporary data files for ex when pressing
+   open on embedded files, they are first extracted in that directory then
+   opened by their associated program. It is also used during convertion for
+   some obsolete (DUDI v3) plugins.
+   You can either use the auto-detected one (Current user Windows temporary
+   directory) or define one yourself (for ex: Ram disk).
+   
+ + Options for 'Open file'
+   Changes the behavior when double clicking on the right-side explorer pane.
+   By default the file is Opened by the associated program.
+   If you prefer you can set: Make 'Extract file... Without Convertion' the
+   default option
+   
+ + Buffer memory
+   The buffer memory is used for extraction (when handled by Dragon UnPACKer).
+   The default buffer is enough for optimal speed, but you can change it if
+   you want.
+ 
+ 
+ Execution log:
+ --------------
+ 
+ This allows you to setup the execution log:
+ + Display it or not
+ + Select the level of detail, there are 3 levels:
+     Low - Will only show important messages and all errors
+     Medium
+     High - All messages, warnings and errors are shown
 
 
  Plugins:
@@ -561,8 +659,8 @@ instead of having an HUGE single MPEG Audio file.
    Maximum priority: 200
    Minimum priority:   0
 
- If a plugin got a configuration dialog the "Setup" button will be enabled.
  If a plugin got an information dialog the "About..." button will be enabled. 
+ If a plugin got a configuration dialog the "Setup" button will be enabled.
  
  
  Look/Icons:
@@ -570,14 +668,6 @@ instead of having an HUGE single MPEG Audio file.
 
  This allows you to choose the icons used by Dragon UnPACKer.
  There is only one available at the moment "XT (XP Look)". 
- 
- 
- Execution log:
- --------------
- 
- This allows you to setup the execution log:
- + Display it or not
- + Select the level of detail
 
 
  File association:
@@ -588,155 +678,307 @@ those file in the windows explorer (for example) with Dragon UnPACKer.
 
  If an extension is checked it is associated with Dragon UnPACKer.
 
+ There are 4 options:
+ + Verify associations on start-up
+   On start-up all selected extensions will be associated with Dragon UnPACKer.
+ + Use external icon
+   If you prefer another icon for the extensions, use an external icon instead
+   of the internal one.
+ + Change the association text
+   Instead of Dragon UnPACKer Archive, use whatever you prefer.
+ + Add Windows Explorer extension "Open with Dragon UnPACKer 5"
+   By right clicking on any file in Windows Explorer you will have the option
+   to open it with Dragon UnPACKer.
+ 
+ 
+ Preview:
+ --------
+ 
+ This section is all about the preview feature, you can enable/disable the
+ preview and set the stretched/shrinked/full size option.
+ 
+ You can also disable the threshold limit for preview size:
+ The extraction for certain file formats can be slow, therefore the preview
+ can be very sluggish. In order to avoid this, there is a limit for the size
+ of the embedded file. If the size is bigger it is not extracted and not
+ previewed. The default of 2MB is sometimes slow, you can set it to whatever
+ you prefer or disable the limit completely (always preview, this is NOT
+ recommended).
+
 
 ===============================================================================
  8. SUPPORTED FORMATS
 -------------------------------------------------------------------------------
 
  If there is a file format you want to be supported by Dragon UnPACKer, contact
-the author (see the Contact Me chapter).
+the author (see the Contact Me chapter). For more detailed information please
+see the webpage at: http://www.elberethzone.net/dup-supportedgames.html
 
- Games                                     Extensions  Tested Comment    
- 11th Hour                                       .GJD  Yes    See options/cfg
- Age of Empires 2: Age of Kings                  .DRS  Yes
- Age of Empires 3                                .BAR  Yes
- Age of Mythology                                .BAR  Tes
- Alien vs Predator                               .FFL  Yes
- Alien vs Predator 2                             .REZ  Yes
- American McGee Alice                            .PK3  Yes
-*Armored Fist 3                                  .PFF  No     PFF3 only
- Battlefield 1942                                .RFA  Yes
- Black & White                                   .SAD  Yes
- Black & White 2                          .LUG;.STUFF  Yes
- Blood                                           .ART  Yes
- Blood 2                                         .REZ  No 
- BloodRayne                                      .POD  Yes
-#Breakneck                                       .SYN  Yes    Partial/Useless
- Civilization 4                                  .FPK  Yes
-*Comanche 4                                      .PFF  No     PFF3 only
- Command and Conquer 1                           .MIX  ???    By Felix Riemann
- Command and Conquer: Generals                   .BIG  Yes
- Conflict: Freespace                             .VP   Yes
- Cyberbykes                                      .BIN  Yes
-!Daikatana                                       .PAK  Yes    Does not work
- Dark Force                                      .GOB  Yes
- DarkStone                                       .MTF  Yes
-*Delta Force 1                                   .PFF  No     PFF3 only
-*Delta Force 2                                   .PFF  No     PFF3 only
-*Delta Force: Land Warrior                       .PFF  Yes    PFF3 only
- Descent                                         .HOG  Yes
- Descent 2                                       .HOG  No 
- Descent 3                                  .HOG;.MN3  Yes
- Desperados: Wanted Dead or Alive                .PAC  Yes    .PAC on the CD
- Deus Ex                               .UAX;.UMX;.UTX  Yes
- Doom 3                                          .PK4  Yes
- Dragon UnPACKer HyperRipper                     .HRF  Yes    v0 v1 v2 v3.0
- Duke Nukem 3D                              .ART;.GRP  Yes
- Dune 2                                          .PAK  Yes
-*Dungeon Keeper 2                           .SDT;.WAD  Yes
- Earth Siege 2                                   .VOL  Yes
- Emperor: Battle for Dune                   .BAG;.RFD  Yes    Fully supported
- Evil Islands                                    .RES  Yes
-#Excessive Speed                                 .SYN  Yes    Partial/Useless
- F22 Lighting 3                                  .PFF  Yes
- Fable: The Lost Chapters                        .LUG  Yes
- F.E.A.R.                                     .ARCH00  Yes
- Freedom Fighters                                .TEX  Yes
- Freespace 2                                     .VP   Yes
- Giants: Citizen Kabuto                          .GZP  Yes    Fully supported
- GTA3                                       .DIR/.IMG  Yes
- GTA: Vice City                                  .ADF  Yes
- Gunlok                                          .DAT  Yes
- Gunman Chronicle                                .WAD  Yes
- Half Life                                  .PAK;.WAD  Yes
- Hand of Fate                               .PAK;.TLK  Yes
- Harbinger                                       .SQH  Yes
- Harry Potter                          .UAX;.UMX;.UTX  Yes
- Heavy Metal: F.A.K.K.2                          .PK3  Yes
- Heretic 2                                  .PAK;.WAD  Yes
- Hexen 2                                         .PAK  No 
- Hidden & Dangerous                              .DTA  Yes    Run the game once
- Hitman 2: Silent Assassin                       .TEX  Yes
- Hitman: Contracts                          .PRM;.TEX  Yes
- Hooligans                                       .X13  Yes
- Indiana Jones 3D                                .GOB  Yes
- Interstate '76                                  .ZFS  Yes
- Interstate '82                                  .ZFS  Yes
- Jagged Alliance 2                               .SLF  Yes
- James Bond NightFire                            .007  Yes    Demo/Retail
- Jedi Knight: Dark Forces 2                      .GOB  Yes
- Jedi Knight 2: Jedi Outcast                     .PK3  Yes
- Lands of Lore                              .PAK;.TLK  Yes
- LEGO Star Wars                                  .DAT  Yes
- Leisure Suit Larry: Magna Cum Laude             .JAM  Yes
- Lemmings Revolution                             .BOX  Yes
- MDK                                             .SNI  Yes
- Medal of Honor: Allied Assault                  .PK3  Yes
- Metal Gear Solid                                .MGZ  Yes
- Monkey Island 3                                 .BUN  Yes
- Mortyr                                          .HAL  Yes
- Moto Racer                                      .BKF  Yes
- Myst IV: Revelation                             .M4B  Yes
-#N.I.C.E.2                                       .SYN  Yes    Partial/Useless
- Nascar Racing                                   .DAT  Yes
- No One Lives for Ever                           .REZ  Yes
- No One Lives for Ever 2                         .REZ  Yes
-#NoX                                         .BAG/IDX  Yes    Partial/Experim.
- Operation Flashpoint                            .PBO  Yes
- Painkiller                                      .PAK  Yes    Thanks to MrMouse
- Patrician II                                    .CPR  Yes
- Port Royale                                     .CPR  Yes
- Postal                                          .SAK  Yes
- Purge                                           .REZ  Yes
- Quake                                      .PAK;.WAD  Yes
- Quake 2                                    .PAK;.WAD  Yes
- Quake 3 Arena                                   .PK3  Yes
- Quake 4                                         .PK4  Yes
- Qui veut gagner des millions                    .AWF  Yes
- Rage of Mages                                   .RES  Yes
- Rage of Mages 2                                 .RES  Yes
- realMyst 3D                                     .DNI  Yes
- Revenant                              .RVI;.RVM;.RVR  Yes
- Rune                                  .UAX;.UMX;.UTX  Yes
- Sanity: Aiken's Artifact                        .REZ  Yes
- Serious Sam                                     .GRO  Yes
- Serious Sam 2                                   .GRO  Yes
- Shadow Warrior                             .ART;.GRP  Yes
- Shogo: Mobile Armor Division                    .REZ  Yes
- Sin                                             .SIN  Yes
- Star Crusader                               .GL;.PAK  Yes
- System Shock 2                                  .CRF  Yes
- Terminal Velocity                               .POD  Yes
- The Sims                                        .FAR  Yes
- The Lord of the Rings: Battle for Middle Earth  .BIG  Yes
- The Movies                                 .BIG;.LUG  Yes
- Theme Park World                           .SDT;.WAD  Yes
- Thief                                           .CRF  Yes
- Thief 2                                         .CRF  Yes
- Tony Hawk Pro Skater 2                          .PKR  Yes
- Total Annihilation                         .HPI;.UFO  Yes
- Total Annihilation: Contrea-Attaque             .CCX  Yes
- Tribes                                          .VOL  Yes
- Tribes 2                                        .VL2  Yes
- Trickstyle                                      .PAK  Yes
- Tron 2.0                                        .REZ  Yes
- Undying                                    .UAX;.UTX  Yes
- Unreal                                .UAX;.UMX;.UTX  No 
- Unreal 2                                   .UAX;.UTX  Yes
- Unreal Tournament                     .UAX;.UMX;.UTX  Yes
- Unreal Tournament 2003                     .UAX;.UTX  Yes    Betas/Demo/Retail
- Vampire: La Mascarade                           .NOB  Yes
-#Vietcong (Demo)                                 .CBF  Yes    No decompression
- Warlords Battlecry                              .XCR  Yes
- Warlords Battlecry 2                            .XCR  Yes
- Who wants to be a millionaire                   .AWF  Yes
- Zanzarah                                        .PAK  Yes
+ Complete support:
+ -----------------
 
-* = Some files don't work properly.
-# = Experimental Driver (Incomplet and/or untested).
-! = Don't work
+ Game                                                    Files Driver
+ 18 Wheels of Steel: Across America                     .ZIPFS drv_zip 
+ 18 Wheels of Steel: Pedal to the Metal                   .CSC drv_zip 
+ The 11th Hour                                            .GJD drv_11th 
+ Act of War                                               .DAT drv_default 
+ Against Rome                                             .DAT drv_zip 
+ Age of Empires 2: Age of Kings                           .DRS drv_default 
+ Age of Empires 3                                         .BAR drv_default 
+ Age of Mythology                                         .BAR drv_default 
+ AGON                                                     .SFL drv_default 
+ Alien vs Predator                                        .FFL drv_default 
+ Alien vs Predator 2                                      .REZ drv_default 
+ Alpha Black Zero                                         .ABZ drv_zip 
+ American McGee Alice                                     .PK3 drv_zip 
+ Arena Wars                                 .TEXTUREPACK;.DATA drv_zip 
+ Ascendancy                                               .COB drv_default 
+ Battlefield 1942                                         .RFA drv_default 
+ Battlefield 2                                            .ZIP drv_zip 
+ Black & White                                            .SAD drv_default 
+ Black & White 2                                   .LUG;.STUFF drv_default 
+ Blitzkrieg                                               .PAK drv_zip 
+ Blitzkrieg Burning Horizon                               .PAK drv_zip 
+ Blitzkrieg Rolling Thunder                               .PAK drv_zip 
+ Blood                                                    .ART drv_default 
+ Blood 2                                                  .REZ ??? 
+ Bloodrayne                                               .POD drv_default 
+ Brothers Pilots 4                                        .PAK drv_zip 
+ Call of Duty                                             .PK3 drv_zip 
+ Call of Duty 2                                           .IWD drv_zip 
+ Call of Duty 3                                           .IWD drv_zip 
+ Call of Duty 4: Modern Warfare                           .IWD drv_zip 
+ Call of Duty: World at War                               .IWD drv_zip 
+ Call of Juarez                                           .PAK drv_zip 
+ Call to Power                                            .CTP drv_zip 
+ Cellblock Squadrons                                      .BOX drv_zip 
+ Civilization 4                                           .FPK drv_default 
+ Command & Conquer: Generals                              .BIG drv_default 
+ Conflict: Freespace                                       .VP drv_default 
+ Cyberbykes                                               .BIN drv_default 
+ Dark Forces                                              .GOB drv_default 
+ Darkstone                                                .MTF drv_default 
+ Deadly Dozen                                              .ZA drv_zip 
+ Deadly Dozen 2: Pacific Theater                           .ZA drv_zip 
+ Defiance                                                 .DAT drv_zip 
+ Descent                                                  .HOG drv_default 
+ Descent 2                                                .HOG drv_default 
+ Descent 3                                           .HOG/.MN3 drv_default 
+ Desperados: Wanted Dead of Alive                         .PAC drv_zip 
+ Dethkarz                                                 .ZIP drv_zip 
+ Dreamfall: The Longest Journey                           .PAK drv_default 
+ Dinosaur Digs                                            .ZTD drv_zip 
+ Dirty Little Helper 98                                   .DLU drv_zip 
+ Doom 3                                                   .PK4 drv_zip 
+ Doom 3: Resurrection of Evil                             .PK4 drv_zip 
+ Duke Nukem 3D                                            .ART drv_default 
+ Duke Nukem: Manhattan Project                          .ZIPFS drv_zip 
+ Dune 2                                                   .PAK drv_default 
+ Dungeon Keeper 2                                         .SDT drv_default 
+ Earth Siege 2                                            .VOL drv_default 
+ El Airplane                                              .ARH drv_zip 
+ Electranoid                                              .RES drv_default 
+ Elite Warriors                                            .ZA drv_zip 
+ Emperor: Battle for Dune                            .BAG;.RFD drv_default 
+ Empire Earth 2                                           .ZIP drv_zip 
+ Enclave                                             .XTC;.XWC drv_default 
+ Entropia Universe                                        .BNT drv_default 
+ Eve Online                                             .STUFF drv_default 
+ Evil Island                                              .RES drv_default 
+ Fable: The Lost Chapters                                 .LUG drv_default 
+ Falcon 4                                                 .ZIP drv_zip 
+ Fallout Tactics                                          .BOS drv_zip 
+ Far Cry                                                  .PAK drv_zip 
+ F.E.A.R.                                              .ARCH00 drv_default 
+ Fire Starter                                             .ZIP drv_zip 
+ Florensia                                                .PAK drv_default 
+ Freedom Fighters                                         .ZIP drv_zip 
+ Freedom Fighters                                         .TEX drv_default 
+ Freedom Force                                             .FF drv_zip 
+ Freedom Force vs The 3rd Reich                            .FF drv_zip 
+ Freelancer                                             .FLMOD drv_zip 
+ Freespace 2                                               .VP drv_default 
+ Fuzzy's World of Miniature Space Golf                    .RES drv_default 
+ Giants: Citizen Kabuto                                   .GZP drv_giants 
+ Grand Theft Auto 3                                  .IMG/.DIR drv_default 
+ Grand Theft Auto: Vice City                              .ADF drv_default 
+ Gunlok                                                   .DAT drv_default 
+ Half Life                                           .PAK;.WAD drv_default 
+ Hands of Fate                                       .PAK;.TLK drv_default 
+ Harbinger                                                .SQH drv_default 
+ Heavy Metal F.A.K.K.2                                    .PK3 drv_zip 
+ Hellhog XP                                                 .A drv_zip 
+ Heretic 2                                           .PAK;.WAD drv_default 
+ Hexen 2                                             .PAK;.WAD ??? 
+ Hidden & Dangerous                                  .DTA/.CNT drv_default 
+ Hitman: Bloodmoney                                       .ZIP drv_zip 
+ Hitman: Bloodmoney                                  .TEX;.PRM drv_default 
+ Hitman 2: Silent Assassin                                .ZIP drv_zip 
+ Hitman 2: Silent Assassin                           .TEX;.PRM drv_default 
+ Hitman: Contracts                                        .ZIP drv_zip 
+ Hitman: Contracts                                   .TEX;.PRM drv_default 
+ Holy Games 2005                                          .POD drv_zip 
+ Hooligans                                                .X13 drv_default 
+ Hot Rod American Street Drag                             .ROD drv_zip 
+ Hunting Unlimited 3                                      .SCS drv_zip 
+ Indiana Jones 3D                                         .GOB drv_default 
+ Interstate '76                                           .ZFS drv_default 
+ Interstate '82                                           .ZFS drv_default 
+ Itch                                                     .PSH drv_zip 
+ Jagged Alliance 2                                        .SLF drv_default 
+ James Bond 007: Nightfire                                .007 drv_default 
+ Jedi Knight 2: Jedi Outcast                              .PK3 drv_zip 
+ Lands of Lore                                       .PAK;.TLK drv_default 
+ Laser Light                                              .RES drv_default 
+ LEGO Star Wars                                           .DAT drv_default 
+ Leisure Suite Larry: Magna Cum Laude                     .JAM drv_default 
+ Lemmings Revolution                                      .BOX drv_default 
+ Line of Sight: Vietnam                                    .ZA drv_zip 
+ Low and Order 3: Justice is Served                       .LZP drv_zip 
+ Marine Mania                                             .ZTD drv_zip 
+ Master of Orion 3                                        .MOB drv_zip 
+ Maximus XV                                               .PAK drv_zip 
+ MDK                                                      .SNI drv_default 
+ Medal of Honor: Allied Assault                           .PK3 drv_zip 
+ Metal Gear Solid                                         .MGZ drv_zip 
+ Microsoft Flight Simulator 2004                          .CAB drv_zip 
+ Monkey Island 3                                          .BUN drv_default 
+ Monte Cristo                                             .PAK drv_zip 
+ Mortyr                                                   .HAL drv_default 
+ Moto Racer                                               .BKF drv_default 
+ Myst IV: Revelation                                      .M4B drv_default 
+ Nascar Racing                                            .DAT drv_default 
+ Neighbours From Hell                                     .BND drv_zip 
+ Neighbours From Hell 2                                   .BND drv_zip 
+ No One Lives for Ever                                    .REZ drv_default 
+ No One Lives for Ever 2                                  .REZ drv_default 
+ Nocturne                                                 .POD drv_default 
+ Outfront                                                 .PAK drv_zip 
+ Packmania 2                                              .ARF drv_zip 
+ Painkiller                                               .PAK drv_default 
+ Paridise Cracked                                         .PAK drv_zip 
+ Patrician II                                             .CPR drv_default 
+ Perimeter                                                .PAK drv_zip 
+ Port Royale                                              .CPR drv_default 
+ Postal                                                   .SAK drv_default 
+ Purge                                                    .REZ drv_default 
+ Pusher                                                   .PSH drv_zip 
+ Quake                                               .PAK;.WAD drv_default 
+ Quake 2                                                  .PAK drv_default 
+ Quake 3 Arena                                            .PK3 drv_zip 
+ Quake 4                                                  .PK4 drv_zip 
+ Qui veut gagner des millions                             .AWF drv_default 
+ Rage of Mages                                            .RES drv_default 
+ Rage of Mages 2                                          .RES drv_default 
+ realMyst 3D                                              .DNI drv_default 
+ Revenant                                           .RVI;.RVM;.RVR drv_zip 
+ Richard Burns Rally                                      .RBZ drv_zip 
+ Ricochet: Lost Worlds Recharged                          .DAT drv_zip 
+ Ricochet Xtreme                                          .DAT drv_zip 
+ Sabotain                                                 .SAB drv_zip 
+ Sanity Aiken's Artifact                                  .REZ drv_default 
+ Serious Sam                                              .GRO drv_zip 
+ Serious Sam 2                                            .GRO drv_zip 
+ Shadow Warrior                                           .GRP drv_default 
+ Shadowgrounds                                            .FBZ drv_zip 
+ Shogo                                                    .REZ drv_default 
+ Sin                                                      .SIN drv_default 
+ Singles: Flirt up your Life                              .SXT drv_zip 
+ Slave Zero                                               .ZIP drv_zip 
+ Spellforce                                               .PAK drv_default 
+ Star Crusader                                        .GL;.PAK drv_default 
+ Star Wolves                                              .DAT drv_zip 
+ SWAT 3: Close Quarters Battle                            .RES drv_zip 
+ System Shock 2                                           .CRF drv_zip 
+ Team Factor                                              .BOT drv_zip 
+ Terminal Velocity                                        .POD drv_default 
+ Terminator 3                                             .POD drv_zip 
+ The Chronicles of Riddick: Escape from Butcher Bay  .XTC;.XWC drv_default 
+ The Elder Scroll 4: Oblivion                             .BSA drv_default 
+ The Lord of the Rings: Battle for the Middle Earth       .BIG drv_default 
+ The Movies                                          .LUG;.PAK drv_default 
+ The Sims                                                 .FAR drv_default 
+ Theme Park World                                    .WAD;.SDT drv_default 
+ Thief                                                    .CRF drv_zip 
+ Thief 2                                                  .CRF drv_zip 
+ Tony Hawk Pro Skater 2                                   .PAK drv_default 
+ Total Annihilation                                  .HPI;.UFO drv_default 
+ Total Annihilation: Counter-Strike                       .CCX drv_default 
+ Tribes                                                   .VOL drv_default 
+ Tribes 2                                                 .VL2 drv_zip 
+ Trickstyle                                               .PAK drv_default 
+ Tron 2.0                                                 .REZ drv_default 
+ UFO: Afterlight                                          .VFS drv_default 
+ UFO: Aftermath                                           .VFS drv_default 
+ UFO: Aftershock                                          .VFS drv_default 
+ Uplink                                                   .DAT drv_zip 
+ Vampire: The Masquerade                                  .NOB drv_zip 
+ Vampire: The Masquerade: Redemption                      .NOB drv_zip 
+ Warlords Battlecry                                       .XCR drv_default 
+ Warlords Battlecry 2                                     .XCR drv_default 
+ Who wants to be a millionaire                            .AWF drv_default 
+ X-Men Legends 2                                          .BIN drv_zip 
+ Xatax                                                    .RES drv_default 
+ Xpand Rally                                              .BIN drv_zip 
+ XS Mark                                             .PK1;.PK2 drv_zip 
+ Zanzarah                                                 .PAK drv_default 
 
-   Total:       Supported Games = 134
+ Partial support:
+ ----------------
+ 
+ Game                                                    Files Driver
+ Armored Fist 3                                           .PFF drv_default 
+ Comanche 4                                               .PFF drv_default 
+ Delta Force                                              .PFF drv_default 
+ Delta Force 2                                            .PFF drv_default 
+ Delta Force: Land Warrior                                .PFF drv_default 
+ F22 Lightning 3                                          .PFF drv_default 
+                              	Only PFF3 files are supported.
+
+ Commandos 3                                              .PCK drv_default 
+                     	          Decryption keys are hardcoded.
+
+ Dig It!                                                  .XRS drv_default 
+                                  Crypted/Compressed? Dunno...
+
+ Dungeon Keeper 2                                         .SDT drv_default 
+ F-22 Air Dominance Fighter                               .DAT drv_default 
+ Super EF2000                                             .DAT drv_default 
+   Filenames are not retrieved and .RA compressed files are not decompressed.
+
+ Operation Flashpoint                                     .PBO drv_default 
+                                      Limited to 2000 entries.
+
+ Deus Ex                                        .UAX;.UMX;.UTX drv_ut 
+ Harry Potter                                   .UAX;.UMX;.UTX drv_ut 
+ Rune                                           .UAX;.UMX;.UTX drv_ut 
+ Undying                                             .UAX;.UTX drv_ut 
+ Unreal                                         .UAX;.UMX;.UTX drv_ut 
+ Unreal 2                                            .UAX;.UTX drv_ut 
+ Unreal: Return to Na Pali                      .UAX;.UMX;.UTX drv_ut 
+ Unreal Tournament                              .UAX;.UMX;.UTX drv_ut 
+ Unreal Tournament 2003                              .UAX;.UTX drv_ut 
+   Unreal Engine packages (.UAX, .UMX &.UTX) from newer games might be opened
+   by the UT Package driver of Dragon UnPACKer but it will almost certainly
+   fail to extract anything because of internal changes in newer packages.
+
+ Experimental/Broken support:
+ ----------------------------
+
+ Game                                                    Files Driver
+ Breakneck                                                .SYN drv_default 
+ Excessive Speed                                          .SYN drv_default 
+ N.I.C.E. 2                                               .SYN drv_default 
+                                                Not decrypted.
+
+ Daikatana                                                .PAK drv_default 
+                      	     Impossible to extract anything...
+                      
+ Empires: Dawn of the Modern World                        .SSA drv_default 
+                         Somes files uses unknown compression.
+
+ NoX                                                  .BAG/IDX drv_default 
+                             Only GABA/Audio.bag\idx supported
 
  If you find other games that work with current drivers please contact Alex
 Devilliers with the game name and version.
@@ -776,7 +1018,7 @@ contact me (see Contacts chapter).
  Send bug reports, comments, suggestions, etc...
  Write me only in french, english or spanish.
  
-  E-Mail: dup520 (at) dragonunpacker (DOT) com
+  E-Mail: dup540 (at) dragonunpacker (DOT) com
      ICQ: 1535372 (Elbereth)
      
  WARNING: You will NEVER receive any email from me having the above email as
@@ -800,7 +1042,11 @@ contact me (see Contacts chapter).
                  EMail: support (at) softlab (dot) od (dot) ua
                    URL: http://www.softlab.od.ua
 
- Beaubois Luc for the Japanese translation of Dragon UnPACKer (japanese.lng).
+ Anonimeitor for the help on improving Spellforce .PAK support.
+
+ Beaubois Luc for the Japanese translation of Dragon UnPACKer (japanese.lng)
+              and all the beautiful icons and images of Dragon UnPACKer. The
+              only one he didn't do is the HyperRipper one.
               EMail: barf (at) hellokitty (dot) ne (dot) jp
                 URL: http://www.barfhappy.com/japan/
 
@@ -851,10 +1097,10 @@ contact me (see Contacts chapter).
 
  Lizardking for the About box music.
 
- Michal Hajek for the Czech translation of Dragon UnPACKer (cestina.lng).
-        EMail: michal.hajek (at) email (dot) cz
-          URL: http://bouchac.misto.cz
-
+ Marek Mauder for the Vampyre Imaging Library v0.26.0 (used for fast preview)
+        Email: marekmauder (at) gmail (dot) com
+          URL: http://imaginglib.sourceforge.net/
+          
  Michele Marcon for the Italian translation of Dragon UnPACKer (italiano.lng).
                 EMail: markovitch (at) inwind (dot) it
                   URL: http://arena.sci.univr.it/~marcon
@@ -878,6 +1124,8 @@ contact me (see Contacts chapter).
 
  PkWARE for format specs of ZIP files
         URL: http://www.pkware.com
+
+ Psych0phobiA for the TrueVision Targa .TGA support (patch) in HyperRipper.
 
  Quake Specs v3.4 by Olivier Montanuy for format specs of Quake 1 PACK
 

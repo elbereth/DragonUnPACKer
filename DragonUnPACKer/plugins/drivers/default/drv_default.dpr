@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.41 2008-11-16 16:19:20 elbereth Exp $
+// $Id: drv_default.dpr,v 1.42 2008-11-20 08:01:26 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -202,8 +202,8 @@ type FSE = ^element;
 const
   DRIVER_VERSION = 20540;
   DUP_VERSION = 54040;
-  CVS_REVISION = '$Revision: 1.41 $';
-  CVS_DATE = '$Date: 2008-11-16 16:19:20 $';
+  CVS_REVISION = '$Revision: 1.42 $';
+  CVS_DATE = '$Date: 2008-11-20 08:01:26 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -367,7 +367,7 @@ begin
   GetDriverInfo.Formats[50].Extensions := '*.XRS';
   GetDriverInfo.Formats[50].Name := 'Dig It! (*.XRS)';
   GetDriverInfo.Formats[51].Extensions := '*.BIG';
-  GetDriverInfo.Formats[51].Name := 'Command & Conquer: Generals (*.BIG)|Command & Conquer: Generals - Zero Hour (*.BIG)|The Lord of the Rings: Battle for Middle Earth (*.BIG)';
+  GetDriverInfo.Formats[51].Name := 'Command & Conquer: Generals (*.BIG)|Command & Conquer: Generals - Zero Hour (*.BIG)|The Lord of the Rings: Battle for Middle Earth (*.BIG)|Command & Conquer: Red Alert 3 (*.BIG)';
   GetDriverInfo.Formats[52].Extensions := '*.PCK';
   GetDriverInfo.Formats[52].Name := 'Commandos 3 (*.PCK)';
   GetDriverInfo.Formats[53].Extensions := '*.SSA';
@@ -5037,7 +5037,7 @@ end;
 
 function readFlorensiaPAK(): Integer;
 var ENT: FlorensiaPAK_Entry;
-    disp, currep: string;
+    disp: string;
     NumE, x: integer;
 begin
 

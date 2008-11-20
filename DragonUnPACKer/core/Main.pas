@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.15 2008-11-16 19:13:26 elbereth Exp $
+// $Id: Main.pas,v 1.16 2008-11-20 08:04:55 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -140,8 +140,6 @@ type
     procedure lstIndexChange(Sender: TObject; Node: TTreeNode);
     procedure menuFichier_FermerClick(Sender: TObject);
     procedure menuEdit_SearchClick(Sender: TObject);
-    procedure menuRecent1Click(Sender: TObject);
-    procedure menuRecent2Click(Sender: TObject);
     procedure menuIndex_InfosClick(Sender: TObject);
     procedure menuIndex_ExtractAllClick(Sender: TObject);
     procedure menuIndex_ExtractDirsClick(Sender: TObject);
@@ -771,28 +769,9 @@ begin
 
   CloseCurrent;
   itmX := TMenuItem(Sender);
-  dup5main.writeLog(inttostr(itmX.tag)+' '+itmX.Caption);
   open_HUB(RecentFiles[itmX.Tag]);
   if (itmX.Tag > 0) then
     dup5main.RecentFiles_Decal(itmX.Tag);
-
-end;
-
-procedure Tdup5Main.menuRecent1Click(Sender: TObject);
-begin
-
-  CloseCurrent;
-  open_HUB(RecentFiles[1]);
-  RecentFiles_Decal(1);
-
-end;
-
-procedure Tdup5Main.menuRecent2Click(Sender: TObject);
-begin
-
-  CloseCurrent;
-  open_HUB(RecentFiles[2]);
-  RecentFiles_Decal(2);
 
 end;
 

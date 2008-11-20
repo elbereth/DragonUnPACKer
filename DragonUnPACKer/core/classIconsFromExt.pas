@@ -1,6 +1,6 @@
 unit classIconsFromExt;
 
-// $Id: classIconsFromExt.pas,v 1.2 2004-05-16 09:30:04 elbereth Exp $
+// $Id: classIconsFromExt.pas,v 1.3 2008-11-20 08:04:55 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classIconsFromExt.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -115,7 +115,7 @@ noassoc:
     // icon. Try to get the default icons from SHELL32.DLL
 
     try // to get the location of SHELL32.DLL
-      FileName := IncludeTrailingBackslash(GetWindowsSystemFolder)
+      FileName := IncludeTrailingPathDelimiter(GetWindowsSystemFolder)
         + 'SHELL32.DLL';
     except
       FileName := 'C:\WINDOWS\SYSTEM\SHELL32.DLL';

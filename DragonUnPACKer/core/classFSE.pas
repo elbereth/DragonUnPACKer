@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.8 2008-08-23 17:42:36 elbereth Exp $
+// $Id: classFSE.pas,v 1.9 2008-12-18 07:09:12 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -572,6 +572,15 @@ begin
           FreeLibrary(handle);
         end;
       end
+      else
+      begin
+        if dup5Main.getVerboseLevel = 0 then
+        begin
+          dup5Main.writeLog(' + '+sr.Name+' :');
+        end;
+        dup5Main.appendLog(DLNGstr('ERRD01'));
+        dup5Main.colorLog(clRed);
+      end;
 
     until FindNext(sr) <> 0;
 

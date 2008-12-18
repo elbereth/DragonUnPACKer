@@ -1,6 +1,6 @@
 unit lib_Utils;
 
-// $Id: lib_Utils.pas,v 1.7 2008-04-20 19:53:26 elbereth Exp $
+// $Id: lib_Utils.pas,v 1.8 2008-12-18 07:10:26 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_Utils.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -148,7 +148,7 @@ begin
               CheckOS := false
             else if (verinfo.dwMajorVersion = 4) then
               CheckOS := false
-            else if (verinfo.dwMajorVersion = 5) then
+            else if (verinfo.dwMajorVersion >= 5) then
               CheckOS := true
             else
               CheckOS := false;

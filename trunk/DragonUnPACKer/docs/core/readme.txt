@@ -1092,8 +1092,7 @@ contact me (see Contacts chapter).
 
  Ken Taylor for the dniExtract source allowing support for realMyst 3D DNI
             files.
-            Email: taylok2 (at) rpi (dot) edu
-              URL: http://www.rpi.edu/~taylok2/dniExtract
+            Email:  taylork (at) alum (dot) mit (dot) edu
 
  Lizardking for the About box music.
 

@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.16 2008-11-20 08:04:55 elbereth Exp $
+// $Id: Main.pas,v 1.17 2009-04-23 18:39:07 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -954,8 +954,10 @@ end;
 procedure Tdup5Main.FormHide(Sender: TObject);
 var Reg: TRegistry;
     x: integer;
+    maxed: TWindowState;
 begin
 
+  maxed := WindowState;
   WindowState := wsNormal;
 
   if (CurFile > 0) then
@@ -966,7 +968,7 @@ begin
     Reg.RootKey := HKEY_CURRENT_USER;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Windows',True) then
     begin
-      if WindowState = wsMaximized then
+      if maxed = wsMaximized then
         Reg.WriteInteger('Main_M',1)
       else
         Reg.WriteInteger('Main_M',0);

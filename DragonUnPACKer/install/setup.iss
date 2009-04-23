@@ -1,4 +1,4 @@
-; $Id: setup.iss,v 1.12 2008-11-20 08:03:38 elbereth Exp $
+; $Id: setup.iss,v 1.13 2009-04-23 19:59:23 elbereth Exp $
 ; $Source: /home/elbzone/backup/cvs/DragonUnPACKer/install/setup.iss,v $
 ;
 ; The contents of this file are subject to the Mozilla Public License
@@ -18,7 +18,7 @@
 Compression=lzma/ultra64
 SolidCompression=yes
 AppName=Dragon UnPACKer 5
-AppVerName=Dragon UnPACKer v5.4.0 "Degei" (build 191/stable)
+AppVerName=Dragon UnPACKer v5.4.0a "Degei" (build 192/stable)
 AppPublisher=Alexandre Devilliers (aka Elbereth)
 AppPublisherURL=http://www.elberethzone.net
 AppSupportURL=http://www.elberethzone.net/dup-support.html
@@ -26,7 +26,7 @@ AppUpdatesURL=http://www.dragonunpacker.com
 AppCopyright=Mozilla Public License 1.1
 DefaultDirName={pf}\Dragon UnPACKer 5
 DefaultGroupName=Dragon UnPACKer 5
-OutputBaseFilename=dup540degei-setup
+OutputBaseFilename=dup540adegei-setup
 AppMutex=DragonUnPACKer5
 AppId=DragonUnPACKer5
 DisableStartupPrompt=yes
@@ -35,7 +35,7 @@ UninstallDisplayIcon={app}\dunpacker5.exe
 WizardImageBackColor=$FFFFFF
 WizardImageFile=dup5-instimage.bmp
 WizardSmallImageFile=dup5-inst55x55.bmp
-VersionInfoVersion=5.4.0.191
+VersionInfoVersion=5.4.0.192
 ; uncomment the following line if you want your installation to run on NT 3.51 too.
 MinVersion=4.10,4.0sp6
 LicenseFile=..\docs\core\source\LICENCE.txt

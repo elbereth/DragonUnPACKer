@@ -1,6 +1,6 @@
 unit prg_ver;
 
-// $Id: prg_ver.pas,v 1.13 2008-11-16 19:13:26 elbereth Exp $
+// $Id: prg_ver.pas,v 1.14 2009-04-23 19:44:10 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/prg_ver.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -23,7 +23,7 @@ uses SysUtils, Windows, Forms, lib_binutils, StrUtils;
 function curBuild:integer;
 
 const
-  CurVersion: String = '5.4.0';
+  CurVersion: String = '5.4.0a';
   CurEdit: String = 'Degei';
   CurURL: String = 'http://www.dragonunpacker.com';
 

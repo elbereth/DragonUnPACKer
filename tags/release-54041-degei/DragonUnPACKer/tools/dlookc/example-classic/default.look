@@ -1,0 +1,117 @@
+{LOOK}
+{HEADER}
+# Dragon UnPACKer 5 LooK (DULK) source [v1.1]
+# =============================================================================
+#  Version: 5.0.0 Beta 2
+# Compiler: 1.1.1 Beta
+#
+# -----------------------------------------------------------------------------
+#
+# Name:
+# This is the name that will be displayed in the select Look listbox.
+#
+Name=Default (XP Look)
+#
+# Author:
+# Your name or nickname.
+#
+Author=Alexandre Devilliers
+#
+# Email:
+# Your email.
+#
+Email=looks@drgsoft.com
+#
+# Comment:
+# Any comment you wish (ex: URL, informations about Look file).
+#
+Comment=Default Dragon UnPACKer 5 style.
+#
+# XP:
+# Change the look of the menus, toolbars and popups in Dragon UnPACKer 5.
+# Possible values:  true = Office XP like menus
+#                  false = Classic menus
+#
+XP=true
+#
+# Outfile:
+# File that will be created by DLOOKC.
+#
+Outfile=default.dulk
+{/HEADER}
+#
+# In the body each line is for a BitMaP.
+# Don't add or remove lines or your .dulk file won't be recognized by Dragon
+# UnPACKer 5. Only change the right part of the lines.
+# Keywords order is not important.
+#
+# Format of pictures:
+# 16x16 Windows BitMaPs (RGB or RLE encoding) (Any color depth)
+#
+# Transparent color:
+# Lime - R:0 G:255 B:0 (#00FF00)
+#
+# Bouton Keywords:
+# CLOS is the bitmap used for the Close button
+# OPTN is the bitmap used for the Options button
+# OPEN is the bitmap used for the Open button
+# EXTR is the bitmap used for Extract files
+#
+# Folder keywords:
+# FCLO is the bitmap used for closed folder icon
+# FOPN is the bitmap used for opened folder icon
+# FROT is the bitmap used for root folder icon
+#
+{BODY}
+CLOS=bouton_fermer.bmp
+OPTN=bouton_options.bmp
+OPEN=bouton_ouvrir.bmp
+QUIT=bouton_quitter.bmp
+FCLO=folder_closed.bmp
+FOPN=folder_open.bmp
+FROT=type_default.bmp
+MRCH=menu_rechercher.bmp
+MABT=menu_about.bmp
+MOGN=menu_options_generales.bmp
+MOGA=menu_options_generales.bmp
+MOGL=menu_options_generales.bmp
+MOPL=menu_options_plugins.bmp
+MOAS=menu_options_associations.bmp
+MOLK=menu_options_look.bmp
+MOPC=menu_options_plugins_convert.bmp
+MOPD=menu_options_plugins_drivers.bmp
+MOPH=menu_options_plugins_hyperripper.bmp
+PIIN=popup_index_informations.bmp
+PICA=popup_index_collapseall.bmp
+PIXA=popup_index_expandall.bmp
+PIXT=popup_index_extractallto.bmp
+PIXD=popup_index_extractsubdirsto.bmp
+PCOP=popup_content_open.bmp
+PCSX=popup_content_singlefile_extractto.bmp
+PCMX=popup_content_multiplefiles_extractto.bmp
+PCWC=popup_content_withoutconvertion.bmp
+TANI=type_anim.bmp
+TBIN=type_bin.bmp
+TBMP=type_bmp.bmp
+TBSP=type_bsp.bmp
+TCFG=type_cfg.bmp
+TFNT=type_font.bmp
+TGIF=type_gif.bmp
+TIFF=type_iff.bmp
+TJPG=type_jpg.bmp
+TM3D=type_model3d.bmp
+TMUS=type_musique.bmp
+TNON=type_none.bmp
+TPCX=type_pcx.bmp
+TPNG=type_png.bmp
+TPSD=type_psd.bmp
+TSPR=type_sprite.bmp
+TTEX=type_tex.bmp
+TTXT=type_text.bmp
+TTGA=type_tga.bmp
+TTIF=type_tif.bmp
+TWAL=type_wal.bmp
+TWAV=type_wave.bmp
+TZIP=type_zip.bmp
+{/BODY}
+{/LOOK}

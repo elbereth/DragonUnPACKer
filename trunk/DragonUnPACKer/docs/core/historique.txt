@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.4.0 "Degei"                              MPL 1.1 open source
-par Alexande "Elbereth" Devilliers                                   20/11/2008
+Dragon UnPACKer v5.4.0a "Degei"                             MPL 1.1 open source
+par Alexande "Elbereth" Devilliers                                   23/04/2009
 ===============================================================================
 
   ** Français ** (see Whatsnew.txt for english version)
@@ -39,7 +39,19 @@ Elbereth's HyperRipper 5 Plugin (hr_default.d5h)        5.1.0.103
 -------------------------------------------------------------------------------
 Version du programme principal et historique:
 
-Version 5.4.0.189
+Version 5.4.0.192
+Release A [23/04/2009]
+
+ i Version très mineure, mais qui corrige quelques bugs bien embettants. :p
+ i Mise à jour des infos de Ken Taylor (auteur de dniExtract) dans la doc.
+ * Ajout d'une erreur lorsque LoadLibrary n'arrive pas a charger un plugin.
+ ! Correction de l'écran de démarrage qui n'utilisais pas l'alpha blending sous
+   Windows Vista et Seven.
+ ! Correction du menu Outils qui n'apparaissait pas en utilisant l'HyperRipper.
+ ! Correction du status de maximisation perdu après avoir quitté l'application.
+ 
+
+Version 5.4.0.191
 Release [20/11/2008]
 
  i Et voilà! 2 ans pour cette nouvelle version! Mais je pense que ça en valais

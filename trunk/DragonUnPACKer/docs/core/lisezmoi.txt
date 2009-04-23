@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.4.0 "Degei"                              MPL 1.1 open source
-par Alexande "Elbereth" Devilliers                                   20/11/2008
+Dragon UnPACKer v5.4.0a "Degei"                             MPL 1.1 open source
+par Alexande "Elbereth" Devilliers                                   23/04/2009
 ===============================================================================
 
   ** Français ** (see Readme.txt for english)
@@ -36,8 +36,8 @@ les fichiers textes doivent rester intact dans le fichier zip, et aucun autre
 fichier ne doit etre rajouté.
 
  Le programme est distribuée sous deux formes (meme contenu):
-    SETUP - ~2.4Mo - dup540degei-setup.exe - Avec Installation/Désinstallation
-       7Z - ~2.3Mo - dup540degei.7z        - Archive 7-Zip (v4.60)
+    SETUP - ~2.5Mo - dup540adegei-setup.exe - Avec Installation/Désinstallation
+       7Z - ~2.4Mo - dup540adegei.7z        - Archive 7-Zip (v4.65)
 
 ===============================================================================
  2. DESCRIPTION DU PROGRAMME
@@ -74,7 +74,7 @@ associations de fichiers dans les options.
  (si vous n'avez pas ses fichiers allez telecharger Dragon UnPACKer sur la
   page officielle, voir fin du fichier)
 
- drgunpack5.exe             3199 Ko
+ drgunpack5.exe             3669 Ko
  drgunpack5.exe.sig            1 Ko  Signature GnuPG du fichier drgunpack5.exe
  file_id.diz                   1 Ko
  historique.txt               42 Ko
@@ -163,7 +163,7 @@ associations de fichiers dans les options.
 
   * Windows 98/ME ou Windows NT/2000/XP/2003/Vista/2008/Seven.
     Testé sous:
-      Windows XP SP3
+      Windows Vista Ultimate x64 SP1
     Ne fonctionne pas sous Windows 95.
   * The programme tourne sous Linux grâce à Wine mais malheureusement
     l'affichage est extrêmement lent...
@@ -1154,8 +1154,7 @@ format n'hesitez pas, contactez moi (voir section 9. CONTACTEZ MOI).
 
  Ken Taylor pour les sources de dniExtract ayant permis le support des fichiers
             DNI de realMyst 3D.
-            Email: taylok2 (arobase) rpi (point) edu
-              URL: http://www.rpi.edu/~taylok2/dniExtract
+            Email: taylork (at) alum (dot) mit (dot) edu
  
  Marek Mauder pour sa librairie Vampyre Imaging Library v0.26.0 (utilisée pour
               la prévisualisation et la conversion de certains formats)
@@ -1201,4 +1200,4 @@ format n'hesitez pas, contactez moi (voir section 9. CONTACTEZ MOI).
        Copyright (c) 1996-2001 Markus Oberhumer & Laszlo Molnar
        URLs: http://upx.sourceforge.net/
 
-===============================================================================                                                                                                                                                                                                                                                                                                               
+===============================================================================

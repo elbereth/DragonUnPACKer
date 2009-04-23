@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.4.0 "Degei"                              MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    20/11/2008
+Dragon UnPACKer v5.4.0a "Degei"                             MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    23/04/2009
 ===============================================================================
 
   ** English Readme (voir lisezmoi.txt pour la version française)
@@ -34,8 +34,8 @@ media for distribution (ex: CD-Rom, FTP, HTTP, etc..). But all text files must
 stay intact, and no files can be added to the zip file.
 
  This program have 2 differents types of releases (same content):
-    SETUP - ~2.4MB - dup540degei-setup.exe - With Install/Uninstall
-       7Z - ~2.3MB - dup540degei.7z        - Plain 7-Zip (v4.60) archive
+    SETUP - ~2.5MB - dup540adegei-setup.exe - With Install/Uninstall
+       7Z - ~2.4MB - dup540adegei.7z        - Plain 7-Zip (v4.65) archive
 
 
 ===============================================================================
@@ -68,7 +68,7 @@ DrgUnPack5.exe and voila it is installed..
  Here is a list of files you must find in the Dragon UnPACKer distribution:
  (if not go to homepage and download it from there)
 
-*drgunpack5.exe    	        3199 KB
+*drgunpack5.exe    	        3669 KB
  drgunpack5.exe.sig            1 KB  GPG Signature of drgunpack5.exe file
  file_id.diz       	           1 KB
  historique.txt    	          42 KB
@@ -157,7 +157,7 @@ DrgUnPack5.exe and voila it is installed..
 
   * Windows 98/ME/NT/2000/XP/2003/Vista/2008/Seven.
     Tested under:
-      Windows XP SP3
+      Windows Vista Ultimate x64 SP1
     Does not work under Windows 95.
   * The programs runs under Linux OS but by the mean of Wine and the display is
     slow as hell...
@@ -1141,4 +1141,4 @@ contact me (see Contacts chapter).
              http://www.nexus.hu/upx
              http://upx.tsx.org
 
-===============================================================================                                                                                                                                                                                                                                                                                                                                                                                                                        
+===============================================================================

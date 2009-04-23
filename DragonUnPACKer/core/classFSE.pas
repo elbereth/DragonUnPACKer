@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.9 2008-12-18 07:09:12 elbereth Exp $
+// $Id: classFSE.pas,v 1.10 2009-04-23 18:27:38 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -1580,6 +1580,7 @@ begin
   dup5Main.Bouton_Fermer.Enabled := True;
 //  Dup5Main.TDup5Edit.Visible := true;
   dup5Main.menuEdit.Visible := True;
+  dup5Main.menuTools.Visible := True;
   dup5Main.Status.Panels.Items[3].Text := 'HRIP';
   loadTimeOpen := loadTime;
 //  loadTimeParse := 0;

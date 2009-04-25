@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.12 2008-11-16 14:54:45 elbereth Exp $
+// $Id: Installer.pas,v 1.13 2009-04-25 15:05:00 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -22,13 +22,18 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, lib_binutils, spec_DUPP, zlib, lib_crc, lib_zlib, Registry,
-  ExtCtrls, ShellAPI, lib_language, XPMan, VirtualTrees, OverbyteIcsHttpProt,
-  JvListView, IniFiles, lib_utils, JvExStdCtrls, JvRichEdit,
-  ULZMADecoder,UBufferedFS,DCPsha512,DCPsha256,DCPsha1,DCPmd5,DCPripemd160,DCPcrypt2,ULZMADec,
-  OverbyteIcsWndControl;
+  ExtCtrls, ShellAPI, lib_language, XPMan,
+  IniFiles, lib_utils,
+  // LZMA
+  ULZMADecoder,UBufferedFS,ULZMADec,
+  // Hash (DCPCrypt2)
+  DCPsha512,DCPsha256,DCPsha1,DCPmd5,DCPripemd160,DCPcrypt2,
+  // HTTP (cURL)
+  curlobj;
 
 type
-  TfrmInstaller = class(TForm)
+   TLogType = (Internet, Install);
+   TfrmInstaller = class(TForm)
     butInstall: TButton;
     imgBanner: TImage;
     strVersion: TLabel;
@@ -43,9 +48,6 @@ type
     lblInstall1: TLabel;
     panInstall: TPanel;
     lblInstalling: TLabel;
-    strStatus: TLabel;
-    lblStatus: TLabel;
-    Progress: TProgressBar;
     grpPackInfos: TGroupBox;
     panPVersion: TPanel;
     strPVersion: TPanel;
@@ -58,7 +60,6 @@ type
     strURL: TPanel;
     panURL: TPanel;
     cmdURL: TButton;
-    List: TListBox;
     stepChoice: TPanel;
     optInstall: TRadioButton;
     txtPathD5P: TEdit;
@@ -68,7 +69,6 @@ type
     lblWhat: TLabel;
     cmdNext: TButton;
     stepInternet: TPanel;
-    HttpCli1: THttpCli;
     butRefresh: TButton;
     InfoLabel: TLabel;
     lstUpdates: TListView;
@@ -82,7 +82,7 @@ type
     Panel1: TPanel;
     imgCustomBanner: TImage;
     butProxy2: TButton;
-    richLog: TJvRichEdit;
+    richLog: TRichEdit;
     lstUpdatesTypes: TComboBox;
     lblLinkToStable: TLabel;
     lblUpdatesTypes: TLabel;
@@ -95,6 +95,8 @@ type
     lblInternetComment: TMemo;
     lstUpdatesUnstable: TListView;
     AutoCheckTimer: TTimer;
+    RichEditInstall: TRichEdit;
+    Progress: TProgressBar;
     procedure parseDUPP_version1to3(src: integer; version: integer);
     procedure parseDUPP_version4(src: integer);
     function infosDUPP_version1(src: integer): boolean;
@@ -114,8 +116,6 @@ type
     procedure FormCreate(Sender: TObject);
     procedure butRefreshClick(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-    procedure HttpCli1DocData(Sender: TObject; Buffer: Pointer;
-      Len: Integer);
     procedure lstUpdatesClick(Sender: TObject);
     procedure butDownloadClick(Sender: TObject);
     procedure cmdContinueClick(Sender: TObject);
@@ -135,6 +135,7 @@ type
     procedure lstUpdatesUnstableClick(Sender: TObject);
     procedure AutoCheckTimerTimer(Sender: TObject);
   private
+    curlObj: TCurl;
     DUS: TIniFile;
     Dup5Path: string;
     tmpFile: string;
@@ -159,20 +160,23 @@ type
     procedure parseDUPP();
     procedure translate();
     function getPluginVersion(filename: String):integer;
+    function getRawDestDir(i: integer): string;
     function getDestDir(i: integer): string;
     function getTempFile(ext: string): string;
     function getDup5Version(): integer;
     function ExecAndWait(const ExecuteFile, ParamString : string): boolean;
     function RegisterOCX(ocxpath: string): boolean;
-    procedure appendLog(text: string);
-    procedure colorLog(Color: TColor);
-    procedure separatorLog;
-    procedure setRichEditLineColor(R: TJvRichEdit; Line: Integer;
+    procedure appendLog(dest: TLogType; text: string);
+    procedure colorLog(dest: TLogType; Color: TColor);
+    procedure separatorLog(dest: TLogType);
+    procedure setRichEditLineColor(R: TRichEdit; Line: Integer;
       Color: TColor);
-    procedure setRichEditLineStyle(R: TJvRichEdit; Line: Integer;
+    procedure setRichEditLineStyle(R: TRichEdit; Line: Integer;
       Style: TFontStyles);
-    procedure styleLog(Style: TFontStyles);
-    procedure writeLog(text: string);
+    procedure styleLog(dest: TLogType; Style: TFontStyles);
+    procedure writeLog(dest: TLogType; text: string);
+    procedure curlObjProgress (Sender:tObject; BytesTotal, BytesNow:longint; var bContinue:Boolean);
+    procedure applyProxyValues();
     { Déclarations privées }
   public
     proxy: string;
@@ -189,7 +193,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 30040;
+  VERSION: Integer = 31040;
 
 implementation
 
@@ -349,7 +353,7 @@ begin
     D5PHASH_SHA512: Hash_Engine := TDCP_sha512.Create(Self);
     D5PHASH_RIPEMD160: Hash_Engine := TDCP_ripemd160.Create(Self);
   else
-    raise Exception.Create('Unknown hash type: '+inttostr(fileid.HashType));
+    raise Exception.Create(ReplaceValue('%h',DLNGStr('PIE401'),inttostr(fileid.HashType)));
   end;
 
   hashsize := Hash_Engine.GetHashSize div 8;
@@ -357,15 +361,21 @@ begin
   try
     testValue := srcStream.Seek(fileid.RelOffset,0);
     if testValue <> fileid.RelOffset then
-      raise Exception.Create('Seek to file data location failed ('+inttohex(testValue,8)+' <> '+inttohex(fileid.RelOffset,8)+')');
+      raise Exception.Create(ReplaceValue('%a',ReplaceValue('%b',DLnGStr('PIE402'),inttohex(fileid.RelOffset,8)),inttohex(testValue,8)));
 
     testValue := tmpStream.CopyFrom(srcStream,fileid.Size);
     if testValue <> fileid.Size then
-      raise Exception.Create('Read file data error ('+inttostr(testValue)+' bytes <> '+inttostr(fileid.Size)+' bytes)');
+      raise Exception.Create(ReplaceValue('%a',ReplaceValue('%b',DLNGStr('PIE403'),inttostr(fileid.Size)),inttostr(testValue)));
+
+    if fileid.DSize > 1024 then
+      appendLog(Install,ReplaceValue('%s','('+DLNGStr('PI0053')+')',inttostr(fileid.DSize div 1024)))
+    else
+      appendLog(Install,ReplaceValue('%s','('+DLNGStr('PI0052')+')',inttostr(fileid.DSize)));
 
     tmpStream.Seek(0,0);
     if (fileid.Flags and D5PFILE_COMPRESSED) = D5PFILE_COMPRESSED then
     begin
+      appendLog(Install,DLNGStr('PI0030'));
       case fileid.CompressionType of
         D5PCOMPRESSION_ZLIB: begin
           DStream := TDecompressionStream.Create(tmpStream);
@@ -375,15 +385,15 @@ begin
             DStream.Free;
           end;
           if testValue <> fileid.DSize then
-            raise Exception.Create('Zlib decompression error ('+inttostr(testValue)+' bytes <> '+inttostr(fileid.DSize)+' bytes)');
+            raise Exception.Create(ReplaceValue('%a',ReplaceValue('%b',ReplaceValue('%c',DLNGStr('PIE404'),inttostr(fileid.DSize)),inttostr(testValue)),'Zlib'));
         end;
         D5PCOMPRESSION_LZMA: begin
           lzma_decode(tmpStream,dstStream);
           if dstStream.size <> fileid.DSize then
-            raise Exception.Create('LZMA decompression error ('+inttostr(dstStream.size)+' bytes <> '+inttostr(fileid.DSize)+' bytes)');
+            raise Exception.Create(ReplaceValue('%a',ReplaceValue('%b',ReplaceValue('%c',DLNGStr('PIE404'),inttostr(fileid.DSize)),inttostr(dstStream.size)),'LZMA'));
         end;
       else  // Unsupported compression format
-        raise Exception.Create('Unsupported Compression ('+inttohex(fileid.CompressionType,2)+')');
+        raise Exception.Create(ReplaceValue('%a',DLNGStr('PIE405'),inttohex(fileid.CompressionType,2)));
       end;
     end
     else
@@ -406,7 +416,9 @@ begin
     end;
 
     if not(HashOk) then
-      raise Exception.Create('Wrong Hash for block data ('+s1+' <> '+s2+')');
+      raise Exception.Create(ReplaceValue('%a',ReplaceValue('%b',DLNGStr('PIE406'),s2),s1));
+
+    appendLog(Install,DLNGStr('PI0032'));
 
   finally
     Hash_Engine.Free;
@@ -433,11 +445,11 @@ begin
   try
     testValue := srcStream.Seek(BlockOffsets[id].Offset,0);
     if testValue <> BlockOffsets[id].Offset then
-      raise Exception.Create('Seek to block data error ('+inttohex(testValue,8)+' <> '+inttohex(BlockOffsets[id].Offset,8)+')');
+      raise Exception.Create(ReplaceValue('%a',ReplaceValue('%b',DLNGStr('PIE407'),inttohex(BlockOffsets[id].Offset,8)),inttohex(testValue,8)));
 
     testValue := tmpStream.CopyFrom(srcStream,BlockOffsets[id].Size);
     if testValue <> BlockOffsets[id].Size then
-      raise Exception.Create('Read block data error ('+inttostr(testValue)+' bytes <> '+inttostr(BlockOffsets[id].Size)+' bytes)');
+      raise Exception.Create(ReplaceValue('%a',ReplaceValue('%b',DLNGStr('PIE408'),inttostr(BlockOffsets[id].Size)),inttostr(testValue)));
 
     tmpStream.Seek(0,0);
     Hash_SHA256.Init;
@@ -453,11 +465,15 @@ begin
     end;
 
     if not(HashOk) then
-      raise Exception.Create('Wrong Hash for block data ('+s1+' <> '+s2+')');
+      raise Exception.Create(ReplaceValue('%a',ReplaceValue('%b',DLNGStr('PIE406'),s2),s1));
 
     tmpStream.Seek(0,0);
     if (BlockOffsets[id].OptionsFlags and D5PBLOCK_COMPRESSED) = D5PBLOCK_COMPRESSED then
     begin
+      if BlockOffsets[id].DSize > 1024 then
+        appendLog(Install,ReplaceValue('%s','('+DLNGStr('PI0053')+')',inttostr(BlockOffsets[id].DSize div 1024)))
+      else
+        appendLog(Install,ReplaceValue('%s','('+DLNGStr('PI0052')+')',inttostr(BlockOffsets[id].DSize)));
       case BlockOffsets[id].CompressionType of
         D5PCOMPRESSION_ZLIB: begin
           result := TMemoryStream.Create;
@@ -468,24 +484,26 @@ begin
             DStream.Free;
           end;
           if testValue <> BlockOffsets[id].DSize then
-            raise Exception.Create('Zlib decompression error ('+inttostr(testValue)+' bytes <> '+inttostr(BlockOffsets[id].DSize)+' bytes)');
+            raise Exception.Create(ReplaceValue('%a',ReplaceValue('%b',ReplaceValue('%c',DLNGStr('PIE404'),inttostr(BlockOffsets[id].DSize)),inttostr(testValue)),'Zlib'));
           result.Seek(0,0);
         end;
         D5PCOMPRESSION_LZMA: begin
           result := TMemoryStream.Create;
           lzma_decode(tmpStream,result);
           if result.size <> BlockOffsets[id].DSize then
-            raise Exception.Create('LZMA decompression error ('+inttostr(result.size)+' bytes <> '+inttostr(BlockOffsets[id].DSize)+' bytes)');
+            raise Exception.Create(ReplaceValue('%a',ReplaceValue('%b',ReplaceValue('%c',DLNGStr('PIE404'),inttostr(BlockOffsets[id].DSize)),inttostr(result.size)),'LZMA'));
+
           result.Seek(0,0);
         end;
       else  // Unsupported compression format
-        raise Exception.Create('Unsupported Compression ('+inttohex(BlockOffsets[id].CompressionType,2)+')');
+        raise Exception.Create(ReplaceValue('%a',DLNGStr('PIE405'),inttohex(BlockOffsets[id].CompressionType,2)));
       end;
     end
     else
     begin
       result := tmpStream;
     end;
+    appendLog(Install,DLNGStr('PI0032'));
   finally
     srcStream.free;
     Hash_SHA256.Free;
@@ -497,13 +515,6 @@ end;
 
 function TfrmInstaller.infosDUPP_version4(src: integer): boolean;
 var  Dup5Ver: integer;
-  //  previewfile: string;
-//    stmTmp: TMemoryStream;
-//    InputStream: TMemoryStream;
-//    DStream: TDecompressionStream;
-//    FinalSize: integer;
-//    Buffer: PByteArray;
-
     infoid, bannerid: integer;
     tmpStream, srcStream: TStream;
     NFO: DUP5PACK_Info_v4;
@@ -528,7 +539,11 @@ begin
       except
         on E: exception do
         begin
-          MessageDlg('Error while retrieving information:'+chr(10)+e.Message,mtError,[mbOk],0);
+          writelog(Install,DLNGStr('PIE409'));
+          colorLog(Install,clRed);
+          writelog(Install,e.Message);
+          colorLog(Install,clRed);
+          MessageDlg(DLNGStr('PIE409')+chr(10)+e.Message,mtError,[mbOk],0);
           isError := true;
         end;
       end;
@@ -572,7 +587,11 @@ begin
           except
             on E: exception do
             begin
-              MessageDlg('Error while retrieving banner:'+chr(10)+e.Message,mtError,[mbOk],0);
+              writelog(Install,DLNGStr('PIE410'));
+              colorLog(Install,clRed);
+              writelog(Install,e.Message);
+              colorLog(Install,clRed);
+              MessageDlg(DLNGStr('PIE410')+chr(10)+e.Message,mtError,[mbOk],0);
               isError := true;
             end;
           end;
@@ -595,110 +614,12 @@ begin
 
   result := not(isError) and cont;
 
-//  exit;
-
-{
-  FileRead(src,NFO1,SizeOf(DUP5PACK_Info_v1));
-  
-  PackName := get8(src);
-  PackURL := get8(src);
-  PackAuthor := get8(src);
-  PackComment := get8(src);
-
-  panTitle.Caption := ' '+StringReplace(PackName,'&','&&',[rfReplaceAll]);
-  panPVersion.Caption := ' '+getVersionFromInt(NFO.NumVer);
-  panAuthor.Caption := ' '+StringReplace(PackAuthor,'&','&&',[rfReplaceAll]);
-  panComment.Caption := ' '+StringReplace(PackComment,'&','&&',[rfReplaceAll]);
-  panURL.Caption := ' '+PackURL;
-
-  Dup5Ver := getDup5Version;
-
-  cont := (NFO.DUP5VerTest = -1) or
-          ((NFO.DUP5VerTest = 0) and (Dup5Ver = NFO.DUP5VerValue)) or
-          ((NFO.DUP5VerTest = 1) and (Dup5Ver > NFO.DUP5VerValue)) or
-          ((NFO.DUP5VerTest = 2) and (Dup5Ver < NFO.DUP5VerValue)) or
-          ((NFO.DUP5VerTest = 3) and (Dup5Ver <> NFO.DUP5VerValue));
-
-  if not(cont) then
-  begin
-    MessageDlg(DLNGStr('PI0042'),mtError,[mbOk],0);
-//    ShowMessage('This package cannot be installed with your version of Dragon UnPACKer.');
-  end
-  else
-  begin
-    // Gestion de l'image a rajouter.. (Skip atm)
-    //FileSeek(src,NFO.PictureSize,1);
-
-    imgCustomBanner.Visible := false;
-    if (NFO.PictureSize > 0) then
-    begin
-//        previewFile := getTempFilename;
-      stmTmp := TMemoryStream.Create;
-
-      try
-
-       if (NFO.NumVer = 1) and (NFO1.PictureCompressed = 1) then
-       begin
-
-        GetMem(Buffer,NFO1.PictureCompressedSize);
-        try
-          FileRead(src,Buffer^,NFO1.PictureCompressedSize);
-
-          InputStream := TMemoryStream.Create;
-          try
-            InputStream.Write(Buffer^,NFO1.PictureCompressedSize);
-            InputStream.Seek(0, soFromBeginning);
-
-            DStream := TDecompressionStream.Create(InputStream);
-            try
-              FinalSize := stmTmp.CopyFrom(DStream,NFO.PictureSize);
-            finally
-              DStream.Free;
-            end;
-          finally
-            InputStream.Free;
-          end;
-        finally
-          FreeMem(Buffer);
-        end;
-
-       end
-       else
-       begin
-
-        GetMem(Buffer,NFO.PictureSize);
-        stmTmp := TMemoryStream.Create;
-
-        try
-          FileRead(src,buffer^,NFO.PictureSize);
-          stmTmp.Write(Buffer^,NFO.PictureSize);
-        finally
-          FreeMem(Buffer);
-        end;
-
-      end;
-
-      imgTmp := TBitMap.Create;
-      stmTmp.Seek(0,0);
-      imgTmp.LoadFromStream(stmTmp);
-      imgCustomBanner.Picture.Assign(imgTmp);
-      imgCustomBanner.Visible := true;
-
-     finally
-      stmTmp.Free;
-     end;
-
-    end;
-
-    NFOLoaded := true;
-  end;
-
-  result := cont;
- }
 end;
 
 function TfrmInstaller.loadDUPP(duppfile: string): boolean;
 begin
+
+   writelog(Install,ReplaceValue('%a',DLNGStr('PI0054'),extractfilename(txtPathD5P.Text))+' ');
 
    if FileExists(duppfile) then
    begin
@@ -711,6 +632,8 @@ begin
      begin
        FileClose(hDupp);
        hDupp := 0;
+       writeLog(Install,DLNGstr('PI0015'));
+       colorLog(Install,clRed);
        MessageDlg(DLNGstr('PI0015'),mtError,[mbOk],0);
        result := false;
      end
@@ -718,6 +641,8 @@ begin
      begin
        FileClose(hDupp);
        hDupp := 0;
+       writeLog(Install,ReplaceValue('%y',ReplaceValue('%v',DLNGstr('PI0041'),GetVersionFromInt(HDR.NeededVersion)),GetVersionFromInt(VERSION)));
+       colorLog(Install,clRed);
        MessageDlg(ReplaceValue('%y',ReplaceValue('%v',DLNGstr('PI0041'),GetVersionFromInt(HDR.NeededVersion)),GetVersionFromInt(VERSION)),mtError,[mbOk],0);
        result := false;
      end
@@ -725,12 +650,15 @@ begin
      begin
        FileClose(hDupp);
        hDupp := 0;
+       writeLog(Install,DLNGStr('PIE411'));
+       colorLog(Install,clRed);
        // ToTRANSLATE //
-       MessageDlg('Verifications of DUPP file failed!',mtError,[mbOk],0);
+       MessageDlg(DLNGStr('PIE411'),mtError,[mbOk],0);
        result := false;
      end
      else
      begin
+       appendlog(Install,'[DUPP v'+inttostr(HDR.Version)+']');
        result := true;
        NFOloaded := false;
      end;
@@ -738,6 +666,8 @@ begin
    end
    else
    begin
+     writeLog(Install,ReplaceValue('%f',DLNGstr('PI0017'),duppfile));
+     colorLog(Install,clRed);
      MessageDlg(ReplaceValue('%f',DLNGstr('PI0017'),duppfile),mtError,[mbOk],0);
      result := false;
    end;
@@ -754,6 +684,8 @@ begin
       3: parseDUPP_version1to3(hDupp,HDR.Version);
       4: parseDUPP_version4(hDupp);
     else
+      writeLog(Install,ReplaceValue('%v',DLNGstr('PI0014'),inttostr(HDR.Version)));
+      colorLog(Install,clRed);
       MessageDlg(ReplaceValue('%v',DLNGstr('PI0014'),inttostr(HDR.Version)),mtError, [mbOk],0);
     end;
 
@@ -781,8 +713,8 @@ begin
 
   for x := 1 to NFO.NumFiles do
   begin
-    List.Items.Add('File '+inttostr(x)+'...');
-    lblStatus.Caption := DLNGstr('PI0018');
+
+    writeLog(Install,DLNGstr('PI0018'));
 
     FileRead(src,ENT.Size,4);
     FileRead(src,ENT.DSize,4);
@@ -798,7 +730,10 @@ begin
     filename := get8(src);
     installdir := get8(src);
 
-    lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+'kb) ';
+    if ENT.DSize > 1024 then
+      writeLog(Install,filename+' ('+ReplaceValue('%s',DLNGStr('PI0053'),inttostr(Round(ENT.DSize/1024)))+') ')
+    else
+      writeLog(Install,filename+' ('+ReplaceValue('%s',DLNGStr('PI0052'),inttostr(ENT.DSize))+') ');
 
     DestDir := getDestDir(ENT.BaseInstallDir) + installdir + filename;
     ForceDirectories(getDestDir(ENT.BaseInstallDir) + installdir);
@@ -829,26 +764,23 @@ begin
 
     if not(installFile) then
     begin
-      lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0027');
+      writeLog(Install,filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0027'));
       FileSeek(src,ENT.Size,1);
     end
     else
     begin
 
-      List.Items.Add(filename+' ('+inttostr(Round(ENT.DSize/1024))+'kb)');
-      lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0029');
+      writeLog(Install,filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0029'));
 
       GetMem(Buf,ENT.Size);
       try
-        List.Items.Add('Reading..');
         FileRead(src,buf^,ENT.Size);
 
         if (ENT.CompressionType = 1) then
         begin
           InputStream := TMemoryStream.Create;
 
-          List.Items.Add('Decompressing..');
-          lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0030');
+          writeLog(Install,filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0030'));
           try
             InputStream.Write(buf^, ENT.Size);
             InputStream.Seek(0, soFromBeginning);
@@ -864,12 +796,10 @@ begin
           finally
             InputStream.Free
           end;
-          List.Items.Add('Calculating CRC32..');
           if version = 3 then
             calcCRC := GetBufCRC32(bufoutstr,ENT.DSize)
           else
             calcCRC := getStrCRC32(bufoutstr^);
-          List.Items.Add('Buffer: '+IntToHex(calcCRC,8)+' / Compare: '+IntToHex(ENT.CRC,8));
         end
         else if ENT.CompressionType = 0 then
         begin
@@ -881,12 +811,13 @@ begin
         end
         else
         begin
-          List.Items.Add('Unknown compression method ['+inttostr(ENT.CompressionType)+']');
+          writelog(Install,ReplaceValue('%a',DLNGStr('PIE405'),inttostr(ENT.CompressionType))+chr(10)+chr(13)+FileName);
+          colorLog(Install,clRed);
 //          MessageDlg(ReplaceValue('%f',DLNGstr('PI0020'),FileName),mtConfirmation,[mbOk],0);
-          MessageDlg('Unknown compression method ['+inttostr(ENT.CompressionType)+'] for:'+chr(10)+chr(13)+FileName,mtConfirmation,[mbOk],0);
+          MessageDlg(ReplaceValue('%a',DLNGStr('PIE405'),inttostr(ENT.CompressionType))+chr(10)+chr(13)+FileName,mtConfirmation,[mbOk],0);
         end;
 
-        lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0031');
+        writeLog(Install,filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0031'));
 
         if (calcCRC <> ENT.CRC) then
         begin
@@ -913,13 +844,12 @@ begin
           FileClose(fout);
           if ((ENT.Flags and D5PFILE_REGSVR32) = D5PFILE_REGSVR32) then
           begin
-            List.Items.Add('Registering ActiveX DLL...');
+            writelog(Install,DLNGStr('PI0061'));
             RegisterOcx(destdir);
           end;
         end;
 
-        lblStatus.Caption := filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0032');
-        List.Items.Add('Freeing memory buffer..');
+        writeLog(Install,filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0032'));
 
       finally
         FreeMem(Buf);
@@ -936,21 +866,20 @@ begin
   Progress.Position := 100;
   if (errCount = 0) then
   begin
-    lblStatus.Caption := ReplaceValue('%i',DLNGstr('PI0022'),IntToStr(NFO.NumFiles));
+    writeLog(Install,ReplaceValue('%i',DLNGstr('PI0022'),IntToStr(NFO.NumFiles)));
     lblInstalling.Caption := DLNGstr('PI0023');
   end
   else
   begin
-    lblStatus.Caption := ReplaceValue('%e',DLNGstr('PI0024'),intToStr(errCount));
+    writeLog(Install,ReplaceValue('%e',DLNGstr('PI0024'),intToStr(errCount)));
     lblInstalling.Caption := ReplaceValue('%i',ReplaceValue('%e',DLNGstr('PI0025'),intToStr(errCount)),intToStr(NFO.NumFiles - errCount));
   end;
 
 end;
 
 procedure TfrmInstaller.parseDUPP_version4(src: integer);
-var ENT: DUP5PACK_File;
-    FileName, InstallDir, DestDir, DuppiInstallNew: string;
-    x, fout, calcCRC, size, destVersion: integer;
+var DestDir, DuppiInstallNew: string;
+    x, destVersion: integer;
     Buf, bufoutstr: PChar;
     InputStream: TMemoryStream;
     OutputStream: TDeCompressionStream;
@@ -978,6 +907,8 @@ begin
   if (length(BlockOffsets) > 0) or sanitycheckDUPP_version4(src) then
   begin
 
+    writelog(Install,DLNGStr('PI0055'));
+
     entriesid := searchDUPP_version4_blockID(D5PID_ENTRIES);
     namesid := searchDUPP_version4_blockID(D5PID_NAMES);
     dataid := searchDUPP_version4_blockID(D5PID_DATA);
@@ -985,32 +916,47 @@ begin
     if (entriesid <> -1) and (namesid <> -1) and (dataid <> -1) then
     begin
 
+      writelog(Install,ReplaceValue('%a',DLNGStr('PI0056'),DLNGStr('PI0057')));
+
       try
         entStream := getDUPP_version4_blockcontent(src,entriesid);
       except
         on E: exception do
         begin
-          MessageDlg('Error while retrieving entries block data:'+chr(10)+e.Message,mtError,[mbOk],0);
+          writelog(Install,ReplaceValue('%a',DLNGStr('PIE411'),DLNGStr('PI0057')));
+          colorLog(Install,clRed);
+          writelog(Install,e.Message);
+          colorLog(Install,clRed);
           isError := true;
         end;
       end;
+
+      writelog(Install,ReplaceValue('%a',DLNGStr('PI0056'),DLNGStr('PI0058')));
 
       try
         namStream := getDUPP_version4_blockcontent(src,namesid);
       except
         on E: exception do
         begin
-          MessageDlg('Error while retrieving names block data:'+chr(10)+e.Message,mtError,[mbOk],0);
+          writelog(Install,ReplaceValue('%a',DLNGStr('PIE411'),DLNGStr('PI0058')));
+          colorLog(Install,clRed);
+          writelog(Install,e.Message);
+          colorLog(Install,clRed);
           isError := true;
         end;
       end;
+
+      writelog(Install,ReplaceValue('%a',DLNGStr('PI0056'),DLNGStr('PI0059')));
 
       try
         datStream := getDUPP_version4_blockcontent(src,dataid);
       except
         on E: exception do
         begin
-          MessageDlg('Error while retrieving data block data:'+chr(10)+e.Message,mtError,[mbOk],0);
+          writelog(Install,ReplaceValue('%a',DLNGStr('PIE411'),DLNGStr('PI0059')));
+          colorLog(Install,clRed);
+          writelog(Install,e.Message);
+          colorLog(Install,clRed);
           isError := true;
         end;
       end;
@@ -1032,6 +978,8 @@ begin
 
         for x := 0 to BlockOffsets[entriesid].NumEntries - 1 do
         begin
+
+          writelog(Install,ReplaceValue('%a',ReplaceValue('%b',DLNGStr('PI0060'),getRawDestDir(files[x].BaseInstallDir) + names[x]),inttostr(x+1)));
 
           if (files[x].BaseInstallDir = 5) and (compareText(names[x],'duppi.exe') = 0) then
           begin
@@ -1087,7 +1035,10 @@ begin
             filesetdate(destdir,files[x].DateT);
 
             if ((files[x].Flags and D5PFILE_REGSVR32) = D5PFILE_REGSVR32) then
+            begin
+              writelog(Install,DLNGStr('PI0061'));
               RegisterOcx(destdir);
+            end;
 
           end;
         end;
@@ -1095,10 +1046,15 @@ begin
     end;
   end;
 
+  writelog(Install,ReplaceValue('%i',DLNGStr('PI0022'),inttostr(BlockOffsets[entriesid].NumEntries)));
+  styleLog(Install,[fsBold]);
+  colorLog(Install,clGreen);
+
   if duppiInstall then
   begin
 
-    MessageDlg('Package installation completed successfully.'+chr(10)+'The Duppi program will now restart to update itself.',mtCustom,[mbOk],0);
+    // Duppi will restart to update itself
+    MessageDlg(DLNGStr('PI0062'),mtCustom,[mbOk],0);
     ShellExecute(0, nil,PChar('"'+extractfilepath(Application.EXEName)+'DuppiInstall.exe"'), PChar('"'+Application.EXEName+'" "'+DuppiInstallNew+'"'), nil, SW_SHOW);
     Application.Terminate;
 
@@ -1217,7 +1173,7 @@ begin
 
   if (isDup5Running()) then
   begin
-    lblStatus.Caption := DLNGstr('PI0012');
+    writeLog(Install,DLNGstr('PI0012'));
     MessageDlg(DLNGstr('PI0013'),mtError,[mbOk],0);
   end
   else
@@ -1280,6 +1236,8 @@ begin
 
   if not(cont) then
   begin
+    writelog(Install,DLNGStr('PI0042'));
+    colorLog(Install,clRed);
     MessageDlg(DLNGStr('PI0042'),mtError,[mbOk],0);
   end
   else
@@ -1321,6 +1279,8 @@ end;
 function TfrmInstaller.infosDUPP: boolean;
 begin
 
+  writeLog(Install,DLNGStr('PI0063'));
+
   result := false;
 
   if (hDupp <> 0) and not(NFOLoaded) then
@@ -1339,11 +1299,8 @@ end;
 procedure TfrmInstaller.cmdCancelClick(Sender: TObject);
 begin
 
-  if (httpCli1.State <> httpReady) then
-    httpCli1.Abort
-  else
-    if MessageDlg(DLNGstr('PI0011'),mtConfirmation, [mbYes, mbNo], 0) = mrYes then
-      Close;
+  if MessageDlg(DLNGstr('PI0011'),mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+    Application.Terminate;
 
 end;
 
@@ -1428,24 +1385,36 @@ begin
 
 end;
 
-function TfrmInstaller.getDestDir(i: integer): string;
+function TfrmInstaller.getRawDestDir(i: integer): string;
 begin
 
   case i of
-    0: result := Dup5Path + 'data\convert\';
-    1: result := Dup5Path + 'data\';
-    2: result := Dup5Path + 'data\drivers\';
+    0: result := 'data\convert\';
+    1: result := 'data\';
+    2: result := 'data\drivers\';
     3: if HDR.Version = 2 then
-         result := Dup5Path + 'data\hyperripper\'
+         result := 'data\hyperripper\'
        else
-         result := Dup5Path;
-    4: result := Dup5Path;
-    5: result := Dup5Path + 'utils\';
-    6: result := Dup5Path + 'utils\templates\';
-    7: result := Dup5Path + 'utils\translation\';
-    8: result := Dup5Path + 'utils\data\';
+         result := '';
+    4: result := '';
+    5: result := 'utils\';
+    6: result := 'utils\templates\';
+    7: result := 'utils\translation\';
+    8: result := 'utils\data\';
   else
     raise Exception.Create(DLNGStr('PI0045'));
+  end;
+
+end;
+
+function TfrmInstaller.getDestDir(i: integer): string;
+begin
+
+  try
+    result := Dup5Path + getRawDestDir(i);
+  except
+    on e: exception do
+      raise Exception.Create(e.Message);
   end;
 
 end;
@@ -1468,8 +1437,8 @@ begin
   lblInstalling.Caption := DLNGstr('PI0006');
   lblInstall1.Caption := DLNGstr('PI0007');
   lblInstall2.Caption := DLNGstr('PI0008');
-  strStatus.Caption := DLNGstr('PI0009');
-  lblStatus.Caption := DLNGstr('PI0010');
+//  strStatus.Caption := DLNGstr('PI0009');
+  //lblStatus.Caption := DLNGstr('PI0010');
   strPVersion.Caption := DLNGstr('PI0033');
   lblWhat.Caption := DLNGstr('PI0034');
   lblChoice.Caption := DLNGstr('PI0035');
@@ -1529,13 +1498,7 @@ begin
     stepChoice.Visible := false;
     stepInstall.Visible := false;
     stepInternet.Visible := true;
-    httpCli1.Proxy := proxy;
-    httpCli1.ProxyPort := proxyPort;
-    if proxyUserPass then
-    begin
-      httpCli1.ProxyUsername := proxyUser;
-      httpCli1.ProxyPassword := proxyPass;
-    end;
+    applyProxyValues;
     refresh;
     butRefresh.Click;
   end;
@@ -1562,6 +1525,9 @@ begin
 
 //  lstInstalled.NodeDataSize := SizeOf(virtualTreeData);
 
+  curlObj:=tCurl.Create(self);
+  curlObj.UserAgent:='Duppi/'+getVersionFromInt(VERSION);
+
   lstUpd := TStringList.Create;
 
 end;
@@ -1572,280 +1538,302 @@ Var updList,updUnstableList: TStringList;
     itm: TListItem;
     x, tmpVer: integer;
     butDl, butDlUnstable, coreUpdate, duppiUpdate, delFile: boolean;
-    coreMessage, url, tmpFileName: string;
+    coreMessage, url, tmpFileName, tmpIniFile: string;
     errCode: string;
 begin
 
   butRefresh.Enabled := false;
-//HttpCli1.URL := 'http://dus.dragonunpacker.com/dup5.dus';   // Old URL
-//HttpCli1.URL := 'http://www.elberethzone.net/dup5.dus';     // 5.0/5.1 URL DUS v2.0
-  HttpCli1.URL := 'http://dragonunpacker.sourceforge.net/dus.php?installedbuild='+inttostr(corebuild);     // 5.2+ URL DUS v3.0
-  tmpFile := getTempFile('.dus');
-  HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
-  CurDL := DLNGstr('PII100');
-    try
-        try
-            writeLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
-            HttpCli1.Get;
-            writeLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
-        except
-            on E: EHttpException do begin
-              writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
-              colorLog(clRed);
-            end
-            else
-                raise;
-        end;
+  // Old URLs:
+  // http://dus.dragonunpacker.com/dup5.dus
+  // http://www.elberethzone.net/dup5.dus'     // 5.0/5.1 URL DUS v2.0
+  tmpIniFile := getTempFile('.dus');
 
-    finally
-        HttpCli1.RcvdStream.Destroy;
-        HttpCli1.RcvdStream := nil;
-        ButRefresh.Enabled := true;
-    end;
+  writeLog(Internet,'curl v'+curlObj.LibraryVersion+' ('+curlObj.Machine+') '+curlObj.CurlVersion);
 
+  curlObj.URL := 'http://dragonunpacker.sourceforge.net/dus.php?installedbuild='+inttostr(corebuild);
+  curlObj.OutputFile := tmpIniFile;
+  curlObj.OnProgress := curlObjProgress;
+  curlObj.NoProgress := false;
+  curlObj.Verbose:=True;
+  curlObj.FollowLocation:=True;
+  curDL := 'dus.ini';
+  writeLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
+
+    ButRefresh.Enabled := true;
     butDl := false;
 
-    if fileexists(tmpFile) then
+    if not(curlObj.Perform) then
     begin
-      dus := TIniFile.Create(tmpFile);
-      if not(dus.SectionExists('ID')) then
-      begin
-        writeLog(DLNGStr('PI0044'));
-      end
-      else
-        if not(dus.ValueExists('ID','DUS')) then
+      writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
+      colorLog(Internet,clRed);
+    end
+    else if fileexists(tmpIniFile) then
+    begin
+      dus := TIniFile.Create(tmpIniFile);
+      try
+        if not(dus.SectionExists('ID')) then
         begin
-          writeLog(DLNGStr('PI0044'));
+          writeLog(Internet,DLNGStr('PI0044'));
         end
         else
-          if (dus.ReadInteger('ID','DUS',0) <> 3) or not(dus.ValueExists('ID','Result')) then
+          if not(dus.ValueExists('ID','DUS')) then
           begin
-            writeLog(DLNGStr('PI0044'));
+            writeLog(Internet,DLNGStr('PI0044'));
           end
           else
-          begin
-            writeLog(dus.ReadString('ID','Description',DLNGstr('PII105')));
-
-            if (dus.ReadString('ID','Result','ERR') <> 'OK') then
+            if (dus.ReadInteger('ID','DUS',0) <> 3) or not(dus.ValueExists('ID','Result')) then
             begin
-              errCode := dus.ReadString('ID','Result','ERR');
-
-              if errCode = 'M01' then
-                writeLog(DLNGStr('PIEM01'))
-              else if errCode = 'M02' then
-                writeLog(DLNGStr('PIEM01'))
-              else if errCode = 'M10' then
-                writeLog(DLNGStr('PIEM10'))
-              else if errCode = 'M11' then
-                writeLog(DLNGStr('PIEM11'))
-              else if errCode = 'M12' then
-                writeLog(DLNGStr('PIEM12'))
-              else if errCode = 'M20' then
-                writeLog(DLNGStr('PIEM20'))
-              else if errCode = 'M30' then
-                writeLog(DLNGStr('PIEM30'))
-              else if errCode = 'M31' then
-                writeLog(DLNGStr('PIEM31'))
-              else if errCode = 'M32' then
-                writeLog(DLNGStr('PIEM32'))
-              else if errCode = 'M33' then
-                writeLog(DLNGStr('PIEM33'))
-              else if errCode = 'M40' then
-                writeLog(DLNGStr('PIEM40'))
-              else if errCode = 'M41' then
-                writeLog(DLNGStr('PIEM41'))
-              else if errCode = 'M42' then
-                writeLog(DLNGStr('PIEM42'))
-              else if errCode = 'M43' then
-                writeLog(DLNGStr('PIEM43'))
-              else if errCode = 'M60' then
-                writeLog(DLNGStr('PIEM60'))
-              else if errCode = 'P01' then
-                writeLog(DLNGStr('PIEP01'))
-              else if errCode = 'P02' then
-                writeLog(DLNGStr('PIEP02'))
-              else
-                writeLog(ReplaceValue('%e',DLNGStr('PIEUNK'),errCode));
-
-              colorLog(clRed);
-            end;
-
-            updList := splitStr(dus.ReadString('ID','Updates',''),' ');
-            updUnstableList := splitStr(dus.ReadString('ID','UpdatesUnstable',''),' ');
-            lngList := splitStr(dus.ReadString('ID','Translations',''),' ');
-            writeLog(ReplaceValue('%t',ReplaceValue('%p',DLNGStr('PII108'),inttostr(updList.Count)+'['+inttostr(updUnstableList.Count)+']'),inttostr(lngList.Count)));
-            lstUpdates.Clear;
-            lstUpdatesUnstable.Clear;
-            lstTranslations.Clear;
-            coreUpdate := false;
-
-            for x:=0 to updList.Count -1 do
-            begin
-
-              if (dus.ReadBool(updList.Strings[x],'AutoUpdate',true)) then
-              begin
-                itm := lstUpdates.Items.Add;
-                itm.Caption := dus.ReadString(updList.Strings[x],'Description',DLNGstr('PII106'));
-                tmpVer := getPluginVersion(Dup5Path+dus.ReadString(updList.Strings[x],'File',''));
-                itm.SubItems.Add(getVersionFromInt(tmpVer));
-                if tmpVer < dus.ReadInteger(updList.Strings[x],'Version',0) then
-                begin
-                  itm.Checked := true;
-                  butDl := true;
-                end;
-                itm.SubItems.Add(dus.ReadString(updList.Strings[x],'VersionDisp',''));
-                itm.SubItems.Add(inttostr(dus.ReadInteger(updList.Strings[x],'Size',0)));
-                if CurLanguage = '*' then
-                  itm.SubItems.Add(dus.ReadString(updList.Strings[x],'CommentFR',''))
-                else
-                  itm.SubItems.Add(dus.ReadString(updList.Strings[x],'Comment',''));
-                itm.SubItems.Add(updList.Strings[x]);
-              end;
-            end;
-
-            for x:=0 to updUnstableList.Count -1 do
-            begin
-
-              if (dus.ReadBool(updUnstableList.Strings[x],'AutoUpdate',true)) then
-              begin
-                itm := lstUpdatesUnstable.Items.Add;
-                itm.Caption := dus.ReadString(updUnstableList.Strings[x],'Description',DLNGstr('PII106'));
-                tmpVer := getPluginVersion(Dup5Path+dus.ReadString(updUnstableList.Strings[x],'File',''));
-                itm.SubItems.Add(getVersionFromInt(tmpVer));
-                if tmpVer < dus.ReadInteger(updUnstableList.Strings[x],'Version',0) then
-                begin
-                  itm.Checked := true;
-                  butDlUnstable := true;
-                end;
-                itm.SubItems.Add(dus.ReadString(updUnstableList.Strings[x],'VersionDisp',''));
-                itm.SubItems.Add(inttostr(dus.ReadInteger(updUnstableList.Strings[x],'Size',0)));
-                if CurLanguage = '*' then
-                  itm.SubItems.Add(dus.ReadString(updUnstableList.Strings[x],'CommentFR',''))
-                else
-                  itm.SubItems.Add(dus.ReadString(updUnstableList.Strings[x],'Comment',''));
-                itm.SubItems.Add(updUnstableList.Strings[x]);
-              end;
-            end;
-
-            for x:=0 to lngList.Count -1 do
-            begin
-
-              itm := lstTranslations.Items.Add;
-              itm.Caption := dus.ReadString(lngList.Strings[x],'Description',DLNGstr('PII106'));
-              itm.SubItems.Add(dus.ReadString(lngList.Strings[x],'Release',''));
-              itm.SubItems.Add(dus.ReadString(lngList.Strings[x],'Author',''));
-              itm.SubItems.Add(inttostr(dus.ReadInteger(lngList.Strings[x],'Size',0)));
-              itm.SubItems.Add(lngList.Strings[x]);
-
-            end;
-
-            butDownload.Enabled := (butDL and not(chkShowUnstable.Checked)) or (butDLUnstable and chkShowUnstable.Checked);
-
-            lstUpdatesTypesChange(lstUpdatesTypes);
-
-            if dus.SectionExists('core') then
-            begin
-              if (dus.ReadInteger('core','Version',0) > coreBuild) then
-              begin
-                coreUpdate := true;
-              end;
-              linkToStable.Caption := dus.ReadString('core','VersionDisp','');
-              if curLanguage = '*' then
-                linkToStable.hint := ReplaceValue('%c',coreMessage,dus.ReadString('core','CommentFR','-'))
-              else
-                linkToStable.hint := ReplaceValue('%c',coreMessage,dus.ReadString('core','Comment','-'));
-              urlToStable := dus.ReadString('core','updateurl','http://sourceforge.net/project/showfiles.php?group_id=108923&package_id=117643&release_id=253827');
-              linkToStable.Visible := true;
+              writeLog(Internet,DLNGStr('PI0044'));
             end
             else
-              linkToStable.Visible := false;
-
-            if dus.SectionExists('corewip') then
             begin
-              linkToWIP.Caption := dus.ReadString('corewip','VersionDisp','');
-              if curLanguage = '*' then
-                linkToWIP.hint := ReplaceValue('%c',coreMessage,dus.ReadString('corewip','CommentFR','-'))
-              else
-                linkToWIP.hint := ReplaceValue('%c',coreMessage,dus.ReadString('corewip','Comment','-'));
-              urlToWIP := dus.ReadString('corewip','updateurl','http://sourceforge.net/project/showfiles.php?group_id=108923&package_id=127752&release_id=315908');
-              linkToWIP.Visible := true;
-            end
-            else
-              linkToWIP.Visible := false;
+              writeLog(Internet,dus.ReadString('ID','Description',DLNGstr('PII105')));
 
-            DuppiUpdate := dus.SectionExists('Duppi') and (VERSION < dus.ReadInteger('Duppi','Version',0));
-
-            if DuppiUpdate then
-            begin
-              coreMessage := ReplaceValue('%s',ReplaceValue('%b',ReplaceValue('%a',DLNGStr('PI0047'),getVersionFromInt(VERSION)),dus.ReadString('Duppi','VersionDisp',GetVersionFromInt(dus.ReadInteger('Duppi','Version',0)))),dus.ReadString('Duppi','Size','???'));
-              if (MessageDlg(coreMessage,mtInformation,[mbYes, mbNo],0) = mrYes) then
+              if (dus.ReadString('ID','Result','ERR') <> 'OK') then
               begin
-                url := dus.ReadString('Duppi','URL','');
-                if url = '' then
-                  raise Exception.Create(DLNGstr('PI0049')); 
-//                url := 'http://users.edpnet.be/elbereth/duppi300.d5p';
-                tmpFile := dup5Path+'Download';
-                if not(DirectoryExists(tmpFile)) then
-                  mkdir(tmpfile);
-                tmpFileName := dus.ReadString('Duppi','FileDL',getTempFile(extractfileext(url)));
-                tmpFile := dup5Path+'Download\'+tmpFileName;
-                HttpCli1.URL := url;
-                HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
-                CurDL := tmpFileName;
-                CurDLSize := dus.ReadInteger('Duppi','Size',1)*1024;
-                inc(curDLSize);
-                progressDL.Position := 0;
-                progressDL.Max := CurDLSize*1024;
-                delFile := false;
-                try
-                  try
-                    WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
-                    HttpCli1.Get;
-                    lstUpd.Add(tmpFile);
-                    WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
-                  except
-                    on E: EHttpException do begin
-                        writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
-                        colorLog(clRed);
-                        DelFile := true;
-                    end
+                errCode := dus.ReadString('ID','Result','ERR');
+
+                if errCode = 'M01' then
+                  writeLog(Internet,DLNGStr('PIEM01'))
+                else if errCode = 'M02' then
+                  writeLog(Internet,DLNGStr('PIEM01'))
+                else if errCode = 'M10' then
+                  writeLog(Internet,DLNGStr('PIEM10'))
+                else if errCode = 'M11' then
+                  writeLog(Internet,DLNGStr('PIEM11'))
+                else if errCode = 'M12' then
+                  writeLog(Internet,DLNGStr('PIEM12'))
+                else if errCode = 'M20' then
+                  writeLog(Internet,DLNGStr('PIEM20'))
+                else if errCode = 'M30' then
+                  writeLog(Internet,DLNGStr('PIEM30'))
+                else if errCode = 'M31' then
+                  writeLog(Internet,DLNGStr('PIEM31'))
+                else if errCode = 'M32' then
+                  writeLog(Internet,DLNGStr('PIEM32'))
+                else if errCode = 'M33' then
+                  writeLog(Internet,DLNGStr('PIEM33'))
+                else if errCode = 'M40' then
+                  writeLog(Internet,DLNGStr('PIEM40'))
+                else if errCode = 'M41' then
+                  writeLog(Internet,DLNGStr('PIEM41'))
+                else if errCode = 'M42' then
+                  writeLog(Internet,DLNGStr('PIEM42'))
+                else if errCode = 'M43' then
+                  writeLog(Internet,DLNGStr('PIEM43'))
+                else if errCode = 'M60' then
+                  writeLog(Internet,DLNGStr('PIEM60'))
+                else if errCode = 'P01' then
+                  writeLog(Internet,DLNGStr('PIEP01'))
+                else if errCode = 'P02' then
+                  writeLog(Internet,DLNGStr('PIEP02'))
+                else
+                  writeLog(Internet,ReplaceValue('%e',DLNGStr('PIEUNK'),errCode));
+
+                colorLog(Internet,clRed);
+              end;
+
+              updList := splitStr(dus.ReadString('ID','Updates',''),' ');
+              updUnstableList := splitStr(dus.ReadString('ID','UpdatesUnstable',''),' ');
+              lngList := splitStr(dus.ReadString('ID','Translations',''),' ');
+              writeLog(Internet,ReplaceValue('%t',ReplaceValue('%p',DLNGStr('PII108'),inttostr(updList.Count)+'['+inttostr(updUnstableList.Count)+']'),inttostr(lngList.Count)));
+              lstUpdates.Clear;
+              lstUpdatesUnstable.Clear;
+              lstTranslations.Clear;
+              coreUpdate := false;
+
+              for x:=0 to updList.Count -1 do
+              begin
+
+                if (dus.ReadBool(updList.Strings[x],'AutoUpdate',true)) then
+                begin
+                  itm := lstUpdates.Items.Add;
+                  itm.Caption := dus.ReadString(updList.Strings[x],'Description',DLNGstr('PII106'));
+                  tmpVer := getPluginVersion(Dup5Path+dus.ReadString(updList.Strings[x],'File',''));
+                  itm.SubItems.Add(getVersionFromInt(tmpVer));
+                  if tmpVer < dus.ReadInteger(updList.Strings[x],'Version',0) then
+                  begin
+                    itm.Checked := true;
+                    butDl := true;
+                  end;
+                  itm.SubItems.Add(dus.ReadString(updList.Strings[x],'VersionDisp',''));
+                  itm.SubItems.Add(inttostr(dus.ReadInteger(updList.Strings[x],'Size',0)));
+                  if CurLanguage = '*' then
+                    itm.SubItems.Add(dus.ReadString(updList.Strings[x],'CommentFR',''))
                   else
-                    raise;
+                    itm.SubItems.Add(dus.ReadString(updList.Strings[x],'Comment',''));
+                  itm.SubItems.Add(updList.Strings[x]);
+                end;
+              end;
+
+              for x:=0 to updUnstableList.Count -1 do
+              begin
+
+                if (dus.ReadBool(updUnstableList.Strings[x],'AutoUpdate',true)) then
+                begin
+                  itm := lstUpdatesUnstable.Items.Add;
+                  itm.Caption := dus.ReadString(updUnstableList.Strings[x],'Description',DLNGstr('PII106'));
+                  tmpVer := getPluginVersion(Dup5Path+dus.ReadString(updUnstableList.Strings[x],'File',''));
+                  itm.SubItems.Add(getVersionFromInt(tmpVer));
+                  if tmpVer < dus.ReadInteger(updUnstableList.Strings[x],'Version',0) then
+                  begin
+                    itm.Checked := true;
+                    butDlUnstable := true;
+                  end;
+                  itm.SubItems.Add(dus.ReadString(updUnstableList.Strings[x],'VersionDisp',''));
+                  itm.SubItems.Add(inttostr(dus.ReadInteger(updUnstableList.Strings[x],'Size',0)));
+                  if CurLanguage = '*' then
+                    itm.SubItems.Add(dus.ReadString(updUnstableList.Strings[x],'CommentFR',''))
+                  else
+                    itm.SubItems.Add(dus.ReadString(updUnstableList.Strings[x],'Comment',''));
+                  itm.SubItems.Add(updUnstableList.Strings[x]);
+                end;
+              end;
+
+              for x:=0 to lngList.Count -1 do
+              begin
+
+                itm := lstTranslations.Items.Add;
+                itm.Caption := dus.ReadString(lngList.Strings[x],'Description',DLNGstr('PII106'));
+                itm.SubItems.Add(dus.ReadString(lngList.Strings[x],'Release',''));
+                itm.SubItems.Add(dus.ReadString(lngList.Strings[x],'Author',''));
+                itm.SubItems.Add(inttostr(dus.ReadInteger(lngList.Strings[x],'Size',0)));
+                itm.SubItems.Add(lngList.Strings[x]);
+
+              end;
+
+              butDownload.Enabled := (butDL and not(chkShowUnstable.Checked)) or (butDLUnstable and chkShowUnstable.Checked);
+
+              lstUpdatesTypesChange(lstUpdatesTypes);
+
+              if dus.SectionExists('core') then
+              begin
+                if (dus.ReadInteger('core','Version',0) > coreBuild) then
+                begin
+                  coreUpdate := true;
+                end;
+                linkToStable.Caption := dus.ReadString('core','VersionDisp','');
+                if curLanguage = '*' then
+                  linkToStable.hint := ReplaceValue('%c',coreMessage,dus.ReadString('core','CommentFR','-'))
+                else
+                  linkToStable.hint := ReplaceValue('%c',coreMessage,dus.ReadString('core','Comment','-'));
+                urlToStable := dus.ReadString('core','updateurl','http://sourceforge.net/project/showfiles.php?group_id=108923&package_id=117643&release_id=253827');
+                linkToStable.Visible := true;
+              end
+              else
+                linkToStable.Visible := false;
+
+              if dus.SectionExists('corewip') then
+              begin
+                linkToWIP.Caption := dus.ReadString('corewip','VersionDisp','');
+                if curLanguage = '*' then
+                  linkToWIP.hint := ReplaceValue('%c',coreMessage,dus.ReadString('corewip','CommentFR','-'))
+                else
+                  linkToWIP.hint := ReplaceValue('%c',coreMessage,dus.ReadString('corewip','Comment','-'));
+                urlToWIP := dus.ReadString('corewip','updateurl','http://sourceforge.net/project/showfiles.php?group_id=108923&package_id=127752&release_id=315908');
+                linkToWIP.Visible := true;
+              end
+              else
+                linkToWIP.Visible := false;
+
+              DuppiUpdate := dus.SectionExists('Duppi') and (VERSION < dus.ReadInteger('Duppi','Version',0));
+
+              if DuppiUpdate then
+              begin
+                coreMessage := ReplaceValue('%s',ReplaceValue('%b',ReplaceValue('%a',DLNGStr('PI0047'),getVersionFromInt(VERSION)),dus.ReadString('Duppi','VersionDisp',GetVersionFromInt(dus.ReadInteger('Duppi','Version',0)))),dus.ReadString('Duppi','Size','???'));
+                if (MessageDlg(coreMessage,mtInformation,[mbYes, mbNo],0) = mrYes) then
+                begin
+                  url := dus.ReadString('Duppi','URL','');
+                  if url = '' then
+                    raise Exception.Create(DLNGstr('PI0049'));
+                  tmpFile := dup5Path+'Download';
+                  if not(DirectoryExists(tmpFile)) then
+                    mkdir(tmpfile);
+                  tmpFileName := dus.ReadString('Duppi','FileDL',getTempFile(extractfileext(url)));
+                  tmpFile := dup5Path+'Download\'+tmpFileName;
+                  curlObj.URL:=url;
+                  curlObj.OutputFile := tmpFile;
+                  CurDL := tmpFileName;
+                  CurDLSize := dus.ReadInteger('Duppi','Size',1)*1024;
+                  inc(curDLSize);
+                  progressDL.Position := 0;
+                  progressDL.Max := 100;
+                  delFile := false;
+                  WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
+                  if curlObj.Perform then
+                    lstUpd.Add(tmpFile)
+                  else
+                  begin
+                    writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
+                    colorLog(Internet,clRed);
+                    DelFile := true;
                   end;
 
-                finally
-                  HttpCli1.RcvdStream.Destroy;
-                  HttpCli1.RcvdStream := nil;
-                  ButDownload.Visible := true;
-                  if DelFile and FileExists(tmpFile) then
-                    DeleteFile(tmpFile);
+                  butDownload.Click;
+                  exit;
                 end;
-                butDownload.Click;
-                exit;
               end;
-            end;
 
-            if (CoreUpdate) then
-            begin
-              coreMessage := ReplaceValue('%v',DLNGstr('PII107'),dus.ReadString('core','VersionDisp','-'));
-              if curLanguage = '*' then
-                coreMessage := ReplaceValue('%c',coreMessage,dus.ReadString('core','CommentFR','-'))
-              else
-                coreMessage := ReplaceValue('%c',coreMessage,dus.ReadString('core','Comment','-'));
-              if (MessageDlg(coreMessage,mtInformation,[mbYes, mbNo],0) = mrYes) then
+              if (CoreUpdate) then
               begin
-                ShellExecute(Application.Handle,
-                           'OPEN',
-                           PChar(dus.ReadString('core','URL','http://www.dragonunpacker.com')),
-                           nil,
-                           nil,
-                           SW_SHOW);
-                close;
+                coreMessage := ReplaceValue('%s',ReplaceValue('%v',ReplaceValue('%c',DLNGStr('PI0050'),'-'),dus.ReadString('core','VersionDisp',GetVersionFromInt(dus.ReadInteger('core','Version',0)))),dus.ReadString('core','PackageSize','???'));
+                if (MessageDlg(coreMessage,mtInformation,[mbYes, mbNo],0) = mrYes) then
+                begin
+                  url := dus.ReadString('core','PackageURL','');
+                  if url = '' then
+                    raise Exception.Create(DLNGstr('PI0051'));
+                  tmpFile := dup5Path+'Download';
+                  if not(DirectoryExists(tmpFile)) then
+                    mkdir(tmpfile);
+                  tmpFileName := dus.ReadString('core','PackageFileDL',getTempFile(extractfileext(url)));
+                  tmpFile := dup5Path+'Download\'+tmpFileName;
+                  curlObj.URL:=url;
+                  curlObj.OutputFile := tmpFile;
+                  CurDL := tmpFileName;
+                  CurDLSize := dus.ReadInteger('core','PackageSize',1)*1024;
+                  inc(curDLSize);
+                  progressDL.Position := 0;
+                  progressDL.Max := 100;
+                  delFile := false;
+                  WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
+                  if curlObj.Perform then
+                    lstUpd.Add(tmpFile)
+                  else
+                  begin
+                    writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
+                    colorLog(Internet,clRed);
+                    DelFile := true;
+                  end;
+
+                  butDownload.Click;
+                  exit;
+                end
+                else
+                begin
+                  coreMessage := ReplaceValue('%v',DLNGstr('PII107'),dus.ReadString('core','VersionDisp','-'));
+                  if curLanguage = '*' then
+                    coreMessage := ReplaceValue('%c',coreMessage,dus.ReadString('core','CommentFR','-'))
+                  else
+                    coreMessage := ReplaceValue('%c',coreMessage,dus.ReadString('core','Comment','-'));
+                  if (MessageDlg(coreMessage,mtInformation,[mbYes, mbNo],0) = mrYes) then
+                  begin
+                    ShellExecute(Application.Handle,
+                               'OPEN',
+                               PChar(dus.ReadString('core','URL','http://www.dragonunpacker.com')),
+                               nil,
+                               nil,
+                               SW_SHOW);
+                    close;
+                  end;
+                end;
               end;
             end;
-
-          end;
-        end;
+     finally
+        dus.free;
+        if FileExists(tmpIniFile) then
+          DeleteFile(tmpIniFile);
+      end;
+    end;
 
 end;
 
@@ -1865,18 +1853,21 @@ end;
 procedure TfrmInstaller.FormDestroy(Sender: TObject);
 begin
 
+  curlObj.Free;
+
   if FileExists(tmpFile) then
     DeleteFile(tmpFile);
 
 end;
 
-procedure TfrmInstaller.HttpCli1DocData(Sender: TObject; Buffer: Pointer;
-  Len: Integer);
+procedure TfrmInstaller.curlObjProgress (Sender:tObject; BytesTotal, BytesNow:longint; var bContinue:Boolean);
 begin
-
-  infoLabel.Caption := ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII102'),curDL),IntToStr(HttpCli1.RcvdCount));
-  ProgressDL.Position := HttpCli1.RcvdCount;
-
+  infoLabel.Caption := ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII102'),curDL),IntToStr(BytesNow)+'/'+Inttostr(BytesTotal));
+  if BytesTotal <> 0 then
+    ProgressDL.Position := Round((BytesNow / BytesTotal)*100)
+  else
+    ProgressDL.Position := 0;
+  refresh;
 end;
 
 procedure TfrmInstaller.lstUpdatesClick(Sender: TObject);
@@ -1931,37 +1922,28 @@ begin
             url := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'URL','');
             tmpFileName := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'FileDL',getTempFile(extractfileext(url)));
             tmpFile := dup5Path+'Download\'+tmpFileName;
-            HttpCli1.URL := url;
-            HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
+            curlObj.URL := url;
+            curlObj.OutputFile := tmpFile;
             CurDL := tmpFileName;
             CurDLSize := strtoint(lstUpdates.Items.Item[x].SubItems[2]);
             inc(curDLSize);
             progressDL.Position := 0;
-            progressDL.Max := CurDLSize*1024;
+            progressDL.Max := 100;
             delFile := false;
-            try
-              try
-                WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
-                HttpCli1.Get;
-                lstUpd.Add(tmpFile);
-                WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
-              except
-                on E: EHttpException do begin
-                    writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
-                    colorLog(clRed);
-                    DelFile := true;
-                end
-              else
-                raise;
-              end;
-
-            finally
-              HttpCli1.RcvdStream.Destroy;
-              HttpCli1.RcvdStream := nil;
-              ButDownload.Visible := true;
-              if DelFile and FileExists(tmpFile) then
-                DeleteFile(tmpFile);
+            WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
+            if curlObj.Perform then
+            begin
+              lstUpd.Add(tmpFile);
+            end
+            else
+            begin
+              writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
+              colorLog(Internet,clRed);
+              DelFile := true;
             end;
+            ButDownload.Visible := true;
+            if DelFile and FileExists(tmpFile) then
+              DeleteFile(tmpFile);
           end;
         end;
       end;
@@ -1977,37 +1959,29 @@ begin
             url := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL','');
             tmpFileName := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'FileDL',getTempFile(extractfileext(url)));
             tmpFile := dup5Path+'Download\'+tmpFileName;
-            HttpCli1.URL := url;
-            HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
+            curlObj.URL := url;
+            curlObj.OutputFile := tmpFile;
             CurDL := tmpFileName;
             CurDLSize := strtoint(lstUpdatesUnstable.Items.Item[x].SubItems[2]);
             inc(curDLSize);
             progressDL.Position := 0;
-            progressDL.Max := CurDLSize*1024;
+            progressDL.Max := 100;
             delFile := false;
-            try
-              try
-                WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
-                HttpCli1.Get;
-                lstUpd.Add(tmpFile);
-                WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
-              except
-                on E: EHttpException do begin
-                    writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
-                    colorLog(clRed);
-                    DelFile := true;
-                end
-              else
-                raise;
-              end;
-
-            finally
-              HttpCli1.RcvdStream.Destroy;
-              HttpCli1.RcvdStream := nil;
-              ButDownload.Visible := true;
-              if DelFile and FileExists(tmpFile) then
-                DeleteFile(tmpFile);
+            WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
+            if curlObj.Perform then
+            begin
+              lstUpd.Add(tmpFile);
+            end
+            else
+            begin
+              writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
+              colorLog(Internet,clRed);
+              DelFile := true;
             end;
+
+            ButDownload.Visible := true;
+            if DelFile and FileExists(tmpFile) then
+              DeleteFile(tmpFile);
           end;
         end;
       end;
@@ -2022,37 +1996,29 @@ begin
           url := dus.ReadString(lstTranslations.Items.Item[x].SubItems[3],'URL','');
           tmpFileName := dus.ReadString(lstTranslations.Items.Item[x].SubItems[3],'FileDL',getTempFile(extractfileext(url)));
           tmpFile := dup5Path+'Download\'+tmpFileName;
-          HttpCli1.URL := url;
-          HttpCli1.RcvdStream := TFileStream.Create(tmpFile,fmCreate);
+          curlObj.URL := url;
+          curlObj.OutputFile := tmpFile;
           CurDL := tmpFileName;
           CurDLSize := strtoint(lstTranslations.Items.Item[x].SubItems[2]);
           inc(curDLSize);
           progressDL.Position := 0;
-          progressDL.Max := CurDLSize*1024;
+          progressDL.Max := 100;
           delFile := false;
-          try
-            try
-              WriteLog(ReplaceValue('%f',DLNGstr('PII101'),curDL));
-              HttpCli1.Get;
-              lstUpd.Add(tmpFile);
-              WriteLog(ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII103'),curDL),IntToStr(HttpCli1.RcvdStream.Size)));
-            except
-              on E: EHttpException do begin
-                  writeLog(ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(HttpCli1.StatusCode)),HttpCli1.ReasonPhrase));
-                  colorLog(clRed);
-                  DelFile := true;
-              end
-            else
-              raise;
-            end;
-
-          finally
-            HttpCli1.RcvdStream.Destroy;
-            HttpCli1.RcvdStream := nil;
-            ButDownload.Visible := true;
-            if DelFile and FileExists(tmpFile) then
-              DeleteFile(tmpFile);
+          WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
+          if curlObj.Perform then
+          begin
+            lstUpd.Add(tmpFile);
+          end
+          else
+          begin
+            writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
+            colorLog(Internet,clRed);
+            DelFile := true;
           end;
+
+          ButDownload.Visible := true;
+          if DelFile and FileExists(tmpFile) then
+            DeleteFile(tmpFile);
         end;
       end;
     end;
@@ -2109,6 +2075,8 @@ begin
 
   translate;
 
+  writelog(Install,'Package ['+inttostr(CurUpd)+'/'+inttostr(lstUpd.Count)+']: '+extractfilename(lstUpd.Strings[curUpd]));
+
   if loadDupp(lstUpd.Strings[curUpd]) then
     if not(infosDupp()) then
     begin
@@ -2162,12 +2130,19 @@ begin
   proxyPass := frmProxy.txtProxyPass.Text;
   proxyUserPass := frmProxy.chkUserPass.Checked;
 
-  httpCli1.Proxy := proxy;
-  httpCli1.ProxyPort := proxyPort;
+  applyProxyValues;
+
+end;
+
+procedure TfrmInstaller.applyProxyValues;
+begin
+
+  curlObj.Proxy := proxy;
+  if (proxyPort > '') then
+    curlObj.ProxyPort := strtoint(proxyPort);
   if proxyUserPass then
   begin
-    httpCli1.ProxyUsername := proxyUser;
-    httpCli1.ProxyPassword := proxyPass;
+    curlObj.ProxyUserPwd := proxyuser+':'+proxypass;
   end;
 
 end;
@@ -2179,7 +2154,7 @@ begin
 
   OpenDialog.InitialDir := txtPathD5P.Text;
 
-  OpenDialog.Filter := 'Dragon UnPACKer 5 Package (*.D5P)|*.d5p';
+  OpenDialog.Filter := ReplaceValue('%d',DLNGStr('PI0064'),'Dragon UnPACKer 5')+'(*.D5P)|*.d5p';
   OpenDialog.Title := DLNGstr('PI0040');
 
   if OpenDialog.Execute then
@@ -2278,47 +2253,71 @@ begin
  end;
 end;
 
-procedure TfrmInstaller.writeLog(text: string);
+procedure TfrmInstaller.writeLog(dest: TLogType; text: string);
+var logToUse: TRichEdit;
 begin
 
-  if richLog.Lines.Count = 32760 then
-    richLog.Lines.Delete(0);
+  if dest = Internet then
+    logToUse := richLog
+  else
+    logToUse := richEditInstall;
 
-  richLog.Lines.Add(DateTimeToStr(now)+' : '+text);
-  richLog.Perform(EM_LINESCROLL,0,1);
+  if logToUse.Lines.Count = 32760 then
+    logToUse.Lines.Delete(0);
+
+  logToUse.Lines.Add(DateTimeToStr(now)+' : '+text);
+  logToUse.Perform(EM_LINESCROLL,0,1);
 
 end;
 
-procedure TfrmInstaller.appendLog(text: string);
+procedure TfrmInstaller.appendLog(dest: TLogType; text: string);
+var logToUse: TRichEdit;
 begin
 
-  richLog.Lines.Strings[richLog.Lines.Count-1] := richLog.Lines.Strings[richLog.Lines.Count-1]+' '+text;
+  if dest = Internet then
+    logToUse := richLog
+  else
+    logToUse := richEditInstall;
+
+  logToUse.Lines.Strings[logToUse.Lines.Count-1] := logToUse.Lines.Strings[logToUse.Lines.Count-1]+' '+text;
 
 end;
 
 
-procedure TfrmInstaller.separatorLog;
+procedure TfrmInstaller.separatorLog(dest: TLogType);
 begin
 
-  writelog(StringOfchar('-',80));
+  writelog(dest,StringOfchar('-',80));
 
 end;
 
-procedure TfrmInstaller.styleLog(Style: TFontStyles);
+procedure TfrmInstaller.styleLog(dest: TLogType; Style: TFontStyles);
+var logToUse: TRichEdit;
 begin
 
-  setRichEditLineStyle(richLog, richLog.Lines.Count, Style);
+  if dest = Internet then
+    logToUse := richLog
+  else
+    logToUse := richEditInstall;
+
+  setRichEditLineStyle(logToUse, logToUse.Lines.Count, Style);
 
 end;
 
-procedure TfrmInstaller.colorLog(Color: TColor);
+procedure TfrmInstaller.colorLog(dest: TLogType; Color: TColor);
+var logToUse: TRichEdit;
 begin
 
-  setRichEditLineColor(richLog, richLog.Lines.Count, Color);
+  if dest = Internet then
+    logToUse := richLog
+  else
+    logToUse := richEditInstall;
+
+  setRichEditLineColor(logToUse, logToUse.Lines.Count, Color);
 
 end;
 
-procedure TfrmInstaller.setRichEditLineStyle(R : TJvRichEdit; Line : Integer; Style : TFontStyles);
+procedure TfrmInstaller.setRichEditLineStyle(R : TRichEdit; Line : Integer; Style : TFontStyles);
 var
  oldPos,
  oldSelLength : Integer;
@@ -2347,7 +2346,7 @@ begin
  end;
 end;
 
-procedure TfrmInstaller.setRichEditLineColor(R : TJvRichEdit; Line : Integer; Color : TColor);
+procedure TfrmInstaller.setRichEditLineColor(R : TRichEdit; Line : Integer; Color : TColor);
 var
  oldPos,
  oldSelLength : Integer;
@@ -2417,6 +2416,8 @@ begin
 
   if not(cont) then
   begin
+    writelog(Install,DLNGStr('PI0042'));
+    colorlog(Install,clRed);
     MessageDlg(DLNGStr('PI0042'),mtError,[mbOk],0);
 //    ShowMessage('This package cannot be installed with your version of Dragon UnPACKer.');
   end

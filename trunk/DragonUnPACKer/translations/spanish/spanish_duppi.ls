@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-# Programa: Duppi (Dragon UnPACKer v5.4.0 "Degei")
+# Programa: Duppi v3.1.0 (Dragon UnPACKer)
 # Lenguaje: Español
-#  Version: 1
+#  Version: 2
 #    Autor: Alexandre Devilliers (con la ayuda de Cinthia)
 # ============================================================================
 {LSF}
@@ -12,7 +12,7 @@ Author = Alexandre Devilliers
 Email = translation@dragonunpacker.com
 URL = http://www.dragonunpacker.com
 ProgramID = PI
-ProgramVer = 1
+ProgramVer = 2
 IconFile = flag_sp.bmp
 Compression=99
 OutFile = spanish.lng
@@ -69,6 +69,34 @@ PI0046=¡La actualización de Duppi ha sido exitosa!
 PI0047=Una nueva versión de Duppi está disponible:%nSu versión: %a%nVersión disponible: %b%nTamaño de actualización: %s Ko%nPoner al día ahora (Recomendado)?
 PI0048=Mostrar versiones inestables (alpha/beta/RC)
 PI0049=No hay URL para la actualización de Duppi!
+PI0050=Una nueva versión de Dragon UnPACKer está disponible:%nVersión disponible: %v%nTamaño de actualización: %s Ko%nCommentario: %c%n%nPoner al día ahora (Recomendado)?
+PI0051=No hay URL para la actualización de Dragon UnPACKer!
+PI0052=%s octetos
+PI0053=%s Kio
+PI0054=Paquete %a...
+PI0055=Identificando los bloques...
+PI0056=Leyendo bloque "%a"...
+PI0057=entradas
+PI0058=nombres
+PI0059=contenido
+PI0060=Installación del fichero %a: %b
+PI0061=Registrando OCX...
+PI0062=La instalación del paquete se termino con suceso.%nEl programa Duppi se re-inicialisara ahora para ponerse al dia.
+PI0063=Leyendo informaciones del paquete...
+PI0064=Paquete %d
+
+PIE401=Tipo de hash desconocido: %h
+PIE402=Fallo al intentar cambiar a la posición del fichero (%a <> %b)
+PIE403=Fallo al intentar leer el fichero (%a octetos <> %b octetos)
+PIE404=Error de descomprimiendo %a (%b octetos <> %c octetos)
+PIE405=Compression no soportada (%a)
+PIE406=El hash no corresponde a los datos del bloque (%a <> %b)
+PIE407=Fallo al intentar cambiar a la posición del bloque (%a <> %b)
+PIE408=Fallo al intentar leer el bloque (%a octetos <> %b octetos)
+PIE409=Error recuperando informaciónes:
+PIE410=Error recuperando imagen:
+PIE411=Fallo en las verificaciones del fichero DUPP!
+PIE412=Error recuperando datos del bloque "%a":
 
 PII001=Titulo
 PII002=Su versión

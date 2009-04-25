@@ -176,6 +176,7 @@ PI0046=Update of Duppi successfull!
 PI0047=A new version of Duppi is available:%nYour version: %a%nAvailable version: %b%nUpdate size: %s Kbytes%n%nDo you want to update now (Recommended)?
 PI0048=Also show unstables (alpha/beta/RC)
 PI0049=No URL for Duppi update!
+PI0050=A new version of Dragon UnPACKer is available to download.%n%nNew version: %v%nUpdate size: %s Kbytes%nComment: %c%n%nDo you want to update now (Recommended)?
 
 PII001=Title
 PII002=Your Version

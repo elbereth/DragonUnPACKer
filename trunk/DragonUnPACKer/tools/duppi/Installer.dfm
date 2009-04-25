@@ -1,6 +1,6 @@
 object frmInstaller: TfrmInstaller
-  Left = 676
-  Top = 201
+  Left = 337
+  Top = 226
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'DUP5 Package Installer'
@@ -1160,34 +1160,17 @@ object frmInstaller: TfrmInstaller
     Height = 220
     BevelOuter = bvNone
     TabOrder = 3
-    object strStatus: TLabel
-      Left = 8
-      Top = 60
-      Width = 65
-      Height = 13
-      Alignment = taRightJustify
-      AutoSize = False
-      Caption = 'Status'
-    end
-    object lblStatus: TLabel
-      Left = 80
-      Top = 60
-      Width = 457
-      Height = 13
-      AutoSize = False
-      Caption = 'Waiting for user input...'
-    end
     object panInstall: TPanel
       Left = 8
       Top = 0
       Width = 529
-      Height = 49
+      Height = 41
       BevelOuter = bvNone
       TabOrder = 1
       Visible = False
       object lblInstalling: TLabel
         Left = 0
-        Top = 24
+        Top = 2
         Width = 529
         Height = 13
         Alignment = taCenter
@@ -1200,17 +1183,24 @@ object frmInstaller: TfrmInstaller
         Font.Style = [fsBold]
         ParentFont = False
       end
+      object Progress: TProgressBar
+        Left = 0
+        Top = 20
+        Width = 529
+        Height = 16
+        TabOrder = 0
+      end
     end
     object panIntro: TPanel
       Left = 8
       Top = 0
       Width = 529
-      Height = 49
+      Height = 41
       BevelOuter = bvNone
       TabOrder = 0
       object lblInstall2: TLabel
         Left = 0
-        Top = 28
+        Top = 20
         Width = 529
         Height = 13
         Alignment = taCenter
@@ -1225,7 +1215,7 @@ object frmInstaller: TfrmInstaller
       end
       object lblInstall1: TLabel
         Left = 0
-        Top = 12
+        Top = 4
         Width = 529
         Height = 13
         Alignment = taCenter
@@ -1241,28 +1231,13 @@ object frmInstaller: TfrmInstaller
         ParentFont = False
       end
     end
-    object List: TListBox
-      Left = 8
-      Top = 120
-      Width = 465
-      Height = 73
-      ItemHeight = 13
-      TabOrder = 4
-    end
-    object Progress: TProgressBar
-      Left = 8
-      Top = 81
-      Width = 529
-      Height = 16
-      TabOrder = 2
-    end
     object grpPackInfos: TGroupBox
       Left = 8
-      Top = 104
+      Top = 100
       Width = 529
       Height = 113
       Caption = 'Package informations'
-      TabOrder = 3
+      TabOrder = 2
       object panPVersion: TPanel
         Left = 112
         Top = 34
@@ -1371,6 +1346,17 @@ object frmInstaller: TfrmInstaller
         TabOrder = 8
         OnClick = cmdURLClick
       end
+    end
+    object RichEditInstall: TRichEdit
+      Left = 8
+      Top = 40
+      Width = 529
+      Height = 57
+      HideScrollBars = False
+      ReadOnly = True
+      ScrollBars = ssVertical
+      TabOrder = 3
+      WordWrap = False
     end
   end
   object stepChoice: TPanel
@@ -1667,12 +1653,11 @@ object frmInstaller: TfrmInstaller
       TabOrder = 4
       OnClick = butProxyClick
     end
-    object richLog: TJvRichEdit
+    object richLog: TRichEdit
       Left = 8
       Top = 40
       Width = 513
       Height = 57
-      AutoSize = False
       HideScrollBars = False
       ReadOnly = True
       ScrollBars = ssVertical
@@ -1796,28 +1781,6 @@ object frmInstaller: TfrmInstaller
   end
   object XPManifest: TXPManifest
     Left = 448
-    Top = 48
-  end
-  object HttpCli1: THttpCli
-    LocalAddr = '0.0.0.0'
-    ProxyPort = '80'
-    Agent = 'Duppi/2.1'
-    Accept = 'image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, */*'
-    NoCache = False
-    ContentTypePost = 'application/x-www-form-urlencoded'
-    MultiThreaded = False
-    RequestVer = '1.0'
-    FollowRelocation = True
-    LocationChangeMaxCount = 5
-    ServerAuth = httpAuthNone
-    ProxyAuth = httpAuthNone
-    BandwidthLimit = 10000
-    BandwidthSampling = 1000
-    Options = [httpoNoNTLMAuth]
-    OnDocData = HttpCli1DocData
-    SocksLevel = '5'
-    SocksAuthentication = socksNoAuthentication
-    Left = 416
     Top = 48
   end
   object OpenDialog: TOpenDialog

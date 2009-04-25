@@ -38,6 +38,25 @@ Elbereth's HyperRipper 5 Plugin (hr_default.d5h)        5.1.0.103
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
+Updates to last stable version:
+
+ * Duppi v3.1.0:
+   * Optimized code to remove all useless units:
+       JVCL & JCL are no more used
+	   VirtualTree are no more used
+	 This alone reduced size by 300kB...
+   i Updated to work with curl instead of Overbyte's ICS.
+     This was done in order to be more platform independant (FPC/Lazarus).
+	 Tested successfully with v7.18.0 & 7.19.4. Will be packed with v7.18.0 in
+	 order to reduce size (it is the latest version without SSL support).
+   * Improved feedback to the user while installing DUPP v4 files.
+   + Added log while installing to know what's going on.
+   + Implemented auto-update of Dragon UnPACKer.
+   ! Translated all text introduced with DUPP v4 support. Sorry to non-english
+     speakers it was alwars showing in english...
+	 This required bump in language version number (PI v2).
+
+
 Version 5.4.0.192
 Release A [23/04/2009]
 

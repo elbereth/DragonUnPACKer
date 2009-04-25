@@ -1,9 +1,9 @@
 # ============================================================================
 # Language Source File (pour DLNGC v4.0)
 # ============================================================================
-#  Programme: Duppi v3.0.0 (Dragon UnPACKer)
+#  Programme: Duppi v3.1.0 (Dragon UnPACKer)
 #     Langue: Français
-#    Version: 1
+#    Version: 2
 #     Auteur: Alexandre Devilliers
 # ============================================================================
 #
@@ -80,9 +80,10 @@ URL = http://www.dragonunpacker.com
 #
 #                                ID      Ver
 # Duppi v3.0.0                   PI       1
+# Duppi v3.1.0                   PI       2
 #
 ProgramID = PI
-ProgramVer = 1
+ProgramVer = 2
 #
 # + IconFile +
 # Chemin & nom du fichier de l'icône affichée avec le nom de langue.
@@ -163,7 +164,7 @@ PI0024=Installation non réussie (%e fichier(s) ont donnés des erreurs)...
 PI0025=Installation non réussie... %i fichier(s) installés avec succés et %e erreur(s)...
 PI0026=Chemin d'accés a Dragon UnPACKer 5 introuvable.%nVeuillez lancer Dragon UnPACKer 5 au moins une fois avant de rééssayer.
 PI0027=Evité...
-PI0028=Ko
+PI0028=ko
 PI0029=Lecture...
 PI0030=Décompression...
 PI0031=Ecriture...
@@ -185,6 +186,33 @@ PI0046=Mise à jour de Duppi terminée avec succès!
 PI0047=Une nouvelle version de Duppi est disponible:%nVotre version: %a%nVersion disponible: %b%nTaille de la mise à jour: %s Ko%n%nVoulez-vous mettre à jour maintenant (Recommandé)?
 PI0048=Montrer aussi les versions instables
 PI0049=Pas d'URL pour la mise à jour de Duppi!
+PI0050=Une nouvelle version de Dragon UnPACKer est disponible en téléchargement.%n%nNouvelle version: %v%nTaille de la mise à jour: %s Ko%nCommentaire: %c%n%nVoulez-vous mettre à jour maintenant (Recommandé)?
+PI0051=Pas d'URL pour la mise à jour de Dragon UnPACKer!
+PI0052=%s octets
+PI0053=%s Kio
+PI0054=Paquet %a...
+PI0055=Recherche des blocs...
+PI0056=Lecture du block "%a"...
+PI0057=entrées
+PI0058=noms
+PI0059=contenu
+PI0060=Installation du fichier %a: %b
+PI0061=Enregistrement OCX...
+PI0062=Le paquet est installé avec succès.%nLe programme Duppi va maintenant redémarrer pour se mettre à jour.
+PI0063=Récupération des informations du paquet...
+PI0064=Paquet %d
+
+PIE401=Fonction de hachage inconnue: %h
+PIE402=Positionnement vers le fichier échoué (%a <> %b)
+PIE403=Erreur lors de la lecture du fichier (%a octets <> %b octets)
+PIE404=Erreur de décompression %a (%b octets <> %c octets)
+PIE405=Compression non supportée (%a)
+PIE406=Le hachage ne correspond pas au bloc (%a <> %b)
+PIE407=Positionnement vers le bloc échoué (%a <> %b)
+PIE408=Erreur lors de la lecture du bloc (%a octets <> %b octets)
+PIE409=Erreur pendant la récupération des informations:
+PIE410=Erreur pendant la récupération de la banière:
+PIE411=Erreur pendant la récupération des données du bloc "%a":
 
 PII001=Titre
 PII002=Votre version

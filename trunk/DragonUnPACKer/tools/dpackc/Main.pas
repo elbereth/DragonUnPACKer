@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.6 2008-11-15 15:34:27 elbereth Exp $
+// $Id: Main.pas,v 1.7 2009-04-26 12:17:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dpackc/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -21,11 +21,11 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, zlib,
-  Dialogs, ComCtrls, StdCtrls, Menus, ToolWin, ImgList, ExtCtrls,
-  lib_crc, lib_zlib, spec_DUPP, JvComponent, JvSimpleXml, lib_version, lib_binutils,
-  JvExStdCtrls, JvButton, JvCtrls, JvRichEdit,
+  Dialogs, ComCtrls, StdCtrls, Menus, ToolWin, ImgList, ExtCtrls, Buttons,
+  lib_crc, lib_zlib, spec_DUPP, lib_version, lib_binutils, BrowseForFolderU,
   ULZMAEnc,UBufferedFS,DCPsha512,DCPsha256,DCPsha1,DCPmd5,DCPripemd160,DCPcrypt2,
-  JvExControls, JvLED,JvBrowseFolder, JvBaseDlg;
+  // JVCL is used for XML manipulation (project files)
+  JvSimpleXml;
 
 type
      BMPHeader = packed record
@@ -107,7 +107,7 @@ type
     txtImageFile: TEdit;
     butBrowseImage: TButton;
     TabSheet4: TTabSheet;
-    richLog: TJvRichEdit;
+    richLog: TRichEdit;
     ToolBar: TToolBar;
     butAdd: TToolButton;
     butDel: TToolButton;
@@ -116,10 +116,6 @@ type
     txtPackageFile: TEdit;
     butBrowsePackageFile: TButton;
     GroupBox4: TGroupBox;
-    butNew: TJvImgBtn;
-    butOpen: TJvImgBtn;
-    butSave: TJvImgBtn;
-    butCompile: TJvImgBtn;
     butExit: TButton;
     lblDUPVersion: TStaticText;
     butVersionPrev: TButton;
@@ -149,10 +145,6 @@ type
     optDUPPv3: TRadioButton;
     optDUPPv4: TRadioButton;
     txtComment: TMemo;
-    ledName: TJvLED;
-    ledURL: TJvLED;
-    ledAuthor: TJvLED;
-    ledComment: TJvLED;
     lblCommentMax: TLabel;
     lblNameMax: TLabel;
     Label20: TLabel;
@@ -163,9 +155,9 @@ type
     lblCommentMaxMax: TLabel;
     TabSheet6: TTabSheet;
     txtUpdateDir1: TEdit;
-    Button1: TButton;
+    butOldVersionBrowse: TButton;
     txtUpdateDir2: TEdit;
-    Button2: TButton;
+    butNewVersionBrowse: TButton;
     Label22: TLabel;
     Label24: TLabel;
     GroupBox5: TGroupBox;
@@ -193,8 +185,15 @@ type
     GroupBox11: TGroupBox;
     ProgressBarUpdate: TProgressBar;
     lblUpdateInfo: TLabel;
-    JvBrowseForFolderDialog1: TJvBrowseForFolderDialog;
-    JvImgBtn1: TJvImgBtn;
+    butNew: TSpeedButton;
+    butOpen: TSpeedButton;
+    butSave: TSpeedButton;
+    butDiff: TSpeedButton;
+    butCompile: TSpeedButton;
+    shapeComment: TShape;
+    shapeAuthor: TShape;
+    shapeURL: TShape;
+    shapeName: TShape;
     procedure ListBox1DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure ListBox1DragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
@@ -239,8 +238,8 @@ type
     procedure chkCompressZlibClick(Sender: TObject);
     procedure chkCompressLZMAClick(Sender: TObject);
     procedure butNewUpdateClick(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
+    procedure butOldVersionBrowseClick(Sender: TObject);
+    procedure butNewVersionBrowseClick(Sender: TObject);
     procedure JvImgBtn1Click(Sender: TObject);
 //    function convertInstallTo(val: integer): string;
   private
@@ -296,7 +295,7 @@ implementation
 uses Compile, Config;
 
 const DPSVERSION = 4;
-      VERSION: integer = 35040;
+      VERSION: integer = 35140;
 
 {$R *.dfm}
 
@@ -1237,10 +1236,15 @@ end;
 procedure TfrmMain.butCompileClick(Sender: TObject);
 begin
 
-  if optDUPPv2.Checked or optDUPPv3.Checked then
-    createDUPPv2_v3
+  if lstFiles.Items.Count = 0 then
+    ShowMessage('You need at least 1 file to create a D5P.')
+  else if txtPackageFile.Text = '' then
+    ShowMessage('You need a package filename.') 
   else
-    createDUPPv4;
+    if optDUPPv2.Checked or optDUPPv3.Checked then
+      createDUPPv2_v3
+    else
+      createDUPPv4;
 
 end;
 
@@ -1962,6 +1966,8 @@ begin
       174: lblDUPVersion.Caption := 'v5.3.1 WIP';
       178: lblDUPVersion.Caption := 'v5.3.2 WIP';
       182: lblDUPVersion.Caption := 'v5.3.3 Beta';
+      191: lblDUPVersion.Caption := 'v5.4.0';
+      193: lblDUPVersion.Caption := 'v5.4.0a';
     else
       lblDUPVersion.Caption := '???';
     end;
@@ -2023,6 +2029,8 @@ begin
       174: txtDUP5Version.Text := '173';
       178: txtDUP5Version.Text := '174';
       182: txtDUP5Version.Text := '178';
+      191: txtDUP5Version.Text := '182';
+      193: txtDUP5Version.Text := '191';
     else
       txtDUP5Version.Text := inttostr(oldValue-1);
     end;
@@ -2085,12 +2093,14 @@ begin
       173: txtDUP5Version.Text := '174';
       174: txtDUP5Version.Text := '178';
       178: txtDUP5Version.Text := '182';
+      182: txtDUP5Version.Text := '191';
+      191: txtDUP5Version.Text := '193';
     else
       txtDUP5Version.Text := inttostr(oldValue+1);
     end;
   except
     on EConvertError do
-      txtDUP5Version.Text := '182';
+      txtDUP5Version.Text := '193';
   end;
 
 end;
@@ -2135,7 +2145,14 @@ end;
 procedure TfrmMain.txtNameChange(Sender: TObject);
 begin
 
-  ledName.Status := length(txtName.Text) <= 255;
+  if length(txtName.Text) <= 128 then
+    shapeName.Brush.Color := clLime
+  else if length(txtName.text) <= 192 then
+    shapeName.Brush.Color := clYellow
+  else if length(txtName.text) <= 255 then
+    shapeName.Brush.Color := $004080FF
+  else
+    shapeName.Brush.Color := clRed;
   lblNameMax.Caption := inttostr(length(txtName.Text));
 
 end;
@@ -2143,7 +2160,14 @@ end;
 procedure TfrmMain.txtURLChange(Sender: TObject);
 begin
 
-  ledURL.Status := length(txtURL.Text) <= 255;
+  if length(txtURL.Text) <= 128 then
+    shapeURL.Brush.Color := clLime
+  else if length(txtURL.text) <= 192 then
+    shapeURL.Brush.Color := clYellow
+  else if length(txtURL.text) <= 255 then
+    shapeURL.Brush.Color := $004080FF
+  else
+    shapeURL.Brush.Color := clRed;
   lblURLMax.Caption := inttostr(length(txtURL.Text));
 
 end;
@@ -2151,7 +2175,14 @@ end;
 procedure TfrmMain.txtAuthorChange(Sender: TObject);
 begin
 
-  ledAuthor.Status := length(txtAuthor.Text) <= 255;
+  if length(txtAuthor.Text) <= 128 then
+    shapeAuthor.Brush.Color := clLime
+  else if length(txtAuthor.text) <= 192 then
+    shapeAuthor.Brush.Color := clYellow
+  else if length(txtAuthor.text) <= 255 then
+    shapeAuthor.Brush.Color := $004080FF
+  else
+    shapeAuthor.Brush.Color := clRed;
   lblAuthorMax.Caption := inttostr(length(txtAuthor.Text));
 
 end;
@@ -2160,9 +2191,25 @@ procedure TfrmMain.txtCommentChange(Sender: TObject);
 begin
 
   if optDUPPv4.Checked then
-    ledComment.Status := length(txtComment.Text) <= 32767
+  begin
+    if length(txtComment.Text) <= 16384 then
+      shapeComment.Brush.Color := clLime
+    else if length(txtComment.text) <= 24576 then
+      shapeComment.Brush.Color := clYellow
+    else if length(txtComment.text) <= 32767 then
+      shapeComment.Brush.Color := $7FFF8040
+    else
+      shapeComment.Brush.Color := clRed;
+  end
   else
-    ledComment.Status := length(txtComment.Text) <= 255;
+    if length(txtComment.Text) <= 128 then
+      shapeComment.Brush.Color := clLime
+    else if length(txtComment.text) <= 192 then
+      shapeComment.Brush.Color := clYellow
+    else if length(txtComment.text) <= 255 then
+      shapeComment.Brush.Color := $004080FF
+    else
+      shapeComment.Brush.Color := clRed;
 
   lblCommentMax.Caption := inttostr(length(txtComment.Text));
 
@@ -2496,40 +2543,37 @@ begin
 
 end;
 
-procedure TfrmMain.Button1Click(Sender: TObject);
-var dirSelect: TJvBrowseForFolderDialog;
+procedure TfrmMain.butOldVersionBrowseClick(Sender: TObject);
+var newDir: string;
 begin
 
-  dirSelect := TJvBrowseForFolderDialog.Create(Self);
-  dirSelect.Directory := txtUpdateDir1.Text;
-  dirSelect.Options := [odOnlyDirectory, odNewDialogStyle, odStatusAvailable];
+  newDir := BrowseForFolder('Select directory of old Dragon UnPACKer version:',txtUpdateDir1.text);
 
-  if dirSelect.Execute then
-    txtUpdateDir1.Text := dirSelect.Directory;
+  if newDir <> '' then
+    txtUpdateDir1.Text := newdir;
 
-  dirSelect.Free;
-  
 end;
 
-procedure TfrmMain.Button2Click(Sender: TObject);
-var dirSelect: TJvBrowseForFolderDialog;
+procedure TfrmMain.butNewVersionBrowseClick(Sender: TObject);
+var newDir: string;
 begin
 
-  dirSelect := TJvBrowseForFolderDialog.Create(Self);
-  dirSelect.Directory := txtUpdateDir2.Text;
-  dirSelect.Options := [odOnlyDirectory, odNewDialogStyle, odStatusAvailable];
+  newDir := BrowseForFolder('Select directory of new Dragon UnPACKer version:',txtUpdateDir2.text);
 
-  if dirSelect.Execute then
-    txtUpdateDir2.Text := dirSelect.Directory;
-
-  dirSelect.Free;
+  if newDir <> '' then
+    txtUpdateDir2.Text := newdir;
 
 end;
 
 procedure TfrmMain.JvImgBtn1Click(Sender: TObject);
 begin
 
-  diffDirectories(txtUpdateDir1.Text,txtUpdateDir2.Text);
+  if not(DirectoryExists(txtUpdateDir1.text)) then
+    ShowMessage('Old directory does not exists:'+chr(10)+txtUpdateDir1.text)
+  else if not(DirectoryExists(txtUpdateDir2.text)) then
+    ShowMessage('New directory does not exists:'+chr(10)+txtUpdateDir2.text)
+  else
+    diffDirectories(txtUpdateDir1.Text,txtUpdateDir2.Text);
 
 end;
 

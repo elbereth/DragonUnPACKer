@@ -1,6 +1,6 @@
 program dpackc;
 
-// $Id: dpackc.dpr,v 1.5 2008-11-15 15:34:27 elbereth Exp $
+// $Id: dpackc.dpr,v 1.6 2009-04-26 12:17:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dpackc/dpackc.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -39,7 +39,8 @@ uses
   UBitTreeEncoder,
   URangeDecoder,
   URangeEncoder,
-  ULZMAEnc in 'ULZMAEnc.pas';
+  ULZMAEnc in 'ULZMAEnc.pas',
+  BrowseForFolderU in '..\..\common\BrowseForFolderU.pas';
 
 {$R *.res}
 

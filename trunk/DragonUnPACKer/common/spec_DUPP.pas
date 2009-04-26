@@ -1,6 +1,6 @@
 unit spec_DUPP;
 
-// $Id: spec_DUPP.pas,v 1.3 2008-11-11 16:00:50 elbereth Exp $
+// $Id: spec_DUPP.pas,v 1.4 2009-04-26 12:17:47 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/spec_DUPP.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -176,6 +176,7 @@ type
                                //      1   $04 Read Only
                                //     1    $08 Update Only
                                //    1     $10 Compressed
+                               //   1      $20 x64/AMD64     // Not in original v4 spec
     CompressionType: byte;     // 0 = No compression
                                // 1 = Zlib compression
                                // 2 = LZMA compression <-- Default
@@ -221,6 +222,7 @@ const D5PFILE_REGSVR32 = $1;
       D5PFILE_READONLY = $4;
       D5PFILE_UPDATEONLY = $8;
       D5PFILE_COMPRESSED = $10;
+      D5PFILE_X64 = $20;
 
       D5PID_INFORMATION = 1;
       D5PID_BANNER = 10;

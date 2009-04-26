@@ -254,29 +254,27 @@ object frmOptMPEGa: TfrmOptMPEGa
       TabOrder = 0
       OnClick = chkFramesMinClick
     end
-    object numFramesMin: TJvSpinEdit
+    object numFramesMin: TSpinEdit
       Left = 232
       Top = 10
       Width = 121
-      Height = 21
-      Alignment = taRightJustify
-      MaxValue = 30000.000000000000000000
-      MinValue = 2.000000000000000000
-      Value = 20.000000000000000000
+      Height = 22
+      MaxValue = 30
+      MinValue = 2
       TabOrder = 1
+      Value = 20
       OnChange = numFramesMinChange
     end
-    object numFramesMax: TJvSpinEdit
+    object numFramesMax: TSpinEdit
       Left = 232
       Top = 32
       Width = 121
-      Height = 21
-      Alignment = taRightJustify
-      MaxValue = 2147483647.000000000000000000
-      MinValue = 20.000000000000000000
-      Value = 30000.000000000000000000
+      Height = 22
       Enabled = False
+      MaxValue = 2147483647
+      MinValue = 20
       TabOrder = 2
+      Value = 30
       OnChange = numFramesMaxChange
     end
     object chkFramesMax: TCheckBox
@@ -308,29 +306,29 @@ object frmOptMPEGa: TfrmOptMPEGa
       TabOrder = 5
       OnClick = chkSizeMaxClick
     end
-    object numSizeMin: TJvSpinEdit
+    object numSizeMin: TSpinEdit
       Left = 232
       Top = 58
       Width = 121
-      Height = 21
-      Alignment = taRightJustify
-      MaxValue = 30000.000000000000000000
-      MinValue = 512.000000000000000000
-      Value = 2048.000000000000000000
+      Height = 22
+      Increment = 1024
+      MaxValue = 20480
+      MinValue = 512
       TabOrder = 6
+      Value = 2048
       OnChange = numSizeMinChange
     end
-    object numSizeMax: TJvSpinEdit
+    object numSizeMax: TSpinEdit
       Left = 232
       Top = 80
       Width = 121
-      Height = 21
-      Alignment = taRightJustify
-      MaxValue = 2147483647.000000000000000000
-      MinValue = 2048.000000000000000000
-      Value = 30000.000000000000000000
+      Height = 22
       Enabled = False
+      Increment = 1024
+      MaxValue = 2147483647
+      MinValue = 2048
       TabOrder = 7
+      Value = 20480
       OnChange = numSizeMaxChange
     end
   end

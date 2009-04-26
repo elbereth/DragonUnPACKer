@@ -1,5 +1,5 @@
-Dragon UnPACKer 5 Package (D5P) Maker (DPACKC) v3.5.0       MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    16/11/2008
+Dragon UnPACKer 5 Package (D5P) Maker (DPACKC) v3.5.1       MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    26/04/2009
 ===============================================================================
 
   What is DPACKC ?
@@ -178,7 +178,7 @@ The compile log can help you to know if something went wrong.
   Compatibility list
   ------------------
 
-DPACKC v3.5.0 is compiling:
+DPACKC v3.5.1 is compiling:
   DUPP files version 2 (Duppi v2.0.2+)
   DUPP files version 3 (Duppi v2.2.0+)
   DUPP files version 4 (Duppi v3.0.0+)
@@ -195,7 +195,7 @@ calculation. The formats in itself are structuraly identical.
 
 DUPP v4 is compatible with all versions of Duppi since v3.0.0 and is a
 completely new format (structure is different than any previous version, only
-the header is the same). This fixes a lot of structural mistakes make in
+the header is the same). This fixes a lot of structural mistakes made in
 previous versions, introduce a lot of sanity checks (secure hashs instead of
 CRC32, etc..) and uses LZMA compression algorithm which leads to much smaller
 packages files. This format can therefore be used as an full update means. For
@@ -214,7 +214,14 @@ You can reach Alex Devilliers:
 
   What's new?
   -----------
+Version 3.5.1:
 
+ - Removed almost all JVLC components used.
+   Only SimpleXML is still used for project files (D5PP).
+ i This had the effect to reduce EXE file by ~137KiB.
+ + Added some sanity checks to avoid weird errors.
+ 
+ 
 Version 3.5.0:
 
  + Added Update Creator tool.
@@ -246,7 +253,7 @@ Version 2.0.0:
  ! I found a huge mistake in the CRC calculation done on files while compiling.
    The problem is by fixing it the D5P file is not working correctly with
    current version of Duppi because the mistake is there too...
-   This means I had to add an option to be compatible with old buggy Duppy.
+   This means I had to add an option to be compatible with old buggy Duppi.
    The new correct implementation will produce D5P files that can only be used
    with Duppi v2.2.0 or earlier.
   

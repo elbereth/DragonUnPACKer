@@ -861,20 +861,17 @@ object frmAbout: TfrmAbout
     TabOrder = 0
     OnClick = cmdOkClick
   end
-  object txtMoreinfo: TJvRichEdit
+  object txtMoreinfo: TRichEdit
     Left = 9
     Top = 121
     Width = 407
     Height = 167
     Alignment = taCenter
-    AutoSize = False
     BorderStyle = bsNone
     HideScrollBars = False
     ReadOnly = True
     ScrollBars = ssVertical
-    SelectionBar = False
     TabOrder = 1
-    OnURLClick = txtMoreinfoURLClick
   end
   object TimerStartBlend: TTimer
     Enabled = False

@@ -1263,11 +1263,26 @@ object frmHyperRipper: TfrmHyperRipper
     Top = 8
     Width = 417
     Height = 297
-    ActivePage = tabSearch
+    ActivePage = tabAbout
     TabOrder = 0
     object tabAbout: TTabSheet
       Caption = 'A Propos..'
       ImageIndex = 4
+      object lblHRVersionShadow: TLabel
+        Left = 353
+        Top = 113
+        Width = 41
+        Height = 13
+        AutoSize = False
+        Caption = 'x.yz'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWhite
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsBold]
+        ParentFont = False
+        Transparent = True
+      end
       object imgHR: TImage
         Left = 32
         Top = 5
@@ -4718,26 +4733,20 @@ object frmHyperRipper: TfrmHyperRipper
         ParentFont = False
         Transparent = True
       end
-      object lblHRVersion: TJvLabel
+      object lblHRVersion: TLabel
         Left = 352
         Top = 112
         Width = 41
         Height = 13
         AutoSize = False
-        Caption = '5.0T'
+        Caption = 'x.yz'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
         Font.Name = 'MS Sans Serif'
         Font.Style = [fsBold]
         ParentFont = False
-        ShadowSize = 1
-        AutoOpenURL = False
-        HotTrackFont.Charset = DEFAULT_CHARSET
-        HotTrackFont.Color = clWindowText
-        HotTrackFont.Height = -11
-        HotTrackFont.Name = 'MS Sans Serif'
-        HotTrackFont.Style = []
+        Transparent = True
       end
       object Panel3: TPanel
         Left = 16
@@ -5340,42 +5349,13 @@ object frmHyperRipper: TfrmHyperRipper
           OnClick = chkRollback3Click
         end
       end
-      object grpMultithreading: TGroupBox
-        Left = 8
-        Top = 168
-        Width = 169
-        Height = 89
-        Caption = 'Multithreading'
-        TabOrder = 1
-        Visible = False
-        object lblMTValue: TLabel
-          Left = 8
-          Top = 56
-          Width = 153
-          Height = 17
-          Alignment = taCenter
-          AutoSize = False
-          Caption = 'bytes'
-        end
-        object sliderMT: TJvxSlider
-          Left = 8
-          Top = 16
-          Width = 150
-          Height = 41
-          Enabled = False
-          Increment = 1
-          MaxValue = 8
-          TabOrder = 0
-          OnChange = sliderMTChange
-        end
-      end
       object grpFormatting: TGroupBox
         Left = 8
         Top = 8
         Width = 393
         Height = 153
         Caption = 'Entries formatting'
-        TabOrder = 2
+        TabOrder = 1
         object chkMakeDirs: TCheckBox
           Left = 8
           Top = 16
@@ -5520,11 +5500,11 @@ object frmHyperRipper: TfrmHyperRipper
     OnClick = cmdOkClick
   end
   object OpenDialog: TOpenDialog
-    Left = 400
-    Top = 8
+    Left = 40
+    Top = 304
   end
   object SaveDialog: TSaveDialog
-    Left = 372
-    Top = 8
+    Left = 4
+    Top = 304
   end
 end

@@ -1,6 +1,6 @@
 object frmConfig: TfrmConfig
-  Left = 197
-  Top = 787
+  Left = 252
+  Top = 468
   BorderStyle = bsToolWindow
   Caption = 'Configuration'
   ClientHeight = 295
@@ -17,6 +17,287 @@ object frmConfig: TfrmConfig
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
+  object tabPluginsInfos: TPanel
+    Left = 184
+    Top = 8
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 10
+    Visible = False
+    object grpPluginsInfo: TGroupBox
+      Left = 0
+      Top = 0
+      Width = 441
+      Height = 281
+      Caption = 'Plugins'
+      TabOrder = 0
+      object lblPluginsConvert: TLabel
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 13
+        AutoSize = False
+        Caption = 'Convert plugins:'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsUnderline]
+        ParentFont = False
+      end
+      object lblPluginsDrivers: TLabel
+        Left = 8
+        Top = 112
+        Width = 425
+        Height = 13
+        AutoSize = False
+        Caption = 'Drivers plugins:'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsUnderline]
+        ParentFont = False
+      end
+      object lblPluginsHyperRipper: TLabel
+        Left = 8
+        Top = 208
+        Width = 425
+        Height = 13
+        AutoSize = False
+        Caption = 'HyperRipper plugins:'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsUnderline]
+        ParentFont = False
+      end
+      object panPluginsConvert: TPanel
+        Left = 8
+        Top = 32
+        Width = 425
+        Height = 65
+        BevelOuter = bvLowered
+        TabOrder = 0
+        object lblPluginsConvertInfo: TLabel
+          Left = 1
+          Top = 1
+          Width = 423
+          Height = 63
+          Align = alClient
+          AutoSize = False
+          Caption = 
+            'Those plugins will handle the convertion of file formats when ex' +
+            'tracting or previewing files. Example: Convert textures from .AR' +
+            'T file format to .BMP'
+          WordWrap = True
+        end
+      end
+      object panPluginsDrivers: TPanel
+        Left = 8
+        Top = 128
+        Width = 425
+        Height = 65
+        BevelOuter = bvLowered
+        TabOrder = 1
+        object lblPluginsDriversInfo: TLabel
+          Left = 1
+          Top = 1
+          Width = 423
+          Height = 63
+          Align = alClient
+          AutoSize = False
+          Caption = 
+            'Those plugins handle opening file formats so Dragon UnPACKer can' +
+            ' browse into them. If a file is not supported that means no driv' +
+            'er plugin could load it. HyperRipper handle files with another t' +
+            'ype of plugins (see below).'
+          WordWrap = True
+        end
+      end
+      object panPluginsHyperRipper: TPanel
+        Left = 8
+        Top = 224
+        Width = 425
+        Height = 49
+        BevelOuter = bvLowered
+        TabOrder = 2
+        object lblPluginsHyperRipperInfo: TLabel
+          Left = 1
+          Top = 1
+          Width = 423
+          Height = 47
+          Align = alClient
+          AutoSize = False
+          Caption = 
+            'Those plugins handle the file format to scan in HyperRipper (ex:' +
+            ' MPEG Audio, BMP, etc..)'
+          WordWrap = True
+        end
+      end
+    end
+  end
+  object tabBasic: TPanel
+    Left = 184
+    Top = 8
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 1
+    object grpLanguage: TGroupBox
+      Left = 0
+      Top = 184
+      Width = 441
+      Height = 97
+      Caption = 'Langue'
+      Color = clBtnFace
+      ParentColor = False
+      TabOrder = 0
+      object strAuthor: TLabel
+        Left = 8
+        Top = 44
+        Width = 34
+        Height = 13
+        Caption = 'Auteur:'
+      end
+      object lblAuthor: TLabel
+        Left = 48
+        Top = 44
+        Width = 385
+        Height = 13
+        AutoSize = False
+      end
+      object strEmail: TLabel
+        Left = 8
+        Top = 59
+        Width = 31
+        Height = 13
+        Caption = 'E-mail:'
+      end
+      object strURL: TLabel
+        Left = 8
+        Top = 76
+        Width = 25
+        Height = 13
+        Caption = 'URL:'
+      end
+      object lblEmail: TLabel
+        Left = 48
+        Top = 59
+        Width = 385
+        Height = 13
+        AutoSize = False
+      end
+      object lblURL: TLabel
+        Left = 40
+        Top = 76
+        Width = 393
+        Height = 13
+        AutoSize = False
+      end
+      object lblFindNewLanguages: TLabel
+        Left = 296
+        Top = 16
+        Width = 141
+        Height = 25
+        Cursor = crHandPoint
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'Trouver d'#39'autres traductions...'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlue
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = []
+        ParentFont = False
+        Transparent = True
+        WordWrap = True
+        OnClick = lblFindNewLanguagesClick
+        OnMouseEnter = lblFindNewLanguagesMouseEnter
+        OnMouseLeave = lblFindNewLanguagesMouseLeave
+      end
+      object lstLangues: TComboBoxEx
+        Left = 8
+        Top = 16
+        Width = 281
+        Height = 22
+        ItemsEx = <
+          item
+            Caption = 'Fran'#231'ais (French)'
+            ImageIndex = 0
+            SelectedImageIndex = 0
+          end>
+        Style = csExDropDownList
+        ItemHeight = 16
+        TabOrder = 0
+        OnKeyDown = FormKeyDown
+        OnSelect = lstLanguesSelect
+        Images = imgLstLangue
+        DropDownCount = 8
+      end
+    end
+    object grpOptions: TGroupBox
+      Left = 0
+      Top = 0
+      Width = 441
+      Height = 161
+      Caption = 'Options'
+      TabOrder = 1
+      object ChkNoSplash: TCheckBox
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Ne pas afficher d'#39#233'cran de d'#233'marrage'
+        TabOrder = 0
+        OnClick = ChkNoSplashClick
+        OnKeyDown = FormKeyDown
+      end
+      object ChkOneInstance: TCheckBox
+        Left = 8
+        Top = 32
+        Width = 425
+        Height = 17
+        Caption = 'Permettre seulement une instance du programme a la fois'
+        TabOrder = 1
+        OnClick = ChkOneInstanceClick
+        OnKeyDown = FormKeyDown
+      end
+      object ChkSmartOpen: TCheckBox
+        Left = 8
+        Top = 48
+        Width = 425
+        Height = 17
+        Caption = 'D'#233'tection intelligente des formats de fichiers'
+        TabOrder = 2
+        OnClick = ChkSmartOpenClick
+        OnKeyDown = FormKeyDown
+      end
+      object chkRegistryIcons: TCheckBox
+        Left = 8
+        Top = 64
+        Width = 425
+        Height = 17
+        Caption = 'Rechercher les icones en base de registre'
+        TabOrder = 3
+        OnClick = chkRegistryIconsClick
+      end
+      object chkUseHyperRipper: TCheckBox
+        Left = 8
+        Top = 80
+        Width = 425
+        Height = 17
+        Caption = 
+          'Utiliser l'#39'HyperRipper si aucun plugin n'#39'arrive '#224' ouvrir le fich' +
+          'ier'
+        TabOrder = 4
+        WordWrap = True
+        OnClick = chkUseHyperRipperClick
+      end
+    end
+  end
   object tabLog: TPanel
     Left = 184
     Top = 8
@@ -1154,17 +1435,6 @@ object frmConfig: TfrmConfig
       OnChange = txtAssocExtIconChange
       OnKeyDown = FormKeyDown
     end
-    object lstTypes: TJvCheckListBox
-      Left = 8
-      Top = 48
-      Width = 121
-      Height = 225
-      ItemHeight = 13
-      Sorted = True
-      TabOrder = 8
-      OnClick = lstTypesClickCheck
-      HorScrollbar = False
-    end
     object butAssocExtIconBrowse: TButton
       Left = 412
       Top = 176
@@ -1172,289 +1442,18 @@ object frmConfig: TfrmConfig
       Height = 21
       Caption = '+'
       Enabled = False
-      TabOrder = 9
+      TabOrder = 8
       OnClick = butAssocExtIconBrowseClick
     end
-  end
-  object tabPluginsInfos: TPanel
-    Left = 184
-    Top = 8
-    Width = 449
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 10
-    Visible = False
-    object grpPluginsInfo: TGroupBox
-      Left = 0
-      Top = 0
-      Width = 441
-      Height = 281
-      Caption = 'Plugins'
-      TabOrder = 0
-      object lblPluginsConvert: TLabel
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 13
-        AutoSize = False
-        Caption = 'Convert plugins:'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = [fsUnderline]
-        ParentFont = False
-      end
-      object lblPluginsDrivers: TLabel
-        Left = 8
-        Top = 112
-        Width = 425
-        Height = 13
-        AutoSize = False
-        Caption = 'Drivers plugins:'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = [fsUnderline]
-        ParentFont = False
-      end
-      object lblPluginsHyperRipper: TLabel
-        Left = 8
-        Top = 208
-        Width = 425
-        Height = 13
-        AutoSize = False
-        Caption = 'HyperRipper plugins:'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = [fsUnderline]
-        ParentFont = False
-      end
-      object panPluginsConvert: TPanel
-        Left = 8
-        Top = 32
-        Width = 425
-        Height = 65
-        BevelOuter = bvLowered
-        TabOrder = 0
-        object lblPluginsConvertInfo: TLabel
-          Left = 1
-          Top = 1
-          Width = 423
-          Height = 63
-          Align = alClient
-          AutoSize = False
-          Caption = 
-            'Those plugins will handle the convertion of file formats when ex' +
-            'tracting or previewing files. Example: Convert textures from .AR' +
-            'T file format to .BMP'
-          WordWrap = True
-        end
-      end
-      object panPluginsDrivers: TPanel
-        Left = 8
-        Top = 128
-        Width = 425
-        Height = 65
-        BevelOuter = bvLowered
-        TabOrder = 1
-        object lblPluginsDriversInfo: TLabel
-          Left = 1
-          Top = 1
-          Width = 423
-          Height = 63
-          Align = alClient
-          AutoSize = False
-          Caption = 
-            'Those plugins handle opening file formats so Dragon UnPACKer can' +
-            ' browse into them. If a file is not supported that means no driv' +
-            'er plugin could load it. HyperRipper handle files with another t' +
-            'ype of plugins (see below).'
-          WordWrap = True
-        end
-      end
-      object panPluginsHyperRipper: TPanel
-        Left = 8
-        Top = 224
-        Width = 425
-        Height = 49
-        BevelOuter = bvLowered
-        TabOrder = 2
-        object lblPluginsHyperRipperInfo: TLabel
-          Left = 1
-          Top = 1
-          Width = 423
-          Height = 47
-          Align = alClient
-          AutoSize = False
-          Caption = 
-            'Those plugins handle the file format to scan in HyperRipper (ex:' +
-            ' MPEG Audio, BMP, etc..)'
-          WordWrap = True
-        end
-      end
-    end
-  end
-  object tabBasic: TPanel
-    Left = 184
-    Top = 8
-    Width = 449
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 1
-    object grpLanguage: TGroupBox
-      Left = 0
-      Top = 184
-      Width = 441
-      Height = 97
-      Caption = 'Langue'
-      Color = clBtnFace
-      ParentColor = False
-      TabOrder = 0
-      object strAuthor: TLabel
-        Left = 8
-        Top = 44
-        Width = 34
-        Height = 13
-        Caption = 'Auteur:'
-      end
-      object lblAuthor: TLabel
-        Left = 48
-        Top = 44
-        Width = 385
-        Height = 13
-        AutoSize = False
-      end
-      object strEmail: TLabel
-        Left = 8
-        Top = 59
-        Width = 31
-        Height = 13
-        Caption = 'E-mail:'
-      end
-      object strURL: TLabel
-        Left = 8
-        Top = 76
-        Width = 25
-        Height = 13
-        Caption = 'URL:'
-      end
-      object lblEmail: TLabel
-        Left = 48
-        Top = 59
-        Width = 385
-        Height = 13
-        AutoSize = False
-      end
-      object lblURL: TLabel
-        Left = 40
-        Top = 76
-        Width = 393
-        Height = 13
-        AutoSize = False
-      end
-      object lblFindNewLanguages: TLabel
-        Left = 296
-        Top = 16
-        Width = 141
-        Height = 25
-        Cursor = crHandPoint
-        Alignment = taCenter
-        AutoSize = False
-        Caption = 'Trouver d'#39'autres traductions...'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlue
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = []
-        ParentFont = False
-        Transparent = True
-        WordWrap = True
-        OnClick = lblFindNewLanguagesClick
-        OnMouseEnter = lblFindNewLanguagesMouseEnter
-        OnMouseLeave = lblFindNewLanguagesMouseLeave
-      end
-      object lstLangues: TComboBoxEx
-        Left = 8
-        Top = 16
-        Width = 281
-        Height = 22
-        ItemsEx = <
-          item
-            Caption = 'Fran'#231'ais (French)'
-            ImageIndex = 0
-            SelectedImageIndex = 0
-          end>
-        Style = csExDropDownList
-        ItemHeight = 16
-        TabOrder = 0
-        OnKeyDown = FormKeyDown
-        OnSelect = lstLanguesSelect
-        Images = imgLstLangue
-        DropDownCount = 8
-      end
-    end
-    object grpOptions: TGroupBox
-      Left = 0
-      Top = 0
-      Width = 441
-      Height = 161
-      Caption = 'Options'
-      TabOrder = 1
-      object ChkNoSplash: TCheckBox
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 17
-        Caption = 'Ne pas afficher d'#39#233'cran de d'#233'marrage'
-        TabOrder = 0
-        OnClick = ChkNoSplashClick
-        OnKeyDown = FormKeyDown
-      end
-      object ChkOneInstance: TCheckBox
-        Left = 8
-        Top = 32
-        Width = 425
-        Height = 17
-        Caption = 'Permettre seulement une instance du programme a la fois'
-        TabOrder = 1
-        OnClick = ChkOneInstanceClick
-        OnKeyDown = FormKeyDown
-      end
-      object ChkSmartOpen: TCheckBox
-        Left = 8
-        Top = 48
-        Width = 425
-        Height = 17
-        Caption = 'D'#233'tection intelligente des formats de fichiers'
-        TabOrder = 2
-        OnClick = ChkSmartOpenClick
-        OnKeyDown = FormKeyDown
-      end
-      object chkRegistryIcons: TCheckBox
-        Left = 8
-        Top = 64
-        Width = 425
-        Height = 17
-        Caption = 'Rechercher les icones en base de registre'
-        TabOrder = 3
-        OnClick = chkRegistryIconsClick
-      end
-      object chkUseHyperRipper: TCheckBox
-        Left = 8
-        Top = 80
-        Width = 425
-        Height = 17
-        Caption = 
-          'Utiliser l'#39'HyperRipper si aucun plugin n'#39'arrive '#224' ouvrir le fich' +
-          'ier'
-        TabOrder = 4
-        WordWrap = True
-        OnClick = chkUseHyperRipperClick
-      end
+    object lstTypes: TCheckListBox
+      Left = 8
+      Top = 48
+      Width = 121
+      Height = 225
+      ItemHeight = 13
+      Sorted = True
+      TabOrder = 9
+      OnClick = lstTypesClick
     end
   end
   object cmdOk: TButton

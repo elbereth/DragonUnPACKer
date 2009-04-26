@@ -1,6 +1,6 @@
 unit About;
 
-// $Id: About.pas,v 1.3 2004-07-17 19:20:20 elbereth Exp $
+// $Id: About.pas,v 1.4 2009-04-26 08:37:15 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/About.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -20,8 +20,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, lib_Utils, ExtCtrls, StdCtrls, JclShell, ComCtrls, JvRichEdit,
-  JvExStdCtrls;
+  Dialogs, lib_Utils, ExtCtrls, StdCtrls, ShellApi, ComCtrls;
 
 type
   TfrmAbout = class(TForm)
@@ -34,7 +33,7 @@ type
     lblCompDate: TLabel;
     Label1: TLabel;
     Shape1: TShape;
-    txtMoreinfo: TJvRichEdit;
+    txtMoreinfo: TRichEdit;
     imgWIP: TImage;
     procedure cmdOkClick(Sender: TObject);
     procedure TimerStartBlendTimer(Sender: TObject);
@@ -78,7 +77,7 @@ end;
 procedure TfrmAbout.lblURLClick(Sender: TObject);
 begin
 
-  ShellExec(application.Handle,'open','http://www.dragonunpacker.com','','',SW_SHOW);
+  ShellExecute(application.Handle,'open',PCHar('http://www.dragonunpacker.com'),nil,nil,SW_SHOW);
 
 end;
 
@@ -86,7 +85,7 @@ procedure TfrmAbout.txtMoreinfoURLClick(Sender: TObject;
   const URLText: String; Button: TMouseButton);
 begin
 
-  ShellExec(application.Handle,'open',URLText,'','',SW_SHOW);
+  ShellExecute(application.Handle,'open',PChar(URLText),nil,nil,SW_SHOW);
 
 end;
 

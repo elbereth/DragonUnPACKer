@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.16 2008-11-13 18:56:39 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.17 2009-04-26 08:37:15 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -22,8 +22,7 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, declFSE, lib_language, Registry,
   ExtCtrls, classHyperRipper, lib_utils, classFSE, spec_HRF,
-  DateUtils, Spin, JvComponent, JvCtrls, JvExControls, JvLabel,
-  translation, U_IntList, cxCPU40, JvxSlider, SyncObjs;
+  DateUtils, translation, U_IntList;
 
 type PFormatListElem = ^FormatsListElemEx;
      SearchItem = record
@@ -70,8 +69,6 @@ type PFormatListElem = ^FormatsListElemEx;
     chkRollback1: TRadioButton;
     chkRollback2: TRadioButton;
     chkRollback3: TRadioButton;
-    grpMultithreading: TGroupBox;
-    lblMTValue: TLabel;
     strRollBack: TLabel;
     lblRollback: TLabel;
     cmdCancel: TButton;
@@ -116,7 +113,6 @@ type PFormatListElem = ^FormatsListElemEx;
     cmdImage: TButton;
     cmdVideo: TButton;
     cmdAudio: TButton;
-    lblHRVersion: TJvLabel;
     lblNamingLegF: TLabel;
     lblNamingLegX: TLabel;
     lblNamingLegO: TLabel;
@@ -132,9 +128,10 @@ type PFormatListElem = ^FormatsListElemEx;
     lblNamingLegS: TLabel;
     panNaming: TPanel;
     txtExample: TEdit;
-    sliderMT: TJvxSlider;
     strNumThreads: TLabel;
     lblNumThreads: TLabel;
+    lblHRVersion: TLabel;
+    lblHRVersionShadow: TLabel;
     procedure cmdOkClick(Sender: TObject);
     procedure cmdSearchClick(Sender: TObject);
     procedure cmdBrowseClick(Sender: TObject);
@@ -176,13 +173,13 @@ type PFormatListElem = ^FormatsListElemEx;
     procedure radiov30Click(Sender: TObject);
     procedure radiov20Click(Sender: TObject);
     procedure radiov10Click(Sender: TObject);
-    procedure sliderMTChange(Sender: TObject);
+//    procedure sliderMTChange(Sender: TObject);
   private
     SearchThread: TThread;
     SortType: integer;
     SortMode: boolean;
     procedure showExample(st: string);
-    procedure refreshMTText;
+//    procedure refreshMTText;
   public
     function getInfo(): DriverInfo;
     procedure stopSearch();
@@ -356,9 +353,9 @@ begin
       begin
         txtSource.Text := Reg.ReadString('Source');
       end;
-      if Reg.ValueExists('NumThreads') then
+{      if Reg.ValueExists('NumThreads') then
         sliderMT.value := Reg.ReadInteger('NumThreads');
-      refreshMTText;
+      refreshMTText;}
       if Reg.ValueExists('LastActiveTab') then
         PageControl.ActivePageIndex := Reg.ReadInteger('LastActiveTab')
       else
@@ -417,6 +414,7 @@ begin
   lblNumPlugs.Caption := inttostr(HPlug.NumPlugins);
   lblNumFormats.Caption := inttostr(List.NumFormats);
   lblHRVersion.Caption := getHRVersion(HR_VERSION);
+  lblHRVersionShadow.Caption := lblHRVersion.Caption;
 
   lstFormats.Items.Clear;
 
@@ -1606,7 +1604,7 @@ begin
 
 end;
 
-procedure TfrmHyperRipper.refreshMTText;
+{procedure TfrmHyperRipper.refreshMTText;
 var cxCPU: TcxCPU;
 begin
 
@@ -1624,9 +1622,9 @@ begin
   else
     lblMTValue.Caption := inttostr(sliderMT.Value)+' threads';
 
-end;
+end;}
 
-procedure TfrmHyperRipper.sliderMTChange(Sender: TObject);
+{procedure TfrmHyperRipper.sliderMTChange(Sender: TObject);
 var Reg: TRegistry;
 begin
 
@@ -1652,7 +1650,7 @@ begin
   end;
 
 
-end;
+end;}
 
 begin
 

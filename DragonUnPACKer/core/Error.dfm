@@ -1,6 +1,6 @@
 object frmError: TfrmError
-  Left = 348
-  Top = 580
+  Left = 243
+  Top = 636
   BorderIcons = [biSystemMenu]
   BorderStyle = bsSingle
   Caption = 'Erreur'

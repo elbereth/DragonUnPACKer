@@ -1,6 +1,6 @@
 unit classIconsFromExt;
 
-// $Id: classIconsFromExt.pas,v 1.3 2008-11-20 08:04:55 elbereth Exp $
+// $Id: classIconsFromExt.pas,v 1.4 2009-04-26 08:37:15 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classIconsFromExt.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,7 +18,7 @@ unit classIconsFromExt;
 
 interface
 
-uses SysUtils, lib_language, Windows, registry, forms, ShellAPI, JclSysInfo, Graphics, Controls, Classes, StrUtils, lib_utils;
+uses SysUtils, lib_language, Windows, registry, ShellApi, forms, Graphics, Controls, Classes, StrUtils, lib_utils;
 
 type
   PHICON = ^HICON;
@@ -43,11 +43,20 @@ type TIconsFromExt = class
     function addIcon(ext: string; icon: TIcon): integer;
     function getInternalIcon(ext: string): integer;
     function useRegIcons(): boolean;
+    function getWindowsSystemFolder(): string;
   public
 
   end;
 
 implementation
+
+function TIconsFromExt.getWindowsSystemFolder(): string;
+var
+  SysPath: array[0..MAX_PATH + 1] of char;
+begin
+  GetSystemDirectory(SysPath,MAX_PATH);
+  result := SysPath;
+end;
 
 procedure TIconsFromExt.GetAssociatedIcon(FileName: TFilename; PLargeIcon, PSmallIcon: PHICON);
 // Gets the icons of a given file

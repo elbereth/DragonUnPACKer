@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.17 2009-04-23 18:39:07 elbereth Exp $
+// $Id: Main.pas,v 1.18 2009-04-26 08:37:15 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -20,19 +20,14 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, JclBase, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, ToolWin, Menus, ImgList,
-  lib_language, translation, ShellApi, JvJCLUtils, VirtualTrees, lib_look,
-  DropSource, XPMan, DragDrop, DragDropFile, prg_ver, JvclVer,
-  classIconsFromExt, DateUtils, JvMenus,  JvRichEdit, JclShell,
-  JvComponent, cxCpu40, JvBaseDlg, JvBrowseFolder, lib_binutils,
-  JvExStdCtrls, commonTypes,
-  ImagingTypes,
-  Imaging,
-  ImagingClasses,
-  ImagingComponents,
-  ImagingCanvases,
-  ImagingFormats,
-  ImagingUtility;     // Vampyre Imaging Library
+  Dialogs, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, Menus, ImgList,
+  lib_language, translation, ShellApi, VirtualTrees, lib_look, ToolWin,
+  DropSource, XPMan, DragDrop, DragDropFile, prg_ver, StrUtils,
+  classIconsFromExt, DateUtils, cxCpu40, lib_binutils, commonTypes,
+  BrowseForFolderU,
+  // Vampyre Imaging Library
+  ImagingTypes, Imaging, ImagingClasses, ImagingComponents, ImagingCanvases,
+  ImagingFormats, ImagingUtility;
 
 type
   Tdup5Main = class(TForm)
@@ -55,7 +50,7 @@ type
     imgPopup1: TImageList;
     imgPopup2: TImageList;
     XPManifest: TXPManifest;
-    mainMenu: TJvMainMenu;
+    mainMenu: TMainMenu;
     menuFichier: TMenuItem;
     menuFichier_Ouvrir: TMenuItem;
     menuEdit: TMenuItem;
@@ -79,7 +74,7 @@ type
     menuOptions_Drivers: TMenuItem;
     menuOptions_HyperRipper: TMenuItem;
     menuAbout_About: TMenuItem;
-    Popup_Contents: TJvPopupMenu;
+    Popup_Contents: TPopupMenu;
     Popup_Extrairevers: TMenuItem;
     N6: TMenuItem;
     Popup_Extrairevers_MODEL: TMenuItem;
@@ -89,7 +84,7 @@ type
     N7: TMenuItem;
     Popup_ExtraireMulti_MODEL: TMenuItem;
     Popup_Open: TMenuItem;
-    Popup_Index: TJvPopupMenu;
+    Popup_Index: TPopupMenu;
     menuIndex_ExtractAll: TMenuItem;
     menuIndex_ExtractDirs: TMenuItem;
     N1: TMenuItem;
@@ -97,18 +92,17 @@ type
     menuIndex_Collapse: TMenuItem;
     N2: TMenuItem;
     menuIndex_Infos: TMenuItem;
-    DirSelect: TJvBrowseForFolderDialog;
     lstIndex2: TVirtualStringTree;
     TimerParam: TTimer;
     SplitterBottom: TSplitter;
-    Popup_Log: TJvPopupMenu;
+    Popup_Log: TPopupMenu;
     menuLog_Hide: TMenuItem;
     menuLog_Show: TMenuItem;
     panBottom: TPanel;
     Status: TStatusBar;
     N3: TMenuItem;
     menuLog_Clear: TMenuItem;
-    richLog: TJvRichEdit;
+    richLog: TRichEdit;
     SplitterPreview: TSplitter;
     panPreview: TPanel;
     menuOptions_Advanced: TMenuItem;
@@ -117,14 +111,14 @@ type
     scrollPreview: TScrollBox;
     imgPreview: TImage;
     TimerInit: TTimer;
-    Popup_Preview: TJvPopupMenu;
+    Popup_Preview: TPopupMenu;
     menuPreview_Hide: TMenuItem;
     MenuItem3: TMenuItem;
     menuPreview_DisplayMode: TMenuItem;
     menuPreview_Display_Full: TMenuItem;
     menuPreview_Display_Stretched: TMenuItem;
     menuPreview_Options: TMenuItem;
-    Popup_Status: TJvPopupMenu;
+    Popup_Status: TPopupMenu;
     menuStatus_PreviewShow: TMenuItem;
     MenuItem2: TMenuItem;
     menuStatus_LogShow: TMenuItem;
@@ -248,9 +242,9 @@ type
     bottomHeight: integer;
     RecentFiles: array of String;
     procedure Open_Hub(src: String);
-    procedure setRichEditLineStyle(R: TJvRichEdit; Line: Integer;
+    procedure setRichEditLineStyle(R: TRichEdit; Line: Integer;
       Style: TFontStyles);
-    procedure setRichEditLineColor(R: TJvRichEdit; Line: Integer;
+    procedure setRichEditLineColor(R: TRichEdit; Line: Integer;
       Color: TColor);
     procedure InitEngine();
     procedure RecentFiles_Display();
@@ -323,7 +317,7 @@ begin
   end;
 
   separatorLog;
-  writeLog(ReplaceStr(DLNGStr('LOG101'),'%f',src));
+  writeLog(ReplaceValue(DLNGStr('LOG101'),'%f',src));
 
   loadRes := FSE.LoadFile(src, res);
 
@@ -497,7 +491,7 @@ begin
 
 end;
 
-procedure Tdup5Main.setRichEditLineStyle(R : TJvRichEdit; Line : Integer; Style : TFontStyles);
+procedure Tdup5Main.setRichEditLineStyle(R : TRichEdit; Line : Integer; Style : TFontStyles);
 var
  oldPos,
  oldSelLength : Integer;
@@ -526,7 +520,7 @@ begin
  end;
 end;
 
-procedure Tdup5Main.setRichEditLineColor(R : TJvRichEdit; Line : Integer; Color : TColor);
+procedure Tdup5Main.setRichEditLineColor(R : TRichEdit; Line : Integer; Color : TColor);
 var
  oldPos,
  oldSelLength : Integer;
@@ -568,12 +562,6 @@ begin
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsItalic]);
   frmAbout.txtMoreinfo.Lines.Add('');
   frmAbout.txtMoreinfo.Lines.Add(DLNGstr('ABT004'));
-  frmAbout.txtMoreinfo.Lines.Add('JEDI Code Library [JCL] v'+inttostr(JclVersionMajor)+'.'+inttostr(JclVersionMinor)+'.'+inttostr(JclVersionRelease)+' Build '+inttostr(JclVersionBuild));
-  setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
-  frmAbout.txtMoreinfo.Lines.Add('http://jcl.sourceforge.net');
-  frmAbout.txtMoreinfo.Lines.Add('JEDI Visual Component Library [JVCL] v'+JVCL_VERSIONSTRING);
-  setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
-  frmAbout.txtMoreinfo.Lines.Add('http://jvcl.sourceforge.net');
   frmAbout.txtMoreinfo.Lines.Add('VirtualTree v'+VTVersion);
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
   frmAbout.txtMoreinfo.Lines.Add('http://www.delphi-gems.com');
@@ -632,6 +620,8 @@ begin
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
 
   frmAbout.txtMoreinfo.Visible := true;
+  // Scroll back the richbox to the top
+  SendMessage(frmAbout.txtMoreInfo.Handle, 277, SB_TOP, 0);
 
   if CurEdit = '' then
     frmAbout.lblVersion.Caption := CurVersion + ' (Build ' + IntToStr(CurBuild) +')'
@@ -796,6 +786,7 @@ end;
 
 function CallDirSelect(): String;
 var Reg: TRegistry;
+    LastDir: string;
 begin
 
   Reg := TRegistry.Create;
@@ -804,44 +795,29 @@ begin
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Options',True) then
     begin
       if Reg.ValueExists('Dir_Path') then
-      begin
-        dup5Main.DirSelect.Directory := Reg.ReadString('Dir_Path');
-//        frmDirSelect.Drive.Drive := Reg.ReadString('Dir_Path')[1];
-//        frmDirSelect.DirList.Directory := Reg.ReadString('Dir_Path');
-      end;
+        lastDir := Reg.ReadString('Dir_Path');
       Reg.CloseKey;
     end;
   Finally
     Reg.Free;
   end;
 
-  dup5Main.DirSelect.Title := DLNGStr('DIRTIT');
+  result := BrowseForFolder(DLNGStr('DIRTIT'),LastDir,true);
 
-//  TranslateDirSelect();
-
-//  Canceled := True;
-//  frmDirSelect.DirList.Update;
-//  frmDirSelect.ShowModal;
-  if dup5Main.DirSelect.Execute then
+  if result <> '' then
   begin
-//    result := frmDirSelect.DirList.Directory;
-    result := dup5Main.DirSelect.Directory;
-
     Reg := TRegistry.Create;
     Try
       Reg.RootKey := HKEY_CURRENT_USER;
       if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Options',True) then
       begin
-//        Reg.WriteString('Dir_Path',frmDirSelect.DirList.Directory);
-        Reg.WriteString('Dir_Path',dup5Main.DirSelect.Directory);
+        Reg.WriteString('Dir_Path',result);
         Reg.CloseKey;
       end;
     Finally
       Reg.Free;
     end;
-  end
-  else
-    result := '';
+  end;
 
 end;
 
@@ -1231,7 +1207,7 @@ begin
   Data := lstContent.GetNodeData(lstContent.GetFirstSelected);
   Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
 
-  writeLog(ReplaceStr(ReplaceStr(DLNGStr('LOGC10'),'%a',Data.data^.Name),'%b',CListInfo.List[CurrentMenu.Tag].Info.Display));
+  writeLog(ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),Data.data^.Name),CListInfo.List[CurrentMenu.Tag].Info.Display));
 
   SaveDialog.FileName := ChangeFileExt(filename,'.'+CListInfo.List[CurrentMenu.Tag].Info.Ext);
 
@@ -1255,7 +1231,7 @@ begin
     begin
       appendLog(DLNGStr('LOGC12'));
       FSE.ExtractFile(Data.data,tmpfil,silentExtract);
-      writeLogVerbose(1,ReplaceStr(DLNGStr('LOGC13'),'%b',CListInfo.List[CurrentMenu.Tag].Info.Display));
+      writeLogVerbose(1,ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[CurrentMenu.Tag].Info.Display));
       CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].Convert(tmpfil,dstfil,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
       appendLog(DLNGStr('LOG510'));
     end
@@ -1267,7 +1243,7 @@ begin
       try
         FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,silentExtract);
         tmpStm.Seek(0,soFromBeginning);
-        writeLogVerbose(1,ReplaceStr(DLNGStr('LOGC13'),'%b',CListInfo.List[CurrentMenu.Tag].Info.Display));
+        writeLogVerbose(1,ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[CurrentMenu.Tag].Info.Display));
         CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].ConvertStream(tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
         appendLog(DLNGStr('LOG510'));
       finally
@@ -1366,7 +1342,7 @@ begin
 
     Node := lstContent.GetFirstSelected;
 
-    writeLog(ReplaceStr(DLNGStr('LOGC14'),'%b',CListInfo.List[CurrentMenu.Tag].Info.Display));
+    writeLog(ReplaceValue('%b',DLNGStr('LOGC14'),CListInfo.List[CurrentMenu.Tag].Info.Display));
 
     useOldMethod := CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].DUCIVersion < 3;
 
@@ -1744,10 +1720,9 @@ begin
   dup5Main.writeLogVerbose(1,DLNGstr('LOG005'));
 
   dup5Main.writeLogVerbose(1,' + cxCpu v'+cxCpu.Version.FormatVersion);
-  dup5Main.writeLogVerbose(1,' + JEDI Code Library [JCL] v'+inttostr(JclVersionMajor)+'.'+inttostr(JclVersionMinor)+'.'+inttostr(JclVersionRelease)+' Build '+inttostr(JclVersionBuild));
-  dup5Main.writeLogVerbose(1,' + JEDI Visual Component Library [JVCL] v'+JVCL_VERSIONSTRING);
+//  dup5Main.writeLogVerbose(1,' + JEDI Code Library [JCL] v'+inttostr(JclVersionMajor)+'.'+inttostr(JclVersionMinor)+'.'+inttostr(JclVersionRelease)+' Build '+inttostr(JclVersionBuild));
+//  dup5Main.writeLogVerbose(1,' + JEDI Visual Component Library [JVCL] v'+JVCL_VERSIONSTRING);
   dup5Main.writeLogVerbose(1,' + Vampyre Imaging Library v'+Imaging.GetVersionStr);
-//  dup5Main.writeLog('Jedi Class Library [JCL] v'+JCL_VERSIONSTRING);
   dup5Main.writeLogVerbose(1,' + VirtualTree v'+VTVersion);
 
   dup5Main.writeLog(DLNGStr('LOG001'));
@@ -1761,7 +1736,7 @@ begin
   FSE.SetOwner(frmConfig);
   FSE.LoadDrivers(ExtractFilePath(Application.ExeName)+'data\drivers\');
 
-  dup5Main.writeLog(' = '+ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(FSe.NumDrivers)));
+  dup5Main.writeLog(' = '+ReplaceValue('%p',DLNGStr('LOG009'),inttostr(FSe.NumDrivers)));
 
   dup5Main.writeLog(DLNGStr('LOG003'));
 
@@ -1772,7 +1747,7 @@ begin
   CPlug.SetOwner(self);
   CPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\convert\');
 
-  dup5Main.writeLog(' = '+ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(CPlug.NumPlugins)));
+  dup5Main.writeLog(' = '+ReplaceValue('%p',DLNGStr('LOG009'),inttostr(CPlug.NumPlugins)));
 
   dup5Main.writeLog(DLNGStr('LOG004'));
 
@@ -1783,7 +1758,7 @@ begin
   HPlug.SetOwner(self);
   HPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\HyperRipper\');
 
-  dup5Main.writeLog(' = '+ReplaceStr(DLNGStr('LOG009'),'%p',inttostr(HPlug.NumPlugins)));
+  dup5Main.writeLog(' = '+ReplaceValue('%p',DLNGStr('LOG009'),inttostr(HPlug.NumPlugins)));
 
   Icons := TIconsFromExt.Create;
   Icons.init(imgContents);
@@ -2491,10 +2466,10 @@ var disp: string;
 begin
 
   disp := GetNodePath2(Node);
-  writelogVerbose(1,ReplaceStr(DLNGStr('LOG300'),'%d',disp));
+  writelogVerbose(1,ReplaceValue('%d',DLNGStr('LOG300'),disp));
   FSE.BrowseDir(disp);
   CurrentDir := disp;
-  appendLogVerbose(1,ReplaceStr(DLNGStr('LOG301'),'%e',inttostr(lstContent.TotalCount)));
+  appendLogVerbose(1,ReplaceValue('%e',DLNGStr('LOG301'),inttostr(lstContent.TotalCount)));
 
 end;
 
@@ -3080,7 +3055,7 @@ end;
 procedure Tdup5Main.menuAbout_NewVersionsClick(Sender: TObject);
 begin
 
-  ShellExec(application.Handle,'open',ExtractFilePath(Application.ExeName)+'\Utils\Duppi.exe','/checknewversions','',SW_SHOW);
+  ShellExecute(application.Handle,'open',PChar(ExtractFilePath(Application.ExeName)+'\Utils\Duppi.exe'),PChar('/checknewversions'),nil,SW_SHOW); ;
 
 end;
 

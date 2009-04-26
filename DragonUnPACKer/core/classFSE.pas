@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.10 2009-04-23 18:27:38 elbereth Exp $
+// $Id: classFSE.pas,v 1.11 2009-04-26 08:37:15 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -29,8 +29,7 @@ interface
 
 uses auxFSE, Classes, Comctrls, Controls, DateUtils, Dialogs, Forms,
      lib_binCopy, lib_binutils, lib_language, lib_utils, Main, prg_ver, Registry,
-     spec_HRF, strutils, Windows, SysUtils, Error,JvJCLUtils, Graphics,
-     commonTypes;
+     spec_HRF, strutils, Windows, SysUtils, Error, Graphics, commonTypes;
 
 { Record declaration }
 
@@ -684,7 +683,7 @@ begin
       try
         if Drivers[x].CanOpen(pchar(pth),SmartOpen) then
         begin
-          dup5Main.writeLogVerbose(1,ReplaceStr(DLNGStr('LOG500'),'%d',Drivers[x].Info.Name));
+          dup5Main.writeLogVerbose(1,ReplaceValue('%d',DLNGStr('LOG500'),Drivers[x].Info.Name));
           Inc(NumCanOpen);
           CanOpen[NumCanOpen] := x;
         end;
@@ -726,7 +725,7 @@ begin
         CurrentFileSize := FileSeek(i,zero64,2);
         FileClose(i);
 
-        dup5Main.writeLogVerbose(1,ReplaceStr(DLNGStr('LOG501'),'%d',Drivers[CurrentDriver].Info.Name));
+        dup5Main.writeLogVerbose(1,ReplaceValue('%d',DLNGStr('LOG501'),Drivers[CurrentDriver].Info.Name));
 
         StartTime := Now;
         try
@@ -774,7 +773,7 @@ begin
           DispNumElems := 0;
           y := 0;
 
-          dup5Main.writeLogVerbose(1,ReplaceStr(DLNGStr('LOG502'),'%x',inttostr(NumElems)));
+          dup5Main.writeLogVerbose(1,ReplaceValue('%x',DLNGStr('LOG502'),inttostr(NumElems)));
 
           try
             for y := 1 to NumElems do
@@ -853,7 +852,7 @@ begin
 
           res := dlOK;
 
-          dup5Main.writeLogVerbose(1,ReplaceStr(ReplaceStr(DLNGStr('LOG504'),'%p',Drivers[CurrentDriver].Info.Name),'%f',DriverID));
+          dup5Main.writeLogVerbose(1,ReplaceValue('%p',ReplaceValue('%f',DLNGStr('LOG504'),Drivers[CurrentDriver].Info.Name),DriverID));
 
           break;
 
@@ -1389,7 +1388,7 @@ begin
     begin
       dup5Main.appendLog(DLNGStr('LOG512'));
       dup5Main.colorLog(clRed);
-      dup5Main.writeLog(ReplaceStr(DLNGStr('ERR900'),'%f','ExtractFile()'));
+      dup5Main.writeLog(ReplaceValue('%f',DLNGStr('ERR900'),'ExtractFile()'));
       dup5Main.colorLog(clRed);
     end;
   end
@@ -1418,7 +1417,7 @@ begin
     dup5Main.colorLog(clRed);
 
     frmError.PrepareError;
-    frmError.details.Add(ReplaceStr(DLNGStr('ERREXT'),'%f',Drivers[CurrentDriver].FileName));
+    frmError.details.Add(ReplaceValue('%f',DLNGStr('ERREXT'),Drivers[CurrentDriver].FileName));
     frmError.details.Add('');
     frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
     frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Name='+Drivers[CurrentDriver].Info.Name);
@@ -1454,7 +1453,7 @@ begin
     begin
       dup5Main.appendLog(DLNGStr('LOG512'));
       dup5Main.colorLog(clRed);
-      dup5Main.writeLog(ReplaceStr(DLNGStr('ERR900'),'%f','ExtractFileToStream()'));
+      dup5Main.writeLog(ReplaceValue('%f',DLNGStr('ERR900'),'ExtractFileToStream()'));
       dup5Main.colorLog(clRed);
     end;
   end
@@ -1470,7 +1469,7 @@ begin
     dup5Main.appendLog(DLNGStr('LOG513'));
     dup5Main.colorLog(clRed);
     frmError.PrepareError;
-    frmError.details.Add(ReplaceStr(DLNGStr('ERRSTM'),'%f',Drivers[CurrentDriver].FileName));
+    frmError.details.Add(ReplaceValue('%f',DLNGStr('ERRSTM'),Drivers[CurrentDriver].FileName));
     frmError.details.Add('');
     frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
     frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Name='+Drivers[CurrentDriver].Info.Name);

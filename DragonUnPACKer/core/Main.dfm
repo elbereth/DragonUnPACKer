@@ -1,6 +1,6 @@
 object dup5Main: Tdup5Main
-  Left = 398
-  Top = 705
+  Left = 513
+  Top = 765
   HelpContext = 1
   AlphaBlendValue = 128
   AutoScroll = False
@@ -288,13 +288,12 @@ object dup5Main: Tdup5Main
         end>
       PopupMenu = Popup_Status
     end
-    object richLog: TJvRichEdit
+    object richLog: TRichEdit
       Left = 0
       Top = 0
       Width = 667
       Height = 82
       Align = alClient
-      AutoSize = False
       HideScrollBars = False
       PopupMenu = Popup_Log
       ReadOnly = True
@@ -5204,14 +5203,8 @@ object dup5Main: Tdup5Main
     Left = 616
     Top = 72
   end
-  object mainMenu: TJvMainMenu
+  object mainMenu: TMainMenu
     Images = imgLook
-    ImageMargin.Left = 0
-    ImageMargin.Top = 0
-    ImageMargin.Right = 5
-    ImageMargin.Bottom = 0
-    ImageSize.Height = 0
-    ImageSize.Width = 0
     Left = 520
     Top = 40
     object menuFichier: TMenuItem
@@ -5341,15 +5334,9 @@ object dup5Main: Tdup5Main
       end
     end
   end
-  object Popup_Contents: TJvPopupMenu
+  object Popup_Contents: TPopupMenu
     AutoPopup = False
     Images = imgPopup2
-    ImageMargin.Left = 0
-    ImageMargin.Top = 0
-    ImageMargin.Right = 0
-    ImageMargin.Bottom = 0
-    ImageSize.Height = 0
-    ImageSize.Width = 0
     Left = 552
     Top = 40
     object Popup_Extrairevers: TMenuItem
@@ -5393,14 +5380,8 @@ object dup5Main: Tdup5Main
       OnClick = PopUp_OpenClick
     end
   end
-  object Popup_Index: TJvPopupMenu
+  object Popup_Index: TPopupMenu
     Images = imgPopup1
-    ImageMargin.Left = 0
-    ImageMargin.Top = 0
-    ImageMargin.Right = 0
-    ImageMargin.Bottom = 0
-    ImageSize.Height = 0
-    ImageSize.Width = 0
     Left = 584
     Top = 40
     object menuIndex_ExtractAll: TMenuItem
@@ -5436,13 +5417,6 @@ object dup5Main: Tdup5Main
       OnClick = menuIndex_InfosClick
     end
   end
-  object DirSelect: TJvBrowseForFolderDialog
-    Options = [odOnlyDirectory, odFileSystemDirectoryOnly, odStatusAvailable, odEditBox, odNewDialogStyle]
-    Position = fpFormCenter
-    RootDirectory = fdMyComputer
-    Left = 616
-    Top = 40
-  end
   object TimerParam: TTimer
     Enabled = False
     Interval = 100
@@ -5450,14 +5424,8 @@ object dup5Main: Tdup5Main
     Left = 520
     Top = 168
   end
-  object Popup_Log: TJvPopupMenu
+  object Popup_Log: TPopupMenu
     OnPopup = Popup_LogPopup
-    ImageMargin.Left = 0
-    ImageMargin.Top = 0
-    ImageMargin.Right = 0
-    ImageMargin.Bottom = 0
-    ImageSize.Height = 0
-    ImageSize.Width = 0
     Left = 584
     Top = 72
     object menuLog_Hide: TMenuItem
@@ -5483,13 +5451,7 @@ object dup5Main: Tdup5Main
     Left = 552
     Top = 168
   end
-  object Popup_Preview: TJvPopupMenu
-    ImageMargin.Left = 0
-    ImageMargin.Top = 0
-    ImageMargin.Right = 0
-    ImageMargin.Bottom = 0
-    ImageSize.Height = 0
-    ImageSize.Width = 0
+  object Popup_Preview: TPopupMenu
     Left = 584
     Top = 104
     object menuPreview_Hide: TMenuItem
@@ -5516,14 +5478,8 @@ object dup5Main: Tdup5Main
       OnClick = actionPreviewOptions
     end
   end
-  object Popup_Status: TJvPopupMenu
+  object Popup_Status: TPopupMenu
     OnPopup = Popup_StatusPopup
-    ImageMargin.Left = 0
-    ImageMargin.Top = 0
-    ImageMargin.Right = 0
-    ImageMargin.Bottom = 0
-    ImageSize.Height = 0
-    ImageSize.Width = 0
     Left = 616
     Top = 104
     object menuStatus_PreviewHide: TMenuItem

@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.9 2008-11-11 16:10:53 elbereth Exp $
+// $Id: Options.pas,v 1.10 2009-04-26 08:37:15 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -20,8 +20,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ComCtrls, ImgList, StdCtrls, ExtCtrls, Registry, declFSE, JclShell,
-  CheckLst, Main, lib_look, JvExCheckLst, JvCheckListBox, JvBrowseFolder;
+  Dialogs, ComCtrls, ImgList, StdCtrls, ExtCtrls, Registry, declFSE,
+  CheckLst, Main, lib_look, ShellApi, BrowseForFolderU;
 
 type
   TfrmConfig = class(TForm)
@@ -142,7 +142,6 @@ type
     lblAssocInfo: TLabel;
     lblAssocCurIcon: TLabel;
     imgAssocIcon16: TImage;
-    lstTypes: TJvCheckListBox;
     tabPluginsInfos: TPanel;
     grpPluginsInfo: TGroupBox;
     lblPluginsConvert: TLabel;
@@ -173,6 +172,7 @@ type
     optPreviewDisplayFull: TRadioButton;
     optPreviewDisplayStretch: TRadioButton;
     lblFindNewLanguages: TLabel;
+    lstTypes: TCheckListBox;
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cmdOkClick(Sender: TObject);
@@ -228,6 +228,7 @@ type
     procedure lblFindNewLanguagesMouseEnter(Sender: TObject);
     procedure lblFindNewLanguagesMouseLeave(Sender: TObject);
     procedure lblFindNewLanguagesClick(Sender: TObject);
+    procedure lstTypesClick(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -1253,20 +1254,12 @@ begin
 end;
 
 procedure TfrmConfig.butTmpDirSelectClick(Sender: TObject);
-var DirSelect: TJvBrowseForFolderDialog;
+var tmpDir: string;
 begin
 
-  DirSelect := TJvBrowseForFolderDialog.Create(Self);
-  try
-    DirSelect.Title := DLNGStr('OPT013');
-    DirSelect.Directory := txtTmpDir.Text;
-    if DirSelect.Execute then
-    begin
-      txtTmpDir.Text := DirSelect.Directory;
-    end;
-  finally
-    DirSelect.Free;
-  end;
+  tmpdir := BrowseForFolder(DLNGStr('OPT013'),txtTmpDir.Text,true);
+  if tmpdir <> '' then
+    txtTmpDir.Text := tmpdir;
 
 end;
 
@@ -1492,7 +1485,18 @@ end;
 procedure TfrmConfig.lblFindNewLanguagesClick(Sender: TObject);
 begin
 
-  ShellExec(application.Handle,'open',ExtractFilePath(Application.ExeName)+'\Utils\Duppi.exe','/checktranslations','',SW_SHOW);
+  ShellExecute(application.Handle,'open',PChar(ExtractFilePath(Application.ExeName)+'\Utils\Duppi.exe'),PChar('/checktranslations'),nil,SW_SHOW);
+
+end;
+
+procedure TfrmConfig.lstTypesClick(Sender: TObject);
+begin
+
+  SetRegistryDUP5;
+  if lstTypes.Checked[lstTypes.ItemIndex] then
+    SetRegistryType(lstTypes.Items.Strings[lstTypes.ItemIndex])
+  else
+    UnSetRegistryType(lstTypes.Items.Strings[lstTypes.ItemIndex]);
 
 end;
 

@@ -476,12 +476,13 @@ var Percent: TPercentCallback;
   *       Improved speed & reliability by using direct searches instead of calling BMFind again:
   *         RIFF/WAVE RIFF/AVI PNG and JPEG/JFIF
   * 51040 Removed unstable status for Dragon UnPACKer v5.4.0 release
+  * 51140 Removed JVCL use, changed to Delphi VCL (TSpinEdit)
   * }
 
-const DRIVER_VERSION = 51040;
-      HR_VERSION = 55044;
-      CVS_REVISION = '$Revision: 1.12 $';
-      CVS_DATE = '$Date: 2008-11-16 16:13:13 $';
+const DRIVER_VERSION = 51140;
+      HR_VERSION = 55045;
+      CVS_REVISION = '$Revision: 1.13 $';
+      CVS_DATE = '$Date: 2009-04-26 10:27:06 $';
 
 function BigToLittle2(src: array of byte): word;
 begin
@@ -835,7 +836,7 @@ end;
 // DUHI v4: SearchBufferEx(tended) that will retrieve ALL instances of selected
 // format found in the buffer and not only the first one
 function SearchBufferEx(format: Integer; buffer: PByteArray; bufSize: integer): TIntList; stdcall;
-var tmpRes,tmpRes2,tmpPos1,tmpPos2,tmpPosMax: integer;
+var tmpRes,tmpPos1,tmpPos2,tmpPosMax: integer;
 //    memBuf: TMemoryStream;
     szFind: array [0..255] of char;
 begin

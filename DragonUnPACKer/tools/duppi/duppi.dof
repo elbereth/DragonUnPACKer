@@ -100,7 +100,7 @@ Conditionals=DUPPI
 DebugSourceDirs=
 UsePackages=0
 [Parameters]
-RunParams=E:\Developpement\files\dup540a-updatefrom540.d5p
+RunParams=X X "E:\Developpement\dup-dev-5.1-compiled\utils\"
 HostApplication=E:\Developpement\dup-dev-5.1-compiled\utils\duppi.exe
 Launcher=
 UseLauncher=0
@@ -110,8 +110,8 @@ IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=3
 MinorVer=1
-Release=0
-Build=90
+Release=2
+Build=94
 Debug=0
 PreRelease=0
 Special=0
@@ -122,7 +122,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone
 FileDescription=Duppi - The DUP5 Package Installer.
-FileVersion=3.1.0.90
+FileVersion=3.1.2.94
 InternalName=Duppi
 LegalCopyright=Mozilla Public License 1.1
 LegalTrademarks=Mozilla Public License 1.1
@@ -130,3 +130,12 @@ OriginalFilename=duppi.exe
 ProductName=Duppi
 ProductVersion=5.4.0a
 Comments=Duppi - The DUP5 Package Installer.
+[HistoryLists\hlUnitAliases]
+Count=1
+Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlUnitOutputDirectory]
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-dcu
+[HistoryLists\hlOutputDirectorry]
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-compiled\utils

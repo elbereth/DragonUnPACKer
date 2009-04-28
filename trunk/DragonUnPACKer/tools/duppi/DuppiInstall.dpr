@@ -1,6 +1,6 @@
 program DuppiInstall;
 
-// $Id: DuppiInstall.dpr,v 1.1 2008-09-27 16:32:32 elbereth Exp $
+// $Id: DuppiInstall.dpr,v 1.2 2009-04-28 20:27:21 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/DuppiInstall.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -24,59 +24,81 @@ uses
 
 //{$R *.res}
 
-var closemsg: string;
-    x, waitresult,hwnd: integer;
+function sleepDelete(oldfile, newfile: string): boolean;
+var x: integer;
 begin
 
-  // Sanity checks:
-  //   4 parameters expected
-  //   3rd and 4th are existing files
-  //   3rd is duppi.exe
-  //   4th is duppi.exe.new
+  result := false;
+
+  if (FileExists(newfile)) then
+  begin
+    for x := 0 to 600 do
+    begin
+      // Delete old (if exists) & rename new
+      if (FileExists(oldfile) and DeleteFile(oldfile)) or not(FileExists(oldfile)) then
+      begin
+        result := RenameFile(newfile,oldfile);
+        Break;
+      end;
+      Sleep(100);
+    end;
+  end;
+
+end;
+
+var closemsg,oldname: string;
+    sr: TSearchRec;
+    FileAttrs: Integer;
+    checkDelete: integer;
+begin
+
+  // Sanity checks for mode 1 (only Duppi is updated -- Old mode):
+  //   2 parameters expected
+  //   1st and 2nd are existing files
+  //   1st is duppi.exe
+  //   2nd is duppi.exe.new
   if (ParamCount = 2) and FileExists(ParamStr(1))
                       and FileExists(ParamStr(2))
                       and SameText(ExtractFilename(ParamStr(1)),'duppi.exe')
                       and SameText(ExtractFilename(ParamStr(2)),'duppi.exe.new') then
   begin
 
-//    ShowMessage('OK 0');
+     if sleepDelete(ParamStr(1),ParamStr(2)) then
+     begin
+       // Execute Duppi to tell the user everything is done
+       ShellExecute(0,nil,PChar(ParamStr(1)),PChar('/InstalledOK'),nil,SW_SHOW);
+     end;
 
-    // Find the Duppi Windows handle
-//    hwnd := FindWindow('TfrmInstaller', nil);
-
-//    ShowMessage(inttostr(hwnd)+' '+ParamStr(1));
-
-    // Sanity check 2: Verify the handle is the same than parameter 1
-//    if (hwnd = strtoint(ParamStr(1))) then
-//    begin
-
-      // Send close message back to Duppi
-{      closemsg := ParamStr(2);
-      for x:=1 to length(closemsg) do
-      begin
-        PostMessage(strtoint(ParamStr(1)), wm_User, ord(closemsg[x]), 0);
-      end;
-      PostMessage(strtoint(ParamStr(1)), wm_User, 0, 0);}
-
-      // Wait until Duppi is closed (if needed)
-      //WaitResult := WaitForSingleObject(strtoint(ParamStr(3)),INFINITE);
-
-      for x := 0 to 600 do
-      begin
-        // Delete old & rename new
-        if DeleteFile(ParamStr(1)) then
+  end
+  // Sanity checks for mode 2 (all .new files in directory are updated):
+  //   3 parameters expected
+  //   1st & 2nd are "X" "X"
+  //   3rd is Duppi's directory (it will check for Duppi.exe in that directory)
+  else if (ParamCount = 3) and DirectoryExists(ParamStr(3))
+                      and FileExists(ParamStr(3)+'duppi.exe')
+                      and (ParamStr(1) = 'X')
+                      and (ParamStr(2) = 'X') then
+  begin
+    FileAttrs := 0;
+    checkDelete := 0;
+    if FindFirst(ParamStr(3)+'*.new',FileAttrs,sr) = 0 then
+    begin
+      repeat
+        if (sr.Attr and FileAttrs) = FileAttrs then
         begin
-          RenameFile(ParamStr(2),ParamStr(1));
-
-          // Execute Duppi to tell the user everything is done
-          ShellExecute(0,nil,PChar(ParamStr(1)),PChar('/InstalledOK'),nil,SW_SHOW);
-
-          Break;
+          oldname := ChangeFileExt(sr.Name,'');
+          if sleepDelete(ParamStr(3)+oldname,ParamStr(3)+sr.Name) then
+            inc(checkDelete);
         end;
-        Sleep(100);
-      end;
+      until FindNext(sr) <> 0;
+      FindClose(sr);
+    end;
 
-//    end;
+    if checkDelete > 0 then
+    begin
+      // Execute Duppi to tell the user everything is done
+      ShellExecute(0,nil,PChar(ParamStr(3)+'duppi.exe'),PChar('/InstalledOK'),nil,SW_SHOW);
+    end;
 
   end;
 

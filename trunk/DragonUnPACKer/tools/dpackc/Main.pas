@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.7 2009-04-26 12:17:47 elbereth Exp $
+// $Id: Main.pas,v 1.8 2009-04-28 20:53:19 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dpackc/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -194,6 +194,9 @@ type
     shapeAuthor: TShape;
     shapeURL: TShape;
     shapeName: TShape;
+    GroupBox12: TGroupBox;
+    chkOverrideNeededVersion: TCheckBox;
+    txtOverrideNeededVersion: TEdit;
     procedure ListBox1DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure ListBox1DragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
@@ -241,6 +244,7 @@ type
     procedure butOldVersionBrowseClick(Sender: TObject);
     procedure butNewVersionBrowseClick(Sender: TObject);
     procedure JvImgBtn1Click(Sender: TObject);
+    procedure chkOverrideNeededVersionClick(Sender: TObject);
 //    function convertInstallTo(val: integer): string;
   private
     { Déclarations privées }
@@ -295,7 +299,7 @@ implementation
 uses Compile, Config;
 
 const DPSVERSION = 4;
-      VERSION: integer = 35140;
+      VERSION: integer = 35240;
 
 {$R *.dfm}
 
@@ -316,6 +320,8 @@ begin
   optFileHashSHA256.Enabled := optDUPPv4.Checked;
   optFileHashSHA512.Enabled := optDUPPv4.Checked;
   optFileHashRIPEMD160.Enabled := optDUPPv4.Checked;
+
+  chkOverrideNeededVersion.Enabled := optDUPPv4.Checked;
 
   if optDUPPv4.Checked then
     lblCommentMaxMax.Caption := 'Max: 32767'
@@ -768,7 +774,18 @@ begin
   HDR.ID := 'DUPP';
   HDR.EOF := 26;
   HDR.Version := 4;
-  HDR.NeededVersion := 30040;
+
+  if chkOverrideNeededVersion.Checked then
+  begin
+    try
+      HDR.NeededVersion := strtoint(txtOverrideNeededVersion.Text);
+    except
+      on EConvertError do
+        HDR.NeededVersion := 30040;
+    end;
+  end
+  else
+    HDR.NeededVersion := 30040;
 
   writeLog('+-+ Compatibility: Duppi v'+getVersion(HDR.NeededVersion));
 
@@ -2574,6 +2591,13 @@ begin
     ShowMessage('New directory does not exists:'+chr(10)+txtUpdateDir2.text)
   else
     diffDirectories(txtUpdateDir1.Text,txtUpdateDir2.Text);
+
+end;
+
+procedure TfrmMain.chkOverrideNeededVersionClick(Sender: TObject);
+begin
+
+  txtOverrideNeededVersion.Enabled := chkOverrideNeededVersion.Checked;
 
 end;
 

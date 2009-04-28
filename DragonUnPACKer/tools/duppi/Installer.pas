@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.13 2009-04-25 15:05:00 elbereth Exp $
+// $Id: Installer.pas,v 1.14 2009-04-28 20:28:43 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -193,7 +193,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 31040;
+  VERSION: Integer = 31240;
 
 implementation
 
@@ -619,7 +619,7 @@ end;
 function TfrmInstaller.loadDUPP(duppfile: string): boolean;
 begin
 
-   writelog(Install,ReplaceValue('%a',DLNGStr('PI0054'),extractfilename(txtPathD5P.Text))+' ');
+   writelog(Install,ReplaceValue('%a',DLNGStr('PI0054'),extractfilename(duppfile))+' ');
 
    if FileExists(duppfile) then
    begin
@@ -981,11 +981,12 @@ begin
 
           writelog(Install,ReplaceValue('%a',ReplaceValue('%b',DLNGStr('PI0060'),getRawDestDir(files[x].BaseInstallDir) + names[x]),inttostr(x+1)));
 
-          if (files[x].BaseInstallDir = 5) and (compareText(names[x],'duppi.exe') = 0) then
+          if (files[x].BaseInstallDir = 5) and ((compareText(names[x],'duppi.exe') = 0)
+                                                 or (compareText(names[x],'libcurl-3.dll') = 0)) then
           begin
             duppiInstall := true;
             DestDir := getDestDir(files[x].BaseInstallDir) + names[x] + '.new';
-            duppiInstallNew := DestDir;
+            duppiInstallNew := getDestDir(files[x].BaseInstallDir);
           end
           else
             DestDir := getDestDir(files[x].BaseInstallDir) + names[x];
@@ -1055,7 +1056,7 @@ begin
 
     // Duppi will restart to update itself
     MessageDlg(DLNGStr('PI0062'),mtCustom,[mbOk],0);
-    ShellExecute(0, nil,PChar('"'+extractfilepath(Application.EXEName)+'DuppiInstall.exe"'), PChar('"'+Application.EXEName+'" "'+DuppiInstallNew+'"'), nil, SW_SHOW);
+    ShellExecute(0, nil,PChar('"'+extractfilepath(Application.EXEName)+'DuppiInstall.exe"'), PChar('X X "'+DuppiInstallNew+'"'), nil, SW_SHOW);
     Application.Terminate;
 
   end;
@@ -1829,9 +1830,9 @@ begin
               end;
             end;
      finally
-        dus.free;
-        if FileExists(tmpIniFile) then
-          DeleteFile(tmpIniFile);
+        //dus.free;
+        //if FileExists(tmpIniFile) then
+        //  DeleteFile(tmpIniFile);
       end;
     end;
 

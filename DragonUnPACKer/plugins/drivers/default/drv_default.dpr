@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.42 2008-11-20 08:01:26 elbereth Exp $
+// $Id: drv_default.dpr,v 1.43 2009-04-28 18:52:55 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -182,6 +182,7 @@ type FSE = ^element;
     20516        Improved LithTech .REZ support -> Fixes opening NOLF2 sound.rez
     20540  54040 Added support for Ascendancy .COB files
                  Added support for Florensia .PAK files
+    20640  54041 Added support for The Fifth Element .MRC file
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -200,10 +201,10 @@ type FSE = ^element;
   //////////////////////////////////////////////////////////////////////////// }
 
 const
-  DRIVER_VERSION = 20540;
-  DUP_VERSION = 54040;
-  CVS_REVISION = '$Revision: 1.42 $';
-  CVS_DATE = '$Date: 2008-11-20 08:01:26 $';
+  DRIVER_VERSION = 20640;
+  DUP_VERSION = 54041;
+  CVS_REVISION = '$Revision: 1.43 $';
+  CVS_DATE = '$Date: 2009-04-28 18:52:55 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -265,7 +266,7 @@ begin
   GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
   GetDriverInfo.Comment := 'This driver support 83 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 70;
+  GetDriverInfo.NumFormats := 71;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -406,6 +407,8 @@ begin
   GetDriverInfo.Formats[69].Name := 'Enclave (*.XTC;*.XWC)|The Chronicles of Riddick: Butcher (*.XTC;*.XWC)';
   GetDriverInfo.Formats[70].Extensions := '*.COB';
   GetDriverInfo.Formats[70].Name := 'Ascendancy (*.COB)';
+  GetDriverInfo.Formats[71].Extensions := '*.MRC';
+  GetDriverInfo.Formats[71].Name := 'The Fifth Element (*.MRC)';
 //  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
 //  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -9488,6 +9491,296 @@ begin
 end;
 
 // -------------------------------------------------------------------------- //
+// The Fifth Element .MRC support =========================================== //
+// -------------------------------------------------------------------------- //
+// This is a standard RIFF file with blocks (and sub blocks).
+// The type of "RIFF" is "mmRC" (position 8-11).
+// The block "FInf" is only 1 longint large with value 1 (unknown purpose)
+// The blocks "LIST" looks like RIFF files themselves, they have the same
+//   structure and contains sub blocks
+//    There are 2 types of "LIST" blocks:
+//      "FSys" which contains:
+//             "DLst" - The directory list
+//             "FLst" - The file list
+//             "NLst" - The name list
+//      "FSto" which contains "FILE" blocks (the content of the files)
+
+type RIFF_Header = packed record
+       ID: array[0..3] of char;
+       Size: integer;
+       ID2: array[0..3] of char;
+     end;
+     RIFF_Block = packed record
+       ID: array[0..3] of char;
+       Size: integer;
+     end;
+     MRC_FLstEntry = packed record
+       RelNameOffset: integer;
+       Size: integer;
+       RelOffset: Integer;
+       Empty: Integer;     // Always 0?
+     end;
+     MRC_DLstEntry = packed record
+       RelDirNameOffset: integer;
+       NumSubDirs: integer;
+       StartDirNum: integer;
+       NumEntries: integer;
+       StartFileNum: integer;
+     end;
+     MRC_DirList = record
+       StartDirNum: Integer;
+       EndDirNum: Integer;
+       Name: String;
+       StartFileNum: Integer;
+       EndFileNum: Integer;
+     end;
+
+function ReadTheFifthElementMRC(): Integer;
+var HDR: RIFF_Header;
+    BLK,SubBLK: RIFF_Block;
+    ID: array[0..3] of char;
+    FLstENT: MRC_FLstEntry;
+    DLstENT: MRC_DLstEntry;
+    DirList: array of MRC_DirList;
+    TotSize, ListFStoOffset, check, nextOffset, nextSubOffset, FStoOffset: Int64;
+    NumE, NumD, x, y, z: Integer;
+    handle_stm: THandleStream;
+    DLstBuffer, NLstBuffer, FLstBuffer: TMemoryStream;
+    EName: String;
+begin
+
+  TotSize := FileSeek(Fhandle, 0, soFromEnd);
+  FileSeek(Fhandle,0,0);
+  FileRead(FHandle, HDR, SizeOf(RIFF_Header));
+
+  // Some verifications of the header to be sure it is an .MRC file from The Fifth Element
+  if (HDR.ID <> 'RIFF') or (HDR.ID2 <> 'mmRC') or (HDR.Size <> (TotSize-8)) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'mmRC';
+    ErrInfo.Games := 'The Fifth Element';
+  end
+  else
+  begin
+
+    // Create a HandleStream from the source file
+    handle_stm := THandleStream.Create(Fhandle);
+
+    // Create memory streams to buffer Directory/File/Names sub blocks
+    DLstBuffer := TMemoryStream.Create;
+    FLstBuffer := TMemoryStream.Create;
+    NLstBuffer := TMemoryStream.Create;
+
+    FStoOffset := 0;
+
+    // Try/Finally to free all streams objects at the end
+    try
+
+      // Read all blocks in RIFF
+      repeat
+
+        // Read the block header
+        handle_stm.Read(BLK,SizeOf(RIFF_Block));
+
+        // Next block offset calculation
+        nextOffset := handle_stm.position + BLK.Size;
+
+        // Sanity check: If current block size is less than 0 then we have a
+        // problem
+        if BLK.Size < 0 then
+        begin
+          FileClose(Fhandle);
+          FHandle := 0;
+          Result := -3;
+          ErrInfo.Format := 'mmRC';
+          ErrInfo.Games := 'The Fifth Element';
+          Exit;
+        end;
+
+        // If the block ID is LIST
+        if BLK.ID = 'LIST' then
+        begin
+
+          // Read the sub ID of the LIST block
+          handle_stm.Read(ID,4);
+
+          // Index sub block
+          if ID = 'FSys' then
+          begin
+
+            // Go through all FSys sub blocks
+            repeat
+
+              // Read the sub block header
+              handle_stm.Read(SubBLK,SizeOf(RIFF_Block));
+
+              // Calculate offset to next sub block
+              nextSubOffset := handle_stm.position + SubBLK.Size;
+
+              // For each sub block type, buffer it to memory
+              if SubBLK.ID = 'DLst' then
+                DLstBuffer.CopyFrom(handle_stm,SubBLK.Size)
+              else if SubBLK.ID = 'FLst' then
+                FLstBuffer.CopyFrom(handle_stm,SubBLK.Size)
+              else if SubBLK.ID = 'NLst' then
+                NLstBuffer.CopyFrom(handle_stm,SubBLK.Size)
+              else
+              // Any other sub block type means we are reading a file of another format, therefore we quit
+              begin
+                FileClose(Fhandle);
+                FHandle := 0;
+                Result := -3;
+                ErrInfo.Format := 'mmRC';
+                ErrInfo.Games := 'The Fifth Element';
+                Exit;
+              end;
+
+              // Move to end of sub block
+              check := handle_stm.Seek(nextSubOffset,soFromBeginning);
+
+            until (handle_stm.Position >= nextOffset);
+
+          end
+          // Content sub block
+          else if ID = 'FSto' then
+            FStoOffset := handle_stm.Position
+
+          // Any other sub block type means we are reading a file of another format, therefore we quit
+          else
+          begin
+            FileClose(Fhandle);
+            FHandle := 0;
+            Result := -3;
+            ErrInfo.Format := 'mmRC';
+            ErrInfo.Games := 'The Fifth Element';
+            Exit;
+          end;
+
+        end;
+
+        // Move to end of block
+        check := handle_stm.Seek(nextOffset,soFromBeginning);
+
+      until (handle_stm.Position >= TotSize);
+
+      // If the content offset was found and all needed lists are buffered
+      if (FStoOffset > 0) and (DLstBuffer.Size > 0) and (FLstBuffer.Size > 0) and (NLstBuffer.Size > 0) then
+      begin
+
+        // Verify the size of the DLstbuffer is a multiple of 20 (size of 1 entry)
+        if (DLstBuffer.Size mod 20) <> 0 then
+        begin
+          FileClose(Fhandle);
+          FHandle := 0;
+          Result := -3;
+          ErrInfo.Format := 'mmRC';
+          ErrInfo.Games := 'The Fifth Element';
+          Exit;
+        end;
+
+        // Calculate the number of directories
+        NumD := DLstBuffer.Size div 20;
+
+        // Size the DirList array
+        SetLength(DirList,NumD);
+
+        DLstBuffer.Seek(0,SoFromBeginning);
+
+        // For each directory entry
+        for x := 0 to NumD-1 do
+        begin
+          // Read entries values
+          DLstBuffer.Read(DLstENT,SizeOf(MRC_DLstEntry));
+          // Seek to filename in buffer
+          NLstBuffer.Seek(DLstENT.RelDirNameOffset,SoFromBeginning);
+          // Add entry
+          DirList[x].Name := Strip0(get0(NLstBuffer));
+          // This directory has following files as children
+          DirList[x].StartFileNum := DLstENT.StartFileNum+1;
+          DirList[x].EndFileNum := DLstENT.StartFileNum + DLstENT.NumEntries;
+          // This directory is the parent of following directories
+          DirList[x].StartDirNum := DLstENT.StartDirNum;
+          DirList[x].EndDirNum := DLstENT.StartDirNum+DLstENT.NumSubDirs-1;
+        end;
+
+        // Expand directories (parent/child names aggregation)
+        for x := 0 to NumD-1 do
+          if DirList[x].StartDirNum < DirList[x].EndDirNum then
+          begin
+            for y := DirList[x].StartDirNum to DirList[x].EndDirNum do
+              DirList[y].Name := DirList[x].Name + '\' + DirList[y].Name;
+          end;
+
+        // Verify the size of the FLstbuffer is a multiple of 16 (size of 1 entry)
+        if (FLstBuffer.Size mod 16) <> 0 then
+        begin
+          FileClose(Fhandle);
+          FHandle := 0;
+          Result := -3;
+          ErrInfo.Format := 'mmRC';
+          ErrInfo.Games := 'The Fifth Element';
+          Exit;
+        end;
+
+        // Calculate the number of entries
+        NumE := FLstBuffer.Size div 16;
+
+        FLstBuffer.Seek(0,SoFromBeginning);
+
+        // For each entry
+        for x := 1 to NumE do
+        begin
+          // Read entries values
+          FLstBuffer.Read(FLstENT,SizeOf(MRC_FLstEntry));
+          // Seek to filename in buffer
+          NLstBuffer.Seek(FLstENT.RelNameOffset,SoFromBeginning);
+          EName := '';
+          for y := 0 to NumD-1 do
+            if (DirList[y].StartFileNum <= x) and (DirList[y].EndFileNum >= x) then
+            begin
+              EName := DirList[y].Name+'\';
+              break;
+            end;
+          EName := EName + Strip0(get0(NLstBuffer));
+          // Add entry
+          FSE_Add(EName,FLstENT.RelOffset+FStoOffset,FLstENT.Size,0,0);
+        end;
+
+        result := NumE;
+
+      end
+      // Info is missing, we quit
+      else
+      begin
+        FileClose(Fhandle);
+        FHandle := 0;
+        Result := -3;
+        ErrInfo.Format := 'mmRC';
+        ErrInfo.Games := 'The Fifth Element';
+        Exit;
+      end;
+
+    finally
+
+      handle_stm.free;
+      DLstBuffer.Free;
+      FLstBuffer.Free;
+      NLstBuffer.Free;
+
+    end;
+
+    DrvInfo.ID := 'mmRC';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
 // The Movies .PAK support ================================================== //
 // -------------------------------------------------------------------------- //
 
@@ -11658,6 +11951,8 @@ begin
         FileClose(FHandle);
         ReadFormat := ReadTheElderScrolls4OblivionBSA(fil)
       end
+      else if (ID4 = ('RIFF')) and (ID12[8] = 'm') and (ID12[9] = 'm') and (ID12[10] = 'R') and (ID12[11] = 'C') then
+        Result := ReadTheFifthElementMRC
       else if (ID4[0] = #0) and (ID4[1] = #0) and (ID4[2] = #128) and (ID4[3] = #63) then
       begin
         FileClose(FHandle);
@@ -11750,6 +12045,12 @@ begin
       Result := ReadLeisureSuitLarryMagnaCumLaudeJAM(fil)
     else if ext = 'M4B' then
       Result := ReadMystIVRevelationM4B(fil)
+    // The Fifth Element .MRC
+    else if ext = 'MRC' then
+    begin
+      FHandle := FileOpen(fil, fmOpenRead);
+      Result := ReadTheFifthElementMRC;
+    end
     else if ext = 'MTF' then
       ReadFormat := ReadDarkstoneMTF(fil)
 {    else if ext = 'NRM' then
@@ -12133,6 +12434,8 @@ begin
       Result := true
     else if (ID4 = ('DATA')) then
       Result := true
+    else if (ID4 = ('RIFF')) and (ID12[8] = 'm') and (ID12[9] = 'm') and (ID12[10] = 'R') and (ID12[11] = 'C') then
+      Result := true
     else if ID12SLF = SLFID then
       Result := true
     else if (ID127 = REZID) or (ID127 = REZIDold) then
@@ -12245,6 +12548,9 @@ begin
     else if ext = 'M4B' then
       IsFormat := True
     else if ext = 'MN3' then
+      IsFormat := True
+    // The Fifth Element .MRC
+    else if ext = 'MRC' then
       IsFormat := True
     else if ext = 'MTF' then
       IsFormat := True

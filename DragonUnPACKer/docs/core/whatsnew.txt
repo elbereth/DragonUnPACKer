@@ -40,6 +40,15 @@ Main program version and versions history:
 
 Updates to last stable version:
 
+ * Duppi v3.1.2:
+  ! Fixed HUGE bug introduced in v3.1.0 that prevented Duppi from downloading
+    any update from internet (fail with an Exception).
+  ! Fixed bug introduced in v3.1.0 that prevented Duppi to update itself when
+    libcurl-3.dll was in the package...
+
+ * Duppi v3.1.1:
+  ! Fixed small bug in information log
+
  * Duppi v3.1.0:
    * Optimized code to remove all useless units:
        JVCL & JCL are no more used

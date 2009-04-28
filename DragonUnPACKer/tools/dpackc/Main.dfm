@@ -1,6 +1,6 @@
 object frmMain: TfrmMain
-  Left = 253
-  Top = 419
+  Left = 272
+  Top = 164
   BorderStyle = bsSingle
   Caption = 'DUP5 Package (D5P) Maker v2.0.0'
   ClientHeight = 378
@@ -136,7 +136,7 @@ object frmMain: TfrmMain
     Top = 56
     Width = 537
     Height = 321
-    ActivePage = TabSheet4
+    ActivePage = TabSheet1
     TabOrder = 0
     object TabSheet1: TTabSheet
       Caption = 'About...'
@@ -9488,6 +9488,50 @@ object frmMain: TfrmMain
           TabOrder = 2
           TabStop = True
           OnClick = optDUPPClick
+        end
+      end
+      object GroupBox12: TGroupBox
+        Left = 8
+        Top = 208
+        Width = 305
+        Height = 49
+        Caption = '/!\ EXPERTS /!\'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clRed
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsBold]
+        ParentFont = False
+        TabOrder = 4
+        object chkOverrideNeededVersion: TCheckBox
+          Left = 8
+          Top = 16
+          Width = 217
+          Height = 17
+          Caption = 'Override Duppi needed version:'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 0
+          OnClick = chkOverrideNeededVersionClick
+        end
+        object txtOverrideNeededVersion: TEdit
+          Left = 232
+          Top = 16
+          Width = 65
+          Height = 21
+          Enabled = False
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 1
+          Text = '30040'
         end
       end
     end

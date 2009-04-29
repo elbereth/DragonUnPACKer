@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.14 2009-04-28 20:28:43 elbereth Exp $
+// $Id: Installer.pas,v 1.15 2009-04-29 04:39:10 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -193,7 +193,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 31240;
+  VERSION: Integer = 31340;
 
 implementation
 
@@ -982,7 +982,8 @@ begin
           writelog(Install,ReplaceValue('%a',ReplaceValue('%b',DLNGStr('PI0060'),getRawDestDir(files[x].BaseInstallDir) + names[x]),inttostr(x+1)));
 
           if (files[x].BaseInstallDir = 5) and ((compareText(names[x],'duppi.exe') = 0)
-                                                 or (compareText(names[x],'libcurl-3.dll') = 0)) then
+                                             or (compareText(names[x],'libcurl-3.dll') = 0)
+                                             or (compareText(names[x],'zlib1.dll') = 0)) then
           begin
             duppiInstall := true;
             DestDir := getDestDir(files[x].BaseInstallDir) + names[x] + '.new';
@@ -1551,7 +1552,7 @@ begin
 
   writeLog(Internet,'curl v'+curlObj.LibraryVersion+' ('+curlObj.Machine+') '+curlObj.CurlVersion);
 
-  curlObj.URL := 'http://dragonunpacker.sourceforge.net/dus.php?installedbuild='+inttostr(corebuild);
+  curlObj.URL := 'http://dragonunpacker.sourceforge.net/dus.php?installedbuild='+inttostr(corebuild)+'&duppiversion='+inttostr(VERSION);
   curlObj.OutputFile := tmpIniFile;
   curlObj.OnProgress := curlObjProgress;
   curlObj.NoProgress := false;

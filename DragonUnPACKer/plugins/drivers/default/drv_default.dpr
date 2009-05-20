@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.43 2009-04-28 18:52:55 elbereth Exp $
+// $Id: drv_default.dpr,v 1.44 2009-05-20 17:40:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -183,6 +183,7 @@ type FSE = ^element;
     20540  54040 Added support for Ascendancy .COB files
                  Added support for Florensia .PAK files
     20640  54041 Added support for The Fifth Element .MRC file
+    20711        Added partial support for F1 Manager 2000 .RFC/.RFH/.RFD (unknown compression, not Zlib)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -201,10 +202,10 @@ type FSE = ^element;
   //////////////////////////////////////////////////////////////////////////// }
 
 const
-  DRIVER_VERSION = 20640;
+  DRIVER_VERSION = 20711;
   DUP_VERSION = 54041;
-  CVS_REVISION = '$Revision: 1.43 $';
-  CVS_DATE = '$Date: 2009-04-28 18:52:55 $';
+  CVS_REVISION = '$Revision: 1.44 $';
+  CVS_DATE = '$Date: 2009-05-20 17:40:32 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -288,9 +289,9 @@ begin
   GetDriverInfo.Formats[10].Extensions := '*.pak;*.tlk';
   GetDriverInfo.Formats[10].Name := 'Hands of Fate (*.PAK;*.TLK)|Lands of Lore (*.PAK;*.TLK)';
   GetDriverInfo.Formats[11].Extensions := '*.wad;*.sdt';
-  GetDriverInfo.Formats[11].Name := 'Dungeon Keeper 2 (*.WAD;*.SDT)|Theme Park World (*.WAD;*.SDT)';
+  GetDriverInfo.Formats[11].Name := 'Dungeon Keeper 2 (*.WAD;*.SDT;*.DWFB)|Theme Park World (*.WAD;*.SDT)';
   GetDriverInfo.Formats[12].Extensions := '*.vp';
-  GetDriverInfo.Formats[12].Name := 'Conflict: Freespace (*.VP)|Freespace 2 (*.VP)';
+  GetDriverInfo.Formats[12].Name := 'Conflict: Freespace (*.VP)|Freespace (*.VP)|Freespace 2 (*.VP)';
   GetDriverInfo.Formats[13].Extensions := '*.zfs';
   GetDriverInfo.Formats[13].Name := 'Interstate ''76 (*.ZFS)|Interstate ''82 (*.ZFS)';
   GetDriverInfo.Formats[14].Extensions := '*.pod';
@@ -3466,55 +3467,172 @@ type RFH_Entry = packed record
        Offset: integer;
      end;
 
+type RFC_Entry = packed record
+       Unknown1: integer;
+       IsPacked: integer;
+       PackedSize: integer;
+       OriginalSize: integer;
+       Offset: integer;
+       Unknown2: integer;
+       NameLength: integer;
+     end;
+
 function ReadDune3RFH(src: string): Integer;
 var ENT: RFH_Entry;
-    disp,dfil: string;
+    ENTC: RFC_Entry;
+    disp,dfil,cfil: string;
     NumE: integer;
-    Chandle: integer;
-    EndSize: integer;
+    Hhandle, Chandle: integer;
+    NumEntries, x: integer;
+    EndSize, CSize: int64;
+    IsError: Boolean;
 begin
 
-  Chandle := FileOpen(src, fmOpenRead);
+  Hhandle := FileOpen(src, fmOpenRead);
 
-  if CHandle > 0 then
+  if Hhandle >= 0 then
   begin
+
     dfil := ChangeFileExt(src,'.rfd');
+    cfil := ChangeFileExt(src,'.rfc');
 
     if not(FileExists(dfil)) then
     begin
-      FileClose(Chandle);
+      FileClose(Hhandle);
       FHandle := 0;
       Result := -4;
       ErrInfo.Format := 'RFH/RFD';
       ErrInfo.Games := dfil;
     end
+    else if FileExists(cfil) then
+    begin
+      FileClose(Hhandle);
+      Fhandle := FileOpen(dfil, fmOpenRead);
+
+      if Fhandle < 0 then
+      begin
+        FHandle := 0;
+        Result := -4;
+        ErrInfo.Format := 'RFH/RFD';
+        ErrInfo.Games := dfil;
+      end
+      else
+      begin
+
+        Chandle := FileOpen(cfil, fmOpenRead);
+
+        if Chandle < 0 then
+        begin
+          FileClose(FHandle);
+          FHandle := 0;
+          Result := -4;
+          ErrInfo.Format := 'RFH/RFD';
+          ErrInfo.Games := cfil;
+        end
+        else
+        begin
+
+          CSize := FileSeek(CHandle, 0,2);
+          FileSeek(CHandle, 0, 0);
+          EndSize := FileSeek(FHandle, 0,2);
+          FileSeek(FHandle, 0, 0);
+
+          FileRead(CHandle,numEntries,4);
+
+          if (numEntries * SizeOf(RFC_Entry)) > CSize then
+          begin
+            FileClose(Fhandle);
+            FileClose(Chandle);
+            FileClose(Hhandle);
+            FHandle := 0;
+            Result := -3;
+            ErrInfo.Format := 'RFH/RFD';
+            ErrInfo.Games := 'F1 Manager 2000';
+          end
+          else
+          begin
+
+            IsError := false;
+
+            for x := 1 to NumEntries do
+            begin
+              FileRead(CHandle,ENTC,SizeOf(RFC_Entry));
+              if (ENTC.Offset > EndSize) or ((Int64(ENTC.Offset) + Int64(ENTC.PackedSize)) > EndSize) then
+              begin
+                FSE_free;
+                NumE := 0;
+                Result := -3;
+                IsError := true;
+                ErrInfo.Format := 'RFH/RFD';
+                ErrInfo.Games := 'Emperor: Battle for Dune';
+                break;
+              end;
+              disp := Get32(Chandle,ENTC.NameLength);
+              if (ENTC.IsPacked <> 0) then
+                FSE_Add(disp+'.cmp'+inttostr(ENTC.IsPacked),ENTC.Offset,ENTC.PackedSize,ENTC.IsPacked,ENTC.PackedSize)
+              else
+                FSE_Add(disp,ENTC.Offset,ENTC.OriginalSize,ENTC.IsPacked,ENTC.PackedSize);
+              Inc(NumE);
+            end;
+
+            FileClose(Chandle);
+
+            if not(IsError) then
+            begin
+              Result := NumE;
+
+              DrvInfo.ID := 'RFH/RFD';
+              DrvInfo.Sch := '\';
+              DrvInfo.FileHandle := FHandle;
+              DrvInfo.ExtractInternal := True;
+            end;
+
+          end;
+        end;
+      end;
+    end
     else
     begin
       Fhandle := FileOpen(dfil, fmOpenRead);
 
-      EndSize := FileSeek(CHandle, 0,2);
-      FileSeek(CHandle, 0, 0);
+      EndSize := FileSeek(FHandle, 0,2);
+      FileSeek(FHandle, 0, 0);
 
       NumE := 0;
+      IsError := false;
 
-      while FileSeek(CHandle,0,1) < EndSize do
+      while FileSeek(Hhandle,0,1) < EndSize do
       begin
-        Per := ROund(((EndSize / (FileSeek(CHandle,0,1)+1))*100));
+        Per := ROund(((EndSize / (FileSeek(Hhandle,0,1)+1))*100));
         SetPercent(Per);
-        FileRead(CHandle, ENT, 24);
-        disp := Strip0(Get0(CHandle));
+        FileRead(Hhandle, ENT, 24);
+        // Sanity checks
+        if (ENT.Offset > EndSize) or ((Int64(ENT.Offset) + Int64(ENT.PackedSize)) > EndSize) then
+        begin
+          FSE_free;
+          NumE := 0;
+          Result := -3;
+          IsError := true;
+          ErrInfo.Format := 'RFH/RFD';
+          ErrInfo.Games := 'Emperor: Battle for Dune';
+          break;
+        end;
+        disp := Strip0(Get0(Hhandle));
         FSE_Add(disp,ENT.Offset,ENT.OriginalSize,ENT.IsPacked,ENT.PackedSize);
         Inc(NumE);
       end;
 
-      FileClose(Chandle);
+      FileClose(Hhandle);
 
-      Result := NumE;
+      if not(IsError) then
+      begin
+        Result := NumE;
 
-      DrvInfo.ID := 'RFH/RFD';
-      DrvInfo.Sch := '\';
-      DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := True;
+        DrvInfo.ID := 'RFH/RFD';
+        DrvInfo.Sch := '\';
+        DrvInfo.FileHandle := FHandle;
+        DrvInfo.ExtractInternal := True;
+      end;
 
     end;
   end
@@ -13269,6 +13387,10 @@ begin
     if (DataX = 2) then
     begin
       DecompressRFDToStream(outputstream, DataY, Size);
+    end
+    else if (DataX = 1) then
+    begin
+      BinCopyToStream(FHandle,outputstream,offset,DataY,0,BUFFER_SIZE,silent,SetPercent);
     end
     else
     begin

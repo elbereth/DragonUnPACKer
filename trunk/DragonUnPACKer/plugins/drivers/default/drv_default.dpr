@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.44 2009-05-20 17:40:32 elbereth Exp $
+// $Id: drv_default.dpr,v 1.45 2009-05-25 19:27:45 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -28,7 +28,7 @@ uses
   spec_HRF in '..\..\..\common\spec_HRF.pas',
   lib_BinUtils in '..\..\..\common\lib_BinUtils.pas',
   lib_bincopy in '..\..\..\common\lib_bincopy.pas',
-  lib_version in '..\..\..\common\lib_version.pas'{,
+  lib_version in '..\..\..\common\lib_version.pas' {,
   class_decompressRA in 'class_decompressRA.pas'};
 
 {$E d5d}
@@ -184,6 +184,7 @@ type FSE = ^element;
                  Added support for Florensia .PAK files
     20640  54041 Added support for The Fifth Element .MRC file
     20711        Added partial support for F1 Manager 2000 .RFC/.RFH/.RFD (unknown compression, not Zlib)
+    20712        Added code to read Vietcong .CBF crypted files (based on GPL C code of Luigi Auriemma cbfext.c)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -202,10 +203,10 @@ type FSE = ^element;
   //////////////////////////////////////////////////////////////////////////// }
 
 const
-  DRIVER_VERSION = 20711;
+  DRIVER_VERSION = 20712;
   DUP_VERSION = 54041;
-  CVS_REVISION = '$Revision: 1.44 $';
-  CVS_DATE = '$Date: 2009-05-20 17:40:32 $';
+  CVS_REVISION = '$Revision: 1.45 $';
+  CVS_DATE = '$Date: 2009-05-25 19:27:45 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -10908,7 +10909,8 @@ End;
 // -------------------------------------------------------------------------- //
 
 type CBFHeader = packed record
-        ID: array[1..8] of Char;  // BIGF 0x00 ZBL
+        ID: array[1..8] of Char;  // BIGF 0x00 ZBL for uncrypted form
+                                  // BIGF 0x01 ZBL for crypted form
         FileSize: int64;
         DirNum: integer;
         DirOffset: int64;
@@ -10959,7 +10961,7 @@ begin
 
       Result := HDR.DirNum;
 
-      DrvInfo.ID := 'CBF';
+      DrvInfo.ID := 'CBF0';
       DrvInfo.Sch := '\';
       DrvInfo.FileHandle := FHandle;
       DrvInfo.ExtractInternal := True;
@@ -10970,8 +10972,194 @@ begin
       FileClose(Fhandle);
       FHandle := 0;
       Result := -3;
-      ErrInfo.Format := 'CBF';
+      ErrInfo.Format := 'CBF0';
       ErrInfo.Games := 'Vietcong MP Demo';
+    end;
+  end
+  else
+    Result := -2;
+
+end;
+
+// CBF Decryption routines --------------------------------------------------------------------------- START //
+//   cbf_head_dec will decrypt header chunks (file info)
+//   cbf_file_dec will decrypt non compressed file data
+// Both procedures are adapted from source code cbfext.c v0.2.1 by Luigi Auriemma
+// Was downloaded from http://aluigi.altervista.org/papers.htm
+// Original source code is licenced under GPL v2 or +.
+
+procedure cbf_head_dec(var chunk: TMemoryStream);
+const key: array[0..15] of byte = (
+                $32, $f3, $1e, $06,
+                $45, $70, $32, $aa,
+                $55, $3f, $f1, $de,
+                $a3, $44, $21, $b4);
+var e, e2, posdata, t: integer;
+    data: byte;
+begin
+
+  posdata := 0;
+  e2 := chunk.Size;
+  for e := chunk.Size downto 1 do
+  begin
+    chunk.Seek(posdata,0);
+    chunk.ReadBuffer(data,1);
+    t := data;
+    data := data xor key[e2 and 15];
+    chunk.Seek(posdata,0);
+    chunk.WriteBuffer(data,1);
+    e2 := t;
+    inc(posdata);
+  end;
+
+end;
+
+procedure cbf_file_dec(var chunk: TMemoryStream; totalsize: integer);
+var t1, t2, data: byte;
+    limit, datapos: integer;
+begin
+
+  t1 := totalsize;
+  t2 := 90 - t1;
+  limit := chunk.Size;
+
+  for datapos := 0 to limit-1 do
+  begin
+    chunk.Seek(datapos,0);
+    chunk.ReadBuffer(data,1);
+    data := (data - t2) xor t1;
+    chunk.Seek(datapos,0);
+    chunk.WriteBuffer(data,1);
+  end;
+
+end;
+
+// CBF Decryption routines ----------------------------------------------------------------------------- END //
+
+procedure DecryptCBFToStream(src : integer; dst : TStream; soff : Int64; ssize : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
+var InFile: THandleStream;
+    Chunk: TMemoryStream;
+    nbchunks,rest,x: integer;
+    per, oldper: byte;
+begin
+
+  InFile := THandleStream.Create(src);
+  InFile.Seek(sOff,0);
+  Chunk := TMemoryStream.Create;
+  nbchunks := sSize div bufsize;
+  rest := sSize - (nbchunks * bufsize);
+  oldper := 0;
+  for x := 1 to nbchunks do
+  begin
+    per := Round((x / nbchunks) * 100);
+    if (per > oldper) then
+    begin
+      DisplayPercent(per);
+      oldper := per;
+    end;
+    Chunk.Clear;
+    Chunk.CopyFrom(InFile,bufSize);
+    cbf_file_dec(Chunk,Ssize);
+    Chunk.Seek(0,0);
+    dst.CopyFrom(chunk,bufSize);
+  end;
+  if rest > 0 then
+  begin
+    Chunk.Clear;
+    Chunk.CopyFrom(InFile,rest);
+    cbf_file_dec(Chunk,Ssize);
+    Chunk.Seek(0,0);
+    dst.CopyFrom(chunk,rest);
+  end;
+  DisplayPercent(100);
+  Chunk.Free;
+  InFile.Free;
+
+end;
+
+procedure DecompressCBFToStream(src : integer; dst : TStream; soff : Int64; ssize : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
+var InFile: THandleStream;
+    Chunk: TMemoryStream;
+    CSize,OSize: integer;
+    per, oldper: byte;
+    Magic: array[0..3] of char;
+begin
+
+  InFile := THandleStream.Create(src);
+  InFile.Seek(sOff,0);
+  InFile.ReadBuffer(Magic,4);
+  InFile.ReadBuffer(CSize,4);
+  InFile.ReadBuffer(OSize,4);
+  Chunk := TMemoryStream.Create;
+  Chunk.CopyFrom(InFile,CSize);
+  Chunk.Seek(0,0);
+//  UnLzw(Chunk,dst);
+  Chunk.Free;
+  InFile.Free;
+
+end;
+
+function ReadVietcongCryptedCBF(src: string): Integer;
+var HDR: CBFHeader;
+    ENT: CBFEntry;
+    disp: string;
+    x: integer;
+    TotSize: int64;
+    Entrysize: word;
+    InFile: THandleStream;
+    Entry: TMemoryStream;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    InFile := THandleStream.Create(FHandle);
+    Entry := TMemoryStream.Create;
+    try
+      InFile.Seek(0,0);
+      InFile.ReadBuffer(HDR,SizeOf(CBFHeader));
+      TotSize := InFile.Size;
+
+      if (HDR.ID = 'BIGF'+#1+'ZBL') and (HDR.FileSize = TotSize) then
+      begin
+
+        InFile.Seek(HDR.DirOffset,0);
+
+        for x := 1 to HDR.DirNum do
+        begin
+          Per := ROund(((x / HDR.DirNum)*100));
+          InFile.ReadBuffer(EntrySize,2);
+          Entry.Clear;
+          Entry.CopyFrom(InFile,EntrySize);
+          cbf_head_dec(Entry);
+          Entry.Seek(0,0);
+          Entry.Read(ENT,SizeOf(ENT));
+          disp := Strip0(get0(Entry));
+          if ENT.CompType <>0 then
+            disp := disp + '.ddc';
+          FSE_Add(disp,ENT.Offset,ENT.Size,ENT.CompSize,ENT.CompType);
+        end;
+
+        Result := HDR.DirNum;
+
+        DrvInfo.ID := 'CBF1';
+        DrvInfo.Sch := '\';
+        DrvInfo.FileHandle := FHandle;
+        DrvInfo.ExtractInternal := True;
+
+      end
+      else
+      begin
+        FileClose(Fhandle);
+        FHandle := 0;
+        Result := -3;
+        ErrInfo.Format := 'CBF1';
+        ErrInfo.Games := 'Vietcong, Vietcong 2';
+      end;
+    finally
+      InFile.Free;
+      Entry.Free;
     end;
   end
   else
@@ -12029,6 +12217,11 @@ begin
       begin
         FileClose(FHandle);
         Result := ReadVietcongCBF(fil);
+      end
+      else if (ID4 = ('BIGF')) and (ID8[4] = #1) and (ID8[5] = 'Z') and (ID8[6] = 'B') and (ID8[7] = 'L') then
+      begin
+        FileClose(FHandle);
+        Result := ReadVietcongCryptedCBF(fil);
       end
       else if (ID4 = ('BIGF')) or (ID4 = ('BIG4')) then
         Result := ReadCommandAndConquerGeneralsBIG
@@ -13484,7 +13677,7 @@ begin
   begin
     DecryptADFToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
   end
-  else if DrvInfo.ID = 'CBF' then
+  else if DrvInfo.ID = 'CBF0' then
   begin
     if (DataY = 1) then
     begin
@@ -13495,6 +13688,18 @@ begin
     else
     begin
       BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+    end;
+  end
+  else if DrvInfo.ID = 'CBF1' then
+  begin
+    if (DataY = 1) then
+    begin
+//      DecompressCBFToStream(FHandle,outputstream,offset,DataX,BUFFER_SIZE,silent,SetPercent);
+      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent);
+    end
+    else
+    begin
+      DecryptCBFToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent,SetPercent);
     end;
   end
 //  else if DrvInfo.ID = 'H4R' then

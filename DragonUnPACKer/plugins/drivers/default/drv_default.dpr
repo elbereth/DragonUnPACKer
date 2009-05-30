@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.45 2009-05-25 19:27:45 elbereth Exp $
+// $Id: drv_default.dpr,v 1.46 2009-05-30 05:52:00 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -205,8 +205,8 @@ type FSE = ^element;
 const
   DRIVER_VERSION = 20712;
   DUP_VERSION = 54041;
-  CVS_REVISION = '$Revision: 1.45 $';
-  CVS_DATE = '$Date: 2009-05-25 19:27:45 $';
+  CVS_REVISION = '$Revision: 1.46 $';
+  CVS_DATE = '$Date: 2009-05-30 05:52:00 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -4269,6 +4269,17 @@ begin
                   dec(SND.Size,40);
                   inc(SND.Offset,40);
                 end
+                else if SND.Size >= 52 then // Assault on Dark Athena
+                begin
+                  FileSeek(Fhandle,SND.Offset+48,0);
+                  FileRead(Fhandle,OggCheck,4);
+                  if strip0(OggCheck) = 'OggS' then
+                  begin
+                    disp := disp + '.ogg';
+                    dec(SND.Size,48);
+                    inc(SND.Offset,48);
+                  end;
+                end;
               end;
             end;
             FSE_Add(disp,SND.Offset,SND.Size,0,0);
@@ -4331,22 +4342,41 @@ begin
 
       Result := NumE;
 
-      if isWave then
+      if Result = 0 then
       begin
-        DrvInfo.ID := 'MOSD';
-        DrvInfo.ExtractInternal := False;
+
+        DrvInfo.Sch := '';
+        DrvInfo.ID := '';
+        DrvInfo.FileHandle := 0;
+
+        if FHandle <> 0 then
+          FileClose(FHandle);
+
+        FHandle := 0;
+        CompressionWindow := 0;
+
       end
       else
       begin
-        if formatCheck <> 512 then
-          DrvInfo.ID := 'MOSDr'
-        else
-          DrvInfo.ID := 'MOSDe';
-        DrvInfo.ExtractInternal := True;
-      end;
 
-      DrvInfo.Sch := '';
-      DrvInfo.FileHandle := FHandle;
+        if isWave then
+        begin
+          DrvInfo.ID := 'MOSD';
+          DrvInfo.ExtractInternal := False;
+        end
+        else
+        begin
+          if formatCheck <> 512 then
+            DrvInfo.ID := 'MOSDr'
+          else
+            DrvInfo.ID := 'MOSDe';
+          DrvInfo.ExtractInternal := True;
+        end;
+
+        DrvInfo.Sch := '';
+        DrvInfo.FileHandle := FHandle;
+
+      end;
 
     end;
   end

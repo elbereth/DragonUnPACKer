@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.46 2009-05-30 05:52:00 elbereth Exp $
+// $Id: drv_default.dpr,v 1.47 2009-05-30 16:40:44 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -185,6 +185,8 @@ type FSE = ^element;
     20640  54041 Added support for The Fifth Element .MRC file
     20711        Added partial support for F1 Manager 2000 .RFC/.RFH/.RFD (unknown compression, not Zlib)
     20712        Added code to read Vietcong .CBF crypted files (based on GPL C code of Luigi Auriemma cbfext.c)
+                 Added support for The Chronicles of Riddick: Dark Athena .XWC & XTC files (some textures are obviously not extracted
+                    to DDS correctly but I don't know why, it is the best I can do...)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -205,8 +207,8 @@ type FSE = ^element;
 const
   DRIVER_VERSION = 20712;
   DUP_VERSION = 54041;
-  CVS_REVISION = '$Revision: 1.46 $';
-  CVS_DATE = '$Date: 2009-05-30 05:52:00 $';
+  CVS_REVISION = '$Revision: 1.47 $';
+  CVS_DATE = '$Date: 2009-05-30 16:40:44 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -4172,6 +4174,28 @@ type MOSChunk = packed record
        Unk15: integer;
        Unk16: word;
      end;
+     MOSTextureEntry2_Init = packed record
+       StopIndicator: integer;      // FFFFFFFF = Not end
+       Empty: Integer;              // Always 0?
+       NameLength: Integer;
+     end;
+     // Get32 texture name padded with spaces to 4 multiple
+     MOSTextureEntry2_Start = packed record
+       MipMapNum: integer;      // Number of mipmap entries
+       Unk: array[1..2] of integer;
+       FirstMipMapSize: integer;
+       Width: integer;
+       Height: integer;
+       Unk2: integer;
+       TextureType: integer;
+       Unk3: integer;
+       Unk4: integer;
+     end;
+     // Offsets: array[1..MipMapNum] of integer;    // Offsets to each mipmap (last offset is always wrong?)
+     MOSTextureEntry2_End = packed record
+       Unk2: array[1..4] of integer;
+       Unk3: word;
+     end;
 
 type MOSDTextureLocalHeader_Init = packed record
        Unk1: integer;
@@ -4200,10 +4224,13 @@ var HDR: MOSChunk;
     TEX2: MOSTextureEntry_End;
     TEXHDR1: MOSDTextureLocalHeader_Init;
     TEXHDR2: MOSDTextureLocalHeader_End;
+    TEXDA1: MOSTextureEntry2_Init;
+    TEXDA2: MOSTextureEntry2_Start;
+    TEXDA3: MOSTextureEntry2_End;
     DirCache: TMemoryStream;
     DirFile: THandleStream;
     disp: string;
-    NumE, x, DirOffset, DirNum, NextOffset, Offset, Per, OldPer, FormatCheck, EntrySize: integer;
+    NumE, x, DirOffset, DirNum, NextOffset, Offset, Per, OldPer, FormatCheck, EntrySize, TextureOffset, MipMapOffset: integer;
 //    fileType, Test1, Test2: integer;
     OggCheck: array[0..3] of char;
     isWave: boolean;
@@ -4286,8 +4313,8 @@ begin
             inc(NumE);
           end;
           isWave := true;
-        end;
-        if (strip0(HDR.ID) = 'TEXTURES') then
+        end
+        else if (strip0(HDR.ID) = 'TEXTURES') then
         begin
           FileSeek(FHandle,8,1);
           FileRead(Fhandle,DirOffset,4);
@@ -4337,6 +4364,74 @@ begin
             else
               FSE_Add(disp,TEX2.Offset,TEX1.FirstMipMapSize,0,0)
           end;
+        end
+        else if (strip0(HDR.ID) = 'IMAGELIST') then  // Textures for The Chronicles of Riddick Assault on Dark Athena
+        begin
+          FormatCheck := 512; // To avoid being detected as Riddick by extraction routine
+          FileSeek(FHandle,4,1);
+          FileRead(Fhandle,DirOffset,4);
+          DirFile := THandleStream.Create(Fhandle);
+          Offset := DirFile.Seek(0,1);
+          DirFile.Seek(DirOffset,0);
+          DirFile.Read(TEXDA1,SizeOf(TEXDA1));
+          while TEXDA1.StopIndicator = -1 do
+          begin
+            disp := Get32(DirFile,TEXDA1.NameLength);
+            if (TEXDA1.NameLength mod 4) > 0 then
+              DirFile.Seek((((Trunc(TEXDA1.NameLength / 4)+1) * 4) - TEXDA1.NameLength),1);
+            MipMapOffset := DirFile.Seek(0,1);
+            DirFile.Read(TEXDA2,SizeOf(TEXDA2));
+            DirFile.Read(TextureOffset,4);
+            inc(NumE);
+            if (TEXDA2.Width > 0) and (TEXDA2.Height > 0) and ((TEXDA2.TextureType = 0) or (TEXDA2.TextureType = 2) or (TEXDA2.TextureType = 4)) then
+              FSE_Add(disp+'.dds',TextureOffset,TEXDA2.FirstMipMapSize,2,MipMapOffset)
+            else
+              FSE_Add(disp,TextureOffset,TEXDA2.FirstMipMapSize,0,0);
+            DirFile.Seek(4*(TEXDA2.MipMapNum-1),1);
+            DirFile.Read(TEXDA3,SizeOf(TEXDA3));
+            DirFile.Read(TEXDA1,SizeOf(TEXDA1));
+          end;
+
+{          DirCache := TMemoryStream.Create;
+          DirCache.CopyFrom(DirFile,Offset-DirOffset-24-56);
+          NextOffset := 0;
+          OldPer := -6;
+          EntrySize := SizeOf(MOSTextureEntry_Init)+SizeOf(MOSTextureEntry_End);
+          if FormatCheck <> 512 then // Riddick?
+            inc(EntrySize,4);
+          for x := 1 to DirNum do
+          begin
+            Per := ROund(((x / DirNum)*100));
+            if (Per > OldPer + 5) then
+            begin
+              SetPercent(Per);
+              OldPer := Per;
+            end;
+            Dircache.Seek(NextOffset,0);
+//            FileSeek(FHandle,NextOffset,0);
+            disp := Get32(DirCache);
+            if (length(disp) mod 4) <> 0 then
+              NextOffset := Dircache.Seek(4 - (Length(disp) mod 4),1)+EntrySize
+            else
+              NextOffset := DirCache.Seek(0,1)+EntrySize;
+            Dircache.Read(TEX1,SizeOf(MOSTextureEntry_Init));
+            if FormatCheck <> 512 then // Riddick?
+              Dircache.Seek(4,1);
+            Dircache.Read(TEX2,SizeOf(MOSTextureEntry_End));
+            inc(NumE);
+            FileSeek(Fhandle,TEX2.Offset,0);
+            FileRead(Fhandle,Offset,4);
+            FileSeek(Fhandle,Offset,0);
+            FileRead(FHandle,TEXHDR1,SizeOf(MOSDTextureLocalHeader_Init));
+            if FormatCheck <> 512 then // Riddick?
+              FileSeek(Fhandle,4,1);
+            FileRead(FHandle,TEXHDR2,SizeOf(MOSDTextureLocalHeader_End));
+
+            if (TEXHDR1.Width > 0) and (TEXHDR1.Height > 0) and ((TEXHDR2.TextureType = 0) or (TEXHDR2.TextureType = 2) or (TEXHDR2.TextureType = 4)) then
+              FSE_Add(disp+'.dds',TEX2.Offset,TEX1.FirstMipMapSize,1,TEX1.MipMapNum)
+            else
+              FSE_Add(disp,TEX2.Offset,TEX1.FirstMipMapSize,0,0)
+          end;}
         end;
       until HDR.NextChunkOffset = 0;
 
@@ -4388,10 +4483,11 @@ end;
 // Function to extract textures from MOS DATAFILE2.0 to DDS
 // Only supports textures types 0, 2 & 4 (DXT1, DXT3 & DXT5)
 // If something weird is found, just do a BinCopy extraction (there are some weird entries in those files...)
-function ExtractMOSDTextureToDDS(outputstream: TStream; Offset, Size: int64; MipMapnum: integer; BufferSize: integer; silent, isRiddick: boolean): boolean;
+function ExtractMOSDTextureToDDS(outputstream: TStream; Offset, Size: int64; MipMapnum: integer; BufferSize: integer; silent, isRiddick, isDarkAthena: boolean): boolean;
 var DDS: DDSHeader;
     TEXHDR1: MOSDTextureLocalHeader_Init;
     TEXHDR2: MOSDTextureLocalHeader_End;
+    TEXDA2: MOSTextureEntry2_Start;
     MipMapOffsets: array of integer;
     inFile: THandleStream;
     x: integer;
@@ -4401,7 +4497,17 @@ begin
 
   inFile := THandleStream.Create(FHandle);
 
-  inFile.Seek(Offset,0);
+  if isDarkAthena then
+  begin
+    inFile.Seek(MipMapNum,0);
+    inFile.Read(TEXDA2,SizeOf(TEXDA2));
+    MipMapNum := TEXDA2.MipMapNum;
+  end
+  else
+  begin
+    inFile.Seek(Offset,0);
+  end;
+
   for x := 0 to MipMapNum - 1 do
     inFile.Read(MipMapOffsets[x],4);
 
@@ -4461,6 +4567,11 @@ begin
       if isRiddick then
         inFile.Seek(4,1);
       inFile.Read(TEXHDR2,SizeOf(MOSDTextureLocalHeader_End));
+      if isDarkAthena then
+        if TEXHDR1.Unk2 = 0 then
+          inFile.seek(MipMapOffsets[x]+36,0)
+        else
+          inFile.Seek(12,1);
       outputstream.CopyFrom(inFile,TEXHDR2.Size);
     end;
 
@@ -13846,8 +13957,8 @@ begin
   end
   else if Leftstr(DrvInfo.ID,4) = 'MOSD' then
   begin
-    if DataX = 1 then
-      ExtractMOSDTextureToDDS(outputstream,Offset,Size,DataY,BUFFER_SIZE,silent,Rightstr(DrvInfo.ID,1)='r')
+    if (DataX = 1) or (DataX = 2) then
+      ExtractMOSDTextureToDDS(outputstream,Offset,Size,DataY,BUFFER_SIZE,silent,Rightstr(DrvInfo.ID,1)='r',DataX=2)
     else
       BinCopyToStream(FHandle,outputstream,offset,size,0,BUFFER_SIZE,silent,SetPercent);
   end

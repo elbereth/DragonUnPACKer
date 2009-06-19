@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.47 2009-05-30 16:40:44 elbereth Exp $
+// $Id: drv_default.dpr,v 1.48 2009-06-19 06:40:35 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -29,7 +29,8 @@ uses
   lib_BinUtils in '..\..\..\common\lib_BinUtils.pas',
   lib_bincopy in '..\..\..\common\lib_bincopy.pas',
   lib_version in '..\..\..\common\lib_version.pas' {,
-  class_decompressRA in 'class_decompressRA.pas'};
+  class_decompressRA in 'class_decompressRA.pas'},
+  lib_unlzw in '..\..\..\common\lib_unlzw.pas';
 
 {$E d5d}
 
@@ -187,6 +188,9 @@ type FSE = ^element;
     20712        Added code to read Vietcong .CBF crypted files (based on GPL C code of Luigi Auriemma cbfext.c)
                  Added support for The Chronicles of Riddick: Dark Athena .XWC & XTC files (some textures are obviously not extracted
                     to DDS correctly but I don't know why, it is the best I can do...)
+    20713        Added decompression code (LZW) for Vietcong CBF files
+                 See lib_unlzw.pas in common folder (based on C source code unlzw.c v0.1.2 by Luigi Auriemma)
+                                                               e-mail: aluigi@autistici.org web: aluigi.org
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -205,10 +209,10 @@ type FSE = ^element;
   //////////////////////////////////////////////////////////////////////////// }
 
 const
-  DRIVER_VERSION = 20712;
+  DRIVER_VERSION = 20713;
   DUP_VERSION = 54041;
-  CVS_REVISION = '$Revision: 1.47 $';
-  CVS_DATE = '$Date: 2009-05-30 16:40:44 $';
+  CVS_REVISION = '$Revision: 1.48 $';
+  CVS_DATE = '$Date: 2009-06-19 06:40:35 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -408,7 +412,7 @@ begin
   GetDriverInfo.Formats[68].Extensions := '*.SFL';
   GetDriverInfo.Formats[68].Name := 'AGON: The Lost Sword of Toledo (*.SFL)';
   GetDriverInfo.Formats[69].Extensions := '*.XWC;.XTC';
-  GetDriverInfo.Formats[69].Name := 'Enclave (*.XTC;*.XWC)|The Chronicles of Riddick: Butcher (*.XTC;*.XWC)';
+  GetDriverInfo.Formats[69].Name := 'Enclave (*.XTC;*.XWC)|The Chronicles of Riddick: Butcher Bay (*.XTC;*.XWC)|The Chronicles of Riddick: Dark Athena (*.XTC;*.XWC)';
   GetDriverInfo.Formats[70].Extensions := '*.COB';
   GetDriverInfo.Formats[70].Name := 'Ascendancy (*.COB)';
   GetDriverInfo.Formats[71].Extensions := '*.MRC';
@@ -11095,8 +11099,8 @@ begin
         Per := ROund(((x / HDR.DirNum)*100));
         FileRead(FHandle,ENT,SizeOf(ENT));
         disp := Strip0(get0(FHandle));
-        if ENT.CompType <>0 then
-          disp := disp + '.ddc';
+//        if ENT.CompType <>0 then
+//          disp := disp + '.ddc';
         FSE_Add(disp,ENT.Offset,ENT.Size,ENT.CompSize,ENT.CompType);
       end;
 
@@ -11231,10 +11235,13 @@ begin
   InFile.ReadBuffer(Magic,4);
   InFile.ReadBuffer(CSize,4);
   InFile.ReadBuffer(OSize,4);
+  if Magic <> '[..]' then
+    Exception.Create('Wrong Magic ID');
+  Dst.Size := OSize;
   Chunk := TMemoryStream.Create;
   Chunk.CopyFrom(InFile,CSize);
   Chunk.Seek(0,0);
-//  UnLzw(Chunk,dst);
+  UnLzw(Chunk,dst);
   Chunk.Free;
   InFile.Free;
 
@@ -11277,8 +11284,8 @@ begin
           Entry.Seek(0,0);
           Entry.Read(ENT,SizeOf(ENT));
           disp := Strip0(get0(Entry));
-          if ENT.CompType <>0 then
-            disp := disp + '.ddc';
+//          if ENT.CompType <>0 then
+//            disp := disp + '.ddc';
           FSE_Add(disp,ENT.Offset,ENT.Size,ENT.CompSize,ENT.CompType);
         end;
 
@@ -13824,7 +13831,8 @@ begin
     begin
 //      FileSeek(FHandle,Offset+12,0);
 //      DecompressZlib(fil, DataX-12, Size);
-      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent);
+//      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent);
+      DecompressCBFToStream(FHandle,outputstream,offset,DataX,BUFFER_SIZE,silent,SetPercent);
     end
     else
     begin
@@ -13835,8 +13843,8 @@ begin
   begin
     if (DataY = 1) then
     begin
-//      DecompressCBFToStream(FHandle,outputstream,offset,DataX,BUFFER_SIZE,silent,SetPercent);
-      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent);
+      DecompressCBFToStream(FHandle,outputstream,offset,DataX,BUFFER_SIZE,silent,SetPercent);
+//      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent);
     end
     else
     begin

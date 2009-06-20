@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.48 2009-06-19 06:40:35 elbereth Exp $
+// $Id: drv_default.dpr,v 1.49 2009-06-20 07:41:03 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -191,6 +191,7 @@ type FSE = ^element;
     20713        Added decompression code (LZW) for Vietcong CBF files
                  See lib_unlzw.pas in common folder (based on C source code unlzw.c v0.1.2 by Luigi Auriemma)
                                                                e-mail: aluigi@autistici.org web: aluigi.org
+    20714        Fixed Vietcong CBF multi-block decompression (only first block was decompressed before).
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -209,10 +210,10 @@ type FSE = ^element;
   //////////////////////////////////////////////////////////////////////////// }
 
 const
-  DRIVER_VERSION = 20713;
+  DRIVER_VERSION = 20714;
   DUP_VERSION = 54041;
-  CVS_REVISION = '$Revision: 1.48 $';
-  CVS_DATE = '$Date: 2009-06-19 06:40:35 $';
+  CVS_REVISION = '$Revision: 1.49 $';
+  CVS_DATE = '$Date: 2009-06-20 07:41:03 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -11222,28 +11223,46 @@ begin
 
 end;
 
-procedure DecompressCBFToStream(src : integer; dst : TStream; soff : Int64; ssize : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
+procedure DecompressCBFToStream(src : integer; dst : TStream; soff : Int64; ssize, totsize : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
 var InFile: THandleStream;
-    Chunk: TMemoryStream;
-    CSize,OSize: integer;
+    Chunk, OutChunk: TMemoryStream;
+    CSize,OSize,OSizeCheck, CopySizeCheck: integer;
     per, oldper: byte;
     Magic: array[0..3] of char;
+    outsize: int64;
 begin
 
   InFile := THandleStream.Create(src);
   InFile.Seek(sOff,0);
-  InFile.ReadBuffer(Magic,4);
-  InFile.ReadBuffer(CSize,4);
-  InFile.ReadBuffer(OSize,4);
-  if Magic <> '[..]' then
-    Exception.Create('Wrong Magic ID');
-  Dst.Size := OSize;
-  Chunk := TMemoryStream.Create;
-  Chunk.CopyFrom(InFile,CSize);
-  Chunk.Seek(0,0);
-  UnLzw(Chunk,dst);
-  Chunk.Free;
+  outsize := 0;
+  Dst.Size := TotSize;
+  Dst.seek(0,0);
+  OutChunk := TMemoryStream.Create;
+  while (outsize <> totsize) and (infile.Position < (soff + ssize)) do
+  begin
+    InFile.ReadBuffer(Magic,4);
+    InFile.ReadBuffer(CSize,4);
+    InFile.ReadBuffer(OSize,4);
+    if Magic <> '[..]' then
+      Exception.Create('Decompression error: Wrong Magic ID');
+    Chunk := TMemoryStream.Create;
+    Chunk.CopyFrom(InFile,CSize);
+    Chunk.Seek(0,0);
+    OutChunk.SetSize(OSize);
+    OSizeCheck := UnLzw(Chunk,OutChunk);
+    if (OSizeCheck <> OSize) then
+      Exception.Create('Decompression error in UnLzw() (expected: '+inttostr(OSize)+' bytes / extracted: '+inttostr(OSizecheck)+')');
+    OutChunk.Seek(0,0);
+    CopysizeCheck := dst.CopyFrom(OutChunk,OSize);
+    if (CopysizeCheck <> OSize) then
+      Exception.Create('Decompression error while Copying from buffer (expected: '+inttostr(OSize)+' bytes / copied: '+inttostr(CopySizecheck)+')');
+    inc(outsize,Osize);
+    Chunk.Free;
+  end;
+  if (outsize <> totSize) then
+    Exception.Create('Decompression error in DecompressCBFToStream() (expected: '+inttostr(totsize)+' bytes / extracted: '+inttostr(outsize)+')');
   InFile.Free;
+  OutChunk.Free;
 
 end;
 
@@ -13832,7 +13851,7 @@ begin
 //      FileSeek(FHandle,Offset+12,0);
 //      DecompressZlib(fil, DataX-12, Size);
 //      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent);
-      DecompressCBFToStream(FHandle,outputstream,offset,DataX,BUFFER_SIZE,silent,SetPercent);
+      DecompressCBFToStream(FHandle,outputstream,offset,DataX,Size,BUFFER_SIZE,silent,SetPercent);
     end
     else
     begin
@@ -13843,7 +13862,7 @@ begin
   begin
     if (DataY = 1) then
     begin
-      DecompressCBFToStream(FHandle,outputstream,offset,DataX,BUFFER_SIZE,silent,SetPercent);
+      DecompressCBFToStream(FHandle,outputstream,offset,DataX,Size,BUFFER_SIZE,silent,SetPercent);
 //      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent);
     end
     else

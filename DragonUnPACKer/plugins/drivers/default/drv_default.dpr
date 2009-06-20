@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.49 2009-06-20 07:41:03 elbereth Exp $
+// $Id: drv_default.dpr,v 1.50 2009-06-20 10:17:50 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -192,6 +192,7 @@ type FSE = ^element;
                  See lib_unlzw.pas in common folder (based on C source code unlzw.c v0.1.2 by Luigi Auriemma)
                                                                e-mail: aluigi@autistici.org web: aluigi.org
     20714        Fixed Vietcong CBF multi-block decompression (only first block was decompressed before).
+    20715        Added support for Prototype .RCF files (thanks to specs by john_doe of Xentax forum)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -205,15 +206,14 @@ type FSE = ^element;
   Game                        Ext.   Description
   Heath: The Unchosen Path    NRM    Extraction problem (maybe some sort of RLE encoding)
                                      Need to fix the unamed file in root
-  Vietcong                    CBF    Unknown decompression code
 
   //////////////////////////////////////////////////////////////////////////// }
 
 const
-  DRIVER_VERSION = 20714;
+  DRIVER_VERSION = 20715;
   DUP_VERSION = 54041;
-  CVS_REVISION = '$Revision: 1.49 $';
-  CVS_DATE = '$Date: 2009-06-20 07:41:03 $';
+  CVS_REVISION = '$Revision: 1.50 $';
+  CVS_DATE = '$Date: 2009-06-20 10:17:50 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -275,7 +275,7 @@ begin
   GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
   GetDriverInfo.Comment := 'This driver support 83 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 71;
+  GetDriverInfo.NumFormats := 72;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -418,6 +418,8 @@ begin
   GetDriverInfo.Formats[70].Name := 'Ascendancy (*.COB)';
   GetDriverInfo.Formats[71].Extensions := '*.MRC';
   GetDriverInfo.Formats[71].Name := 'The Fifth Element (*.MRC)';
+  GetDriverInfo.Formats[72].Extensions := '*.RCF';
+  GetDriverInfo.Formats[72].Name := 'Prototype (*.RCF)|Scarface (*.RCF)';
 //  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
 //  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -8539,6 +8541,134 @@ begin
 end;
 
 // -------------------------------------------------------------------------- //
+// Prototype .RCF support =================================================== //
+// -------------------------------------------------------------------------- //
+
+type RCFHeader = packed record
+       ID: array[0..31] of char;
+       Unknown1: cardinal;
+       Unknown2: cardinal;
+       Unknown3: cardinal;
+       NameOffset: cardinal;
+       Unknown4: cardinal;
+       Unknown5: cardinal;
+       FileCount: cardinal;
+     end;
+     RCFFileBlock = packed record
+       Unknown: cardinal;
+       Offset: cardinal;
+       Size: cardinal;
+     end;
+     RCFFileHeader = packed record
+       ID: array[0..7] of char;
+       OriginalSize: int64;
+     end;
+
+procedure RCFFileBlockSort(var A: array of RCFFileBlock; iLo, iHi: Integer) ;
+var
+  Lo, Hi, Pivot: Integer;
+  T: RCFFileBlock;
+begin
+  Lo := iLo;
+  Hi := iHi;
+  Pivot := A[(Lo + Hi) div 2].Offset;
+  repeat
+    while A[Lo].Offset < Pivot do Inc(Lo) ;
+    while A[Hi].Offset > Pivot do Dec(Hi) ;
+    if Lo <= Hi then
+    begin
+      T := A[Lo];
+      A[Lo] := A[Hi];
+      A[Hi] := T;
+      Inc(Lo) ;
+      Dec(Hi) ;
+    end;
+  until Lo > Hi;
+  if Hi > iLo then RCFFileBlockSort(A, iLo, Hi) ;
+  if Lo < iHi then RCFFileBlockSort(A, Lo, iHi) ;
+end;
+
+function ReadPrototypeRCF(src: string): integer;
+var HDR: RCFHeader;
+    FileBlock: array of RCFFileBlock;
+    inFile: THandleStream;
+    Buffer: TMemoryStream;
+    x, namelen: cardinal;
+    disp: string;
+    compressedEntries: boolean;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileSeek(Fhandle, 0, 0);
+    inFile := THandleStream.Create(FHandle);
+    inFile.ReadBuffer(HDR, SizeOf(RCFHeader));
+
+    if (Strip0(HDR.ID) <> 'ATG CORE CEMENT LIBRARY') or (HDR.ID[31] <> #0)
+    or (HDR.ID[23] <> #0) or (HDR.ID[24] <> #0) or (HDR.ID[25] <> #0) or (HDR.ID[26] <> #0)
+    or (HDR.ID[27] <> #0) or (HDR.ID[28] <> #0) or (HDR.ID[29] <> #0) or (HDR.ID[30] <> #0)
+    or (HDR.NameOffset > inFile.Size) or ((HDR.NameOffset + (HDR.FileCount * SizeOf(RCFFileBlock))) > inFile.Size) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'RCF';
+      ErrInfo.Games := 'Prototype, Scarface, The Incredible Hulk: Ultimate Destruction';
+    end
+    else
+    begin
+
+      Setlength(FileBlock,HDR.FileCount);
+
+      Buffer := TMemoryStream.Create;
+      Buffer.CopyFrom(inFile,HDR.FileCount * SizeOf(RCFFileBlock));
+      Buffer.Seek(0,0);
+
+      for x := 0 to HDR.FileCount-1 do
+        Buffer.ReadBuffer(FileBlock[x],SizeOf(RCFFileBlock));
+
+      RCFFileBlockSort(FileBlock,Low(FileBlock),High(Fileblock));
+
+      inFile.Seek(HDR.NameOffset+4,0);
+
+      compressedEntries := false;
+
+      for x := 0 to HDR.FileCount-1 do
+      begin
+        inFile.Seek(16,1);
+        inFile.ReadBuffer(nameLen,4);
+        disp := get32(inFile,nameLen-1);
+        if (disp[1] = '\') then
+          disp := RightStr(disp,Length(Disp)-1);
+        if lowercase(RightStr(disp,3)) = '.rz' then
+        begin
+          compressedEntries := true;
+          disp := Leftstr(disp,length(disp)-3);
+          FSE_Add(Disp,FileBlock[x].Offset,FileBlock[x].Size,1,0);
+        end
+        else
+          FSE_Add(Disp,FileBlock[x].Offset,FileBlock[x].Size,0,0);
+      end;
+
+      Result := HDR.FileCount;
+
+      DrvInfo.ID := 'RCF';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := compressedEntries;
+
+    end;
+
+    inFile.Free;
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
 // Quake .PAK support ======================================================= //
 // -------------------------------------------------------------------------- //
 
@@ -12436,6 +12566,14 @@ begin
         FileClose(FHandle);
         ReadFormat := ReadUFOAftermathVFS(fil);
       end
+      // Scarface & Prototype .RCF
+      else if (ID23 = 'ATG CORE CEMENT LIBRARY')
+          and (ID36[24] = #0) and (ID36[25] = #0) and (ID36[26] = #0) and (ID36[27] = #0) and (ID36[28] = #0)
+          and (ID36[29] = #0) and (ID36[30] = #0) and (ID36[31] = #0) and (ID36[23] = #0) then
+      begin
+        FileClose(FHandle);
+        Result := ReadPrototypeRCF(fil)
+      end
       else
       begin
         Result := 0;
@@ -12548,6 +12686,9 @@ begin
       ReadFormat := ReadHubPOD(fil)
     else if ext = 'PRM' then
       Result := ReadHitmanContractsPRM(fil)
+    // Scarface & Prototype .RCF
+    else if ext = 'RCF' then
+      Result := ReadPrototypeRCF(fil)
     else if ext = 'RES' then
       ReadFormat := ReadHubRES(fil)
     else if ext = 'REZ' then
@@ -12818,6 +12959,11 @@ begin
       Result := true
     else if ID8 = 'FILECHNK' then
       Result := true
+    // Scarface & Prototype .RCF
+    else if (ID23 = 'ATG CORE CEMENT LIBRARY')
+        and (ID36[24] = #0) and (ID36[25] = #0) and (ID36[26] = #0) and (ID36[27] = #0) and (ID36[28] = #0)
+        and (ID36[29] = #0) and (ID36[30] = #0) and (ID36[31] = #0) and (ID36[23] = #0) then
+      Result := true
     else if ID4 = ('JAM2') then     // Leisure Suit Larry - Magna Cum Laude
       Result := true
     else if ID4 = ('DTA_') then
@@ -13049,6 +13195,9 @@ begin
       IsFormat := True
     // Hitman: Contracts .PRM
     else if ext = 'PRM' then
+      IsFormat := True
+    // Scarface & Prototype .RCF
+    else if ext = 'RCF' then
       IsFormat := True
     else if ext = 'RES' then
       IsFormat := True
@@ -13598,6 +13747,24 @@ begin
 
 End;
 
+function DecompressRCFToStream(outputstream: TStream; offset,size: int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback): boolean;
+var HDR: RCFFileHeader;
+begin
+
+  FileSeek(FHandle,Offset,0);
+  FileRead(FHandle,HDR,SizeOf(RCFFileHeader));
+  if (strip0(HDR.ID) = 'RZ') and (HDR.ID[2] = #0) and (HDR.ID[3] = #0)
+  and (HDR.ID[4] = #0) and (HDR.ID[5] = #0) and (HDR.ID[6] = #0) and (HDR.ID[7] = #0) then
+  begin
+    DecompressZlibToStream(outputstream,offset+16,HDR.OriginalSize);
+  end
+  else
+  begin
+    BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+  end;
+
+end;
+
 procedure AboutBox; stdcall;
 begin
 
@@ -13762,6 +13929,17 @@ begin
     if (DataX = 1) then
     begin
       DecompressZlibToStream(outputstream, DataY, Size);
+    end
+    else
+    begin
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+    end;
+  end
+  else if DrvInfo.ID = 'RCF' then
+  begin
+    if (DataX = 1) then
+    begin
+      DecompressRCFToStream(outputstream,offset,size,BUFFER_SIZE,silent,SetPercent);
     end
     else
     begin

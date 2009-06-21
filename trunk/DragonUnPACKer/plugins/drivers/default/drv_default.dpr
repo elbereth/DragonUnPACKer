@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.50 2009-06-20 10:17:50 elbereth Exp $
+// $Id: drv_default.dpr,v 1.51 2009-06-21 20:24:33 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -193,6 +193,7 @@ type FSE = ^element;
                                                                e-mail: aluigi@autistici.org web: aluigi.org
     20714        Fixed Vietcong CBF multi-block decompression (only first block was decompressed before).
     20715        Added support for Prototype .RCF files (thanks to specs by john_doe of Xentax forum)
+    20716        Added much needed sanity checks to .BIN & .DAT file formats
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -210,10 +211,10 @@ type FSE = ^element;
   //////////////////////////////////////////////////////////////////////////// }
 
 const
-  DRIVER_VERSION = 20715;
+  DRIVER_VERSION = 20716;
   DUP_VERSION = 54041;
-  CVS_REVISION = '$Revision: 1.50 $';
-  CVS_DATE = '$Date: 2009-06-20 10:17:50 $';
+  CVS_REVISION = '$Revision: 1.51 $';
+  CVS_DATE = '$Date: 2009-06-21 20:24:33 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -2796,6 +2797,16 @@ begin
           SetPercent(Per);
           FileRead(FHandle,ENT,SizeOf(BIN_Entry));
           CurOffset := FileSeek(FHandle,0,1);
+          if (ENT.Offset > TotFSize) or ((ENT.Offset + ENT.Size) > TotFSize) then
+          begin
+            FileClose(Fhandle);
+            FSE_Free;
+            FHandle := 0;
+            Result := -3;
+            ErrInfo.Format := 'CBIN';
+            ErrInfo.Games := 'CyberBykes, Shadow Racer VR';
+            exit;
+          end;
           FileSeek(FHandle,ENT.Offset,0);
           FileRead(FHandle,preval,4);
           FileSeek(FHandle,curOffset,0);
@@ -4900,6 +4911,18 @@ begin
 
   // Read & seek to the offset to the directory structure
   FileRead(FHandle, DirOffset, 4);
+
+  // Sanity check
+  if (DirOffset <= 4) or (DirOffset > TotFSize) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'F22DAT';
+    ErrInfo.Games := 'F22 ADF';
+    exit;
+  end;
+
   FileSeek(Fhandle, DirOffset,0);
 
   // Read the number of entries
@@ -4911,6 +4934,17 @@ begin
   // Read the size of the directory+extension names block
   FileRead(FHandle, NameSize,2);
 
+  // Sanity check
+  if (DirOffset+NameSize+8) > TotFSize then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'F22DAT';
+    ErrInfo.Games := 'F22 ADF';
+    exit;
+  end;
+
   // Read the directory names
   setLength(DirNames,DirNameNum);
   for x := 1 to DirNameNum do
@@ -4920,6 +4954,17 @@ begin
   setLength(ExtNames,ExtNameNum);
   for x := 1 to ExtNameNum do
     ExtNames[x-1] := Get8(Fhandle);
+
+  // Sanity check
+  if (FileSeek(FHandle,0,1) > DirOffset+NameSize+8) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'F22DAT';
+    ErrInfo.Games := 'F22 ADF';
+    exit;
+  end;
 
   // Just to be sure, we calculate the offset of the entries and seek there
   EntOffset := DirOffset+NameSize+8;
@@ -4945,6 +4990,19 @@ begin
     FileRead(FHandle,ENT,SizeOf(F22adfDAT_Entry));
     FileSeek(FHandle,ENT.Offset,0);
     FileRead(FHandle,test,2);
+
+    // Sanity check
+    if (ENT.Offset < 0) or (ENT.Offset > TotFSize)
+    or (ENT.Size < 0) or (ENT.Size > TotFSize) or ((ENT.Offset + ENT.Size) > TotFSize) then
+    begin
+      FileClose(Fhandle);
+      FSE_Free();
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'F22DAT';
+      ErrInfo.Games := 'F22 ADF';
+      exit;
+    end;
 
     if test = 'RA' then
       FSE_Add(IntToHex(ENT.Hash,8)+'.RA',ENT.Offset,ENT.Size,0,0)
@@ -6873,25 +6931,72 @@ var HDR: LEGODAT_Header;
     stmNames: TMemoryStream;
     stmSource: THandleStream;
     disp: string;
-    x, y, EntrySize, DirTableSize, NamesSize: integer;
+    x, y, EntrySize, DirTableSize, NamesSize, TotFSize: integer;
     ENT: array of LEGODAT_Entry;
     DIR: array of LEGODAT_Directory;
     dirname: array of string;
 begin
 
+  TotFSize := FileSeek(FHandle, 0, 2);
   FileSeek(Fhandle, 0, 0);
   FileRead(FHandle, HDR, 8);
+
+  if (HDR.DirOffset+4 > TotFSize) or (HDR.DirSize < 0) or (HDR.DirOffset < 0)
+  or ((HDR.DirOffset+HDR.DirSize) > TotFSize) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'LEGODAT';
+    ErrInfo.Games := 'LEGO Star Wars';
+    exit;
+  end;
 
   FileSeek(FHandle,HDR.DirOffset+4,0);
   FileRead(FHandle,EntrySize,4);
 
+  // Sanity check entries should be between 1 and 100000
+  if (EntrySize <= 0) or (EntrySize > 100000) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'LEGODAT';
+    ErrInfo.Games := 'LEGO Star Wars';
+    exit;
+  end;
+
   setLength(ENT,EntrySize);
 
   for x := 0 to EntrySize-1 do
+  begin
     FileRead(FHandle,ENT[x],16);
+    // Sanity check, the Offset & Size of the entry should be into the file
+    if (ENT[x].Offset > TotFSize) or (ENT[x].Size < 0) or (ENT[x].Offset < 0)
+    or ((ENT[x].Offset+ENT[x].Size) > TotFSize) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'LEGODAT';
+      ErrInfo.Games := 'LEGO Star Wars';
+      exit;
+    end;
+  end;
 
   //FileSeek(FHandle,EntrySize*16,1);
   FileRead(FHandle,DirTableSize,4);
+
+  // Sanity check DirTableSize should be between 1 and 100000
+  if (DirTableSize <= 0) or (DirTableSize > 100000) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'LEGODAT';
+    ErrInfo.Games := 'LEGO Star Wars';
+    exit;
+  end;
 
   setLength(DIR,DirTableSize);
 
@@ -6901,6 +7006,17 @@ begin
   end;
 
   FileRead(FHandle,NamesSize,4);
+
+  // NamesSize should not exceed EOF
+  if (NamesSize < 0) or (NamesSize > TotFSize) or ((FileSeek(FHandle,0,1)+NamesSize) > TotFSize) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'LEGODAT';
+    ErrInfo.Games := 'LEGO Star Wars';
+    exit;
+  end;
 
   stmNames := TMemoryStream.Create;
   stmSource := THandleStream.Create(FHandle);
@@ -7857,7 +7973,7 @@ begin
   FileSeek(Fhandle, 0, 0);
   FileRead(FHandle, DirNum, 2);
 
-  if ((DirNum > 1000) or (DirNum < 1)) then
+  if ((DirNum * SizeOf(NascarDAT_Entry)) > TotFSize) then
   begin
     FileClose(Fhandle);
     FHandle := 0;
@@ -7877,6 +7993,19 @@ begin
       FileRead(FHandle,ENT.Size2,4);
       FileRead(FHandle,ENT.Filename,13);
       FileRead(FHandle,ENT.Offset,4);
+
+      if (ENT.Offset > TotFSize) or (ENT.Offset < (2+SizeOf(NascarDAT_Entry)*NumE)) or (ENT.Size < 0)
+      or (ENT.Offset + ENT.Size > TotFSize) then
+      begin
+        FileClose(Fhandle);
+        FHandle := 0;
+        Result := -3;
+        ErrInfo.Format := 'DAT';
+        ErrInfo.Games := 'Nascar Racing';
+        FSE_Free();
+        NumE := 0;
+        exit;
+      end;
 
       FSE_Add(Strip0(ENT.Filename),ENT.Offset,ENT.Size,0,0);
 

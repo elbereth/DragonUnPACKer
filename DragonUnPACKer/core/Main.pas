@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.18 2009-04-26 08:37:15 elbereth Exp $
+// $Id: Main.pas,v 1.19 2009-06-21 19:47:43 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -2830,14 +2830,25 @@ begin
             dup5Main.appendLogVerbose(2,ReplaceValue('%f',DLNGStr('PRV008'),uppercase(foundFormat)));
 
             dup5Main.appendLogVerbose(2,'... '+DLNGStr('PRV004')+'...');
-            FPreviewImage.LoadMultiFromStream(stmSource);
-            dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV005')+'...');
-            FPreviewImage.ActiveImage := 0;
-            isPreviewImage := true;
-            scrollPreview.Visible := isPreviewImage;
-            ImgPreview.Picture.Graphic.Assign(FPreviewImage);
-            ImgPreview.Refresh;
-            dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV006'));
+            try
+              FPreviewImage.LoadMultiFromStream(stmSource);
+              dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV005')+'...');
+              FPreviewImage.ActiveImage := 0;
+              isPreviewImage := true;
+              scrollPreview.Visible := isPreviewImage;
+              ImgPreview.Picture.Graphic.Assign(FPreviewImage);
+              ImgPreview.Refresh;
+              dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV006'));
+            except
+              on E: EImagingError do
+              begin
+                dup5Main.writeLogVerbose(0,DLNGStr('PRV002')+' '+E.Message);
+                dup5Main.colorLogVerbose(0,clRed); 
+                isPreviewImage := false;
+                scrollPreview.Visible := isPreviewImage;
+                imgPreview.Refresh;
+              end;
+            end;
 
           end
           else
@@ -2857,17 +2868,29 @@ begin
                 stmSource.Seek(0,soFromBeginning);
                 CPlug.Plugins[CList.List[i].Plugin].ConvertStream(stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true);
                 stmBitmap.Seek(0,soFromBeginning);
-                dup5Main.appendLogVerbose(2,'... '+DLNGStr('PRV004')+'...');
-                FPreviewImage.LoadMultiFromStream(stmBitmap);
-                dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV005')+'...');
-                FPreviewImage.ActiveImage := 0;
-                isPreviewImage := true;
-                ImgPreview.Picture.Graphic.Assign(FPreviewImage);
-                scrollPreview.Visible := isPreviewImage;
-                ImgPreview.Refresh;
-                dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV006'));
 
-                break;
+                try
+                  dup5Main.appendLogVerbose(2,'... '+DLNGStr('PRV004')+'...');
+                  FPreviewImage.LoadMultiFromStream(stmBitmap);
+                  dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV005')+'...');
+                  FPreviewImage.ActiveImage := 0;
+                  isPreviewImage := true;
+                  ImgPreview.Picture.Graphic.Assign(FPreviewImage);
+                  scrollPreview.Visible := isPreviewImage;
+                  ImgPreview.Refresh;
+                  dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV006'));
+
+                  break;
+                except
+                  on E: EImagingError do
+                  begin
+                    dup5Main.writeLogVerbose(0,DLNGStr('PRV002')+' '+E.Message);
+                    dup5Main.colorLogVerbose(0,clRed);
+                    isPreviewImage := false;
+                    scrollPreview.Visible := isPreviewImage;
+                    imgPreview.Refresh;
+                  end;
+                end;
               end;
             end;
 

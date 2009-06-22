@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.51 2009-06-21 20:24:33 elbereth Exp $
+// $Id: drv_default.dpr,v 1.52 2009-06-22 05:50:29 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -193,7 +193,7 @@ type FSE = ^element;
                                                                e-mail: aluigi@autistici.org web: aluigi.org
     20714        Fixed Vietcong CBF multi-block decompression (only first block was decompressed before).
     20715        Added support for Prototype .RCF files (thanks to specs by john_doe of Xentax forum)
-    20716        Added much needed sanity checks to .BIN & .DAT file formats
+    20740        Added much needed sanity checks to .BIN & .DAT file formats
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -211,10 +211,10 @@ type FSE = ^element;
   //////////////////////////////////////////////////////////////////////////// }
 
 const
-  DRIVER_VERSION = 20716;
+  DRIVER_VERSION = 20740;
   DUP_VERSION = 54041;
-  CVS_REVISION = '$Revision: 1.51 $';
-  CVS_DATE = '$Date: 2009-06-21 20:24:33 $';
+  CVS_REVISION = '$Revision: 1.52 $';
+  CVS_DATE = '$Date: 2009-06-22 05:50:29 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;

@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.52 2009-06-22 05:50:29 elbereth Exp $
+// $Id: drv_default.dpr,v 1.53 2009-06-26 05:26:40 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -194,6 +194,7 @@ type FSE = ^element;
     20714        Fixed Vietcong CBF multi-block decompression (only first block was decompressed before).
     20715        Added support for Prototype .RCF files (thanks to specs by john_doe of Xentax forum)
     20740        Added much needed sanity checks to .BIN & .DAT file formats
+    20741        Fixed Total Annihilation HPI extraction when compression is Zlib (Exception Access Violation)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -211,10 +212,10 @@ type FSE = ^element;
   //////////////////////////////////////////////////////////////////////////// }
 
 const
-  DRIVER_VERSION = 20740;
+  DRIVER_VERSION = 20741;
   DUP_VERSION = 54041;
-  CVS_REVISION = '$Revision: 1.52 $';
-  CVS_DATE = '$Date: 2009-06-22 05:50:29 $';
+  CVS_REVISION = '$Revision: 1.53 $';
+  CVS_DATE = '$Date: 2009-06-26 05:26:40 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -10994,7 +10995,7 @@ begin
 //            FileWrite(fil,DecompBuffer^,HDR.DecompressedSize);
 //            FreeMem(DecompBuffer);
           finally
-            OutputStream.Free;
+            //OutputStream.Free;
           end;
           //ShowMessage(IntToStr(FinalSize));
         end;

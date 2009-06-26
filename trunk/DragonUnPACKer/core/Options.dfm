@@ -17,128 +17,6 @@ object frmConfig: TfrmConfig
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
-  object tabPluginsInfos: TPanel
-    Left = 184
-    Top = 8
-    Width = 449
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 10
-    Visible = False
-    object grpPluginsInfo: TGroupBox
-      Left = 0
-      Top = 0
-      Width = 441
-      Height = 281
-      Caption = 'Plugins'
-      TabOrder = 0
-      object lblPluginsConvert: TLabel
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 13
-        AutoSize = False
-        Caption = 'Convert plugins:'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = [fsUnderline]
-        ParentFont = False
-      end
-      object lblPluginsDrivers: TLabel
-        Left = 8
-        Top = 112
-        Width = 425
-        Height = 13
-        AutoSize = False
-        Caption = 'Drivers plugins:'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = [fsUnderline]
-        ParentFont = False
-      end
-      object lblPluginsHyperRipper: TLabel
-        Left = 8
-        Top = 208
-        Width = 425
-        Height = 13
-        AutoSize = False
-        Caption = 'HyperRipper plugins:'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = [fsUnderline]
-        ParentFont = False
-      end
-      object panPluginsConvert: TPanel
-        Left = 8
-        Top = 32
-        Width = 425
-        Height = 65
-        BevelOuter = bvLowered
-        TabOrder = 0
-        object lblPluginsConvertInfo: TLabel
-          Left = 1
-          Top = 1
-          Width = 423
-          Height = 63
-          Align = alClient
-          AutoSize = False
-          Caption = 
-            'Those plugins will handle the convertion of file formats when ex' +
-            'tracting or previewing files. Example: Convert textures from .AR' +
-            'T file format to .BMP'
-          WordWrap = True
-        end
-      end
-      object panPluginsDrivers: TPanel
-        Left = 8
-        Top = 128
-        Width = 425
-        Height = 65
-        BevelOuter = bvLowered
-        TabOrder = 1
-        object lblPluginsDriversInfo: TLabel
-          Left = 1
-          Top = 1
-          Width = 423
-          Height = 63
-          Align = alClient
-          AutoSize = False
-          Caption = 
-            'Those plugins handle opening file formats so Dragon UnPACKer can' +
-            ' browse into them. If a file is not supported that means no driv' +
-            'er plugin could load it. HyperRipper handle files with another t' +
-            'ype of plugins (see below).'
-          WordWrap = True
-        end
-      end
-      object panPluginsHyperRipper: TPanel
-        Left = 8
-        Top = 224
-        Width = 425
-        Height = 49
-        BevelOuter = bvLowered
-        TabOrder = 2
-        object lblPluginsHyperRipperInfo: TLabel
-          Left = 1
-          Top = 1
-          Width = 423
-          Height = 47
-          Align = alClient
-          AutoSize = False
-          Caption = 
-            'Those plugins handle the file format to scan in HyperRipper (ex:' +
-            ' MPEG Audio, BMP, etc..)'
-          WordWrap = True
-        end
-      end
-    end
-  end
   object tabBasic: TPanel
     Left = 184
     Top = 8
@@ -304,7 +182,7 @@ object frmConfig: TfrmConfig
     Width = 449
     Height = 281
     BevelOuter = bvNone
-    TabOrder = 8
+    TabOrder = 7
     object grpLogVerbose: TGroupBox
       Left = 0
       Top = 200
@@ -366,7 +244,7 @@ object frmConfig: TfrmConfig
     Width = 449
     Height = 281
     BevelOuter = bvNone
-    TabOrder = 9
+    TabOrder = 8
     Visible = False
     object grpAdvOpenFile: TGroupBox
       Left = 0
@@ -491,7 +369,7 @@ object frmConfig: TfrmConfig
     Width = 449
     Height = 281
     BevelOuter = bvNone
-    TabOrder = 11
+    TabOrder = 10
     Visible = False
     object grpPreviewBasic: TGroupBox
       Left = 0
@@ -944,184 +822,6 @@ object frmConfig: TfrmConfig
       end
     end
   end
-  object tabHyperRipper: TPanel
-    Left = 184
-    Top = 8
-    Width = 441
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 7
-    Visible = False
-    object lblHR: TLabel
-      Left = 0
-      Top = 0
-      Width = 265
-      Height = 13
-      AutoSize = False
-      Caption = 'HyperRipper plugins:'
-    end
-    object cmdHRSetup: TButton
-      Left = 366
-      Top = 0
-      Width = 75
-      Height = 17
-      Caption = 'Setup'
-      Enabled = False
-      TabOrder = 0
-      OnClick = cmdHRSetupClick
-      OnKeyDown = FormKeyDown
-    end
-    object grpHRInfo: TGroupBox
-      Left = 0
-      Top = 144
-      Width = 305
-      Height = 137
-      Caption = 'Driver Info'
-      TabOrder = 1
-      object strHRInfoAuthor: TLabel
-        Left = 8
-        Top = 32
-        Width = 65
-        Height = 13
-        Alignment = taRightJustify
-        AutoSize = False
-        Caption = 'Author:'
-      end
-      object lblHRInfoAuthor: TLabel
-        Left = 80
-        Top = 32
-        Width = 217
-        Height = 13
-        AutoSize = False
-      end
-      object strHRInfoVersion: TLabel
-        Left = 8
-        Top = 16
-        Width = 65
-        Height = 13
-        Alignment = taRightJustify
-        AutoSize = False
-        Caption = 'Version:'
-      end
-      object lblHRInfoVersion: TLabel
-        Left = 80
-        Top = 16
-        Width = 217
-        Height = 13
-        AutoSize = False
-      end
-      object strHRInfoComments: TLabel
-        Left = 8
-        Top = 48
-        Width = 65
-        Height = 13
-        Alignment = taRightJustify
-        AutoSize = False
-        Caption = 'Comments:'
-      end
-      object Panel5: TPanel
-        Left = 80
-        Top = 48
-        Width = 217
-        Height = 81
-        BevelInner = bvLowered
-        BevelOuter = bvNone
-        TabOrder = 0
-        object lblHRInfoComments: TLabel
-          Left = 1
-          Top = 1
-          Width = 215
-          Height = 79
-          AutoSize = False
-          WordWrap = True
-        end
-      end
-    end
-    object cmdHRAbout: TButton
-      Left = 288
-      Top = 0
-      Width = 75
-      Height = 17
-      Caption = 'About'
-      Enabled = False
-      TabOrder = 2
-      OnClick = cmdHRAboutClick
-      OnKeyDown = FormKeyDown
-    end
-    object lstHR2: TListView
-      Left = 0
-      Top = 24
-      Width = 441
-      Height = 113
-      Columns = <
-        item
-          Caption = 'Plugin name'
-          Width = 250
-        end
-        item
-          Caption = 'Version'
-          Width = 105
-        end
-        item
-          Caption = 'Filename'
-          Width = 65
-        end>
-      ColumnClick = False
-      HideSelection = False
-      ReadOnly = True
-      RowSelect = True
-      TabOrder = 3
-      ViewStyle = vsReport
-      OnChange = lstHR2Change
-      OnKeyDown = FormKeyDown
-    end
-    object grpHRAdvInfo: TGroupBox
-      Left = 312
-      Top = 144
-      Width = 129
-      Height = 137
-      Caption = 'Advanced Info'
-      TabOrder = 4
-      object lblDUHI: TLabel
-        Left = 8
-        Top = 18
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'DUHI :'
-      end
-      object lblHIntVer: TLabel
-        Left = 8
-        Top = 37
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'Int.Ver. :'
-      end
-      object txtDUHI: TStaticText
-        Left = 64
-        Top = 16
-        Width = 58
-        Height = 17
-        Alignment = taCenter
-        AutoSize = False
-        BorderStyle = sbsSingle
-        Caption = '-'
-        TabOrder = 0
-      end
-      object txtHIntVer: TStaticText
-        Left = 64
-        Top = 35
-        Width = 58
-        Height = 17
-        Alignment = taCenter
-        AutoSize = False
-        BorderStyle = sbsSingle
-        Caption = '-'
-        TabOrder = 1
-      end
-    end
-  end
   object tabConvert: TPanel
     Left = 184
     Top = 8
@@ -1456,6 +1156,94 @@ object frmConfig: TfrmConfig
       OnClick = lstTypesClick
     end
   end
+  object tabPluginsInfos: TPanel
+    Left = 184
+    Top = 8
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 9
+    Visible = False
+    object grpPluginsInfo: TGroupBox
+      Left = 0
+      Top = 0
+      Width = 441
+      Height = 281
+      Caption = 'Plugins'
+      TabOrder = 0
+      object lblPluginsConvert: TLabel
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 13
+        AutoSize = False
+        Caption = 'Convert plugins:'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsUnderline]
+        ParentFont = False
+      end
+      object lblPluginsDrivers: TLabel
+        Left = 8
+        Top = 152
+        Width = 425
+        Height = 13
+        AutoSize = False
+        Caption = 'Drivers plugins:'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsUnderline]
+        ParentFont = False
+      end
+      object panPluginsConvert: TPanel
+        Left = 8
+        Top = 32
+        Width = 425
+        Height = 105
+        BevelOuter = bvLowered
+        TabOrder = 0
+        object lblPluginsConvertInfo: TLabel
+          Left = 1
+          Top = 1
+          Width = 423
+          Height = 103
+          Align = alClient
+          AutoSize = False
+          Caption = 
+            'Those plugins will handle the convertion of file formats when ex' +
+            'tracting or previewing files. Example: Convert textures from .AR' +
+            'T file format to .BMP'
+          WordWrap = True
+        end
+      end
+      object panPluginsDrivers: TPanel
+        Left = 8
+        Top = 170
+        Width = 425
+        Height = 103
+        BevelOuter = bvLowered
+        TabOrder = 1
+        object lblPluginsDriversInfo: TLabel
+          Left = 1
+          Top = 1
+          Width = 423
+          Height = 101
+          Align = alClient
+          AutoSize = False
+          Caption = 
+            'Those plugins handle opening file formats so Dragon UnPACKer can' +
+            ' browse into them. If a file is not supported that means no driv' +
+            'er plugin could load it. HyperRipper handle files with another t' +
+            'ype of plugins (see below).'
+          WordWrap = True
+        end
+      end
+    end
+  end
   object cmdOk: TButton
     Left = 8
     Top = 264
@@ -1489,14 +1277,13 @@ object frmConfig: TfrmConfig
       054261736963210000000F0000000F000000FFFFFFFFFFFFFFFF000000000000
       000008416476616E6365641C0000001000000010000000FFFFFFFFFFFFFFFF00
       00000000000000034C6F67200000000600000006000000FFFFFFFFFFFFFFFF00
-      0000000300000007506C7567696E73200000000900000009000000FFFFFFFFFF
+      0000000200000007506C7567696E73200000000900000009000000FFFFFFFFFF
       FFFFFF000000000000000007436F6E76657274200000000A0000000A000000FF
-      FFFFFFFFFFFFFF00000000000000000744726976657273240000000B0000000B
-      000000FFFFFFFFFFFFFFFF00000000000000000B48797065725269707065721D
-      0000000800000008000000FFFFFFFFFFFFFFFF0000000000000000044C6F6F6B
-      250000000700000007000000FFFFFFFFFFFFFFFF00000000000000000C417373
-      6F63696174696F6E73200000001100000011000000FFFFFFFFFFFFFFFF000000
-      00000000000750726576696577}
+      FFFFFFFFFFFFFF000000000000000007447269766572731D0000000800000008
+      000000FFFFFFFFFFFFFFFF0000000000000000044C6F6F6B2500000007000000
+      07000000FFFFFFFFFFFFFFFF00000000000000000C4173736F63696174696F6E
+      73200000001100000011000000FFFFFFFFFFFFFFFF0000000000000000075072
+      6576696577}
   end
   object imgLstLangue: TImageList
     BlendColor = clBlack

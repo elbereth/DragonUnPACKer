@@ -1,6 +1,6 @@
 unit List;
 
-// $Id: List.pas,v 1.3 2004-07-17 19:30:31 elbereth Exp $
+// $Id: List.pas,v 1.4 2009-06-26 21:05:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/List.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -96,7 +96,7 @@ begin
 
   for x := 1 to numDUHT do
     if lstDUHT[x] <> nil then
-      lstDUHT[x].Free;
+      FreeAndNil(lstDUHT[x]);
 
   numDUHT := 0;
 
@@ -160,7 +160,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   pth := extractfilepath(Application.ExeName);
@@ -211,7 +211,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -301,8 +301,8 @@ begin
       ss.CopyFrom(mem,size);
       ss.Seek(0,SoFromBeginning);
       header := ss.ReadString(size);
-      mem.free;
-      ss.Free;
+      FreeAndNil(mem);
+      FreeAndNil(ss);
     end
     else
       header := '';
@@ -319,8 +319,8 @@ begin
       ss.CopyFrom(mem,size);
       ss.Seek(0,SoFromBeginning);
       footer := ss.ReadString(size);
-      mem.free;
-      ss.Free;
+      FreeAndNil(mem);
+      FreeAndNil(ss);
     end
     else
       footer := '';
@@ -337,8 +337,8 @@ begin
       ss.CopyFrom(mem,size);
       ss.Seek(0,SoFromBeginning);
       varstart := ss.ReadString(size);
-      mem.free;
-      ss.Free;
+      FreeAndNil(mem);
+      FreeAndNil(ss);
     end
     else
     begin
@@ -487,7 +487,7 @@ begin
         OutBuf.Seek(0,0);
         OutFile.CopyFrom(OutBuf,OutBuf.Size);
       finally
-        OutFile.Free;
+        FreeAndNil(OutFile);
       end;
 
     finally
@@ -496,8 +496,8 @@ begin
         EntRec := SortList.Items[x];
         Dispose(EntRec);
       end;
-      SortList.Free;
-      OutBuf.Free;
+      FreeAndNil(SortList);
+      FreeAndNil(OutBuf);
     end;
 
 //    footer := macroFooter(footer, '');
@@ -771,7 +771,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   grp3.Enabled := chkSort.Checked;
@@ -792,7 +792,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -810,7 +810,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -828,7 +828,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -846,7 +846,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -864,7 +864,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -882,7 +882,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -900,7 +900,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -918,7 +918,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;

@@ -1,6 +1,6 @@
 unit classIconsFromExt;
 
-// $Id: classIconsFromExt.pas,v 1.4 2009-04-26 08:37:15 elbereth Exp $
+// $Id: classIconsFromExt.pas,v 1.5 2009-06-26 21:05:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classIconsFromExt.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -97,7 +97,7 @@ begin
           Reg.CloseKey;
         end;
     finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
 
     // If we couldn't find the association, we will
@@ -249,7 +249,7 @@ begin
     Dispose(tmpIcon);
   end;
 
-  iconNum.Free;
+  FreeAndNil(iconNum);
 
 end;
 
@@ -400,7 +400,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;

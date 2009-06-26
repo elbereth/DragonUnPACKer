@@ -1,6 +1,6 @@
 library drv_11th;
 
-// $Id: drv_11th.dpr,v 1.2 2008-11-20 07:59:16 elbereth Exp $
+// $Id: drv_11th.dpr,v 1.3 2009-06-26 21:05:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/11th/drv_11th.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -91,8 +91,8 @@ type EDup5PathNotFound = class(Exception);
 const
   DRIVER_VERSION = 10040;
   DUP_VERSION = 54040;
-  CVS_REVISION = '$Revision: 1.2 $';
-  CVS_DATE = '$Date: 2008-11-20 07:59:16 $';
+  CVS_REVISION = '$Revision: 1.3 $';
+  CVS_DATE = '$Date: 2009-06-26 21:05:32 $';
   BUFFER_SIZE = 8192;
 
 type GJD_Entry = packed record         // 32 Bytes
@@ -575,7 +575,7 @@ begin
       ShowModal;
     end;
   finally
-    frmCfg.Free;
+    FreeAndNil(frmCfg);
   end;
 
 

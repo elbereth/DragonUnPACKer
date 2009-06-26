@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.15 2009-04-29 04:39:10 elbereth Exp $
+// $Id: Installer.pas,v 1.16 2009-06-26 21:06:05 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -1127,7 +1127,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   if Not(FileExists(Dup5Path+'drgunpack5.exe')) then
@@ -1486,7 +1486,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   if optInternet.Checked then
@@ -2197,7 +2197,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;

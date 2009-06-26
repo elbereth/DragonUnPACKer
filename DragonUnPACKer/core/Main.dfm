@@ -5289,11 +5289,6 @@ object dup5Main: Tdup5Main
           ImageIndex = 10
           OnClick = menuOptions_DriversClick
         end
-        object menuOptions_HyperRipper: TMenuItem
-          Caption = 'HyperRipper'
-          ImageIndex = 11
-          OnClick = TDup5PluginsHRExecute
-        end
       end
       object menuOptions_Assoc: TMenuItem
         Caption = 'Associations'

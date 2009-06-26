@@ -207,7 +207,7 @@ begin
         LinkedItem:=LinkedItem.Next;
       end;
       TreeItem.AddDown(Value,Data,ROR(Hash));
-      TLinkedItem(Items[i]).Free;
+      FreeAndNil(TLinkedItem(Items[i]));
       Items[i]:=TreeItem;
     end else
       Items[i]:=TLinkedItem.Create(Value,Data,TLinkedItem(Items[i]));
@@ -234,7 +234,7 @@ begin
   end else if Items[i] is TTreeItem then begin
     TTreeItem(Items[i]).Delete(Value,ROR(Hash));
     if TTreeItem(Items[i]).Filled = 0 then begin
-      TTreeItem(Items[i]).Free;
+      FreeAndNil(TTreeItem(Items[i]));
       Items[i]:=nil;
     end;
   end else begin
@@ -251,7 +251,7 @@ begin
           PrevLinkedItem.Next:=LinkedItem.Next;
         LinkedItem.Next:=nil;
         Owner.DestroyItem(LinkedItem.Value,LinkedItem.Data);
-        LinkedItem.Free;
+        FreeAndNil(LinkedItem);
         Exit;
       end;
       PrevLinkedItem:=LinkedItem;
@@ -274,7 +274,7 @@ begin
           Owner.DestroyItem(LinkedItem.Value,LinkedItem.Data);
           LinkedItem:=LinkedItem.Next;
         end;
-        TLinkedItem(Items[j]).Free;
+        FreeAndNil(TLinkedItem(Items[j]));
       end;
   inherited;
 end;
@@ -351,7 +351,7 @@ end;
 destructor TLinkedItem.Destroy;
 begin
   if Next <> nil then
-    Next.Free;
+    FreeAndNil(Next);
 end;
 
 { THashTrie }
@@ -385,7 +385,7 @@ end;
 
 destructor THashTrie.Destroy;
 begin
-  if Root <> nil then Root.Free;
+  if Root <> nil then FreeAndNil(Root);
   inherited;
 end;
 
@@ -427,7 +427,7 @@ procedure TStringHashTrie.DestroyItem(var Value,Data: DWORD);
 begin
   DisposeStr(PString(Value));
   if FAutoFreeObjects then
-    TObject(Data).Free;
+    FreeAndNil(TObject(Data));
   Value:=0;
   Data:=0;
 end;

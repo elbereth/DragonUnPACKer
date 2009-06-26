@@ -10,6 +10,7 @@ function Get0A(src: integer): string;
 function Get16(src: integer): string;
 function Get16v(src: integer; size: word): string;
 function Get32(src: TStream): string; overload;
+function Get32(src: TStream; size: integer): string; overload;
 function Get32(src: integer): string; overload;
 function Get32(src, size: integer): string; overload;
 function Get8(src: integer): string; overload;
@@ -231,6 +232,25 @@ begin
 
 end;
 
+function Get32(src: TStream; size: integer): string; overload;
+var tchar: Pchar;
+    res: string;
+begin
+
+  if size > 255 then
+  begin
+    raise Exception.Create(inttostr(size)+' octets! t''es fou ?!'+#10+inttostr(src.Seek(0,1))+#10+inttohex(src.Seek(0,1),8));
+  end;
+  GetMem(tchar,size);
+  FillChar(tchar^,size,0);
+  src.Read(tchar^,size);
+
+  res := tchar;
+  Result := Copy(res,1,size);
+
+  FreeMem(tchar);
+
+end;
 function Get32(src: integer): string; overload;
 var tchar: Pchar;
     tint: Integer;

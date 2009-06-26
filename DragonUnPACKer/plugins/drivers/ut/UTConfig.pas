@@ -1,6 +1,6 @@
 unit UTConfig;
 
-// $Id: UTConfig.pas,v 1.2 2005-12-14 16:51:37 elbereth Exp $
+// $Id: UTConfig.pas,v 1.3 2009-06-26 21:05:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/ut/UTConfig.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -102,7 +102,7 @@ begin
         butRemove.Enabled := false;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
   end
   else
@@ -165,7 +165,7 @@ begin
 
         //setGameHint(fil,ord(GH),frmGH.chkDontAsk.checked);
     finally
-      frmGH.Free;
+      FreeAndNil(frmGH);
     end;
 
   end;
@@ -186,7 +186,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;

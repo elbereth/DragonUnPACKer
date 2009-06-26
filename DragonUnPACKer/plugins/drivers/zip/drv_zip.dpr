@@ -1,6 +1,6 @@
 library drv_zip;
 
-// $Id: drv_zip.dpr,v 1.7 2008-11-16 16:18:14 elbereth Exp $
+// $Id: drv_zip.dpr,v 1.8 2009-06-26 21:05:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/zip/drv_zip.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -464,7 +464,7 @@ begin
   fil := FileCreate(outputfile,fmOpenRead or fmShareExclusive);
   outStm := THandleStream.Create(fil);
   result := ExtractFileToStream(outStm,entrynam,offset,size,datax,datay,silent);
-  outStm.Free;
+  FreeAndNil(outStm);
   FileClose(fil);
 
 end;

@@ -1,6 +1,6 @@
 unit lib_language;
 
-// $Id: lib_language.pas,v 1.12 2009-04-25 15:07:10 elbereth Exp $
+// $Id: lib_language.pas,v 1.13 2009-06-26 21:05:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_language.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -133,14 +133,14 @@ begin
 
                     decompStm := TDecompressionStream.Create(inpFileStm);
                     dataStm.CopyFrom(decompStm,HDR.DataSize);
-                    decompStm.Free;
+                    FreeAndNil(decompStm);
 
                   end;
 
                   dataStm.Seek(0,soFromBeginning);
 
                 finally
-                  inpFileStm.Free;
+                  FreeAndNil(inpFileStm);
                 end;
 
                 FileSeek(lng, HDR.IndexOffSet,0);
@@ -158,7 +158,7 @@ begin
                 end;
 
               finally
-                dataStm.Free;
+                FreeAndNil(dataStm);
               end;
 
               UseInternalLanguage := False;
@@ -236,7 +236,7 @@ begin
           stm.WriteBuffer(Buffer^, HDR.IconSize);
           stm.Seek(0,soFromBeginning);
           icn.LoadFromStream(stm);
-          stm.Free;
+          FreeAndNil(stm);
           FreeMem(buffer);
         end;
       end;

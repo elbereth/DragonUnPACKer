@@ -1,6 +1,6 @@
 unit Splash;
 
-// $Id: Splash.pas,v 1.2 2004-07-17 19:53:07 elbereth Exp $
+// $Id: Splash.pas,v 1.3 2009-06-26 21:05:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Splash.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -81,7 +81,7 @@ begin
         Reg.CloseKey;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
   end;
 
@@ -111,7 +111,7 @@ begin
         Reg.CloseKey;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
   end;
 

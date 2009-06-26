@@ -1,6 +1,6 @@
 unit SelectLanguage;
 
-// $Id: SelectLanguage.pas,v 1.1.1.1 2004-05-08 10:25:50 elbereth Exp $
+// $Id: SelectLanguage.pas,v 1.2 2009-06-26 21:05:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/SelectLanguage.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -135,7 +135,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;

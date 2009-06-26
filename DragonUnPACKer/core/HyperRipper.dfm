@@ -16,6 +16,8 @@ object frmHyperRipper: TfrmHyperRipper
   OldCreateOrder = False
   Position = poMainFormCenter
   OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
@@ -1263,15 +1265,15 @@ object frmHyperRipper: TfrmHyperRipper
     Top = 8
     Width = 417
     Height = 297
-    ActivePage = tabAbout
+    ActivePage = tabFormats
     TabOrder = 0
     object tabAbout: TTabSheet
       Caption = 'A Propos..'
       ImageIndex = 4
       object lblHRVersionShadow: TLabel
-        Left = 353
+        Left = 201
         Top = 113
-        Width = 41
+        Width = 176
         Height = 13
         AutoSize = False
         Caption = 'x.yz'
@@ -4694,7 +4696,7 @@ object frmHyperRipper: TfrmHyperRipper
         Shape = bsTopLine
       end
       object strHRVersion: TLabel
-        Left = 248
+        Left = 96
         Top = 112
         Width = 97
         Height = 13
@@ -4734,9 +4736,9 @@ object frmHyperRipper: TfrmHyperRipper
         Transparent = True
       end
       object lblHRVersion: TLabel
-        Left = 352
+        Left = 200
         Top = 112
-        Width = 41
+        Width = 177
         Height = 13
         AutoSize = False
         Caption = 'x.yz'
@@ -4750,37 +4752,14 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object Panel3: TPanel
         Left = 16
-        Top = 208
+        Top = 216
         Width = 377
-        Height = 49
+        Height = 33
         BevelOuter = bvLowered
         TabOrder = 0
-        object strNumPlugs: TLabel
-          Left = 8
-          Top = 8
-          Width = 185
-          Height = 13
-          Alignment = taRightJustify
-          AutoSize = False
-          Caption = 'Number of plugins loaded:'
-        end
-        object lblNumPlugs: TLabel
-          Left = 200
-          Top = 8
-          Width = 169
-          Height = 17
-          AutoSize = False
-          Caption = '0'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'MS Sans Serif'
-          Font.Style = [fsBold]
-          ParentFont = False
-        end
         object strNumFormats: TLabel
           Left = 8
-          Top = 24
+          Top = 8
           Width = 185
           Height = 13
           Alignment = taRightJustify
@@ -4789,7 +4768,7 @@ object frmHyperRipper: TfrmHyperRipper
         end
         object lblNumFormats: TLabel
           Left = 200
-          Top = 24
+          Top = 8
           Width = 169
           Height = 13
           AutoSize = False

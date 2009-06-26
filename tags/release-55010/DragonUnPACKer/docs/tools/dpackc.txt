@@ -1,0 +1,268 @@
+Dragon UnPACKer 5 Package (D5P) Maker (DPACKC) v3.5.1       MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    26/04/2009
+===============================================================================
+
+  What is DPACKC ?
+  ----------------
+
+This program allow you to make .D5P files (Dragon UnPACKer 5 Package). Those
+files allows to install your plugins (for example) automatically into the
+user's Dragon UnPACKer 5 install directory.
+
+D5P files are installed using the Duppi file.
+
+
+  How to use DPACKC
+  -----------------
+
+  MENU
+  
+  The project menu allows to:
+    - Start a NEW project (reset everything)
+    - OPEN a project: Load a previously saved project file (.D5PP XML files)
+      Please note that the file added in that saved project must still be
+      available for the project to load successfully!
+    - SAVE a project: Save the current project to a project file (.D5PP XML
+      file). Quite useful if you want to re-use the stuff for later versions of
+      your plugin. ;)
+      
+      
+  ABOUT
+  
+  Nothing there but the "about the program" information. ;)
+  
+
+  HEADER
+
+On the Header tab you can set the information of your package:
+- Package name (max 255 characters)
+- Package author (max 255 characters)
+- Package URL (max 255 characters) include the protocol, this must be a full
+  URL (ex: http://www.elberethzone.net)
+- Package comment (max 255 characters for v2 and v3 files, 32767 characters for
+  v4 files)
+No field is mandatory but a package without name will look awful...
+
+You must also indicate the version number of your pack (this is also important)
+by indicating a number on the xyzir form:
+   x = Major version (between 0 and 10000)
+   y = Minor version (0 to 9)
+   z = Sub version (0 to 9)
+   i = Release type
+   				0 = Alpha
+   				1 = Beta
+   				2 = Release Candidate
+   				3 = Gold
+   				4/5/6 = Release
+   				7 = Fix
+   				8 = Patch
+   				9 = Special
+   r = Release number (0 for no number else 1 to 9)
+
+Ex: 14551 would mean v1.4.5 Release K (or 1.4.5k)
+
+Well use the program to know how it will look like.
+
+You can also enable a check on Dragon UnPACKer version needed to install the
+package. This is useful if your plugin do not support older versions of Dragon
+UnPACKer. The number to fill there is the build number of Dragon UnPACKer (for
+example v5.2.0.169 then you would use 169).
+
+You can also use a custom Duppi banner to display in your package.
+Select the option and browse for a Windows BitMaP (.BMP) file in 465x90 size.
+The image can be uncompressed RGB or RLE encoded.
+
+  OPTIONS
+
+There is an option to choose between different versions of DUPP file format.
+You can read the compatibility section to know which version is compatible with
+what.
+
+Short list of compatibility:
+Dragon UnPACKer v5.2.0b and olders   --> Use v2
+Dragon UnPACKer v5.3.0 to 5.3.3 Beta --> Prefer v3 (v2 not recommended)
+For all newer versions               --> Prefer v4 (v2/v3 not recommended)
+
+The others options in that tab only apply to version 4 DUPP format.
+
+  Allowed compression algorithm (at least one must be selected):
+    None - Do not compress, faster but big D5P files
+    Zlib - Fast compression, fast but weak compression
+    LZMA - Best compression, slow but good compression
+  (Version 4 will always select the best compression algorithm, ie. the one who
+   compress to less bytes, but you can disable some algorithms if you want)
+  
+  File compression scheme:
+    Each file independently - All files will be compressed independently
+                              This is the faster and recommended for single
+                              files packages. For multiple files the resulting
+                              package will be bigger than solid scheme.
+    Solid (all files in one block) - This is the best option for multiple files
+                                     the resulting package will be smaller.
+  
+  File hash algorithm:
+    Select the hash algorithm you want to use in your package. SHA512 should be
+    the best option (but obviously not the faster to compute).
+
+
+  FILES
+  
+The files tab is the heart of this tool. There you click on the [+] button to
+add files to the project. The tool will automatically detect what it think are
+best settings for the file, but you can change most of the settings by
+selecting the file in the list and changing them:
+
+  Install into: This dropdown list are the base directories of Dragon UnPACKer
+    {program}\data\convert         Where convert plugins are stored
+    {program}\data                 Where languages, dulk & uht are stored
+    {program}\data\drivers         Where drivers plugins are stored
+    {program}\data\hyperripper     Where HyperRipper plugins are stored
+    {program}                      The install directory of Dragon UnPACKer
+    {program}\utils                Where tools are stored (ex: Duppi)
+    {program}\utils\templates      Where templates sources are stored
+    {program}\utils\translations   Where translations sources are stored
+
+Note: This field cannot be changed if the file type is a plugin (the correct
+      install directory is automatically selected).  
+  
+  Compress (use best algorithm): Store the file compressed with Zlib\LZMA. If
+                                 unchecked the file will be stored without
+                                 any compression.
+                                 For v2 and v3 files only Zlib will be used.
+                                 For v4 files Zlib, LZMA or no compression will
+                                 be used depending on the selected algorithm in
+                                 the options tab. The smaller of the 3 options
+                                 will be used (sometimes LZMA & Zlib produces
+                                 larger result than by not compressing at all).
+
+  Do not install if a newer version already exist: Well... Prevents the package
+                                                   to install if a newer
+                                                   plugin is already installed.
+
+Note: Only available for compatible plugins (if the program could retrieve
+      version information).
+      Highly recommended to keep it checked!
+      
+  Store data and time of the file are the attributes of
+      the file. If you don't check the date & time will not be stored,
+      therefore not restored on the end-user side when installed.
+      
+  Hidden/Read only: If you need your file to be one and/or the other...
+
+  Register (ActiveX OCX/DLL): Run regsvr32 on the file upon installation.
+                              This is useful for ActiveX components for ex.
+                              This will only be available for DLL and OCX files
+
+
+  UPDATE CREATOR
+
+With this tab you can easily create a differential update between two Dragon
+UnPACKer versions. In order for it to work you need the two versions in two
+different directories.
+
+Select the old directory and the new one then press the Retrieve different and
+new files button. Both directories will be scanned. When a file of same name
+and same size is found their SHA-512 hash will be calculated if it is different
+it will be added to the list. All new files and files with different size will
+be automatically added.  
+  
+
+  COMPILE
+  
+This is the final step, choosing a filename and then compile the package.
+Then you can test it with Duppi. :)
+
+The compile log can help you to know if something went wrong.
+
+
+  Compatibility list
+  ------------------
+
+DPACKC v3.5.1 is compiling:
+  DUPP files version 2 (Duppi v2.0.2+)
+  DUPP files version 3 (Duppi v2.2.0+)
+  DUPP files version 4 (Duppi v3.0.0+)
+
+Those files can be installed by all versions of Duppi since v2.0.2 (that means
+since Dragon UnPACKer v5.0.0 RC3!
+
+DUPP v2 is compatible with all versions of Duppi (for Dragon UnPACKer stables)
+but suffer from a CRC calculation mistake on included files.
+
+DUPP v3 is compatible with all versions of Duppi since v2.2.0 and do not suffer
+from the CRC mistake. The only difference between the two formats is the CRC
+calculation. The formats in itself are structuraly identical.
+
+DUPP v4 is compatible with all versions of Duppi since v3.0.0 and is a
+completely new format (structure is different than any previous version, only
+the header is the same). This fixes a lot of structural mistakes made in
+previous versions, introduce a lot of sanity checks (secure hashs instead of
+CRC32, etc..) and uses LZMA compression algorithm which leads to much smaller
+packages files. This format can therefore be used as an full update means. For
+example to go from one full version of Dragon UnPACKer to another without the
+need to download the full file again.
+
+
+  Contact
+  -------
+
+You can reach Alex Devilliers:
+
+ By E-Mail: dpackc (at) dragonunpacker (dot) com
+    By ICQ: 1535372 (Elbereth)
+
+
+  What's new?
+  -----------
+Version 3.5.1:
+
+ - Removed almost all JVLC components used.
+   Only SimpleXML is still used for project files (D5PP).
+ i This had the effect to reduce EXE file by ~137KiB.
+ + Added some sanity checks to avoid weird errors.
+ 
+ 
+Version 3.5.0:
+
+ + Added Update Creator tool.
+ * Improved the tab order.
+ 
+
+Version 3.0.0:
+
+ * Project files (.D5PP) version 3 to store new info needed by DUPP v4 format.
+ ! Fixed bug where when loading a project file failed, the next time the open
+   button was pressed nothing happened.
+ * The add file button now allow multi-select.
+ + Enabled the use of custom Duppi pictures.
+ + Added full support for DUPP version 4 file format:
+     Block based structure, very flexible and robust.
+     Compression algorithms: Zlib & LZMA
+     Solid compression
+     Secure hashs: SHA256 for blocks
+                   MD4,SHA1,SHA256,SHA512 & RIPEMD160 for files
+     Sanity checks: Ensure the file has no errors  
+
+
+Version 2.0.0:
+
+ i Too much to say. The program now works as it should, and I think I have
+   found and fixed most bugs.
+ + New Project files (.D5PP) to store new info.
+   The format is just version 2 of the old format (.DPS) adding new XML nodes.
+ ! I found a huge mistake in the CRC calculation done on files while compiling.
+   The problem is by fixing it the D5P file is not working correctly with
+   current version of Duppi because the mistake is there too...
+   This means I had to add an option to be compatible with old buggy Duppi.
+   The new correct implementation will produce D5P files that can only be used
+   with Duppi v2.2.0 or earlier.
+  
+
+Version 1.0.0 Beta 1:
+
+ + Added Load/Save project to .DPS (XML file / D5P Project).
+ - Disabled custom banner (Duppi is unable to display them for the moment).
+   This feature still needs to be worked out.
+ i Program doesn't remember anything (recent save/load, window position, etc.).
+
+===============================================================================

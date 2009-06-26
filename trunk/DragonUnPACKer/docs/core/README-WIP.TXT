@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.5.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    Unreleased
+by Alexande "Elbereth" Devilliers                                    27/06/2009
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -14,13 +14,13 @@ by Alexande "Elbereth" Devilliers                                    Unreleased
   - drv_default can be compiled with Lazarus/FPC and run fine in Delphi built
     core.
   - Some non compatible components were replaced by compatible ones.
+  - HyperRipper plugin was merged into the core.
   
   To Do until v5.6 stable release :
   - Migrate core application (DrgUnPACKer.exe).
   - Migrate convert plugin, create standalone configuration tool.
     Another solution would be to merge to the core.
   - Migrate driver plugins.
-  - Merge HyperRipper plugin to the core.
   - Migrate tools applications (Duppi, Dlngc, Dlngcomp, Dlookc, Dlookd,
     duhtcomp & Dpackc).
   
@@ -36,8 +36,8 @@ by Alexande "Elbereth" Devilliers                                    Unreleased
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.5.0.207
-Beta [Unreleased]
+Version 5.5.0.218
+Beta [27/06/2009]
 
  - Removed all use of JCL & JVCL. Replaced by:
     Personnal equivalent functions
@@ -45,7 +45,14 @@ Beta [Unreleased]
 	Delphi VCL
  * Replacement for JVCL JvBrowseDialog, uses ShellApi (by Brian Cryer code with
    help of Martin Birk)
- i EXE file is 272KiB smaller than v5.4.0a. Not much but still not bad! :p
+ * HyperRipper v5.6 Beta 1:
+   - HyperRipper plugin support was removed, this was done with multiple goals
+     in mind:
+	   Easier to compile with Lazarus\FreePascal
+	   Ability to do multi-threading in the future
+   * The latest plugin version was merged with Dragon UnPACKer core to provide
+     same functionnality as last HyperRipper + last HyperRipper plugin.
+ i EXE file is 227KiB smaller than v5.4.0a. Not much but still not bad! :p
 
 
 Beta Developement Page:

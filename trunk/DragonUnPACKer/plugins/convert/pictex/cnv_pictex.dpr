@@ -1,6 +1,6 @@
 library cnv_pictex;
 
-// $Id: cnv_pictex.dpr,v 1.10 2008-11-16 16:25:15 elbereth Exp $
+// $Id: cnv_pictex.dpr,v 1.11 2009-06-26 21:05:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/cnv_pictex.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -356,7 +356,7 @@ begin
       FreeMem(Buffer);
     end;
   finally
-    img.Free;
+    FreeAndNil(img);
   end;
 
 end;
@@ -393,7 +393,7 @@ begin
     else if cnv = 'TGA24' then
       img.SaveToTGA24Stream(dst);
   finally
-    img.Free;
+    FreeAndNil(img);
   end;
 
 end;
@@ -476,7 +476,7 @@ begin
     else if cnv = 'TGA24' then
       img.SaveToTGA24Stream(dst);
   finally
-    img.Free;
+    FreeAndNil(img);
   end;
 
 end;
@@ -545,7 +545,7 @@ begin
       else if cnv = 'TGA24' then
         img.SaveToTGA24Stream(dst);
   finally
-    img.Free;
+    FreeAndNil(img);
   end;
 
 end;
@@ -594,7 +594,7 @@ begin
     else if cnv = 'TGA24' then
       img.SaveToTGA24Stream(dst);
   finally
-    img.Free;
+    FreeAndNil(img);
   end;
 
 end;
@@ -639,7 +639,7 @@ begin
     else if cnv = 'TGA24' then
       img.SaveToTGA24Stream(dst);
   finally
-    img.Free;
+    FreeAndNil(img);
   end;
 
 end;
@@ -682,7 +682,7 @@ begin
     end;
     img.SaveToTGA32Stream(dst);
   finally
-    img.Free;
+    FreeAndNil(img);
   end;
 
 end;
@@ -779,7 +779,7 @@ begin
     img8.SaveToTGA32Stream(dst);
   finally
     FreeMem(Buffer);
-    img8.free;
+    FreeAndNil(img8);
   end;
 
 end;
@@ -796,7 +796,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -815,7 +815,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -891,7 +891,7 @@ begin
     end;
   finally
     frmCnv.Release;
-    lstPALFil.Free;
+    FreeAndNil(lstPALFil);
   end;
   Application.Handle := OApp;
 
@@ -998,8 +998,8 @@ begin
   try
     result := ConvertStream(src_stm, dst_stm,nam,fmt,cnv,Offset,DataX,DataY,Silent);
   finally
-    src_stm.Free;
-    dst_stm.Free;
+    FreeAndNil(src_stm);
+    FreeAndNil(dst_stm);
   end;
 
 end;
@@ -1098,7 +1098,7 @@ begin
     end;
   finally
     frmCnv.Release;
-    lstPALFil.Free;
+    FreeAndNil(lstPALFil);
   end;
   Application.Handle := OApp;
 

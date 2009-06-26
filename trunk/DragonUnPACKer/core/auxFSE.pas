@@ -1,6 +1,6 @@
 unit auxFSE;
 
-// $Id: auxFSE.pas,v 1.4 2008-08-23 17:42:36 elbereth Exp $
+// $Id: auxFSE.pas,v 1.5 2009-06-26 21:05:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/auxFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -213,7 +213,7 @@ begin
 
 //  ShowMessage(inttostr(nbdir)+#10+inttostr(MilliSecondsBetween(Now,StartTime)));
 
-  ht.Free;
+  FreeAndNil(ht);
   dup5Main.lstIndex2.RootNodeCount := 1;
   dup5Main.lstIndex2.FocusedNode := Root2;
   dup5Main.lstIndex2.SortTree(1,sdAscending);

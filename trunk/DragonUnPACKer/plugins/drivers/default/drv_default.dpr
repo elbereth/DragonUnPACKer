@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.53 2009-06-26 05:26:40 elbereth Exp $
+// $Id: drv_default.dpr,v 1.54 2009-06-26 21:05:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -195,6 +195,7 @@ type FSE = ^element;
     20715        Added support for Prototype .RCF files (thanks to specs by john_doe of Xentax forum)
     20740        Added much needed sanity checks to .BIN & .DAT file formats
     20741        Fixed Total Annihilation HPI extraction when compression is Zlib (Exception Access Violation)
+    20742        Replaced .free by FreeAndNil() to be more consistant (no more bad pointers)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -212,10 +213,10 @@ type FSE = ^element;
   //////////////////////////////////////////////////////////////////////////// }
 
 const
-  DRIVER_VERSION = 20741;
+  DRIVER_VERSION = 20742;
   DUP_VERSION = 54041;
-  CVS_REVISION = '$Revision: 1.53 $';
-  CVS_DATE = '$Date: 2009-06-26 05:26:40 $';
+  CVS_REVISION = '$Revision: 1.54 $';
+  CVS_DATE = '$Date: 2009-06-26 21:05:32 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -721,7 +722,7 @@ begin
           Dispose(ENTL);
         end;
       finally
-        EList.Free;
+        FreeAndNil(EList);
       end;
 
       //ShowMessage(IntTosTr(NumE));
@@ -882,7 +883,7 @@ begin
     dirBuffer.CopyFrom(handle_stm,HDR.DirSize);
 
     // Free the HandleStream as we don't need it anymore
-    handle_stm.Free;
+    FreeAndNil(handle_stm);
 
     // Seek to the start of the buffer
     dirBuffer.Seek(0,soFromBeginning);
@@ -1574,7 +1575,7 @@ begin
       headerBuffer.CopyFrom(handle_stm,(numEntries*54));
 
       // Free the handle stream, useless now
-      handle_stm.Free;
+      FreeAndNil(handle_stm);
 
       headerBuffer.Seek(0,0);
 
@@ -2101,7 +2102,7 @@ begin
               end;
             end;
           finally // Finally we free the stored offsets because we don't need them anymore
-            StoredOffsets.Free;
+            FreeAndNil(StoredOffsets);
           end;
 
           // If we detected a music audio bank
@@ -2258,7 +2259,7 @@ begin
 
   end;
 
-  NameStream.Free;
+  FreeAndNil(NameStream);
 
   Result := NumE;
 
@@ -3247,7 +3248,7 @@ begin
     ENTBuffer := TMemoryStream.Create;
     ENTBuffer.CopyFrom(TmpBuffer,HDR.NumberOfEntries * SizeOf(ENTDreamfallTLJPAK));
     ENTBuffer.Seek(0,0);
-    TmpBuffer.Free;
+    FreeAndNil(TmpBuffer);
 
     NumE := 0;
     DispPre := ExtractFileExt(filename);
@@ -3308,7 +3309,7 @@ begin
 
     end;
 
-    ENTBuffer.Free;
+    FreeAndNil(ENTBuffer);
 
     Result := NumE;
 
@@ -4068,7 +4069,7 @@ begin
         end;
         FSE_Add(EList.Strings[ENT.DirIndex]+Strip0(ENT.Filename),ENT.Offset,TotFSize-ENT.Offset,ENT.Unknow,0);
       finally
-        EList.Free;
+        FreeAndNil(EList);
       end;
 
       //ShowMessage(IntTosTr(NumE));
@@ -4540,7 +4541,7 @@ begin
   if (TEXHDR1.Width <= 0) or (TEXHDR1.Height <= 0) or (TEXHDR2.Size <= 0) or ((TEXHDR2.TextureType <> 0) and (TEXHDR2.TextureType <> 2) and (TEXHDR2.TextureType <> 4)) then
   begin
 
-    inFile.Free;
+    FreeAndNil(inFile);
     BinCopyToStream(Fhandle,outputstream,Offset,Size,0,BufferSize,silent,SetPercent);
 
   end
@@ -4594,7 +4595,7 @@ begin
       outputstream.CopyFrom(inFile,TEXHDR2.Size);
     end;
 
-    inFile.Free;
+    FreeAndNil(inFile);
 
   end;
 
@@ -4891,10 +4892,10 @@ begin
     outputstream.CopyFrom(inMem,inMem.Size); 
   end;
 
-  DEC.Free;
+  FreeAndNil(DEC);
 
-  inHandle.Free;
-  InMem.Free;
+  FreeAndNil(inHandle);
+  FreeAndNil(InMem);
 
 end;}
 
@@ -5222,7 +5223,7 @@ begin
         finally
 
           // We free the handle stream
-          filStream.Free;
+          FreeAndNil(filStream);
 
         end;
 
@@ -5292,8 +5293,8 @@ begin
       finally
 
         // We free both memory streams
-        namStream.Free;
-        dirStream.Free;
+        FreeAndNil(namStream);
+        FreeAndNil(dirStream);
 
       end;
 
@@ -5357,7 +5358,7 @@ begin
       isFormat := isFormat and (totSize = inStm.Size);
     end;
   finally
-    inStm.Free;
+    FreeAndNil(inStm);
   end;
 
   result := isFormat;
@@ -7028,7 +7029,7 @@ begin
 
   finally
 
-    stmSource.Free;
+    FreeAndNil(stmSource);
 
   end;
 
@@ -7057,7 +7058,7 @@ begin
 
   setlength(DirName,0);
   setLength(DIR,0);
-  stmNames.Free;
+  FreeAndNil(stmNames);
 
   Result := EntrySize;
 
@@ -7316,9 +7317,9 @@ begin
         end;
  }
       finally  // We are done.. free lists
-        EList.Free;
-        FList.Free;
-        OList.Free;
+        FreeAndNil(EList);
+        FreeAndNil(FList);
+        FreeAndNil(OList);
       end;
 
       Result := NumE;
@@ -7404,7 +7405,7 @@ begin
         end;
         FSE_Add(Strip0(EList.Strings[NumE-1]),OldOffset,TotFSize-OldOffset,0,0);
       finally
-        EList.Free;
+        FreeAndNil(EList);
       end;
 
       //ShowMessage(IntTosTr(NumE));
@@ -8158,7 +8159,7 @@ begin
 
   end;
 
-  NameStream.Free;
+  FreeAndNil(NameStream);
 
   Result := NumE;
 
@@ -8311,7 +8312,7 @@ begin
       DrvInfo.FileHandle := FHandle;
       DrvInfo.ExtractInternal := False;
     finally
-      EList.Free;
+      FreeAndNil(EList);
     end;
 
   end
@@ -8417,7 +8418,7 @@ begin
       end;
 
     finally
-      HF.Free;
+      FreeAndNil(HF);
     end;
 
     Result := NumE;
@@ -8652,7 +8653,7 @@ begin
           Dispose(ENT);
         end;
       finally
-        EList.Free;
+        FreeAndNil(EList);
       end;
 
       Result := NumE;
@@ -8791,7 +8792,7 @@ begin
 
     end;
 
-    inFile.Free;
+    FreeAndNil(inFile);
   end
   else
     Result := -2;
@@ -9387,8 +9388,8 @@ begin
       end;
 
     finally
-      HF.Free;
-      FAT.Free;
+      FreeAndNil(HF);
+      FreeAndNil(FAT);
     end;
 
     Result := HDR.NbFatEntry;
@@ -9771,9 +9772,9 @@ begin
       end;
     end;
   finally
-    FileSource.Free;
-    BufferNam.Free;
-    BufferIdx.Free;
+    FreeAndNil(FileSource);
+    FreeAndNil(BufferNam);
+    FreeAndNil(BufferIdx);
   end;
 
 end;
@@ -9925,7 +9926,7 @@ begin
         SHandle.Seek(OffsetToNames,0);
         Buffer.CopyFrom(SHandle,HDR.TotalFileNameLength);
         Buffer.Seek(0,0);
-        SHandle.Free;
+        FreeAndNil(SHandle);
 
         // 2. Parse filenames to the TStringList
         for x := 1 to HDR.FileCount do
@@ -9934,7 +9935,7 @@ begin
         end;
 
         // 3. Free the buffer as we don't need it anymore
-        Buffer.Free;
+        FreeAndNil(Buffer);
 
         oldperc := 0;
 
@@ -9995,7 +9996,7 @@ begin
         end;
 
       finally
-        FileNames.Free;
+        FreeAndNil(FileNames);
       end;
 
       Result := NumE;
@@ -10289,10 +10290,10 @@ begin
 
     finally
 
-      handle_stm.free;
-      DLstBuffer.Free;
-      FLstBuffer.Free;
-      NLstBuffer.Free;
+      FreeAndNil(handle_stm);
+      FreeAndNil(DLstBuffer);
+      FreeAndNil(FLstBuffer);
+      FreeAndNil(NLstBuffer);
 
     end;
 
@@ -10391,7 +10392,7 @@ begin
     finally
 
       // We free the handle stream
-      FilData.Free;
+      FreeAndNil(FilData);
 
       // We seek to the stored offset
       FileSeek(FHandle,CurP,0);
@@ -10438,7 +10439,7 @@ begin
     finally
 
       // We free the directory chunk
-      DirData.Free;
+      FreeAndNil(DirData);
 
     end;
 
@@ -10614,7 +10615,7 @@ begin
 
         end;
       finally
-        EList.Free;
+        FreeAndNil(EList);
       end;
 
       //ShowMessage(IntTosTr(NumE));
@@ -10986,7 +10987,7 @@ begin
   //            ShowMessage(IntToStr(TestID));
               OutputStream.CopyFrom(DStream,HDR.DecompressedSize);
             finally
-              DStream.Free;
+              FreeAndNil(DStream);
             end;
 //            GetMem(DecompBuffer,HDR.DecompressedSize);
 //            OutputStream.SaveToFile('h:\testhpi-zlib-'+inttostr(x)+'-decomp.bin');
@@ -10995,7 +10996,7 @@ begin
 //            FileWrite(fil,DecompBuffer^,HDR.DecompressedSize);
 //            FreeMem(DecompBuffer);
           finally
-            //OutputStream.Free;
+            //FreeAndNil(OutputStream);
           end;
           //ShowMessage(IntToStr(FinalSize));
         end;
@@ -11290,11 +11291,11 @@ begin
               else
                 FinalSize := OutputStream.CopyFrom(DStream,CompressionWindow);
             finally
-              DStream.Free;
+              FreeAndNil(DStream);
             end
 
           finally
-            InputStream.Free;
+            FreeAndNil(InputStream);
           end;
 
           Dec(OSize,CompressionWindow);
@@ -11478,8 +11479,8 @@ begin
     dst.CopyFrom(chunk,rest);
   end;
   DisplayPercent(100);
-  Chunk.Free;
-  InFile.Free;
+  FreeAndNil(Chunk);
+  FreeAndNil(InFile);
 
 end;
 
@@ -11517,12 +11518,12 @@ begin
     if (CopysizeCheck <> OSize) then
       Exception.Create('Decompression error while Copying from buffer (expected: '+inttostr(OSize)+' bytes / copied: '+inttostr(CopySizecheck)+')');
     inc(outsize,Osize);
-    Chunk.Free;
+    FreeAndNil(Chunk);
   end;
   if (outsize <> totSize) then
     Exception.Create('Decompression error in DecompressCBFToStream() (expected: '+inttostr(totsize)+' bytes / extracted: '+inttostr(outsize)+')');
-  InFile.Free;
-  OutChunk.Free;
+  FreeAndNil(InFile);
+  FreeAndNil(OutChunk);
 
 end;
 
@@ -11585,8 +11586,8 @@ begin
         ErrInfo.Games := 'Vietcong, Vietcong 2';
       end;
     finally
-      InFile.Free;
-      Entry.Free;
+      FreeAndNil(InFile);
+      FreeAndNil(Entry);
     end;
   end
   else
@@ -13828,11 +13829,11 @@ begin
       try
         FinalSize := OutputStream.CopyFrom(DStream,OSize);
       finally
-        DStream.Free;
+        FreeAndNil(DStream);
       end
 
     finally
-      InputStream.Free;
+      FreeAndNil(InputStream);
     end
   finally
     FreeMem(Buf);
@@ -13863,11 +13864,11 @@ begin
       try
         FinalSize := OutputStream.CopyFrom(DStream,OSize);
       finally
-        DStream.Free;
+        FreeAndNil(DStream);
       end
 
     finally
-      InputStream.Free;
+      FreeAndNil(InputStream);
     end
   finally
     FreeMem(Buf);
@@ -14311,15 +14312,12 @@ begin
 end;
 
 function ExtractFile(outputfile: ShortString; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
-var fil: Integer;
-    outStm: THandleStream;
+var outStm: TFileStream;
 begin
 
-  fil := FileCreate(outputfile,fmOpenRead or fmShareExclusive);
-  outStm := THandleStream.Create(fil);
+  outStm := TFileStream.Create(outputfile,fmCreate or fmShareExclusive);
   result := ExtractFileToStream(outStm,entrynam,offset,size,datax,datay,silent);
-  outStm.Free;
-  FileClose(fil);
+  FreeAndNil(outStm);
 
 end;
 

@@ -1,6 +1,6 @@
 unit Search;
 
-// $Id: Search.pas,v 1.2 2008-08-23 17:42:36 elbereth Exp $
+// $Id: Search.pas,v 1.3 2009-06-26 21:05:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Search.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -65,7 +65,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   StatusBar.Panels.Items[0].Text := IntToStr(FSE.Search(txtSearch.Text,CheckCase.Checked,CurrentDir,RadioDirOnly.Checked))+' '+DLNGStr('STAT10');
@@ -85,7 +85,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -103,7 +103,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -121,7 +121,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;

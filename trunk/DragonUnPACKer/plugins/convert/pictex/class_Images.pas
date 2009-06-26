@@ -1,6 +1,6 @@
 unit class_Images;
 
-// $Id: class_Images.pas,v 1.4 2005-12-13 07:13:56 elbereth Exp $
+// $Id: class_Images.pas,v 1.5 2009-06-26 21:05:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/class_Images.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -380,7 +380,7 @@ begin
   try
     SaveToBMPStream(bmp);
   finally
-    bmp.Free;
+    FreeAndNil(bmp);
   end;
 
 end;
@@ -476,7 +476,7 @@ begin
   try
     SaveToPCXStream(pcx);
   finally
-    pcx.free;
+    FreeAndNil(pcx);
   end;
 
 end;
@@ -577,7 +577,7 @@ begin
   try
     SaveToTGA24Stream(tga);
   finally
-    tga.free;
+    FreeAndNil(tga);
   end;
 
 end;
@@ -647,7 +647,7 @@ begin
   try
     SaveToTGA32Stream(tga);
   finally
-    tga.free;
+    FreeAndNil(tga);
   end;
 
 end;
@@ -718,7 +718,7 @@ begin
   try
     SaveToTGA8Stream(tga);
   finally
-    tga.free;
+    FreeAndNil(tga);
   end;
 
 end;
@@ -1006,7 +1006,7 @@ begin
   try
     SaveToTGA24Stream(tga);
   finally
-    tga.free;
+    FreeAndNil(tga);
   end;
 
 end;
@@ -1076,7 +1076,7 @@ begin
   try
     SaveToTGA32Stream(tga);
   finally
-    tga.free;
+    FreeAndNil(tga);
   end;
 
 end;

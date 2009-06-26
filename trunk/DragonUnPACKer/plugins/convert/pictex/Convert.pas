@@ -1,6 +1,6 @@
 unit Convert;
 
-// $Id: Convert.pas,v 1.1.1.1 2004-05-08 10:26:52 elbereth Exp $
+// $Id: Convert.pas,v 1.2 2009-06-26 21:05:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/Convert.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -237,7 +237,7 @@ begin
         MessageDlg(ReplaceValue('%e',ReplaceValue('%t',ReplaceValue('%f',ErrorMessage,txtSource.Text),'Binary BGR'),E.className+'['+E.Message+']'),mtWarning,[mbOk],0);
       end
     end;
-    DPAL.Free;
+    FreeAndNil(DPAL);
   end;
 
 end;

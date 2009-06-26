@@ -1,6 +1,6 @@
 program drgunpack5;
 
-// $Id: drgunpack5.dpr,v 1.13 2009-04-26 08:38:05 elbereth Exp $
+// $Id: drgunpack5.dpr,v 1.14 2009-06-26 21:05:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/drgunpack5.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -39,7 +39,6 @@ uses
   class_duht in 'class_duht.pas',
   classConvert in 'classConvert.pas',
   classFSE in 'classFSE.pas',
-  classHyperRipper in 'classHyperRipper.pas',
   classIconsFromExt in 'classIconsFromExt.pas',
   declFSE in 'declFSE.pas',
   HashTrie in 'HashTrie.pas',
@@ -59,7 +58,9 @@ uses
   spec_HRF in '..\common\spec_HRF.pas',
   commonTypes in '..\common\commonTypes.pas',
   U_IntList in '..\common\U_IntList.pas',
-  BrowseForFolderU in '..\common\BrowseForFolderU.pas';
+  BrowseForFolderU in '..\common\BrowseForFolderU.pas',
+  spec_DDS in '..\common\spec_DDS.pas',
+  MpegAudioOptions in 'MpegAudioOptions.pas' {frmOptMPEGa};
 
 {$R *.res}
 
@@ -103,7 +104,7 @@ begin
 
     Finally
       // Free the TRegistry object
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
   end;
 
@@ -147,7 +148,7 @@ begin
     end;
   Finally
     // Free the TRegistry object
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -189,7 +190,7 @@ begin
     end;
   Finally
     // Free the TRegistry object
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -318,6 +319,7 @@ begin
   Application.CreateForm(TfrmHyperRipper, frmHyperRipper);
   Application.CreateForm(TfrmList, frmList);
   Application.CreateForm(TfrmError, frmError);
+  Application.CreateForm(TfrmOptMPEGa, frmOptMPEGa);
   end;
     finally
       // When everything is loaded we start the close timer

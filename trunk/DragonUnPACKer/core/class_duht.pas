@@ -1,6 +1,6 @@
 unit class_duht;
 
-// $Id: class_duht.pas,v 1.2 2004-07-17 19:21:00 elbereth Exp $
+// $Id: class_duht.pas,v 1.3 2009-06-26 21:05:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/class_duht.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -125,11 +125,11 @@ begin
       try
         result.CopyFrom(DStream,entryList[idx].entry.FileSize);
       finally
-        DStream.Free;
+        FreeAndNil(DStream);
       end
 
       finally
-        InputStream.Free;
+        FreeAndNil(InputStream);
       end
     end
     else

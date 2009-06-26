@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.11 2009-04-26 08:37:15 elbereth Exp $
+// $Id: classFSE.pas,v 1.12 2009-06-26 21:05:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -628,7 +628,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -910,7 +910,7 @@ begin
 
     end;
 
-    ErrList.Free;
+    FreeAndNil(ErrList);
     LoadFile := res;
 
   end
@@ -1224,7 +1224,7 @@ begin
       Result.Num := cl;
 
     finally
-      ExtList.Free;
+      FreeAndNil(ExtList);
     end;
   end
   else
@@ -1400,7 +1400,7 @@ begin
       tmpStm := THandleStream.Create(dst);
 //      BinCopy(CurrentFile,dst,Offset,Size,0,16384,silent);
       BinCopyToStream(CurrentFile,tmpStm,Offset,Size,0,getBufferSize(),silent,percent);
-      tmpStm.Free;
+      FreeAndNil(tmpStm);
       FileClose(dst);
       if not(silent) then
         dup5Main.appendLog(DLNGStr('LOG510'));
@@ -2190,7 +2190,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -2211,7 +2211,7 @@ begin
         Reg.CloseKey;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
   end;
 
@@ -2293,7 +2293,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -2318,16 +2318,25 @@ begin
       try
         outstream.CopyFrom(tmpStm,tmpStm.Size);
       finally
-        tmpStm.Free;
+        FreeAndNil(tmpStm);
       end;
     end
     else
       ExtractFileToStream_Alt(outstream,entry^.Name,entry^.Offset,entry^.Size,entry^.DataX,entry^.DataY,silent);
-  finally
-    Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
-    SetStatus('-');
-    RestoreTitle;
+  except
+    on E: Exception do
+    begin
+      dup5Main.writeLogVerbose(0,DLNGStr('ERR101'));
+      dup5Main.colorLogVerbose(0,clRed);
+      dup5Main.writeLogVerbose(2,DLNGStr('ERR202')+' '+E.ClassName);
+      dup5Main.colorLogVerbose(2,clRed);
+      dup5Main.writeLogVerbose(2,DLNGStr('ERR203')+' '+E.Message);
+      dup5Main.colorLogVerbose(2,clRed);
+    end;
   end;
+  Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
+  SetStatus('-');
+  RestoreTitle;
 
 end;
 

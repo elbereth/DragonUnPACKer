@@ -1,6 +1,6 @@
 unit classHyperRipper;
 
-// $Id: classHyperRipper.pas,v 1.4 2008-03-04 06:06:54 elbereth Exp $
+// $Id: classHyperRipper.pas,v 1.5 2009-06-26 21:05:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classHyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -62,7 +62,7 @@ type FormatsListElem = record
      end;
      ExtSearchFormatsList = record
        NumFormats : Integer;
-       FormatsList : array[1..1000] of FormatsListElemEx;
+       FormatsList : array of FormatsListElemEx;
      end;
      FoundInfo = record
        Offset: integer;

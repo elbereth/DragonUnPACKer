@@ -1,6 +1,6 @@
 unit lib_bincopy;
 
-// $Id: lib_bincopy.pas,v 1.3 2008-10-01 04:46:39 elbereth Exp $
+// $Id: lib_bincopy.pas,v 1.4 2009-06-26 21:05:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_bincopy.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -95,7 +95,7 @@ begin
   try
     BinCopyToStream(srcStm,dst,soff,ssize,doff,bufsize,silent,DisplayPercent);
   finally
-    srcStm.Free;
+    FreeAndNil(srcStm);
   end;
 
 end;
@@ -109,8 +109,8 @@ begin
   try
     BinCopyToStream(srcStm,dstStm,soff,ssize,doff,bufsize,silent,DisplayPercent);
   finally
-    srcStm.Free;
-    dstStm.Free;
+    FreeAndNil(srcStm);
+    FreeAndNil(dstStm);
   end;
 
 end;

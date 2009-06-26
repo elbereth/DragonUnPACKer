@@ -1,6 +1,6 @@
 unit Proxy;
 
-// $Id: Proxy.pas,v 1.1.1.1 2004-05-08 10:27:05 elbereth Exp $
+// $Id: Proxy.pas,v 1.2 2009-06-26 21:06:05 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Proxy.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -69,7 +69,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   frmInstaller.proxy := txtProxy.Text;

@@ -1,6 +1,6 @@
 unit lib_look;
 
-// $Id: lib_look.pas,v 1.4 2008-08-23 17:42:36 elbereth Exp $
+// $Id: lib_look.pas,v 1.5 2009-06-26 21:05:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/lib_look.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -327,9 +327,9 @@ begin
 
         end;
 
-        stm.Free;
-        Icn.Free;
-        IcnMask.Free;
+        FreeAndNil(stm);
+        FreeAndNil(Icn);
+        FreeAndNil(IcnMask);
 
       end;
       FileClose(Hin);

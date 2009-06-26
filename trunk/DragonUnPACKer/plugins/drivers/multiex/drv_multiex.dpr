@@ -1,6 +1,6 @@
 library drv_multiex;
 
-// $Id: drv_multiex.dpr,v 1.1.1.1 2004-05-08 10:26:54 elbereth Exp $
+// $Id: drv_multiex.dpr,v 1.2 2009-06-26 21:05:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/multiex/drv_multiex.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -290,7 +290,7 @@ begin
       BMSInfoList[x].id := reg.ReadString(BMSList.Strings[x],'id','MEX');
     end;
   finally
-    reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -560,12 +560,12 @@ begin
       try
         FinalSize := OutputStream.CopyFrom(DStream,OSize);
       finally
-        DStream.Free;
+        FreeAndNil(DStream);
       end
 
     finally
-      InputStream.Free;
-      OutputStream.Free;
+      FreeAndNil(InputStream);
+      FreeAndNil(OutputStream);
     end
   finally
     FreeMem(Buf);

@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.19 2009-06-21 19:47:43 elbereth Exp $
+// $Id: Main.pas,v 1.20 2009-06-26 21:05:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -72,7 +72,6 @@ type
     menuOptions_Look: TMenuItem;
     menuOptions_Convert: TMenuItem;
     menuOptions_Drivers: TMenuItem;
-    menuOptions_HyperRipper: TMenuItem;
     menuAbout_About: TMenuItem;
     Popup_Contents: TPopupMenu;
     Popup_Extrairevers: TMenuItem;
@@ -313,7 +312,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   separatorLog;
@@ -372,7 +371,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -386,7 +385,7 @@ begin
   begin
     itmX := menuRecent.Items[menuRecent.Count-1];
     menuRecent.Remove(itmX);
-    itmX.Free;
+    FreeAndNil(itmX);
   end;
 
   x := Low(RecentFiles);
@@ -429,7 +428,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   RecentFiles_Display;
@@ -745,7 +744,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   TranslateSearch;
@@ -799,7 +798,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   result := BrowseForFolder(DLNGStr('DIRTIT'),LastDir,true);
@@ -815,7 +814,7 @@ begin
         Reg.CloseKey;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
   end;
 
@@ -969,20 +968,20 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   FSE.FreeDrivers;
-  FSE.Free;
+  FreeAndNil(FSE);
 
   Icons.close;
-  Icons.Free;
+  FreeAndNil(Icons);
   
   for x := 0 to TempFiles.Count-1 do
     if FileExists(TempFiles.Strings[x]) and Not(DeleteFile(TempFiles.Strings[x])) then
       MessageDlg(ReplaceValue('%f',DLNGStr('ERRTMP'),TempFiles.Strings[x]),mtWarning,[mbOk],0);
 
-  TempFiles.Free;
+  FreeAndNil(TempFiles);
 
   Application.Terminate;
 
@@ -1247,8 +1246,8 @@ begin
         CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].ConvertStream(tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
         appendLog(DLNGStr('LOG510'));
       finally
-        tmpStm.Free;
-        outStm.Free;
+        FreeAndNil(tmpStm);
+        FreeAndNil(outStm);
       end;
     end;
 
@@ -1384,8 +1383,8 @@ begin
             styleLog([fsBold]);
           end;
         end;
-        tmpStm.Free;
-        outStm.Free;
+        FreeAndNil(tmpStm);
+        FreeAndNil(outStm);
       end;
 
       if not(Silent) then
@@ -1702,7 +1701,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   TranslateMain;
@@ -1748,17 +1747,6 @@ begin
   CPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\convert\');
 
   dup5Main.writeLog(' = '+ReplaceValue('%p',DLNGStr('LOG009'),inttostr(CPlug.NumPlugins)));
-
-  dup5Main.writeLog(DLNGStr('LOG004'));
-
-  HPlug := HPlugInit;
-  HPlug.SetPercent(PercentCB);
-  HPlug.SetLanguage(LanguageCB);
-  HPlug.SetPath(ExtractFilePath(Application.ExeName)+'data\HyperRipper\');
-  HPlug.SetOwner(self);
-  HPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\HyperRipper\');
-
-  dup5Main.writeLog(' = '+ReplaceValue('%p',DLNGStr('LOG009'),inttostr(HPlug.NumPlugins)));
 
   Icons := TIconsFromExt.Create;
   Icons.init(imgContents);
@@ -1991,7 +1979,7 @@ begin
          Reg.CloseKey;
        end;
      finally
-       Reg.Free;
+       FreeAndNil(Reg);
      end;
 
      Popup_Extrairevers_Raw.Default := isExtractDefault;
@@ -2102,7 +2090,7 @@ begin
         Reg.CloseKey;
       end;
     finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
 
     if isExtractDefault then
@@ -2347,7 +2335,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   TranslateSearch;
@@ -2597,7 +2585,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
   
   richLog.Visible := true;
@@ -2619,7 +2607,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   richLog.Visible := false;
@@ -2762,7 +2750,7 @@ var Data: pvirtualTreeData;
     Node: PVirtualNode;
     rep,ext,filename,tmpFil,foundFormat: string;
     Offset, Size: int64;
-    i,DataX, DataY, Step,x,y: integer;
+    i,DataX, DataY: integer;
     CList: ExtConvertList;
     stmSource, stmBitmap: TMemoryStream;
     foundCnv: boolean;
@@ -2903,10 +2891,34 @@ begin
             end;
 
           end;
-        finally
-          stmSource.Free;
-          stmBitmap.Free;
+        except
+          on E: Exception do
+          begin
+            writeLogVerbose(0,DLNGStr('ERR200'));
+            colorLogVerbose(0,clRed);
+            writeLogVerbose(2,DLNGStr('ERR202')+' '+E.ClassName);
+            colorLogVerbose(2,clRed);
+            writeLogVerbose(2,DLNGStr('ERR203')+' '+E.Message);
+            colorLogVerbose(2,clRed);
+          end;
         end;
+        if Assigned(stmSource) then
+        begin
+          try
+            FreeAndNil(stmSource);
+          except
+            on E: Exception do
+            begin
+              writeLogVerbose(0,DLNGStr('ERR200'));
+              colorLogVerbose(0,clRed);
+              writeLogVerbose(2,DLNGStr('ERR202')+' '+E.ClassName);
+              colorLogVerbose(2,clRed);
+              writeLogVerbose(2,DLNGStr('ERR203')+' '+E.Message);
+              colorLogVerbose(2,clRed);
+            end;
+          end;
+        end;
+        FreeAndNil(stmBitmap);
       end
       else
       begin
@@ -2923,8 +2935,8 @@ end;
 procedure Tdup5Main.FormDestroy(Sender: TObject);
 begin
 
-  FPreviewImage.Free;
-  FPreviewBitmap.Free;
+  FreeAndNil(FPreviewImage);
+  FreeAndNil(FPreviewBitmap);
 
 end;
 
@@ -2965,7 +2977,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   SplitterPreview.Visible := false;
@@ -2997,7 +3009,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   panPreview.Visible := true;
@@ -3042,7 +3054,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   imgPreview.AutoSize := false;
@@ -3065,7 +3077,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   imgPreview.Align := alNone;

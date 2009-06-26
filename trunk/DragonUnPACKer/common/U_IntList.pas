@@ -365,7 +365,7 @@ begin
   try
     SaveToStream(Stream);
   finally
-    Stream.Free;
+    FreeAndNil(Stream);
   end;
 end;
 
@@ -393,7 +393,7 @@ begin
   try
     LoadFromStream(Stream);
   finally
-    Stream.Free;
+    FreeAndNil(Stream);
   end;
 end;
 

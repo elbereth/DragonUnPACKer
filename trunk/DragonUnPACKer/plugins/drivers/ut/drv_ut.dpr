@@ -1,6 +1,6 @@
 library drv_ut;
 
-// $Id: drv_ut.dpr,v 1.4 2005-12-14 16:51:37 elbereth Exp $
+// $Id: drv_ut.dpr,v 1.5 2009-06-26 21:05:32 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/ut/drv_ut.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -155,7 +155,7 @@ begin
 
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -201,7 +201,7 @@ begin
       end;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -221,7 +221,7 @@ begin
         result := Reg.ReadBool('DontAsk');
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -241,7 +241,7 @@ begin
         inc(result,Reg.ReadInteger('GameHint'));
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -261,7 +261,7 @@ begin
         result := Reg.ReadInteger('GameHint');
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -300,7 +300,7 @@ begin
       end;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -382,7 +382,7 @@ begin
         Inc(GH,frmGH.ShowModal-1);
         setGameHint(fil,ord(GH),frmGH.chkDontAsk.checked);
       finally
-        frmGH.Free;
+        FreeAndNil(frmGH);
       end;
 
       Application.Handle := OldH;
@@ -436,7 +436,7 @@ begin
 
   CurPos := 0;
 //  Package.ReleaseAllObjects;
-  Package.Free;
+  FreeAndNil(Package);
   Package := TUTPackage.Create;
 
 end;
@@ -668,12 +668,12 @@ begin
         end;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
 
     frmUTC.ShowModal;
   finally
-    frmUTC.free;
+    FreeAndNil(frmUTC);
   end;
 
   Application.Handle := OldH;

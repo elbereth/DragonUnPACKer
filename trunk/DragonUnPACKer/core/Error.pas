@@ -1,6 +1,6 @@
 unit Error;
 
-// $Id: Error.pas,v 1.4 2008-04-04 19:08:13 elbereth Exp $
+// $Id: Error.pas,v 1.5 2009-06-26 21:05:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Error.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -119,7 +119,7 @@ try
     txtError.Lines.Add('CPU '+inttostr(x)+': '+cxCpu.Processors[x-1].Name.AsString );
   end;
 finally
-  cxCPU.Free;
+  FreeAndNil(cxCPU);
 end;
 
 txtError.Lines.Add('Memory: Free='+inttostr(OSInfo.MemAvailable div 1048576)+'MB / Total='+inttostr(OSInfo.MemTotal div 1048576)+'MB');
@@ -246,7 +246,7 @@ end;
 
 destructor TfrmError.destroy;
 begin
-  if details <> nil then details.Free;
+  if details <> nil then FreeAndNil(details);
   inherited;
 end;
 

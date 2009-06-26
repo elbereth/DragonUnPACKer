@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.12 2008-11-16 19:13:26 elbereth Exp $
+// $Id: Translation.pas,v 1.13 2009-06-26 21:04:05 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -250,10 +250,9 @@ begin
     treeConfig.Items.Item[3].Text := DLNGStr('OPT600');
     treeConfig.Items.Item[4].Text := DLNGStr('OPT500');
     treeConfig.Items.Item[5].Text := DLNGStr('OPT200');
-    treeConfig.Items.Item[6].Text := 'HyperRipper';
-    treeConfig.Items.Item[7].Text := DLNGStr('OPT300');
-    treeConfig.Items.Item[8].Text := DLNGStr('OPT400');
-    treeConfig.Items.Item[9].Text := DLNGStr('OPT900');
+    treeConfig.Items.Item[6].Text := DLNGStr('OPT300');
+    treeConfig.Items.Item[7].Text := DLNGStr('OPT400');
+    treeConfig.Items.Item[8].Text := DLNGStr('OPT900');
 
     grpLanguage.Caption := DLNGStr('OPT110');
     grpLanguage.Font.Name := GetFont();
@@ -351,33 +350,6 @@ begin
     butRefresh.Caption := DLNGStr('OPT221');
     lblPriority.Caption := DLNGStr('OPT220');
 
-    cmdHRAbout.Caption := DLNGStr('OPT201');
-    cmdHRAbout.Font.Name := GetFont();
-
-    cmdHRSetup.Caption := DLNGStr('OPT202');
-    cmdHRSetup.Font.Name := GetFont();
-
-    lblHR.Caption := DLNGStr('OPT701');
-    lblHR.Font.Name := GetFont();
-
-    grpHRInfo.Caption := DLNGStr('OPT710');
-    grpHRInfo.Font.Name := GetFont();
-
-    strHRInfoAuthor.Caption := DLNGStr('INFO02');
-    strHRInfoAuthor.Font.Name := GetFont();
-
-    strHRInfoVersion.Caption := DLNGStr('INFO04');
-    strHRInfoVersion.Font.Name := GetFont();
-
-    strHRInfoComments.Caption := DLNGStr('INFO03');
-    strHRInfoComments.Font.Name := GetFont();
-
-    lstHR2.Columns.Items[0].Caption := DLNGStr('INFO20');
-    lstHR2.Columns.Items[1].Caption := DLNGStr('INFO21');
-    lstHR2.Columns.Items[2].Caption := DLNGStr('INFO10');
-    grpHRAdvInfo.Caption := DLNGStr('INFO22');
-    lblHIntVer.Caption := DLNGStr('INFO23');
-
     grpLookInfo.Caption := DLNGStr('OPT310');
     grpLookInfo.Font.Name := GetFont();
 
@@ -434,15 +406,11 @@ begin
     lblPluginsDrivers.Font.Name := GetFont();
     lblPluginsConvert.Caption := DLNGStr('OPT501');
     lblPluginsConvert.Font.Name := GetFont();
-    lblPluginsHyperRipper.Caption := DLNGStr('OPT701');
-    lblPluginsHyperRipper.Font.Name := GetFont();
 
     lblPluginsDriversInfo.Caption := DLNGStr('OPT191');
     lblPluginsDriversInfo.Font.Name := GetFont();
     lblPluginsConvertInfo.Caption := DLNGStr('OPT192');
     lblPluginsConvertInfo.Font.Name := GetFont();
-    lblPluginsHyperRipperInfo.Caption := DLNGStr('OPT193');
-    lblPluginsHyperRipperInfo.Font.Name := GetFont();
 
     grpPluginsInfo.Caption := DLNGStr('OPT600');
     grpPluginsInfo.Font.Name := GetFont();
@@ -704,8 +672,8 @@ begin
     lblAboutInfo.Font.Name := getFont();
     lblAboutBeware.Caption := DLNGstr('HR0002');
     lblAboutBeware.Font.Name := getFont();
-    strNumPlugs.Caption := DLNGstr('HR0003');
-    strNumPlugs.Font.Name := getFont();
+//    strNumPlugs.Caption := DLNGstr('HR0003');
+//    strNumPlugs.Font.Name := getFont();
     strNumFormats.Caption := DLNGstr('HR0004');
     strNumFormats.Font.Name := getFont();
 

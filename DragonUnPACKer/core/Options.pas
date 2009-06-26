@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.10 2009-04-26 08:37:15 elbereth Exp $
+// $Id: Options.pas,v 1.11 2009-06-26 21:04:05 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -79,18 +79,6 @@ type
     strCnvInfoComments: TLabel;
     Panel3: TPanel;
     lblCnvInfoComments: TLabel;
-    tabHyperRipper: TPanel;
-    lblHR: TLabel;
-    cmdHRSetup: TButton;
-    grpHRInfo: TGroupBox;
-    strHRInfoAuthor: TLabel;
-    lblHRInfoAuthor: TLabel;
-    strHRInfoVersion: TLabel;
-    lblHRInfoVersion: TLabel;
-    strHRInfoComments: TLabel;
-    Panel5: TPanel;
-    lblHRInfoComments: TLabel;
-    cmdHRAbout: TButton;
     chkRegistryIcons: TCheckBox;
     chkUseHyperRipper: TCheckBox;
     lstDrivers2: TListView;
@@ -109,12 +97,6 @@ type
     lblCIntVer: TLabel;
     txtDUCI: TStaticText;
     txtCIntVer: TStaticText;
-    lstHR2: TListView;
-    grpHRAdvInfo: TGroupBox;
-    lblDUHI: TLabel;
-    lblHIntVer: TLabel;
-    txtDUHI: TStaticText;
-    txtHIntVer: TStaticText;
     tabLog: TPanel;
     grpLogVerbose: TGroupBox;
     grpLogOptions: TGroupBox;
@@ -150,9 +132,6 @@ type
     lblPluginsDrivers: TLabel;
     panPluginsDrivers: TPanel;
     lblPluginsDriversInfo: TLabel;
-    lblPluginsHyperRipper: TLabel;
-    panPluginsHyperRipper: TPanel;
-    lblPluginsHyperRipperInfo: TLabel;
     butAssocExtIconBrowse: TButton;
     radTmpDirDefault: TRadioButton;
     radTmpDirOther: TRadioButton;
@@ -192,8 +171,6 @@ type
     procedure cmdDrvSetupClick(Sender: TObject);
     procedure cmdCnvAboutClick(Sender: TObject);
     procedure cmdCnvSetupClick(Sender: TObject);
-    procedure cmdHRAboutClick(Sender: TObject);
-    procedure cmdHRSetupClick(Sender: TObject);
     procedure chkUseHyperRipperClick(Sender: TObject);
     procedure lstDrivers2KeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -202,8 +179,6 @@ type
     procedure trkPriorityChange(Sender: TObject);
     procedure butRefreshClick(Sender: TObject);
     procedure lstConvert2Change(Sender: TObject; Item: TListItem;
-      Change: TItemChange);
-    procedure lstHR2Change(Sender: TObject; Item: TListItem;
       Change: TItemChange);
     procedure chkLogClick(Sender: TObject);
     procedure trackbarVerboseChange(Sender: TObject);
@@ -284,7 +259,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   if Not(Loading) then
@@ -387,27 +362,6 @@ begin
   if CPlug.NumPlugins > 0 then
   begin
     frmConfig.lstConvert2.ItemIndex := 0;
-  end;
-
-end;
-
-procedure HRIPList();
-var x : integer;
-    itmx : TListItem;
-begin
-
-  frmConfig.lstHR2.Clear;
-  for x := 1 to HPlug.NumPlugins do
-  begin
-    itmx := frmConfig.lstHR2.Items.Add;
-    itmx.Caption := HPlug.Plugins[x].Version.Name;
-    itmx.SubItems.Add(GetPlugVersion(HPlug.Plugins[x].Version.Version));
-    itmx.SubItems.Add(ChangeFileExt(HPlug.Plugins[x].FileName,''));
-  end;
-
-  if HPlug.NumPlugins > 0 then
-  begin
-    frmConfig.lstHR2.ItemIndex := 0;
   end;
 
 end;
@@ -562,7 +516,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   optPreviewDisplayStretch.Checked := dup5Main.imgPreview.Stretch;
@@ -573,7 +527,6 @@ begin
 
   CONVList;
   DRVList;
-  HRIPList;
   LOOKList;
   frmConfig.lstLookClick(Self);
   TYPEList;
@@ -608,7 +561,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -672,7 +625,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   CFilIdx := -1;
@@ -736,7 +689,7 @@ begin
           Reg.CloseKey;
         end;
       Finally
-        Reg.Free;
+        FreeAndNil(Reg);
       end;
     end;
 
@@ -793,7 +746,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -811,7 +764,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -834,7 +787,6 @@ begin
   tabAssoc.Visible := False;
   tabLog.Visible := False;
   tabConvert.Visible := False;
-  tabHyperRipper.Visible := False;
   tabPreview.Visible := False;
 
   case treeConfig.Selected.AbsoluteIndex of
@@ -848,13 +800,12 @@ begin
     3: tabPluginsInfos.Visible := True;
     4: tabConvert.Visible := True;
     5: tabPlugins.Visible := True;
-    6: tabHyperRipper.Visible := True;
-    7: tabLook.Visible := True;
-    8: begin
+    6: tabLook.Visible := True;
+    7: begin
          tabAssoc.Visible := True;
          updateAssocIcon;
        end;
-    9: tabPreview.Visible := True;
+    8: tabPreview.Visible := True;
   end;
 
 end;
@@ -881,7 +832,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -907,20 +858,6 @@ begin
 
 end;
 
-procedure TfrmConfig.cmdHRAboutClick(Sender: TObject);
-begin
-
-  HPlug.showAboutBox(Application.Handle,lstHR2.ItemIndex+1);
-
-end;
-
-procedure TfrmConfig.cmdHRSetupClick(Sender: TObject);
-begin
-
-  HPlug.showConfigBox(Application.Handle,lstHR2.ItemIndex+1);
-
-end;
-
 procedure TfrmConfig.chkUseHyperRipperClick(Sender: TObject);
 var Reg: TRegistry;
 begin
@@ -934,7 +871,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -1010,28 +947,6 @@ begin
 
 end;
 
-procedure TfrmConfig.lstHR2Change(Sender: TObject; Item: TListItem;
-  Change: TItemChange);
-begin
-
-  if (Change = ctState)
-  and (lstHR2.ItemIndex > -1) then
-  begin
-
-    lblHRInfoAuthor.Caption := HPlug.Plugins[lstHR2.ItemIndex+1].Version.Author;
-    lblHRInfoVersion.Caption := GetplugVersion(HPlug.Plugins[lstHR2.ItemIndex+1].Version.Version);
-    lblHRInfoComments.Caption := HPlug.Plugins[lstHR2.ItemIndex+1].Version.Comment;
-
-    cmdHRAbout.Enabled := HPlug.Plugins[lstHR2.ItemIndex+1].IsAboutBox;
-    cmdHRSetup.Enabled := HPlug.Plugins[lstHR2.ItemIndex+1].IsConfigBox;
-
-    txtDUHI.Caption := 'v'+inttostr(HPlug.Plugins[lstHR2.ItemIndex+1].DUHIVersion);
-    txtHIntVer.Caption := inttostr(HPlug.Plugins[lstHR2.ItemIndex+1].Version.Version);
-//    trkPriority.Position := FSE.Drivers[lstDrivers2.ItemIndex+1].Priority;
-  end;
-
-end;
-
 procedure TfrmConfig.chkLogClick(Sender: TObject);
 begin
 
@@ -1060,7 +975,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   trackbarVerboseUpdateHint;
@@ -1099,8 +1014,8 @@ begin
       imgAssocIcon16.Visible := false;
     end;
   end;
-  icnLarge.Free;
-  icnSmall.Free;
+  FreeAndNil(icnLarge);
+  FreeAndNil(icnSmall);
 
 end;
 
@@ -1117,7 +1032,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   txtAssocExtIcon.Enabled := chkAssocExtIcon.Checked;
@@ -1138,7 +1053,7 @@ begin
     if diagOpen.Execute then
       txtAssocExtIcon.Text := diagOpen.FileName;
   finally
-    diagOpen.Free;
+    FreeAndNil(diagOpen);
   end;
 
 end;
@@ -1159,7 +1074,7 @@ begin
         Reg.CloseKey;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
 
     updateAssocIcon;
@@ -1182,7 +1097,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   txtAssocText.Enabled := chkAssocText.Checked;
@@ -1206,7 +1121,7 @@ begin
         Reg.CloseKey;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
 
     SetRegistryDUP5;
@@ -1228,7 +1143,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
   SetRegistryDUP5;
@@ -1248,7 +1163,7 @@ begin
       Reg.CloseKey;
     end;
   Finally
-    Reg.Free;
+    FreeAndNil(Reg);
   end;
 
 end;
@@ -1279,7 +1194,7 @@ begin
         Reg.CloseKey;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
 
   end;
@@ -1307,7 +1222,7 @@ begin
         Reg.CloseKey;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
 
   end;
@@ -1331,7 +1246,7 @@ begin
         Reg.CloseKey;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
 
   end;
@@ -1354,7 +1269,7 @@ begin
         Reg.CloseKey;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
 
   end;
@@ -1387,7 +1302,7 @@ begin
         Reg.CloseKey;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
 
     dup5main.isPreviewLimit := false;
@@ -1414,7 +1329,7 @@ begin
         Reg.CloseKey;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
 
     dup5main.previewLimitValue := lstPreviewLimit.ItemIndex;
@@ -1441,7 +1356,7 @@ begin
         Reg.CloseKey;
       end;
     Finally
-      Reg.Free;
+      FreeAndNil(Reg);
     end;
 
     dup5main.isPreviewLimit := true;

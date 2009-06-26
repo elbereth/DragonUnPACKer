@@ -1,6 +1,6 @@
 unit declFSE;
 
-// $Id: declFSE.pas,v 1.2 2005-12-13 07:13:56 elbereth Exp $
+// $Id: declFSE.pas,v 1.3 2009-06-26 21:04:05 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/declFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,15 +18,13 @@ unit declFSE;
 
 
 interface
-uses classFSE, classConvert, classHyperRipper;
+uses classFSE, classConvert;
 
 var FSE: TDrivers;
     CPlug: TPlugins;
-    HPlug: THRPlugins;
 
 function FSEInit(): TDrivers;
 function CPlugInit(): TPlugins;
-function HPlugInit(): THRPlugins;
 
 implementation
 
@@ -41,13 +39,6 @@ function CPlugInit(): TPlugins;
 begin
 
   Result := TPlugins.Create;
-
-end;
-
-function HPlugInit(): THRPlugins;
-begin
-
-  Result := THRPlugins.Create;
 
 end;
 

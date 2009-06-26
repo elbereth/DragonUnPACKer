@@ -1,6 +1,6 @@
 unit HyperRipper_aux;
 
-// $Id: HyperRipper_aux.pas,v 1.1.1.1 2004-05-08 10:25:35 elbereth Exp $
+// $Id: HyperRipper_aux.pas,v 1.2 2009-06-26 21:01:29 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper_aux.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -19,7 +19,7 @@ unit HyperRipper_aux;
 interface
 
 uses
-  Windows, Classes, HyperRipper, classHyperRipper, lib_utils, SysUtils, declFSE, Main;
+  Windows, Classes, HyperRipper, lib_utils, SysUtils, declFSE, Main;
 
 type
   THRipSearch = class(TThread)
@@ -219,7 +219,7 @@ begin
       hrip.AddResult('Freeing ressources..');
       for x := 0 to flist.Count-1 do
         Dispose(flist.Items[x]);
-      flist.Free;
+      FreeAndNil(flist);
       freemem(Buffer);
       FileClose(hSRC);
       hrip.LastResult('Freeing ressources.. Done!');

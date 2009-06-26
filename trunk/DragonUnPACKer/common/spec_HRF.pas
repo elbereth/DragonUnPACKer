@@ -1,6 +1,6 @@
 unit spec_HRF;
 
-// $Id: spec_HRF.pas,v 1.10 2008-11-09 14:12:37 elbereth Exp $
+// $Id: spec_HRF.pas,v 1.11 2009-06-26 21:01:29 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/spec_HRF.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -30,19 +30,11 @@ unit spec_HRF;
 //  HRF_Index_v1
 //  HRF_Index_v2
 //  
-//  Const:
-//  DULK_Version
-//  DULK_IndexNum
-//  
-//  Functions:
-//  procedure LoadLook(fil: string);
-//
 // -----------------------------------------------------------------------------
 
 interface
 
-const HR_VERSION = 55044;	// HyperRipper version
-      HR_ID = 1;
+const HR_ID = 1;
 
       HR_TYPE_ERROR = -1;
       HR_TYPE_UNKNOWN = 0;
@@ -178,16 +170,16 @@ begin
     valVer := 0;
 
   case typVer of
-    0: typStr := 'Alpha';
-    1: typStr := 'Beta';
-    2: typStr := 'RC';
-    3: typStr := 'Gold';
+    0: typStr := ' Alpha ';
+    1: typStr := ' Beta ';
+    2: typStr := ' RC';
+    3: typStr := ' Gold ';
     4: typStr := '';
     5: typStr := '';
     6: typStr := '';
-    7: typStr := 'Fix';
-    8: typStr := 'Patch';
-    9: typStr := 'Special';
+    7: typStr := ' Fix ';
+    8: typStr := ' Patch ';
+    9: typStr := ' Special ';
   end;
 
   if (typVer = 4) and (valVer > 0) then
@@ -216,7 +208,7 @@ begin
   else
     valStr := '';
 
-  result := TrimRight(IntToStr(majVer)+'.'+IntToStr(minVer)+valStr);
+  result := TrimRight(IntToStr(majVer)+'.'+IntToStr(minVer)+typStr+valStr);
 
 end;
 

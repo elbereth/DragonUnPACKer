@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.54 2009-06-26 21:05:32 elbereth Exp $
+// $Id: drv_default.dpr,v 1.55 2009-07-10 20:55:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -78,6 +78,7 @@ type FSE = ^element;
    end;
    TPercentCallback = procedure (p: byte);
    TLanguageCallback = function (lngid: ShortString): ShortString;
+   TMsgBoxCallback = procedure(const title, msg: AnsiString);
 
 { ////////////////////////////////////////////////////////////////////////////
   Driver History:
@@ -196,6 +197,7 @@ type FSE = ^element;
     20740        Added much needed sanity checks to .BIN & .DAT file formats
     20741        Fixed Total Annihilation HPI extraction when compression is Zlib (Exception Access Violation)
     20742        Replaced .free by FreeAndNil() to be more consistant (no more bad pointers)
+    20743        Upgraded to new interface DUDI v5 (plugin is backward compatible to v4)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -213,10 +215,12 @@ type FSE = ^element;
   //////////////////////////////////////////////////////////////////////////// }
 
 const
-  DRIVER_VERSION = 20742;
-  DUP_VERSION = 54041;
-  CVS_REVISION = '$Revision: 1.54 $';
-  CVS_DATE = '$Date: 2009-06-26 21:05:32 $';
+  DUDI_VERSION = 5;
+  DUDI_VERSION_COMPATIBLE = 4;
+  DRIVER_VERSION = 20743;
+  DUP_VERSION = 55110;
+  CVS_REVISION = '$Revision: 1.55 $';
+  CVS_DATE = '$Date: 2009-07-10 20:55:56 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -229,6 +233,7 @@ var DataBloc: FSE;
     SetPercent: TPercentCallback;
     Per: Byte = 0;
     OldPer: byte = 0;
+    SupportedDUDI: byte = 0;
     DNISize : Integer;
     NumFSE: Integer;
     HPIKey: Integer;
@@ -236,6 +241,7 @@ var DataBloc: FSE;
     CurPath: string;
     AHandle : THandle;
     AOwner : TComponent;
+    ShowMsgBox : TMsgBoxCallback;
 
 // This function reverse a string
 //  Ex: "abcd" becomes "dcba"
@@ -253,11 +259,20 @@ begin
 
 end;
 
-// Identifies the DLL as a Driver plugin
+// Identifies the DLL as a Driver plugin (minimum version to load plugin)
 // Exported
 function DUDIVersion: Byte; stdcall;
 begin
-  DUDIVersion := 4;
+  result := DUDI_VERSION_COMPATIBLE;
+  SupportedDUDI := DUDI_VERSION_COMPATIBLE;
+end;
+
+// Indicate current DUDIVersion (should return 5 at minimum)
+// Exported
+function DUDIVersionEx(supported: byte): byte; stdcall;
+begin
+  result := DUDI_VERSION;
+  SupportedDUDI := supported;
 end;
 
 // Returns Driver plugin version
@@ -9532,7 +9547,7 @@ type OPKHeader = packed record
        Size: integer;
        EntrySizeNoFilename: integer;      // Size of the entry in directory (without filename) --> Always 32?
        EntrySize: integer;                // Size of the entry in directory (filename included)
-       FileTime: TFileTime;               // Date/File of entry (Windows FiLETIME structure)
+       FileTime: Int64;                   // Date/File of entry (Windows FiLETIME structure)
      end;
 
 function ReadSinkingIslandOPK(src: string): Integer;
@@ -13897,11 +13912,45 @@ begin
 end;
 
 procedure AboutBox; stdcall;
+var aboutText: string;
 begin
 
-  MessageBoxA(AHandle, PChar('Elbereth''s Main Driver plugin v'+getVersion(DRIVER_VERSION)+#10+
+  if (SupportedDUDI >= 5) then
+  begin
+    aboutText := '{\rtf1\ansi\ansicpg1252\deff0\deflang1036{\fonttbl{\f0\fswiss\fcharset0 Arial;}}'+#10+
+                 '\viewkind4\uc1\pard\qc\ul\b\f0\fs24\par Elbereth''s Main Driver plugin v'+getVersion(DRIVER_VERSION)+'\par'+#10+
+                 '\ulnone\b0\i\fs22 Created by \b Alexandre Devilliers (aka Elbereth/Piecito)\par'+#10+
+                 '\par'+#10+
+                 '\b0\i0\fs20 Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+'\par'+#10+
+                 'Driver Interface [DUDI] v'+inttostr(DUDI_VERSION)+' (v'+inttostr(DUDI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUDI)+']\par'+#10+
+                 'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+'\par'+#10+
+                 'Based on CVS rev '+getCVSRevision(CVS_REVISION)+' ('+getCVSDate(CVS_DATE)+')\par'+#10+
+                 '\par'+#10+
+                 '\ul Limitations:\par'+#10+
+                 '\ulnone Breakneck .SYN files are not decrypted (useless support?)\par'+#10+
+                 'Commandos 3 .PCK decryption is experimental.\par'+#10+
+                 'Daikatana .PAK files: No extraction is possible.\par'+#10+
+                 'Empires: Dawn of the Modern World SSA support is partial.\par'+#10+
+                 'Novalogic .PFF files: Only PFF3 can be loaded.\par'+#10+
+                 '\par'+#10+
+                 '\ul Credits:\par'+#10+
+                 '\ulnone realMyst 3D DNI support code based on source of:\par dniExtract by {\b Ken Taylor}\par'+#10+
+                 'Darkstone MTF decompression code based on infos by:\par {\b Guy Ratajczak}\par'+#10+
+                 'GTA3 IMG/DIR support based on specs and infos by:\par {\b Dan Strandberg} of Game-Editing.net\par'+#10+
+                 'Spellforce PAK and Eve Online STUFF support based on infos by:\par {\b DaReverse}\par'+#10+
+                 'Painkiller PAK support partially based on infos by:\par {\b MrMouse}\par'+#10+
+                 'The Elder Scrolls 4: Oblivion BSA support based on infos found on:\par'+#10+
+                 'http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format\par'+#10+
+                 'Some file formats support based on info found on:\par'+#10+
+                 'http://wiki.xentax.com\par'+
+                 '}'+#10;
+  end
+  else
+  begin
+    aboutText :=          'Elbereth''s Main Driver plugin v'+getVersion(DRIVER_VERSION)+#10+
                           'Created by Alexandre Devilliers (aka Elbereth/Piecito)'+#10+#10+
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
+                          'Driver Interface [DUDI] v'+inttostr(DUDI_VERSION)+' (v'+inttostr(DUDI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUDI)+']'+#10+
                           'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+
                           'Based on CVS rev '+getCVSRevision(CVS_REVISION)+' ('+getCVSDate(CVS_DATE)+')'+#10+#10+
                           'Limitations:'+#10+
@@ -13920,8 +13969,9 @@ begin
                           'http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format'+#10+
                           'Some file formats support based on info found on:'+#10+
                           'http://wiki.xentax.com'
-                          )
-                        , 'About Elbereth''s Main Driver plugin...', MB_OK);
+  end;
+
+  showMsgBox('About Elbereth''s Main Driver plugin...',aboutText);
 
 end;
 
@@ -14321,6 +14371,13 @@ begin
 
 end;
 
+procedure InternalMsgBox(const title, msg: AnsiString);
+begin
+
+  MessageBoxA(AHandle, PChar(msg), PChar(title), MB_OK);
+
+end;
+
 procedure InitPlugin(per: TPercentCallback; lngid: TLanguageCallback; DUP5Path: ShortString; AppHandle: THandle; AppOwner: TComponent); stdcall;
 begin
 
@@ -14329,11 +14386,20 @@ begin
   CurPath := DUP5Path;
   AHandle := AppHandle;
   AOwner := AppOwner;
+  showMsgBox := InternalMsgBox;
+
+end;
+
+procedure InitPluginEx5(MsgBox: TMsgBoxCallback); stdcall;
+begin
+
+  showMsgBox := MsgBox;
 
 end;
 
 exports
   DUDIVersion,
+  DUDIVersionEx,
   ExtractFile,
   ExtractFileToStream,
   ReadFormat,
@@ -14345,6 +14411,7 @@ exports
   GetErrorInfo,
   AboutBox,
   InitPlugin,
+  InitPluginEx5,
   IsFormat;
 
 begin

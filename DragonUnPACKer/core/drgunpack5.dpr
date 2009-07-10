@@ -1,6 +1,6 @@
 program drgunpack5;
 
-// $Id: drgunpack5.dpr,v 1.14 2009-06-26 21:05:32 elbereth Exp $
+// $Id: drgunpack5.dpr,v 1.15 2009-07-10 20:58:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/drgunpack5.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -60,7 +60,8 @@ uses
   U_IntList in '..\common\U_IntList.pas',
   BrowseForFolderU in '..\common\BrowseForFolderU.pas',
   spec_DDS in '..\common\spec_DDS.pas',
-  MpegAudioOptions in 'MpegAudioOptions.pas' {frmOptMPEGa};
+  MpegAudioOptions in 'MpegAudioOptions.pas' {frmOptMPEGa},
+  MsgBox in 'MsgBox.pas' {frmMsgBox};
 
 {$R *.res}
 
@@ -320,6 +321,7 @@ begin
   Application.CreateForm(TfrmList, frmList);
   Application.CreateForm(TfrmError, frmError);
   Application.CreateForm(TfrmOptMPEGa, frmOptMPEGa);
+  Application.CreateForm(TfrmMsgBox, frmMsgBox);
   end;
     finally
       // When everything is loaded we start the close timer

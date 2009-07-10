@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.12 2009-06-26 21:05:31 elbereth Exp $
+// $Id: classFSE.pas,v 1.13 2009-07-10 20:59:51 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -74,6 +74,9 @@ type
 
 { External Function/Procedure declaration }
 
+const
+  DUDIVERSION = 5;  // Max supported DUDIVersion
+
 type
 
   { Callback functions (the driver can call those functions/procedure) }
@@ -85,6 +88,9 @@ type
   //                     lngid is a 6 chars ID for a language string.
   TLanguageCallback = function (lngid: ShortString): ShortString;
 
+  // TMsgBoxCallback : Used by the plugin to display About box
+  TMsgBoxCallback = procedure(const title, msg: AnsiString);
+
   { Driver plugin functions }
 
   // TDUDIVersion : Returns the driver plugin DUDI (Dragon UnPACKer Driver
@@ -93,10 +99,33 @@ type
   //                                         2 = Version 2
   //                                         3 = Version 3
   //                                         4 = Version 4
+  //                                         5 = Version 5 (see DUDIVersionEx)
   //                Each version has different exported functions/procedure
   //                and/or same function/procedure with different export
   //                parameters.
+  //                For version 5 DUDI plugins this returns the minimum compatible
+  //                version. Ex: DUDIVersionEx returns 5
+  //                             DUDIVersion returns 4
+  //                             This means the plugins is version 5 but is
+  //                             compatible with version 4.
   TDUDIVersion = function(): Byte; stdcall;
+  // TDUDIVersionEx : Returns the driver plugin DUDI (Dragon UnPACKer Driver
+  //                Interface) version. This exported function was created with
+  //                version 5 of DUDI interface.
+  //                Current class supports : 1 = Version 1
+  //                                         2 = Version 2
+  //                                         3 = Version 3
+  //                                         4 = Version 4
+  //                Each version has different exported functions/procedure
+  //                and/or same function/procedure with different export
+  //                parameters.
+  //                The parameter supported provides information on the host
+  //                core program supported version (ex: if only version 4 plugin
+  //                is supported the plugin might react differently).
+  //                If DUDIVersionEx was not called, it is to be expected that
+  //                the host core program do not supported extended version 5
+  //                features.
+  TDUDIVersionEx = function(supported: Byte): Byte; stdcall;
   // TCloseFormat : Called to (obviously) close current opened file.
   //                Driver is also supposed to free any resource associated with
   //                the opening of that file.
@@ -133,6 +162,7 @@ type
   TShowBox3 = procedure; stdcall;
   TInitPlugin = procedure(percent: TPercentCallback; dlngstr: TLanguageCallback; dup5pth: shortstring); stdcall;
   TInitPlugin3 = procedure(percent: TPercentCallback; dlngstr: TLanguageCallback; dup5pth: shortstring; AppHandle: THandle; AppOwner: TComponent); stdcall;
+  TInitPluginEx5 = procedure(MsgBox: TMsgBoxCallback); stdcall;
 
 type driver = record
    FileName : ShortString;
@@ -160,6 +190,7 @@ type driver = record
    DUDIVersion : Byte;
    InitPlugin : TInitPlugin;
    InitPlugin3 : TInitPlugin3;
+   InitPluginEx5 : TInitPluginEx5;
    Priority : Integer;         // 5.1 : Prioritization of drivers
  end;
 
@@ -275,6 +306,13 @@ end;
 implementation
 
 { TDrivers }
+
+procedure showMsgBox(const title, msg: AnsiString);
+begin
+
+  dup5Main.messageDlgTitle(title,msg,[mbOk],0);
+
+end;
 
 function TDrivers.GetFileSize(): Int64;
 begin
@@ -430,7 +468,9 @@ end;
 procedure TDrivers.LoadDrivers(pth: String);
 var sr: TSearchRec;
     DUDIVer: TDUDIVersion;
+    DUDIVerEx: TDUDIVersionEx;
     Handle: THandle;
+    test: TClass;
 begin
 
   NumDrivers := 0;
@@ -451,15 +491,20 @@ begin
         if IsConsole then
           write('Loaded... ');
           @DUDIVer := GetProcAddress(Handle, 'DUDIVersion');
-        if (@DUDIVer <> Nil) and ((DUDIVer = 1) or (DUDIVer = 2) or (DUDIVer = 3) or (DUDIVer = 4)) then
+          @DUDIVerEx := GetProcAddress(Handle, 'DUDIVersionEx');
+        if (@DUDIVer <> Nil) and ((DUDIVer >= 1) and (DUDIVer <= DUDIVersion)) then
         begin
+          Inc(NumDrivers);
+          if (@DUDIVerEx <> Nil) and ((DUDIVerEx(DUDIVersion) >= 5) and (DUDIVerEx(DUDIVersion) <= DUDIVersion)) then
+            Drivers[NumDrivers].DUDIVersion := DUDIVerEx(DUDIVersion)
+          else
+            Drivers[NumDrivers].DUDIVersion := DUDIVer;
+
           if IsConsole then
             write('IsDUDI... ')
           else
-            dup5Main.appendLogVerbose(2,'DUDI v'+inttostr(DUDIVer)+' -');
-          Inc(NumDrivers);
+            dup5Main.appendLogVerbose(2,'DUDI v'+inttostr(Drivers[NumDrivers].DUDIVersion)+' -');
 
-          Drivers[NumDrivers].DUDIVersion := DUDIVer;
           @Drivers[NumDrivers].CloseFile := GetProcAddress(Handle, 'CloseFormat');
           @Drivers[NumDrivers].GetEntry := GetProcAddress(Handle, 'GetEntry');
           @Drivers[NumDrivers].GetInfo := GetProcAddress(Handle, 'GetDriverInfo');
@@ -468,37 +513,35 @@ begin
           @Drivers[NumDrivers].CanOpen := GetProcAddress(Handle, 'IsFormat');
           @Drivers[NumDrivers].ExtractFile := GetProcAddress(Handle, 'ExtractFile');
           @Drivers[NumDrivers].GetError := GetProcAddress(Handle, 'GetErrorInfo');
-          if (DUDIVer = 1) then
+          if (Drivers[NumDrivers].DUDIVersion = 1) then
           begin
             @Drivers[NumDrivers].ShowAboutBox := GetProcAddress(Handle, 'AboutBox');
             @Drivers[NumDrivers].ShowConfigBox := GetProcAddress(Handle, 'ConfigBox');
             @Drivers[NumDrivers].OpenFile := GetProcAddress(Handle, 'ReadFormat');
           end
-          else if (DUDIVer = 2) then
+          else if (Drivers[NumDrivers].DUDIVersion = 2) then
           begin
             @Drivers[NumDrivers].ShowAboutBox2 := GetProcAddress(Handle, 'AboutBox');
             @Drivers[NumDrivers].ShowConfigBox2 := GetProcAddress(Handle, 'ConfigBox');
             @Drivers[NumDrivers].InitPlugin := GetProcAddress(Handle, 'InitPlugin');
             @Drivers[NumDrivers].OpenFile2 := GetProcAddress(Handle, 'ReadFormat');
           end
-          else if (DUDIVer = 3) then
+          else if (Drivers[NumDrivers].DUDIVersion = 3) or (Drivers[NumDrivers].DUDIVersion = 4) or (Drivers[NumDrivers].DUDIVersion = 5) then
           begin
             @Drivers[NumDrivers].ShowAboutBox3 := GetProcAddress(Handle, 'AboutBox');
             @Drivers[NumDrivers].ShowConfigBox3 := GetProcAddress(Handle, 'ConfigBox');
-            @Drivers[NumDrivers].InitPlugin3 := GetProcAddress(Handle, 'InitPlugin');
             @Drivers[NumDrivers].OpenFile2 := GetProcAddress(Handle, 'ReadFormat');
-          end
-          else if (DUDIVer = 4) then
-          begin
-            @Drivers[NumDrivers].ShowAboutBox3 := GetProcAddress(Handle, 'AboutBox');
-            @Drivers[NumDrivers].ShowConfigBox3 := GetProcAddress(Handle, 'ConfigBox');
             @Drivers[NumDrivers].InitPlugin3 := GetProcAddress(Handle, 'InitPlugin');
-            @Drivers[NumDrivers].OpenFile2 := GetProcAddress(Handle, 'ReadFormat');
-            @Drivers[NumDrivers].ExtractFileToStream := GetProcAddress(Handle, 'ExtractFileToStream');
+            if (Drivers[NumDrivers].DUDIVersion = 5) then
+              @Drivers[NumDrivers].InitPluginEx5 := GetProcAddress(Handle, 'InitPluginEx5');
+            if (Drivers[NumDrivers].DUDIVersion = 4) or (Drivers[NumDrivers].DUDIVersion = 5) then
+            begin
+              @Drivers[NumDrivers].ExtractFileToStream := GetProcAddress(Handle, 'ExtractFileToStream');
+            end;
           end;
 
-          if ((DUDIVer = 1) and (@Drivers[NumDrivers].OpenFile = Nil))
-          or (((DUDIVer = 2) or (DUDIVer = 3) or (DUDIVer = 4)) and (@Drivers[NumDrivers].OpenFile2 = Nil))
+          if ((Drivers[NumDrivers].DUDIVersion = 1) and (@Drivers[NumDrivers].OpenFile = Nil))
+          or (((Drivers[NumDrivers].DUDIVersion = 2) or (Drivers[NumDrivers].DUDIVersion = 3) or (Drivers[NumDrivers].DUDIVersion = 4)) and (@Drivers[NumDrivers].OpenFile2 = Nil))
           or (@Drivers[NumDrivers].CloseFile = Nil)
           or (@Drivers[NumDrivers].GetEntry = Nil)
           or (@Drivers[NumDrivers].GetInfo = Nil)
@@ -506,9 +549,10 @@ begin
           or (@Drivers[NumDrivers].GetVersion = Nil)
           or (@Drivers[NumDrivers].CanOpen = Nil)
           or (@Drivers[NumDrivers].GetError = Nil)
-          or ((DUDIVer = 2) and (@Drivers[NumDrivers].InitPlugin = Nil))
-          or (((DUDIVer = 3) or (DUDIVer = 4)) and (@Drivers[NumDrivers].InitPlugin3 = Nil))
-          or ((DUDIVer = 4) and (@Drivers[NumDrivers].ExtractFileToStream = Nil))
+          or ((Drivers[NumDrivers].DUDIVersion = 2) and (@Drivers[NumDrivers].InitPlugin = Nil))
+          or (((Drivers[NumDrivers].DUDIVersion = 3) or (Drivers[NumDrivers].DUDIVersion = 4) or (Drivers[NumDrivers].DUDIVersion = 5)) and (@Drivers[NumDrivers].InitPlugin3 = Nil))
+          or (((Drivers[NumDrivers].DUDIVersion = 4) or (Drivers[NumDrivers].DUDIVersion = 5)) and (@Drivers[NumDrivers].ExtractFileToStream = Nil))
+          or ((Drivers[NumDrivers].DUDIVersion = 5) and (@Drivers[NumDrivers].InitPluginEx5 = Nil))
           then
           begin
             if IsConsole then
@@ -531,13 +575,18 @@ begin
             if IsConsole then
               writeln('OK');
             try
-              if (DUDIVer = 2) then
+              if (Drivers[NumDrivers].DUDIVersion = 2) then
               begin
                 Drivers[NumDrivers].InitPlugin(Percent,Language,dup5pth);
               end
-              else if (DUDIVer = 3) or (DUDIVer = 4) then
+              else if (Drivers[NumDrivers].DUDIVersion = 3) or (Drivers[NumDrivers].DUDIVersion = 4) then
               begin
                 Drivers[NumDrivers].InitPlugin3(Percent,Language,dup5pth,Application.Handle,CurAOwner);
+              end
+              else if (Drivers[NumDrivers].DUDIVersion = 5) then
+              begin
+                Drivers[NumDrivers].InitPlugin3(Percent,Language,dup5pth,Application.Handle,CurAOwner);
+                Drivers[NumDrivers].InitPluginEx5(showMsgBox);
               end;
               Drivers[NumDrivers].FileName := ExtractFileName(sr.Name);
               Drivers[NumDrivers].Handle := Handle;
@@ -731,7 +780,7 @@ begin
         try
           if (Drivers[CurrentDriver].DUDIVersion = 1) then
             NumElems := Drivers[CurrentDriver].OpenFile(pchar(pth),Percent,SmartOpen)
-          else if (Drivers[CurrentDriver].DUDIVersion = 2) or (Drivers[CurrentDriver].DUDIVersion = 3) or (Drivers[CurrentDriver].DUDIVersion = 4) then
+          else if (Drivers[CurrentDriver].DUDIVersion >= 2) then
             NumElems := Drivers[CurrentDriver].OpenFile2(pchar(pth),SmartOpen);
         except
           on Ex:Exception do
@@ -740,7 +789,7 @@ begin
             frmError.details.Add(DLNGStr('ERRCAL'));
             if Drivers[CurrentDriver].DUDIVersion = 1 then
               frmError.details.Add('NumElems := Drivers['+inttostr(CurrentDriver)+'].OpenFile('''+pth+''',Percent,'+booltostr(SmartOpen,true)+')')
-            else if (Drivers[CurrentDriver].DUDIVersion = 2) or (Drivers[CurrentDriver].DUDIVersion = 3) or (Drivers[CurrentDriver].DUDIVersion = 4) then
+            else if (Drivers[CurrentDriver].DUDIVersion >= 2) then
               frmError.details.Add('NumElems := Drivers['+inttostr(CurrentDriver)+'].OpenFile2('''+pth+''','+booltostr(SmartOpen,true)+')');
             frmError.details.Add('');
             frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
@@ -2113,8 +2162,8 @@ begin
     // Run the second version of the ShowAboutBox function
     Drivers[drvnum].ShowAboutBox2(hwnd);
   end
-  // If driver at drvnum index has DUDI version 3 or 4
-  else if (Drivers[drvnum].DUDIVersion = 3) or (Drivers[drvnum].DUDIVersion = 4) then
+  // If driver at drvnum index has DUDI version 3 or +
+  else if (Drivers[drvnum].DUDIVersion >= 3) then
   begin
     // Run the third version of the ShowAboutBox function
     Drivers[drvnum].ShowAboutBox3;
@@ -2143,7 +2192,7 @@ begin
     Drivers[drvnum].ShowConfigBox2(hwnd);
   end
   // If driver at drvnum index has DUDI version 3 or 4
-  else if (Drivers[drvnum].DUDIVersion = 3) or (Drivers[drvnum].DUDIVersion = 4) then
+  else if (Drivers[drvnum].DUDIVersion >= 3) then
   begin
     // Run the third version of the ShowConfigBox function
     Drivers[drvnum].ShowConfigBox3;

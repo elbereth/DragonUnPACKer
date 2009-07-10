@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.20 2009-06-26 21:05:31 elbereth Exp $
+// $Id: Main.pas,v 1.21 2009-07-10 20:59:51 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -267,6 +267,7 @@ type
     procedure separatorLog();
     procedure separatorLogVerbose(minLevel: integer);
     function getPreviewLimitInBytes(value: integer): integer;
+    function messageDlgTitle(const Title: String; const Msg: string; Buttons: TMsgDlgButtons; HelpCtx: Longint): Integer;
     { Déclarations publiques }
   end;
 
@@ -284,7 +285,7 @@ implementation
 
 uses About, Registry, lib_utils, Search,
      DrvInfo, Options, Splash, spec_DULK, declFSE,
-     HyperRipper, classConvert, classFSE, List, Error;
+     HyperRipper, classConvert, classFSE, List, Error, MsgBox;
 
 var
   TempFiles: TStrings;
@@ -3091,6 +3092,33 @@ procedure Tdup5Main.menuAbout_NewVersionsClick(Sender: TObject);
 begin
 
   ShellExecute(application.Handle,'open',PChar(ExtractFilePath(Application.ExeName)+'\Utils\Duppi.exe'),PChar('/checknewversions'),nil,SW_SHOW); ;
+
+end;
+
+
+function Tdup5Main.MessageDlgTitle(const Title: AnsiString; const Msg: Ansistring; Buttons: TMsgDlgButtons; HelpCtx: Longint): Integer;
+var tmpStm: TMemoryStream;
+begin
+
+  tmpStm := TMemoryStream.Create;
+  tmpStm.WriteBuffer(Msg[1],Length(Msg));
+  tmpStm.Seek(0,0);
+  frmMsgBox.richText.Clear;
+  frmMsgBox.richText.Lines.LoadFromStream(tmpStm);
+  FreeAndNil(tmpStm);
+  frmMsgBox.Caption := Title;
+  frmMsgBox.ShowModal;
+
+{  with CreateMessageDialog(Msg, mtCustom, Buttons) do
+  try
+     Caption:=Title;
+     HelpContext:=HelpCtx;
+     HelpFile:='';
+     Position:=poScreenCenter;
+     result:=ShowModal;
+  finally
+     Free;
+  end;}
 
 end;
 

@@ -1,6 +1,6 @@
 program dpackc;
 
-// $Id: dpackc.dpr,v 1.6 2009-04-26 12:17:47 elbereth Exp $
+// $Id: dpackc.dpr,v 1.7 2009-07-11 14:08:28 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dpackc/dpackc.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -46,7 +46,7 @@ uses
 
 begin
   Application.Initialize;
-  Application.Title := 'Dragon UnPACKer 5 Package Maker';
+  Application.Title := 'Dragon UnPACKer 5 (D5P) Package Maker';
   Application.CreateForm(TfrmMain, frmMain);
   Application.Run;
 end.

@@ -136,7 +136,7 @@ object frmMain: TfrmMain
     Top = 56
     Width = 537
     Height = 321
-    ActivePage = TabSheet1
+    ActivePage = TabSheet4
     TabOrder = 0
     object TabSheet1: TTabSheet
       Caption = 'About...'
@@ -9542,7 +9542,7 @@ object frmMain: TfrmMain
         Left = 25
         Top = 0
         Width = 504
-        Height = 184
+        Height = 168
         Align = alClient
         Columns = <
           item
@@ -9572,9 +9572,9 @@ object frmMain: TfrmMain
       end
       object grpInfos: TGroupBox
         Left = 0
-        Top = 184
+        Top = 168
         Width = 529
-        Height = 109
+        Height = 125
         Align = alBottom
         Caption = 'Attributes for the selected file'
         TabOrder = 1
@@ -9716,12 +9716,22 @@ object frmMain: TfrmMain
           BevelKind = bkFlat
           TabOrder = 8
         end
+        object chkDelete: TCheckBox
+          Left = 8
+          Top = 104
+          Width = 225
+          Height = 17
+          Caption = 'Delete file (if version lower or equal)'
+          Enabled = False
+          TabOrder = 9
+          OnClick = chkDeleteClick
+        end
       end
       object ToolBar: TToolBar
         Left = 0
         Top = 0
         Width = 25
-        Height = 184
+        Height = 168
         Align = alLeft
         ButtonWidth = 24
         Caption = 'ToolBar'
@@ -9960,7 +9970,7 @@ object frmMain: TfrmMain
         Left = 344
         Top = 96
         Width = 177
-        Height = 97
+        Height = 121
         Caption = 'Update'
         TabOrder = 6
         object Label35: TLabel
@@ -10041,6 +10051,24 @@ object frmMain: TfrmMain
           Alignment = taRightJustify
           AutoSize = False
           Caption = '0%'
+        end
+        object Label27: TLabel
+          Left = 16
+          Top = 98
+          Width = 41
+          Height = 13
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'Deleted:'
+        end
+        object lblDir2DelNum: TLabel
+          Left = 64
+          Top = 98
+          Width = 73
+          Height = 13
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = '0'
         end
       end
       object GroupBox11: TGroupBox

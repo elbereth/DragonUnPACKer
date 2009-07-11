@@ -1,4 +1,4 @@
--- $Id: dus.sql,v 1.3 2008-11-15 18:42:05 elbereth Exp $
+-- $Id: dus.sql,v 1.4 2009-07-11 14:06:36 elbereth Exp $
 -- $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dus/dus.sql,v $
 --
 -- The contents of this file are subject to the Mozilla Public License
@@ -124,12 +124,13 @@ CREATE TABLE `dus_driver` (
 --
 
 CREATE TABLE `dus_duppi` (
+  `versionfrom` int(11) NOT NULL default '0',
   `version` int(11) NOT NULL,
   `versiondisp` varchar(32) NOT NULL,
   `URL` text NOT NULL,
   `fileDL` text NOT NULL,
   `size` int(11) NOT NULL,
-  PRIMARY KEY  (`version`)
+  PRIMARY KEY  (`versionfrom`,`version`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------

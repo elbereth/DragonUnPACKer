@@ -1,6 +1,6 @@
 unit spec_DUPP;
 
-// $Id: spec_DUPP.pas,v 1.4 2009-04-26 12:17:47 elbereth Exp $
+// $Id: spec_DUPP.pas,v 1.5 2009-07-11 14:20:09 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/spec_DUPP.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -177,9 +177,16 @@ type
                                //     1    $08 Update Only
                                //    1     $10 Compressed
                                //   1      $20 x64/AMD64     // Not in original v4 spec
+                               //  1       $40 Delete entry
+                               //              The entry will have a Size/DSize of 0
+                               //              And Compression type of 255
+                               //              Version will contain the max version
+                               //              for which entry should be deleted
+                               //              HashType & Hash are irrelevant
     CompressionType: byte;     // 0 = No compression
                                // 1 = Zlib compression
                                // 2 = LZMA compression <-- Default
+                               // 255 = Absolute compression (0 bytes)
     BaseInstallDir: byte;      // 0 = Dup5Path + 'data\convert\'
                                // 1 = Dup5Path + 'data\'
                                // 2 = Dup5Path + 'data\drivers\'
@@ -210,6 +217,7 @@ type
     SignatureID: Byte;                // Program ID that made the D5P file
                                       //    0 = Not indicated
                                       //    1 = DPACKC
+                                      //  128+= Third party tools
                                       // If you create a program either set 0 or use a number greater than 128
     Flags: Byte;                      // Footer flags
     Version: Byte;                    // 1 = Footer v1
@@ -223,6 +231,7 @@ const D5PFILE_REGSVR32 = $1;
       D5PFILE_UPDATEONLY = $8;
       D5PFILE_COMPRESSED = $10;
       D5PFILE_X64 = $20;
+      D5PFILE_DELETE = $40;
 
       D5PID_INFORMATION = 1;
       D5PID_BANNER = 10;
@@ -238,6 +247,7 @@ const D5PFILE_REGSVR32 = $1;
       D5PCOMPRESSION_NONE = 0;
       D5PCOMPRESSION_ZLIB = 1;
       D5PCOMPRESSION_LZMA = 2;
+      D5PCOMPRESSION_ABSOLUTE = 255;
 
       D5PHASH_MD5 = 0;
       D5PHASH_SHA1 = 1;

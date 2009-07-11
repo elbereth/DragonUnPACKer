@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.16 2009-06-26 21:06:05 elbereth Exp $
+// $Id: Installer.pas,v 1.17 2009-07-11 14:55:57 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -193,7 +193,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 31340;
+  VERSION: Integer = 32040;
 
 implementation
 
@@ -883,7 +883,7 @@ var DestDir, DuppiInstallNew: string;
     Buf, bufoutstr: PChar;
     InputStream: TMemoryStream;
     OutputStream: TDeCompressionStream;
-    installFile: boolean;
+    installFile, isDeleteFile: boolean;
     errCount: integer;
 
     entStream,namStream,datStream: TStream;
@@ -991,55 +991,81 @@ begin
           end
           else
             DestDir := getDestDir(files[x].BaseInstallDir) + names[x];
-          ForceDirectories(getDestDir(files[x].BaseInstallDir));
 
           if (files[x].Version >= 0) and FileExists(DestDir) then
             destVersion := getPluginVersion(DestDir)
           else
             destVersion := -1;
 
-          if (files[x].Version >= 0) and (files[x].Version <= destVersion) then
+          isDeleteFile := (files[x].Flags and D5PFILE_DELETE) = D5PFILE_DELETE;
+
+          if isDeleteFile then
           begin
-            if (files[x].Flags and D5PFILE_UPDATEONLY) = D5PFILE_UPDATEONLY then
+
+            if FileExists(destdir) then
+              if (files[x].Version = 0) then
+              begin
+                if MessageDlg(ReplaceValue('%f',DLNGStr('PI0065'),destdir)+DLNGStr('PI0067'),mtConfirmation,[mbYes, mbNo],0) = mrYes then
+                  if DeleteFile(destdir) then
+                    appendLog(Install,DLNGStr('PI0068'));
+              end
+              else if (files[x].Version >= 0) and (files[x].Version >= destVersion) then
+              begin
+                if MessageDlg(ReplaceValue('%f',DLNGStr('PI0065'),destdir)+ReplaceValue('%2',ReplaceValue('%1',DLNGStr('PI0066'),getVersionFromInt(destVersion)),getVersionFromInt(files[x].Version))+DLNGStr('PI0067'),mtConfirmation,[mbYes, mbNo],0) = mrYes then
+                  if DeleteFile(destdir) then
+                    appendLog(Install,DLNGStr('PI0068'));
+              end;
+
+          end
+          else
+          begin
+
+            ForceDirectories(getDestDir(files[x].BaseInstallDir));
+
+            if (files[x].Version >= 0) and (files[x].Version <= destVersion) then
             begin
-              if MessageDlg(ReplaceValue('%2',ReplaceValue('%1',ReplaceValue('%f',DLNGstr('PI0019'),destdir),getVersionFromInt(destVersion)),getVersionFromInt(files[x].Version)),mtConfirmation,[mbYes, mbNo],0) = mrYes then
-                installFile := true
+              if (files[x].Flags and D5PFILE_UPDATEONLY) = D5PFILE_UPDATEONLY then
+              begin
+                if MessageDlg(ReplaceValue('%2',ReplaceValue('%1',ReplaceValue('%f',DLNGstr('PI0019'),destdir),getVersionFromInt(destVersion)),getVersionFromInt(files[x].Version)),mtConfirmation,[mbYes, mbNo],0) = mrYes then
+                  installFile := true
+                else
+                  installFile := false;
+              end
               else
                 installFile := false;
             end
             else
-              installFile := false;
-          end
-          else
-            installFile := true;
+              installFile := true;
 
-          if installFile then
-          begin
-
-            if FileExists(destdir) then
-              DeleteFile(destdir);
-            outfile := TBufferedFS.Create(destdir,fmCreate or fmShareExclusive);
-            try
-              extractDUPP_version4_file(files[x],datStream,outfile);
-            finally
-              outfile.Free;
-            end;
-
-            fileattrib := 0;
-            if (files[x].Flags and D5PFILE_HIDDEN) = D5PFILE_HIDDEN then
-              fileattrib := fileattrib or faHidden;
-            if (files[x].Flags and D5PFILE_READONLY) = D5PFILE_READONLY then
-              fileattrib := fileattrib or faReadOnly;
-
-            if fileattrib > 0 then
-              filesetattr(DestDir,fileattrib);
-
-            filesetdate(destdir,files[x].DateT);
-
-            if ((files[x].Flags and D5PFILE_REGSVR32) = D5PFILE_REGSVR32) then
+            if installFile then
             begin
-              writelog(Install,DLNGStr('PI0061'));
-              RegisterOcx(destdir);
+
+              if FileExists(destdir) then
+                DeleteFile(destdir);
+              outfile := TBufferedFS.Create(destdir,fmCreate or fmShareExclusive);
+              try
+                extractDUPP_version4_file(files[x],datStream,outfile);
+              finally
+                outfile.Free;
+              end;
+
+              fileattrib := 0;
+              if (files[x].Flags and D5PFILE_HIDDEN) = D5PFILE_HIDDEN then
+                fileattrib := fileattrib or faHidden;
+              if (files[x].Flags and D5PFILE_READONLY) = D5PFILE_READONLY then
+                fileattrib := fileattrib or faReadOnly;
+
+              if fileattrib > 0 then
+                filesetattr(DestDir,fileattrib);
+
+              filesetdate(destdir,files[x].DateT);
+
+              if ((files[x].Flags and D5PFILE_REGSVR32) = D5PFILE_REGSVR32) then
+              begin
+                writelog(Install,DLNGStr('PI0061'));
+                RegisterOcx(destdir);
+              end;
+
             end;
 
           end;

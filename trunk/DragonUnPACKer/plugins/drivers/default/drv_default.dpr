@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.55 2009-07-10 20:55:56 elbereth Exp $
+// $Id: drv_default.dpr,v 1.56 2009-07-11 14:49:09 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -196,8 +196,9 @@ type FSE = ^element;
     20715        Added support for Prototype .RCF files (thanks to specs by john_doe of Xentax forum)
     20740        Added much needed sanity checks to .BIN & .DAT file formats
     20741        Fixed Total Annihilation HPI extraction when compression is Zlib (Exception Access Violation)
-    20742        Replaced .free by FreeAndNil() to be more consistant (no more bad pointers)
+    20742  55010 Replaced .free by FreeAndNil() to be more consistant (no more bad pointers)
     20743        Upgraded to new interface DUDI v5 (plugin is backward compatible to v4)
+    20840        Merged Giants GZP plugin
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -217,10 +218,10 @@ type FSE = ^element;
 const
   DUDI_VERSION = 5;
   DUDI_VERSION_COMPATIBLE = 4;
-  DRIVER_VERSION = 20743;
+  DRIVER_VERSION = 20840;
   DUP_VERSION = 55110;
-  CVS_REVISION = '$Revision: 1.55 $';
-  CVS_DATE = '$Date: 2009-07-10 20:55:56 $';
+  CVS_REVISION = '$Revision: 1.56 $';
+  CVS_DATE = '$Date: 2009-07-11 14:49:09 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -293,7 +294,7 @@ begin
   GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
   GetDriverInfo.Comment := 'This driver support 83 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 72;
+  GetDriverInfo.NumFormats := 73;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -438,6 +439,8 @@ begin
   GetDriverInfo.Formats[71].Name := 'The Fifth Element (*.MRC)';
   GetDriverInfo.Formats[72].Extensions := '*.RCF';
   GetDriverInfo.Formats[72].Name := 'Prototype (*.RCF)|Scarface (*.RCF)';
+  GetDriverInfo.Formats[73].Extensions := '*.gzp';
+  GetDriverInfo.Formats[73].Name := 'Giants: Citizen Kabuto (*.GZP)';
 //  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
 //  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -5609,6 +5612,135 @@ begin
   finally
     FreeMem(Buffer);
   end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Giants: Citizen Kabuto .GZP support ====================================== //
+// -------------------------------------------------------------------------- //
+
+type GZPEntry = record
+    size : integer;
+    size_uncmp :integer;
+    datetime :integer;    // can be ignored
+    start :integer;       // start position of block
+    compr :byte;          // 1: compressed, 2: not compressed
+    namelength :byte;
+   end;
+   GZPHeader = record
+    ID : integer;   // &H6608F101
+    Offset : integer;
+    Unknown1 : integer;
+    Unknown2 : integer;
+    Unknown3 : integer;
+    Unknown4 : integer;
+   end;
+
+function ReadGiantsGZP(src: string): Integer;
+var HDR: GZPHeader;
+    ENT: GZPEntry;
+    Name: string;
+    NumE, x, Per, PerOld: integer;
+begin
+
+  FHandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    FileSeek(FHandle, 0, 0);
+    FileRead(FHandle, HDR, SizeOf(HDR));
+
+    if HDR.ID <> $6608F101 then
+    begin
+      FileClose(FHandle);
+      FHandle := 0;
+      ReadGiantsGZP := -3;
+      ErrInfo.Format := 'GZP';
+      ErrInfo.Games := 'Giants: Citizen Kabuto';
+    end
+    else
+    begin
+
+      FileSeek(FHandle, HDR.Offset+4, 0);
+      FileRead(FHandle, NumE,4);
+
+      PerOld := 0;
+
+      for x:= 1 to NumE do
+      begin
+
+        Per := Round((x / NumE)*100);
+        if Per >= PerOld + 5 then
+        begin
+          SetPercent(Per);
+          PerOld := Per;
+        end;
+
+        FileRead(FHandle, ENT, 18);
+        Name := Strip0(Get8v(FHandle,ENT.namelength));
+
+        FSE_add(Name,ENT.start+16,ENT.size_uncmp,ENT.size,ENT.compr);
+
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'GZP';
+      DrvInfo.Sch := '';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := True;
+
+    end;
+  end
+  else
+    ReadGiantsGZP := -2;
+
+end;
+
+function DecompressGZP(buf :PByteArray; start,len,finalsize:longint):PByteArray;
+var
+  i,j,vbufstart,decbits,decpos,declen :longint;
+  decbyte :byte;
+  res: PByteArray;
+begin
+
+  GetMem(res,finalsize);
+
+  i := 0;
+  j := 0;
+  vbufstart := $FEE;
+  decbits := 8;
+  decbyte := 0;
+
+  while j<finalsize do begin
+    if decbits=8 then begin
+      decbyte := buf^[i];
+      inc(i);
+      decbits := 0;
+    end;
+    if (decbyte shr decbits) and 1=0 then begin
+      decpos := (buf^[i]+longint(buf^[i+1]) and $F0 shl 4-vbufstart-j) and $FFF-$1000+j;
+      declen := buf^[i+1] and $F+3;
+      inc(i,2);
+      while declen>0 do begin
+        if decpos>=0 then
+          res^[j] := res^[decpos]
+        else
+          res^[j] := 32;
+        inc(j);
+        inc(decpos);
+        dec(declen)
+      end
+    end
+    else begin
+      res^[j] := buf^[i];
+      inc(i);
+      inc(j);
+    end;
+    inc(decbits);
+  end;
+
+  result := res;
 
 end;
 
@@ -12520,6 +12652,12 @@ begin
       begin
         Result := ReadEvilIslandsRES;
       end
+      // Giants: Citizen Kabuto
+      else if (ID4[3] = #$66) and (ID4[2] = #8) and (ID4[1] = #$F1) and (ID4[0] = #1) then
+      begin
+        FileClose(FHandle);
+        Result := ReadGiantsGZP(fil);
+      end
       else if (ID12 = 'xcr File 1.0') and (ID36[12] = #48) then
       begin
         FileClose(FHandle);
@@ -12791,6 +12929,8 @@ begin
       ReadFormat := ReadDuke3DGRP(fil)
     else if ext = 'GOB' then
       ReadFormat := ReadHubGOB(fil)
+    else if ext = 'GZP' then
+      Result := ReadGiantsGZP(fil)
 //    else if ext = 'H4R' then
 //      ReadFormat := ReadHeroesOfMightAndMagic4H4R(fil)
     else if ext = 'HAL' then
@@ -13090,6 +13230,9 @@ begin
     // Dreamfall: The Longest Journey
     else if ID12 = 'tlj_pack0001' then
       Result := true
+    // Giants: Citizen Kabuto
+    else if (ID4[3] = #$66) and (ID4[2] = #$08) and (ID4[1] = #$F1) and (ID4[0] = #$01) then
+      Result := true
     else if (ID4[0] = #60) and (ID4[1] = #226) and (ID4[2] = #156) and (ID4[3] = #1) then
       Result := true
     else if (ID4[0] = #1) and (ID4[1] = #0) and (ID4[2] = #0) and (ID4[3] = #0)
@@ -13300,6 +13443,9 @@ begin
     else if ext = 'GOB' then
       IsFormat := True
     else if ext = 'GRP' then
+      IsFormat := True
+    // Giants: Citizen Kabuto
+    else if ext = 'GZP' then
       IsFormat := True
 //    else if ext = 'H4R' then
 //      IsFormat := True
@@ -13940,9 +14086,11 @@ begin
                  'Spellforce PAK and Eve Online STUFF support based on infos by:\par {\b DaReverse}\par'+#10+
                  'Painkiller PAK support partially based on infos by:\par {\b MrMouse}\par'+#10+
                  'The Elder Scrolls 4: Oblivion BSA support based on infos found on:\par'+#10+
-                 'http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format\par'+#10+
+                 '{\b http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format}\par'+#10+
+                 'Giants .GZP decompression code based on infos by:\par'+#10+
+                 '{\b Thilo Girmann (Nullpointer)}\par'+#10+
                  'Some file formats support based on info found on:\par'+#10+
-                 'http://wiki.xentax.com\par'+
+                 '{\b http://wiki.xentax.com\par}'+
                  '}'+#10;
   end
   else
@@ -13967,6 +14115,8 @@ begin
                           'Painkiller PAK support partially based on infos by: MrMouse'+#10+
                           'The Elder Scrolls 4: Oblivion BSA support based on infos found on:'+#10+
                           'http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format'+#10+
+                          'Giants .GZP decompression code based on infos by:'+#10+
+                          'Thilo Girmann (Nullpointer)'+#10+
                           'Some file formats support based on info found on:'+#10+
                           'http://wiki.xentax.com'
   end;
@@ -13975,108 +14125,6 @@ begin
 
 end;
 
-{procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64; bufsize : Integer);
-var
-  //sFileLength: Integer;
-  Buffer: PByteArray;
-  i,numbuf, restbuf: Integer;
-  per, oldper, perstep: word;
-  real1, real2: real;
-begin
-
-  //sFileLength := FileSeek(src,0,2);
-  FileSeek(src,soff,0);
-  numbuf := ssize div bufsize;
-  if (numbuf > 25000) then
-    perstep := 2
-  else if (numbuf > 12500) then
-    perstep := 5
-  else if (numbuf > 6000) then
-    perstep := 10
-  else
-    perstep := 15;
-  restbuf := ssize mod bufsize;
-
-GetMem(Buffer,bufsize);
-try
-  oldper := 0;
-
-  for i := 1 to numbuf do
-  begin
-    FileRead(src, Buffer^, bufsize);
-    FileWrite(dst, Buffer^, bufsize);
-    real1 := i;
-    real2 := numbuf;
-    real1 := (real1 / real2)*100;
-    per := Round(real1);
-    if per >= oldper + perstep then
-    begin
-      oldper := per;
-      SetPercent(per);
-    end;
-  end;
-
-  SetPercent(100);
-
-  FileRead(src, Buffer^, restbuf);
-  FileWrite(dst, Buffer^, restbuf);
-
-finally
-  FreeMem(Buffer);
-end;
-
-end;
-
-procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; bufsize : Integer; silent: boolean);
-var
-  //sFileLength: Integer;
-  Buffer: PChar;
-  i,numbuf, restbuf: Integer;
-  per, oldper: word;
-  real1, real2: real;
-begin
-
-  //sFileLength := FileSeek(src,0,2);
-  FileSeek(src,soff,0);
-  numbuf := ssize div bufsize;
-  restbuf := ssize mod bufsize;
-
-  GetMem(Buffer,bufsize);
-
-  try
-
-    oldper := 0;
-
-    for i := 1 to numbuf do
-    begin
-      FileRead(src, Buffer^, bufsize);
-      dst.WriteBuffer(Buffer^, bufsize);
-      if not(silent) then
-      begin
-        real1 := i;
-        real2 := numbuf;
-        real1 := (real1 / real2)*100;
-        per := Round(real1);
-        if per >= oldper + 10 then
-        begin
-          SetPercent(per);
-          oldper := per;
-        end;
-      end;
-    end;
-
-    if not(silent) then
-      SetPercent(100);
-
-    FileRead(src, Buffer^, restbuf);
-    dst.WriteBuffer(Buffer^, restbuf);
-
-  finally
-    FreeMem(Buffer);
-  end;
-
-end;}
-
 function ExtractFileToStream(outputstream: TStream; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
 var ENT: MTFCompress;
     SSA: SSACompress;
@@ -14084,11 +14132,11 @@ var ENT: MTFCompress;
     tbyt,key: byte;
     ID: array[0..2] of char;
     ID4: array[0..3] of char;
+    Buf: PByteArray;
+    BufEnd: PByteArray;
 begin
 
   FileSeek(FHandle,Offset,0);
-
-//  ShowMessage(DrvInfo.ID+' '+Inttostr(DataX)+' '+Inttostr(DataY)+' '+Inttostr(Size));
 
   if DrvInfo.ID = 'RFH/RFD' then
   begin
@@ -14114,6 +14162,25 @@ begin
     else
     begin
       BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+    end;
+  end
+  else if DrvInfo.ID = 'GZP' then
+  begin
+    if (DataY = 1) then
+    begin
+      GetMem(Buf,DataX);
+      try
+        FileRead(FHandle,Buf^,DataX);
+        BufEnd := DecompressGZP(Buf,Offset,DataX,Size);
+        Outputstream.WriteBuffer(BufEnd^,Size);
+        FreeMem(BufEnd);
+      finally
+        FreeMem(Buf);
+      end;
+    end
+    else
+    begin
+      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent);
     end;
   end
   else if DrvInfo.ID = 'RCF' then

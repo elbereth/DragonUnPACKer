@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-# Programa: Duppi v3.1.0 (Dragon UnPACKer)
+# Programa: Duppi v3.2.0 (Dragon UnPACKer)
 # Lenguaje: Español
-#  Version: 2
+#  Version: 3
 #    Autor: Alexandre Devilliers (con la ayuda de Cinthia)
 # ============================================================================
 {LSF}
@@ -12,7 +12,7 @@ Author = Alexandre Devilliers
 Email = translation@dragonunpacker.com
 URL = http://www.dragonunpacker.com
 ProgramID = PI
-ProgramVer = 2
+ProgramVer = 3
 IconFile = flag_sp.bmp
 Compression=99
 OutFile = spanish.lng
@@ -84,6 +84,10 @@ PI0061=Registrando OCX...
 PI0062=La instalación del paquete se termino con suceso.%nEl programa Duppi se re-inicialisara ahora para ponerse al dia.
 PI0063=Leyendo informaciones del paquete...
 PI0064=Paquete %d
+PI0065=El fichero siguiente esta obsoleto y va a ser borrado:%n%n%f%n%n
+PI0066=Versión del fichero: %1%nVersiones obsoletas: <= %2%n%n
+PI0067=Continuar y borrar el fichero (recomendado)?
+PI0068=Borrado!
 
 PIE401=Tipo de hash desconocido: %h
 PIE402=Fallo al intentar cambiar a la posición del fichero (%a <> %b)

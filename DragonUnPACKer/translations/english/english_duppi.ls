@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-#  Program: Duppi v3.0.0 (Dragon UnPACKer)
+#  Program: Duppi v3.2.0 (Dragon UnPACKer)
 # Language: English
-#  Version: 1
+#  Version: 3
 #   Author: Alex Devilliers
 # ============================================================================
 #
@@ -72,9 +72,11 @@ URL = http://www.dragonunpacker.com
 #
 #                                ID      Ver
 # Duppi v3.0.0                   PI       1
+# Duppi v3.1.0 - 3.1.3           PI       2
+# Duppi v3.2.0                   PI       3
 #
 ProgramID = PI
-ProgramVer = 1
+ProgramVer = 3
 #
 # + IconFile +
 # Path & FileName of the "icon" displayed with language name (ex: c:\test.bmp)
@@ -177,6 +179,36 @@ PI0047=A new version of Duppi is available:%nYour version: %a%nAvailable version
 PI0048=Also show unstables (alpha/beta/RC)
 PI0049=No URL for Duppi update!
 PI0050=A new version of Dragon UnPACKer is available to download.%n%nNew version: %v%nUpdate size: %s Kbytes%nComment: %c%n%nDo you want to update now (Recommended)?
+PI0051=No URL for Dragon UnPACKer update!
+PI0052=%s bytes
+PI0053=%s KiB
+PI0054=Package %a...
+PI0055=Search blocks...
+PI0056=Reading block "%a"...
+PI0057=entries
+PI0058=names
+PI0059=content
+PI0060=Installation of file %a: %b
+PI0061=Registering OCX...
+PI0062=Package installation successful.%nThe Duppi program will now restart to update itself.
+PI0063=Retrieving package informations...
+PI0064=Package %d
+PI0065=The following obsolete file was found and will be deleted:%n%n%f%n%n
+PI0066=File version: %1%nObsolete versions: <= %2%n%n
+PI0067=Proceed and delete (recommended)?
+PI0068=Deleted!
+
+PIE401=Hash function unknown: %h
+PIE402=Seek to file failed (%a <> %b)
+PIE403=Error while reading file (%a bytes <> %b bytes)
+PIE404=Error while decompressing %a (%b bytes <> %c bytes)
+PIE405=Unsupported compression (%a)
+PIE406=Hash value do not match the block (%a <> %b)
+PIE407=Seek to block failed (%a <> %b)
+PIE408=Error while reading block (%a bytes <> %b bytes)
+PIE409=Error while retrieving informations:
+PIE410=Error while retrieving banner:
+PIE411=Error while retrieving data of block "%a":
 
 PII001=Title
 PII002=Your Version

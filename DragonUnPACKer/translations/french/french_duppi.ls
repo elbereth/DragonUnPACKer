@@ -1,9 +1,9 @@
 # ============================================================================
 # Language Source File (pour DLNGC v4.0)
 # ============================================================================
-#  Programme: Duppi v3.1.0 (Dragon UnPACKer)
+#  Programme: Duppi v3.2.0 (Dragon UnPACKer)
 #     Langue: Français
-#    Version: 2
+#    Version: 3
 #     Auteur: Alexandre Devilliers
 # ============================================================================
 #
@@ -38,6 +38,9 @@
 # Version 1:
 # Version initiale (séparation entre Duppi & Dragon UnPACKer pour permettre
 # une mise à jour indépendante).
+#
+# Version 3:
+# Ajout de la possibilité d'éffacer d'anciens fichiers obsolètes.
 #
 {LSF}
 {HEADER}
@@ -80,10 +83,11 @@ URL = http://www.dragonunpacker.com
 #
 #                                ID      Ver
 # Duppi v3.0.0                   PI       1
-# Duppi v3.1.0                   PI       2
+# Duppi v3.1.0 - 3.1.3           PI       2
+# Duppi v3.2.0                   PI       3
 #
 ProgramID = PI
-ProgramVer = 2
+ProgramVer = 3
 #
 # + IconFile +
 # Chemin & nom du fichier de l'icône affichée avec le nom de langue.
@@ -201,6 +205,10 @@ PI0061=Enregistrement OCX...
 PI0062=Le paquet est installé avec succès.%nLe programme Duppi va maintenant redémarrer pour se mettre à jour.
 PI0063=Récupération des informations du paquet...
 PI0064=Paquet %d
+PI0065=Le fichier suivant est obsolète et va donc être éffacé:%n%n%f%n%n
+PI0066=Version du fichier: %1%nVersions obsolètes: <= %2%n%n
+PI0067=Continuer et effacer le fichier (recommandé)?
+PI0068=Effacé!
 
 PIE401=Fonction de hachage inconnue: %h
 PIE402=Positionnement vers le fichier échoué (%a <> %b)

@@ -143,6 +143,14 @@ begin
     result := 'Récupération des informations du paquet...'
   else if sch = 'PI0064' then
     result := 'Paquet %d'
+  else if sch = 'PI0065' then
+    result := 'Le fichier suivant est obsolète et va donc être éffacé:%n%n%f%n%n'
+  else if sch = 'PI0066' then
+    result := 'Version du fichier: %1%nVersions obsolètes: <= %2%n%n'
+  else if sch = 'PI0067' then
+    result := 'Continuer et effacer le fichier (recommandé)?'
+  else if sch = 'PI0068' then
+    result := 'Effacé!'
   else if sch = 'PIE401' then
     result := 'Fonction de hachage inconnue: %h'
   else if sch = 'PIE402' then

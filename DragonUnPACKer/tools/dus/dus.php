@@ -1,6 +1,6 @@
 <?php
 
-// $Id: dus.php,v 1.8 2008-11-16 19:18:34 elbereth Exp $
+// $Id: dus.php,v 1.9 2009-07-11 13:52:38 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dus/dus.php,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,9 +18,9 @@
 //
 
   // CVS variables
-  $CVS_REVISION = '$Revision: 1.8 $';
+  $CVS_REVISION = '$Revision: 1.9 $';
   $CVS_REVISION_DISPLAY = substr($CVS_REVISION,11,strlen($CVS_REVISION)-13);
-  $CVS_DATE = '$Date: 2008-11-16 19:18:34 $';
+  $CVS_DATE = '$Date: 2009-07-11 13:52:38 $';
   $CVS_DATE_DISPLAY = substr($CVS_DATE,7,strlen($CVS_DATE)-9);
 
   // Sending the header
@@ -81,9 +81,15 @@
   $dusservers = "NumServers=".$numservers."\n".$dusservers;
 
   mysql_free_result($queryresult);
-
+ 
+  // Getting user Duppi version from HTTP GET parameter
+  $userDuppiVersion = $_GET['duppiversion'];
+  if ((!isset($userDuppiVersion)) | (strlen($userDuppiVersion) == 0) | (!is_numeric($userDuppiVersion))) {
+	$userDuppiVersion = 0;
+  }
+  
   // Retrieving duppi information
-  $query = "SELECT * FROM dus_duppi ORDER BY version DESC";
+  $query = sprintf('SELECT * FROM dus_duppi WHERE versionfrom = %d ORDER BY version DESC',$userDuppiVersion);
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
   	echo "Result=M60\n";
@@ -91,28 +97,41 @@
   	return;
   }
 
-  if ($line = mysql_fetch_array($queryresult, MYSQL_NUM)) {
+  $line = mysql_fetch_array($queryresult, MYSQL_NUM);
 
-    $dusbody .= "[duppi]\nVersion=".$line[0]."\nVersionDisp=".$line[1]."\n";
+  if (!$line) {
+    $query = 'SELECT * FROM dus_duppi WHERE versionfrom = 0 ORDER BY version DESC';
+    $queryresult = mysql_query ($query);
+    if (mysql_errno() != 0) {
+    	echo "Result=M61\n";
+        echo "ResultDescription=".mysql_error()."\n";
+    	return;
+    }
+    $line = mysql_fetch_array($queryresult, MYSQL_NUM);
+  }
+  
+  if ($line) {
+
+    $dusbody .= "[duppi]\nVersion=".$line[1]."\nVersionDisp=".$line[2]."\n";
     for ($x=0;$x<$numservers;$x++) {
       if ($x == 0) {
         if ($servers[$x]['path'] == 'true') {
-          $dusbody .= "URL=".$servers[$x]['url'].$line[2]."\n";
+          $dusbody .= "URL=".$servers[$x]['url'].$line[3]."\n";
         }
         else {
-          $dusbody .= "URL=".$servers[$x]['url'].$line[3]."\n";
+          $dusbody .= "URL=".$servers[$x]['url'].$line[4]."\n";
         }
       }
       else {
         if ($servers[$x]['path'] == 'true') {
-          $dusbody .= "URL$x=".$servers[$x]['url'].$line[2]."\n";
+          $dusbody .= "URL$x=".$servers[$x]['url'].$line[3]."\n";
         }
         else {
-          $dusbody .= "URL$x=".$servers[$x]['url'].$line[3]."\n";
+          $dusbody .= "URL$x=".$servers[$x]['url'].$line[4]."\n";
         }
       }
     }
-    $dusbody .= "FileDL=".$line[3]."\nSize=".$line[4]."\n\n";
+    $dusbody .= "FileDL=".$line[3]."\nSize=".$line[5]."\n\n";
 
   }
 

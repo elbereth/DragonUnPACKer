@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.8 2009-04-28 20:53:19 elbereth Exp $
+// $Id: Main.pas,v 1.9 2009-07-11 14:08:28 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dpackc/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -52,6 +52,7 @@ type
        FileHash: array[0..63] of byte;
        Hashed: boolean;
        Value: boolean;
+       ToDelete: boolean;
      end;
      PDirEntry = ^DirEntry;
 
@@ -197,6 +198,9 @@ type
     GroupBox12: TGroupBox;
     chkOverrideNeededVersion: TCheckBox;
     txtOverrideNeededVersion: TEdit;
+    chkDelete: TCheckBox;
+    Label27: TLabel;
+    lblDir2DelNum: TLabel;
     procedure ListBox1DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure ListBox1DragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
@@ -245,6 +249,7 @@ type
     procedure butNewVersionBrowseClick(Sender: TObject);
     procedure JvImgBtn1Click(Sender: TObject);
     procedure chkOverrideNeededVersionClick(Sender: TObject);
+    procedure chkDeleteClick(Sender: TObject);
 //    function convertInstallTo(val: integer): string;
   private
     { Déclarations privées }
@@ -256,8 +261,9 @@ type
     procedure createDUPPv4;
     procedure diffDirectories(dir1, dir2: String);
     function getFilesTreeFromDirectory(root, dirName: string): TList;
-    procedure addFile(filename: string; installTo: integer = -1);
+    procedure addFile(filename: string; installTo: integer = -1; deleteFile: boolean = false);
     procedure reinitFilesTab();
+    function checkIfDeleteFile(): boolean;
   public
     PackVersion: Integer;
     PackDUP5Check: Boolean;
@@ -286,7 +292,8 @@ type FileInfo = class
        Filename: string;
        InstallDir: string;
        ForcedDir: boolean;
-       constructor Create(Comp, Upg, StoreDT, ReadO, Hide, Reg: boolean; CompType, InstTo: integer; Vers: integer; FName, InstallDir: string);
+       DeleteFile: boolean;
+       constructor Create(Comp, Upg, StoreDT, ReadO, Hide, Reg, DelFile: boolean; CompType, InstTo: integer; Vers: integer; FName, InstallDir: string);
      end;
 
 var
@@ -298,12 +305,26 @@ implementation
 
 uses Compile, Config;
 
-const DPSVERSION = 4;
-      VERSION: integer = 35240;
+const DPSVERSION = 5;
+      VERSION: integer = 36040;
 
 {$R *.dfm}
 
 {$Include datetime.inc}
+
+function TfrmMain.checkIfDeleteFile(): boolean;
+var x: integer;
+    tmpFileInfo: FileInfo;
+begin
+
+  result := false;
+  for x := 0 to lstFiles.Items.Count-1 do
+  begin
+    tmpFileInfo := FileInfo(lstFiles.Items.Item[x].Data);
+    result := result or tmpFileInfo.DeleteFile;
+  end;
+
+end;
 
 procedure TfrmMain.refreshAvailableOptions;
 begin
@@ -781,11 +802,19 @@ begin
       HDR.NeededVersion := strtoint(txtOverrideNeededVersion.Text);
     except
       on EConvertError do
-        HDR.NeededVersion := 30040;
+      begin
+        if checkIfDeleteFile then
+          HDR.NeededVersion := 32040
+        else
+          HDR.NeededVersion := 30040;
+      end;
     end;
   end
   else
-    HDR.NeededVersion := 30040;
+    if checkIfDeleteFile then
+      HDR.NeededVersion := 32040
+    else
+      HDR.NeededVersion := 30040;
 
   writeLog('+-+ Compatibility: Duppi v'+getVersion(HDR.NeededVersion));
 
@@ -1033,6 +1062,18 @@ begin
       else
         Files[x].DateT := 0;
       Files[x].Flags := 0;
+      if fInfo.DeleteFile then
+      begin
+        Files[x].Flags := Files[x].Flags or D5PFILE_DELETE;
+        Files[x].CompressionType := D5PCOMPRESSION_ABSOLUTE;
+        Files[x].DSize := 0;
+        Files[x].Size := 0;
+        fInfo.Compress := false;
+        fInfo.ReadOnly := false;
+        fInfo.RegSvr := false;
+        fInfo.UpgradeOnly := false;
+        fInfo.Hidden := false;
+      end;
       if fInfo.Hidden then
         Files[x].Flags := Files[x].Flags or D5PFILE_HIDDEN;
       if fInfo.ReadOnly then
@@ -1048,49 +1089,58 @@ begin
 
       fin.Seek(0,0);
 
-      Files[x].HashType := HashUsed;
-      FillChar(Files[x].Hash,64,0);
-      Hash_Engine.Init;
-      Hash_Engine.UpdateStream(fin,fin.Size);
-      Hash_Engine.Final(Files[x].Hash);
-
-      fin.Seek(0,0);
-
-      s:= '';
-      for i:= 0 to (Hash_Engine.GetHashSize div 8)-1 do
-        s:= s + IntToHex(Files[x].Hash[i],2);
-      writeLog('+--+ Hash: '+Lowercase(s));
-
-      if fInfo.Compress and not(optFileCompressSolid.Checked) then
+      if not(fInfo.DeleteFile) then
       begin
+        Files[x].HashType := HashUsed;
+        FillChar(Files[x].Hash,64,0);
+        Hash_Engine.Init;
+        Hash_Engine.UpdateStream(fin,fin.Size);
+        Hash_Engine.Final(Files[x].Hash);
+
+        fin.Seek(0,0);
+
+        s:= '';
+        for i:= 0 to (Hash_Engine.GetHashSize div 8)-1 do
+          s:= s + IntToHex(Files[x].Hash[i],2);
+        writeLog('+--+ Hash: '+Lowercase(s));
+
+        if fInfo.Compress and not(optFileCompressSolid.Checked) then
+        begin
 //        Files[x].CompressionType := D5PCOMPRESSION_LZMA;
 
 //        tmpStream3 := TMemoryStream.Create;
-        fin.Seek(0,0);
+          fin.Seek(0,0);
 //        tmpStream3.CopyFrom(fin,fin.Size);
 //        tmpStream3.Seek(0,0);
 //        lzma_encode(fin,tmpStream);
-        tmpStream := compressDUPPv4best(fin,Files[x].CompressionType);
+          tmpStream := compressDUPPv4best(fin,Files[x].CompressionType);
 //        tmpStream3.Free;
-        tmpStream.Seek(0,0);
+          tmpStream.Seek(0,0);
 
-        if (Files[x].CompressionType <> D5PCOMPRESSION_NONE) then
-          Files[x].Flags := Files[x].Flags or D5PFILE_COMPRESSED;
+          if (Files[x].CompressionType <> D5PCOMPRESSION_NONE) then
+            Files[x].Flags := Files[x].Flags or D5PFILE_COMPRESSED;
 
-        Files[x].Size := tmpStream.Size;
+          Files[x].Size := tmpStream.Size;
 
-        tmpStream3.CopyFrom(tmpStream,tmpStream.Size);
+          tmpStream3.CopyFrom(tmpStream,tmpStream.Size);
 
-        writeLog('+---+ OK (Size: '+inttostr(Files[x].Size)+' bytes - '+floattostrF(((Files[x].Size/Files[x].DSize)*100),ffFixed,1,1)+'%)');
+          writeLog('+---+ OK (Size: '+inttostr(Files[x].Size)+' bytes - '+floattostrF(((Files[x].Size/Files[x].DSize)*100),ffFixed,1,1)+'%)');
 
-        tmpStream.Free;
+          tmpStream.Free;
+        end
+        else
+        begin
+          Files[x].Size := Files[x].DSize;
+
+          tmpStream3.CopyFrom(fin,Files[x].Size);
+          Files[x].CompressionType := D5PCOMPRESSION_NONE;
+        end;
       end
       else
       begin
-        Files[x].Size := Files[x].DSize;
 
-        tmpStream3.CopyFrom(fin,Files[x].Size);
-        Files[x].CompressionType := D5PCOMPRESSION_NONE;
+          writeLog('+---+ OK (Flagged as Delete File)');
+
       end;
 
       if (x = 0) then
@@ -1345,6 +1395,16 @@ begin
   chkHidden.Checked := curFileInfo.Hidden;
   chkHidden.Enabled := true;
 
+  chkDelete.Checked := curFileInfo.DeleteFile;
+  chkDelete.Enabled := optDUPPv4.Checked;
+
+  chkCompress.enabled := not(curFileInfo.DeleteFile);
+  chkUpgradeOnly.enabled := not(curFileInfo.DeleteFile);
+  chkStoreDateTime.enabled := not(curFileInfo.DeleteFile);
+  chkHidden.enabled := not(curFileInfo.DeleteFile);
+  chkReadOnly.enabled := not(curFileInfo.DeleteFile);
+  chkStoreDateTime.enabled := not(curFileInfo.DeleteFile);
+
   if curFileInfo.Version <> -1 then
     lblFileVersion.Caption := getVersion(curFileInfo.Version)
   else
@@ -1384,13 +1444,14 @@ begin
   chkRegSvr.Enabled := false;
   chkReadOnly.Enabled := false;
   chkHidden.Enabled := false;
+  chkDelete.Enabled := false;
   lblFileVersion.Caption := '';
 
 end;
 
 { FileInfo }
 
-constructor FileInfo.Create(Comp, Upg, StoreDT, ReadO, Hide, Reg: boolean; CompType, InstTo: integer; Vers: Integer; FName, InstallDir: String);
+constructor FileInfo.Create(Comp, Upg, StoreDT, ReadO, Hide, Reg, DelFile: boolean; CompType, InstTo: integer; Vers: Integer; FName, InstallDir: String);
 begin
 
   Compress := comp;
@@ -1403,6 +1464,7 @@ begin
   InstallTo := InstTo;
   Version := Vers;
   FileName := FName;
+  DeleteFile := DelFile;
 
   ForcedDir := false;
 
@@ -1473,6 +1535,7 @@ begin
     chkRegSvr.Enabled := false;
     chkReadOnly.Enabled := false;
     chkHidden.Enabled := false;
+    chkDelete.Enabled := false;
   end;
 
 end;
@@ -1673,6 +1736,7 @@ begin
       sub2.Properties.Add('regsvr',tmp.RegSvr);
       sub2.Properties.Add('updateonly',tmp.UpgradeOnly);
       sub2.Properties.Add('compress',tmp.Compress);
+      sub2.Properties.Add('delfile',tmp.DeleteFile);
 
       sub2 := sub.Items.Add('INSTALLDIR');
       sub2.Value := tmp.InstallDir;
@@ -1719,13 +1783,11 @@ begin
 
     head := SimpleXML.Root.Items.ItemNamed['HEAD'];
 
-    if (SimpleXML.Root.Properties.IntValue('version') <> DPSVERSION) and
-       (SimpleXML.Root.Properties.IntValue('version') <> 3) and
-       (SimpleXML.Root.Properties.IntValue('version') <> 2) and
-       (SimpleXML.Root.Properties.IntValue('version') <> 1) then
+    if (SimpleXML.Root.Properties.IntValue('version') > DPSVERSION) and
+       (SimpleXML.Root.Properties.IntValue('version') < 1) then
     begin
 
-      ShowMessage('Error: Project file must be version '+inttostr(DPSVERSION)+' (v1, v2 & v3 are also supported).');
+      ShowMessage('Error: Project file must be version '+inttostr(DPSVERSION)+' (v1 to v'+inttostr(DPSVERSION-1)+' are also supported).');
 
     end
     else
@@ -1809,6 +1871,7 @@ begin
             sub.Items.ItemNamed['OPTIONS'].Properties.BoolValue('readonly',false),
             sub.Items.ItemNamed['OPTIONS'].Properties.BoolValue('hidden',false),
             sub.Items.ItemNamed['OPTIONS'].Properties.BoolValue('regsvr',false),
+            sub.Items.ItemNamed['OPTIONS'].Properties.BoolValue('delfile',false),
             D5PCOMPRESSION_LZMA,
             sub.Items.ItemNamed['INSTALLDIR'].Properties.IntValue('basedir',0),
             -1,
@@ -1854,6 +1917,7 @@ procedure TfrmMain.FormCreate(Sender: TObject);
 begin
 
   frmMain.Caption := 'Dragon UnPACKer 5 (D5P) Package Maker v'+getVersion(VERSION);
+  application.Title := frmMain.Caption;
   lblVersion.Caption := 'Version '+getVersion(VERSION);
   lblCompatible.Caption := 'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime);
 
@@ -2139,6 +2203,17 @@ end;
 procedure TfrmMain.optDUPPClick(Sender: TObject);
 begin
 
+  if checkIfDeleteFile and not(optDUPPv4.Checked) then
+  begin
+
+    refreshAvailableOptions;
+
+    ShowMessage('Delete file option for at least one entry, only Version 4 supports this feature');
+
+    optDUPPv4.Checked := true;
+
+  end;
+
   refreshAvailableOptions;
 
 end;
@@ -2317,7 +2392,7 @@ end;
 
 procedure TfrmMain.diffDirectories(dir1, dir2: String);
 var DirList1, DirList2: TList;
-    numDir1, numDir2, x, installTo, totSize,TotSizeUpd, numUpd: integer;
+    numDir1, numDir2, x, installTo, totSize,TotSizeUpd, numUpd, numDel: integer;
     DirItem1, DirItem2: PDirEntry;
     Hash_SHA512: TDCP_sha512;
     fin: TStream;
@@ -2330,6 +2405,7 @@ begin
   lblDir1Size.Caption := '0';
   lblDir2Num.Caption := '0';
   lblDir2Size.Caption := '0';
+  lblDir2DelNum.Caption := '0';
   lblUpdNum.Caption := '0';
   lblUpdSize.Caption := '0';
   lblUpdSaved.Caption := '0';
@@ -2403,6 +2479,7 @@ begin
           for x := 0 to 63 do
             HashOk := HashOk and (dirItem1^.FileHash[x] = dirItem2^.FileHash[x]);
           dirItem2^.Value := not(HashOk);
+          dirItem1^.Value := dirItem2^.Value;
         end;
         break;
       end;
@@ -2411,6 +2488,27 @@ begin
     frmMain.Refresh;
     if dirItem2^.Value then
       inc(NumUpd);
+  end;
+
+  lblUpdateInfo.Caption := 'Checking removed files...';
+  lblUpdateInfo.Refresh;
+
+  for numDir1 := 0 to dirList1.Count-1 do
+  begin
+    dirItem1 := dirList1.Items[numDir1];
+    if not(dirItem1^.Value) then
+    begin
+      dirItem1^.ToDelete := true;
+      for numDir2 := 0 to dirList2.Count-1 do
+      begin
+        dirItem2 := dirList2.Items[numDir2];
+        if (dirItem2^.FileName = dirItem1^.FileName) then
+        begin
+          dirItem1^.ToDelete := false;
+          break;
+        end;
+      end;
+    end;
   end;
 
   lblUpdateInfo.Caption := 'Adding files to the list...';
@@ -2452,9 +2550,39 @@ begin
     end;
     Dispose(DirItem2);
   end;
+  numDel := 0;
   for x := 0 to dirList1.Count-1 do
   begin
     dirItem1 := dirList1.Items[x];
+    if (dirItem1^.ToDelete) then
+    begin
+//      inc(TotSizeUpd,dirItem1^.FileSize);
+      inc(numDel);
+      pathId := ExtractFilePath(dirItem1^.FileName);
+      if (pathId = '\data\convert\') then
+        installTo := 0
+      else if (pathId = '\data\') then
+        installTo := 1
+      else if (pathId = '\data\drivers\') then
+        installTo := 2
+      else if (pathId = '\data\hyperripper\') then
+        installTo := 3
+      else if (pathId = '\') then
+        installTo := 4
+      else if (pathId = '\utils\') then
+        installTo := 5
+      else if (pathId = '\utils\templates\') then
+        installTo := 6
+      else if (pathId = '\utils\translation\') then
+        installTo := 7
+      else if (pathId = '\utils\data\') then
+        installTo := 8
+      else
+        installTo := -1;
+
+      addFile(Dir1 + dirItem1^.FileName,installTo,true);
+
+    end;
     Dispose(DirItem1);
   end;
   DirList1.Free;
@@ -2464,12 +2592,13 @@ begin
   lblUpdSavedPercent.Caption := inttostr(Round(((TotSize-TotSizeUpd)/TotSize)*100))+'%';
   lblUpdateInfo.Caption := 'Finished!';
   lblUpdateInfo.Refresh;
+  lblDir2DelNum.Caption := inttostr(NumDel);
 
   Hash_SHA512.Free;
 
 end;
 
-procedure TfrmMain.addFile(filename: string; installTo: integer = -1);
+procedure TfrmMain.addFile(filename: string; installTo: integer = -1; deleteFile: boolean = false);
 var itmx: TListItem;
     ext,datestr: string;
     tmp: FileInfo;
@@ -2488,9 +2617,9 @@ begin
         itmx.SubItems.Add(datestr);
         ext := lowercase(ExtractFileExt(filename));
         if installTo <> -1 then
-          tmp := FileInfo.Create(True, True, True, False, False,False,D5PCOMPRESSION_LZMA,installTo,-1,filename,'')
+          tmp := FileInfo.Create(True, True, True, False, False,False,deleteFile,D5PCOMPRESSION_LZMA,installTo,-1,filename,'')
         else
-          tmp := FileInfo.Create(True, True, True, False, False,False,D5PCOMPRESSION_LZMA,0,-1,filename,'');
+          tmp := FileInfo.Create(True, True, True, False, False,False,deleteFile,D5PCOMPRESSION_LZMA,0,-1,filename,'');
         if ext = '.d5d' then
         begin
           if installTo = -1 then
@@ -2537,6 +2666,16 @@ begin
         if (tmp.Version = -1) then
           tmp.UpgradeOnly := false;
         itmx.SubItems.Add(txtInstallTo.Items.Strings[tmp.InstallTo]);
+        if tmp.DeleteFile then
+        begin
+          tmp.Compress := false;
+          tmp.CompressType := D5PCOMPRESSION_ABSOLUTE;
+          tmp.UpgradeOnly := false;
+          tmp.StoreDateTime := false;
+          tmp.ReadOnly := false;
+          tmp.Hidden := false;
+          tmp.RegSvr := false;
+        end;
         itmx.Data := tmp;
       end;
 
@@ -2598,6 +2737,30 @@ procedure TfrmMain.chkOverrideNeededVersionClick(Sender: TObject);
 begin
 
   txtOverrideNeededVersion.Enabled := chkOverrideNeededVersion.Checked;
+
+end;
+
+procedure TfrmMain.chkDeleteClick(Sender: TObject);
+begin
+
+  curFileInfo.DeleteFile := chkDelete.Checked;
+
+  if curFileInfo.DeleteFile then
+  begin
+    chkCompress.Checked := false;
+    chkUpgradeOnly.Checked := false;
+    chkStoreDateTime.Checked := false;
+    chkHidden.Checked := false;
+    chkReadOnly.Checked := false;
+    chkStoreDateTime.Checked := false;
+  end;
+
+  chkCompress.enabled := not(curFileInfo.DeleteFile);
+  chkUpgradeOnly.enabled := not(curFileInfo.DeleteFile);
+  chkStoreDateTime.enabled := not(curFileInfo.DeleteFile);
+  chkHidden.enabled := not(curFileInfo.DeleteFile);
+  chkReadOnly.enabled := not(curFileInfo.DeleteFile);
+  chkStoreDateTime.enabled := not(curFileInfo.DeleteFile);
 
 end;
 

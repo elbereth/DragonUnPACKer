@@ -1,6 +1,6 @@
 <?php
 
-// $Id: dus.php,v 1.9 2009-07-11 13:52:38 elbereth Exp $
+// $Id: dus.php,v 1.10 2009-07-11 13:55:28 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dus/dus.php,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -18,9 +18,9 @@
 //
 
   // CVS variables
-  $CVS_REVISION = '$Revision: 1.9 $';
+  $CVS_REVISION = '$Revision: 1.10 $';
   $CVS_REVISION_DISPLAY = substr($CVS_REVISION,11,strlen($CVS_REVISION)-13);
-  $CVS_DATE = '$Date: 2009-07-11 13:52:38 $';
+  $CVS_DATE = '$Date: 2009-07-11 13:55:28 $';
   $CVS_DATE_DISPLAY = substr($CVS_DATE,7,strlen($CVS_DATE)-9);
 
   // Sending the header
@@ -131,7 +131,7 @@
         }
       }
     }
-    $dusbody .= "FileDL=".$line[3]."\nSize=".$line[5]."\n\n";
+    $dusbody .= "FileDL=".$line[4]."\nSize=".$line[5]."\n\n";
 
   }
 

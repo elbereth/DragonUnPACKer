@@ -1,5 +1,5 @@
-Dragon UnPACKer 5 Package (D5P) Maker (DPACKC) v3.5.1       MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    26/04/2009
+Dragon UnPACKer 5 Package (D5P) Maker (DPACKC) v3.5.2       MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    28/04/2009
 ===============================================================================
 
   What is DPACKC ?
@@ -214,6 +214,12 @@ You can reach Alex Devilliers:
 
   What's new?
   -----------
+Version 3.5.2:
+
+ + Added expert option to override the needed version of Duppi of DUPPv4 files.
+   This option is NOT saved in .D5PP project file.
+
+
 Version 3.5.1:
 
  - Removed almost all JVLC components used.

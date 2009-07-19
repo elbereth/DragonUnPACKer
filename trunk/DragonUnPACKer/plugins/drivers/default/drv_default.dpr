@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.56 2009-07-11 14:49:09 elbereth Exp $
+// $Id: drv_default.dpr,v 1.57 2009-07-19 20:56:40 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -21,8 +21,8 @@ uses
   Zlib,
   Classes,
   StrUtils,
-  SysUtils,
   Windows,
+  SysUtils,
   U_IntList in '..\..\..\common\U_IntList.pas',
   spec_DDS in '..\..\..\common\spec_DDS.pas',
   spec_HRF in '..\..\..\common\spec_HRF.pas',
@@ -30,7 +30,8 @@ uses
   lib_bincopy in '..\..\..\common\lib_bincopy.pas',
   lib_version in '..\..\..\common\lib_version.pas' {,
   class_decompressRA in 'class_decompressRA.pas'},
-  lib_unlzw in '..\..\..\common\lib_unlzw.pas';
+  lib_unlzw in '..\..\..\common\lib_unlzw.pas',
+  lib_crc in '..\..\..\common\lib_crc.pas';
 
 {$E d5d}
 
@@ -199,6 +200,10 @@ type FSE = ^element;
     20742  55010 Replaced .free by FreeAndNil() to be more consistant (no more bad pointers)
     20743        Upgraded to new interface DUDI v5 (plugin is backward compatible to v4)
     20840        Merged Giants GZP plugin
+                 Added Command & Conquer .MIX files support (based on info by Olaf van der Spek)
+                   http://xhp.xwis.net/documents/MIX_Format.html
+                  Encrypted files are not supported (yet?), don't hesitate in using the very good XCC-Utils
+                  Thanks to this added support drv_mix.d5d from Felix Riemann is not needed anymore (way to go x64!!!)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -220,8 +225,8 @@ const
   DUDI_VERSION_COMPATIBLE = 4;
   DRIVER_VERSION = 20840;
   DUP_VERSION = 55110;
-  CVS_REVISION = '$Revision: 1.56 $';
-  CVS_DATE = '$Date: 2009-07-11 14:49:09 $';
+  CVS_REVISION = '$Revision: 1.57 $';
+  CVS_DATE = '$Date: 2009-07-19 20:56:40 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -293,8 +298,8 @@ begin
   GetDriverInfo.Name := 'Elbereth''s Main Driver';
   GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 83 different file formats. This is the official main driver.'+#10+'Some Delta Force PFF (PFF2) files are not supported. N.I.C.E.2 SYN files are not decompressed/decrypted.';
-  GetDriverInfo.NumFormats := 73;
+  GetDriverInfo.Comment := 'This driver support 83 different file formats. This is the official main driver.'+#10+'Check about box for more info.';
+  GetDriverInfo.NumFormats := 74;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -441,6 +446,8 @@ begin
   GetDriverInfo.Formats[72].Name := 'Prototype (*.RCF)|Scarface (*.RCF)';
   GetDriverInfo.Formats[73].Extensions := '*.gzp';
   GetDriverInfo.Formats[73].Name := 'Giants: Citizen Kabuto (*.GZP)';
+  GetDriverInfo.Formats[74].Extensions := '*.mix';
+  GetDriverInfo.Formats[74].Name := 'Command & Conquer (*.MIX)';
 //  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
 //  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -11825,6 +11832,410 @@ begin
 end;
 
 // -------------------------------------------------------------------------- //
+// West Wood .MIX support =================================================== //
+// -------------------------------------------------------------------------- //
+
+type WestwoodMIX_Header = packed record
+       NumFiles: Word;
+       Size: cardinal;
+     end;
+     WestwoodMIX_Entry = packed record
+       ID: cardinal;
+       offset: cardinal;
+       size: cardinal;
+     end;
+     WestwoodMIX_IDNames = record
+       Names: array of string;
+       Hash1: array of cardinal;
+       Hash2: array of cardinal;
+       Size: cardinal;
+     end;
+
+var MIXNames: WestwoodMIX_IDNames;
+    MIXNamesLoaded: boolean = false;
+
+function getRedAlertAndTiberianSunID(name: string): cardinal;
+var i, j, l, id: cardinal;
+    a: integer;
+    newname: string;
+begin
+
+  i := 1;
+  id := 0;
+  l := length(name);
+  name := uppercase(name);
+
+  a := l shr 2;
+
+  if (l and 3) > 0 then
+  begin
+    name := name + chr(l - (a shl 2));
+    i := 3 - (l and 3);
+    while i > 0 do
+    begin
+      dec(i);
+      name := name + name[(a shl 2)+1];
+    end;
+  end;
+
+  result := GetStrCRC32(name);
+
+end;
+
+function getCommandAndConquerID(name: string): cardinal;
+var a, i, j, l, id: cardinal;
+begin
+
+  i := 1;
+  id := 0;
+  l := length(name);
+  name := uppercase(name);
+
+  while (i <= l) do
+  begin
+    a := 0;
+    for j := 0 to 3 do
+    begin
+      a := a shr 8;
+      if (i <= l) then
+      begin
+        inc(a,cardinal(ord(name[i])) shl 24);
+        inc(i);
+      end;
+    end;
+    id := (id shl 1) or (id shr 31) +a;
+  end;
+
+  result := id;
+
+end;
+
+function findNameByID(ID: cardinal; RAorTS: boolean = false): string;
+var x: integer;
+begin
+
+  result := inttohex(ID,8);
+
+  if MIXNamesLoaded then
+  begin
+    for x := 0 to MIXNames.Size - 1 do
+    begin
+      if (not(RAorTS) and (ID = MIXNames.Hash1[x]))
+      or ((RAorTS) and (ID = MIXNames.Hash2[x])) then
+      begin
+        result := MIXNames.Names[x];
+        exit;
+      end;
+    end;
+  end;
+
+end;
+
+procedure createWestWoodMIXDatabase;
+var XCCDATFile: TFileStream;
+    Buffer: TMemoryStream;
+    NumE, DBSize: integer;
+    DBNameNum, x: cardinal;
+    DBNameString: array of string;
+    Per, OldPer, Empty: byte;
+begin
+
+  if FileExists(CurPath+'global mix database.dat') then
+  begin
+
+    try
+
+      XCCDATFile := TFileStream.Create(CurPath+'global mix database.dat',fmOpenRead);
+      Buffer := TMemoryStream.Create;
+
+      Buffer.CopyFrom(XCCDATFile,XCCDATFile.Size);
+      DBSize := Buffer.Size;
+      Buffer.Seek(0,0);
+
+      DBNameNum := 0;
+      OldPer := 0;
+      SetPercent(0);
+      while (Buffer.Seek(0,1) < Buffer.Size) do
+      begin
+        Per := Round((Buffer.Seek(0,1) / Buffer.Size)*33);
+        if Per >= OldPer + 1 then
+        begin
+          SetPercent(Per);
+          OldPer := Per;
+        end;
+        Buffer.ReadBuffer(NumE,4);
+        SetLength(DBNameString,DBNameNum+NumE);
+//        SetLength(DBNameHash1,DBNameNum+NumE);
+//        SetLength(DBNameHash2,DBNameNum+NumE);
+        for x := 0 to NumE-1 do
+        begin
+          DBNameString[DBNameNum+x] := Strip0(Get0(Buffer));
+//          DBNameHash1[DBNameNum+x] := getCommandAndConquerID(DBNameString[DBNameNum+x]);
+//          DBNameHash2[DBNameNum+x] := getRedAlertAndTiberianSunID(DBNameString[DBNameNum+x]);
+          // Useless description
+          Get0(Buffer);
+        end;
+        inc(DBNameNum,NumE);
+      end;
+
+      Buffer.Clear;
+
+      Buffer.WriteBuffer(DBNameNum,4);
+
+      Empty := 0;
+      for x := 0 to DBNameNum - 1 do
+      begin
+        Buffer.WriteBuffer(DBNameString[x][1],Length(DBNameString[x]));
+        Buffer.WriteBuffer(Empty,1);
+      end;
+
+      Buffer.SaveToFile(CurPath+'drv_default_mix.dbs');
+
+    finally
+
+      if XCCDATFile <> nil then
+        FreeAndNil(XCCDATFile);
+      if Buffer <> nil then
+        FreeAndNil(Buffer);
+
+    end;
+  end;
+
+end;
+
+function loadWestWoodMIXDatabase: boolean;
+var DATFile: TFileStream;
+    Buffer: TMemoryStream;
+    x, TestValue: cardinal;
+    CreateHashDB: boolean;
+begin
+
+  result := false;
+
+  if FileExists(CurPath+'drv_default_mix.dbs') then
+  begin
+
+    try
+
+      DATFile := TFileStream.Create(CurPath+'drv_default_mix.dbs',fmOpenRead);
+      Buffer := TMemorystream.Create;
+
+      Buffer.CopyFrom(DATFile,DATFile.Size);
+      Buffer.Seek(0,0);
+
+      Buffer.ReadBuffer(MIXNames.Size,4);
+
+      // Sanity check, we don't expect more than 64k entries
+      if MIXNames.Size > $10000 then
+      begin
+        result := false;
+        exit;
+      end;
+
+      setLength(MIXNames.Names,MIXNames.Size);
+      setLength(MIXNames.Hash1,MIXNames.Size);
+      setLength(MIXNames.Hash2,MIXNames.Size);
+
+      for x := 0 to MIXNames.Size - 1 do
+        MIXNames.Names[x] := Strip0(Get0(Buffer));
+
+      Buffer.Clear;
+      FreeAndNil(DATFile);
+
+      CreateHashDB := not(FileExists(CurPath+'drv_default_mix.db1'));
+
+      if not(CreateHashDB) then
+      begin
+
+        DATFile := TFileStream.Create(CurPath+'drv_default_mix.db1',fmOpenRead);
+
+        Buffer.CopyFrom(DATFile,DATFile.Size);
+        Buffer.Seek(0,0);
+
+        Buffer.ReadBuffer(TestValue,4);
+
+        CreateHashDB := (TestValue <> MIXNames.Size) or (((TestValue + 1) * 4) <> DATFile.Size);
+
+        if not(CreateHashDB) then
+        begin
+
+          try
+            for x := 0 to MIXNames.Size - 1 do
+              Buffer.ReadBuffer(MIXNames.Hash1[x],4);
+          except
+            on E: Exception do
+              CreateHashDB := true;
+          end;
+
+        end;
+
+        FreeAndNil(DATFile);
+        Buffer.Clear;
+
+      end;
+
+      if CreateHashDB then
+      begin
+
+        if FileExists(CurPath+'drv_default_mix.db1') then
+          DeleteFile(CurPath+'drv_default_mix.db1');
+          
+        Buffer.WriteBuffer(MIXNames.Size,4);
+        for x := 0 to MIXNames.Size - 1 do
+        begin
+          MIXNames.Hash1[x] := getCommandAndConquerID(MIXNames.Names[x]);
+          Buffer.WriteBuffer(MIXNames.Hash1[x],4);
+        end;
+
+        Buffer.SaveToFile(CurPath+'drv_default_mix.db1');
+
+        Buffer.Clear;
+        
+      end;
+
+      FreeAndNil(DATFile);
+
+      CreateHashDB := not(FileExists(CurPath+'drv_default_mix.db2'));
+
+      if not(CreateHashDB) then
+      begin
+
+        DATFile := TFileStream.Create(CurPath+'drv_default_mix.db2',fmOpenRead);
+
+        Buffer.CopyFrom(DATFile,DATFile.Size);
+        Buffer.Seek(0,0);
+
+        Buffer.ReadBuffer(TestValue,4);
+
+        CreateHashDB := (TestValue <> MIXNames.Size) or (((TestValue + 1) * 4) <> DATFile.Size);
+
+        if not(CreateHashDB) then
+        begin
+
+          try
+            for x := 0 to MIXNames.Size - 1 do
+              Buffer.ReadBuffer(MIXNames.Hash2[x],4);
+          except
+            on E: Exception do
+              CreateHashDB := true;
+          end;
+
+        end;
+
+        FreeAndNil(DATFile);
+        Buffer.Clear;
+
+      end;
+
+      if CreateHashDB then
+      begin
+
+        if FileExists(CurPath+'drv_default_mix.db2') then
+          DeleteFile(CurPath+'drv_default_mix.db2');
+          
+        Buffer.WriteBuffer(MIXNames.Size,4);
+        for x := 0 to MIXNames.Size - 1 do
+        begin
+          MIXNames.Hash2[x] := getRedAlertAndTiberianSunID(MIXNames.Names[x]);
+          Buffer.WriteBuffer(MIXNames.Hash2[x],4);
+        end;
+
+        Buffer.SaveToFile(CurPath+'drv_default_mix.db2');
+
+        Buffer.Clear;
+        
+      end;
+
+      MIXNamesLoaded := true;
+      Result := MIXNamesLoaded;
+
+      FreeAndNil(DATFile);
+
+    finally
+
+      if DATFile <> nil then
+        FreeAndNil(DATFile);
+      if Buffer <> nil then
+        FreeAndNil(Buffer);
+
+    end;
+    
+  end;
+
+end;
+
+function readWestWoodMIX(fil: string): integer;
+var HDR: WestwoodMIX_Header;
+    ENT: WestwoodMIX_Entry;
+//    Flag: cardinal;    // For encrypted MIX files (unsupported yet)
+    x, BodyOffset: cardinal;
+    Per, OldPer: byte;
+begin
+
+  Fhandle := FileOpen(fil, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    TotFSize := FileSeek(FHandle,0,2);
+
+    FileSeek(Fhandle, 0, 0);
+//    FileRead(FHandle,Flag,4);
+    FileRead(FHandle, HDR, Sizeof(WestwoodMIX_Header));
+
+    if (HDR.NumFiles = 0) or ((HDR.Size + HDR.NumFiles*12 + 6) <> TotFSize) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'MIX';
+      ErrInfo.Games := 'Command & Conquer';
+    end
+    else
+    begin
+
+      // Load filenames Database and generate IDs
+      if not(loadWestWoodMIXDatabase) then
+      begin
+        // If filenames database does not exist we create it from the XCC-Util DAT file
+        createWestWoodMIXDatabase;
+        // Then we load it and generate the IDs
+        loadWestWoodMIXDatabase;
+      end;
+      // In any case if database is not loaded the name will be the hexa ID
+
+      OldPer := 0;
+      BodyOffset := (HdR.NumFiles * 12) + 6;
+
+      for x := 1 to HDR.NumFiles do
+      begin
+
+        FileRead(FHandle,ENT,SizeOf(WestwoodMIX_Entry));
+        FSE_Add(findNameByID(ENT.ID),ENT.offset+BodyOffset,ENT.size,0,0);
+        Per := Round((x / HDR.NumFiles)*100);
+        if Per >= OldPer + 1 then
+        begin
+          SetPercent(Per);
+          OldPer := Per;
+        end;
+
+      end;
+
+      Result := HDR.NumFiles;
+
+      DrvInfo.ID := 'MIX';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
 // West Wood .PAK support =================================================== //
 // -------------------------------------------------------------------------- //
 
@@ -12222,7 +12633,7 @@ function ReadHubPAK(src: String): Integer;
 var ID: array[0..3] of char;
     ID12: array[0..11] of char;
     ID21P4: array[0..20] of char;
-    res,Test1,Test3,Test4,Test5,testpko,FSize: integer;
+    res,Test1,Test3,testpko,FSize: integer;
     Test2: Word;
     testpk: byte;
 begin
@@ -12445,7 +12856,9 @@ var ext: string;
     ID28: array[0..27] of char;
     ID36: array[0..35] of char;
     ID127: array[0..126] of char;
-    x: integer;
+    x, fsize: integer;
+    mixtest1: word;
+    mixtest2,mixtest3: cardinal;
 begin
 
   SetPercent(0);
@@ -12470,6 +12883,12 @@ begin
     if FHandle > 0 then
     begin
       FileRead(FHandle,ID127,127);
+      FSize := FileSeek(FHandle,0,2);
+      FileSeek(FHandle,0,0);
+      FileRead(FHandle,mixtest1,2);
+      FileRead(FHandle,mixtest2,4);
+      FileSeek(FHandle,0,0);
+      FileRead(FHandle,mixtest3,4);
       FileSeek(FHandle,520,0);
       FileRead(FHandle,ID12SLF,12);
       FileSeek(FHandle,-4,2);
@@ -12858,6 +13277,13 @@ begin
         FileClose(FHandle);
         Result := ReadPrototypeRCF(fil)
       end
+      else if (ext = 'MIX') then
+      begin
+        if ((mixtest1 = 0) and ((mixtest3 = $20000) or (mixtest3 = $30000)))
+             or ((mixtest1 > 0) and ((mixtest2 + mixtest1*12 + 6) = FSize)) then
+          FileClose(FHandle);
+          Result := ReadWestwoodMIX(fil);
+      end
       else
       begin
         Result := 0;
@@ -12947,6 +13373,8 @@ begin
       Result := ReadLeisureSuitLarryMagnaCumLaudeJAM(fil)
     else if ext = 'M4B' then
       Result := ReadMystIVRevelationM4B(fil)
+    else if ext = 'MIX' then
+      Result := ReadWestwoodMIX(fil)
     // The Fifth Element .MRC
     else if ext = 'MRC' then
     begin
@@ -13111,16 +13539,32 @@ var ID4: array[0..3] of char;
     ID28: array[0..27] of char;
     ID36: array[0..35] of char;
     ID127: array[0..126] of char;
-    TestFile,x: integer;
+    TestFile,x,fsize: integer;
+    mixtest1: word;
+    mixtest2,mixtest3: cardinal;
+    ext: string;
 begin
 
   Result := False;
 
   TestFile := FileOpen(fil, fmOpenRead);
 
+  ext := ExtractFileExt(fil);
+
+  if ext <> '' then
+    ext := copy(ext,2,length(ext)-1);
+
+  ext := UpperCase(ext);
+
   if TestFile > 0 then
   begin
     FileRead(TestFile,ID127,127);
+    FSize := FileSeek(Testfile,0,2);
+    FileSeek(TestFile,0,0);
+    FileRead(TestFile,mixtest1,2);
+    FileRead(TestFile,mixtest2,4);
+    FileSeek(TestFile,0,0);
+    FileRead(TestFile,mixtest3,4);
     FileSeek(TestFile,520,0);
     FileRead(TestFile,ID12SLF,12);
     FileSeek(TestFile,-4,2);
@@ -13362,6 +13806,11 @@ begin
     else if (ID127[8] = #3) and (ID127[9] = #0) and (ID127[10] = #0) and (ID127[11] = #0)
         and (ID127[12] = #4) and (ID127[13] = #0) and (ID127[14] = #0) and (ID127[15] = #0) then
       Result := true
+    else if ext = 'MIX' then
+    begin
+      result := ((mixtest1 = 0) and ((mixtest3 = $20000) or (mixtest3 = $30000)))
+             or ((mixtest1 > 0) and ((mixtest2 + mixtest1*12 + 6) = FSize));
+    end
     else
       Result := False;
   end;
@@ -13462,6 +13911,9 @@ begin
     else if ext = 'JAM' then
       IsFormat := True
     else if ext = 'M4B' then
+      IsFormat := True
+    // Westwood Studios .MIX files (C&C)
+    else if ext = 'MIX' then
       IsFormat := True
     else if ext = 'MN3' then
       IsFormat := True
@@ -14089,6 +14541,9 @@ begin
                  '{\b http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format}\par'+#10+
                  'Giants .GZP decompression code based on infos by:\par'+#10+
                  '{\b Thilo Girmann (Nullpointer)}\par'+#10+
+                 'Command & Conquer .MIX infos by:\par'+#10+
+                 '{\b Olaf van der Spek}\par'+#10+
+                 '{\b http://xhp.xwis.net/documents/MIX_Format.html}\par'+#10+
                  'Some file formats support based on info found on:\par'+#10+
                  '{\b http://wiki.xentax.com\par}'+
                  '}'+#10;
@@ -14117,6 +14572,9 @@ begin
                           'http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format'+#10+
                           'Giants .GZP decompression code based on infos by:'+#10+
                           'Thilo Girmann (Nullpointer)'+#10+
+                          'Command & Conquer .MIX infos by:'+#10+
+                          'Olaf van der Spek'+#10+
+                          'http://xhp.xwis.net/documents/MIX_Format.html'+#10+
                           'Some file formats support based on info found on:'+#10+
                           'http://wiki.xentax.com'
   end;

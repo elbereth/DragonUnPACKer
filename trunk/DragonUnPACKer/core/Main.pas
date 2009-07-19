@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.21 2009-07-10 20:59:51 elbereth Exp $
+// $Id: Main.pas,v 1.22 2009-07-19 21:01:03 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -317,13 +317,14 @@ begin
   end;
 
   separatorLog;
-  writeLog(ReplaceValue(DLNGStr('LOG101'),'%f',src));
+  writeLog(ReplaceValue('%f',DLNGStr('LOG101'),src));
 
   loadRes := FSE.LoadFile(src, res);
 
   if (loadRes = dlOk) then
   begin
     Caption := 'Dragon UnPACKer v' + CurVersion + ' ' + CurEdit+ ' - '+src;
+    application.Title := dup5Main.Caption;
     menuFichier_Fermer.Enabled := True;
     Bouton_Fermer.Enabled := True;
     menuEdit.Visible := True;
@@ -1710,6 +1711,8 @@ begin
   if clook <> 'default.dulk' then
     LoadLook(clook);
 
+  application.Title := dup5Main.Caption;
+
 end;
 
 procedure Tdup5Main.InitEngine;
@@ -2044,6 +2047,7 @@ begin
   dup5Main.menuEdit.Visible := False;
   dup5Main.menuTools.Visible := False;
   dup5Main.Caption := 'Dragon UnPACKer v'+CurVersion+' '+CurEdit;
+  application.Title := dup5Main.Caption;
 
   dup5Main.Status.Panels.Items[0].Text := '0 '+DLNGStr('STAT10');
   dup5Main.Status.Panels.Items[1].Text := '0 '+DLNGStr('STAT20');

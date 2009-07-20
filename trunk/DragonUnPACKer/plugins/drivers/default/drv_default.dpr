@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.58 2009-07-20 07:03:07 elbereth Exp $
+// $Id: drv_default.dpr,v 1.59 2009-07-20 21:34:06 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -225,8 +225,8 @@ const
   DUDI_VERSION_COMPATIBLE = 4;
   DRIVER_VERSION = 20840;
   DUP_VERSION = 55110;
-  CVS_REVISION = '$Revision: 1.58 $';
-  CVS_DATE = '$Date: 2009-07-20 07:03:07 $';
+  CVS_REVISION = '$Revision: 1.59 $';
+  CVS_DATE = '$Date: 2009-07-20 21:34:06 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -284,6 +284,7 @@ end;
 // Returns Driver plugin version
 // Exported
 function GetNumVersion: Integer; stdcall;
+var buildStr: string;
 begin
 
   GetNumVersion := DRIVER_VERSION;
@@ -298,8 +299,8 @@ begin
   GetDriverInfo.Name := 'Elbereth''s Main Driver';
   GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
   GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 83 different file formats. This is the official main driver.'+#10+'Check about box for more info.';
-  GetDriverInfo.NumFormats := 74;
+  GetDriverInfo.Comment := 'This driver support 84 different file formats. This is the official main driver.'+#10+'Check about box for more info.';
+  GetDriverInfo.NumFormats := 75;
   GetDriverInfo.Formats[1].Extensions := '*.pak';
   GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)';
   GetDriverInfo.Formats[2].Extensions := '*.bun';
@@ -444,10 +445,12 @@ begin
   GetDriverInfo.Formats[71].Name := 'The Fifth Element (*.MRC)';
   GetDriverInfo.Formats[72].Extensions := '*.RCF';
   GetDriverInfo.Formats[72].Name := 'Prototype (*.RCF)|Scarface (*.RCF)';
-  GetDriverInfo.Formats[73].Extensions := '*.gzp';
+  GetDriverInfo.Formats[73].Extensions := '*.GZP';
   GetDriverInfo.Formats[73].Name := 'Giants: Citizen Kabuto (*.GZP)';
-  GetDriverInfo.Formats[74].Extensions := '*.mix';
+  GetDriverInfo.Formats[74].Extensions := '*.MIX';
   GetDriverInfo.Formats[74].Name := 'Command & Conquer (*.MIX)';
+  GetDriverInfo.Formats[75].Extensions := '*.MIX;*.TLK';
+  GetDriverInfo.Formats[75].Name := 'Blade Runner (*.MIX;*.TLK)';
 //  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
 //  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
 //  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
@@ -11850,6 +11853,16 @@ type WestwoodMIX_Header = packed record
        Hash2: array of cardinal;
        Size: cardinal;
      end;
+     WestwoodMIX_SHP_Header = packed record
+       NumImages: word;    {Number of images}
+       A,B: word;    {Unknown}
+       Width, Height: word;    {Width and Height of the images}
+       C: longint; {Unknown}
+     end;
+     WestwoodMIX_SHP_Entry = packed record
+       Offset  : cardinal;  {Offset and format of image in file}
+       RefOffs : cardinal;  {Offset and format of image on which it is based}
+     end;
 
 type WestwoodMIX_DBHeader = packed record
        ID: array[0..3] of char;
@@ -12286,8 +12299,125 @@ begin
         FreeAndNil(Buffer);
 
     end;
-    
+
   end;
+
+end;
+
+function GetWestwoodMIXExt(srcHandle: integer; offset, size: integer): string;
+var curOffset: integer;
+    Char4: array[0..3] of char;
+    Char8: array[0..7] of char;
+    Char12: array[0..11] of char;
+    Num4, Num4b, x: cardinal;
+    Num2: word;
+    Num1: byte;
+    SHP_HDR: WestwoodMIX_SHP_Header;
+    SHP_ENT: WestwoodMIX_SHP_Entry;
+    IsSHP: boolean;
+begin
+
+  result := '';
+  curOffset := FileSeek(srcHandle,0,1);
+  FileSeek(srcHandle,offset,0);
+
+  FileRead(srcHandle,Char4,4);
+
+  if Char4 = 'FORM' then
+  begin
+    FileSeek(srcHandle,4,1);
+    FileRead(srcHandle,Char8,8);
+    if Char8 = 'WVQAVQHD' then
+      result := '.vqa';
+  end;
+  if (result = '') and (Char4 = 'Voxe') then
+  begin
+    FileSeek(srcHandle,Offset+4,0);
+    FileRead(srcHandle,Char12,12);
+    if Char12 = 'l Animation' then
+      result := '.vxl';
+  end;
+  if (result = '') then
+  begin
+    Fileseek(srcHandle,offset,0);
+    Fileread(srcHandle,Num2,2);
+    if (Num2 = Size) then
+    begin
+      Fileread(srcHandle,Num2,2);
+      if Num2 = $0500 then
+      begin
+        Fileread(srcHandle,Num2,2);
+        if Num2 = $000E then
+        begin
+          Fileread(srcHandle,Num2,2);
+          if Num2 = $0014 then
+            result := '.fnt';
+        end;
+      end;
+    end
+    else if (Num2 = (Size-2)) then
+    begin
+      Fileread(srcHandle,Num2,2);
+      if Num2 = $0004 then
+      begin
+        Fileread(srcHandle,Num2,2);
+        if Num2 = $FA00 then
+          result := '.cps';
+      end;
+    end;
+    if result = '' then
+    begin
+      Fileseek(srcHandle,offset+2,0);
+      Fileread(srcHandle,Num4,4);
+      if (Num2 <= 44100) and ((Num4+12) = Size) then
+      begin
+        Fileread(srcHandle,Num4b,4);
+        if (Num4b >= Num4) then
+        begin
+          FileSeek(srcHandle,1,1);
+          Fileread(srcHandle,Num1,1);
+          if (Num1 = 0) or (Num1 = 1) or (Num1 = 99) then
+            result := '.aud';
+        end;
+      end;
+      if result = '' then
+      begin
+        Fileseek(srcHandle,offset+8,0);
+        Fileread(srcHandle,Num4,4);
+        if Num4 = 48 then
+        begin
+          Fileread(srcHandle,Num4,4);
+          if Num4 = 24 then
+            result := '.tmp';
+        end;
+      end;
+    end;
+  end;
+
+  if (result = '') then
+  begin
+    FileSeek(srcHandle,Offset,0);
+    FileRead(srcHandle,SHP_HDR,SizeOf(WestwoodMIX_SHP_Header));
+    if (SHP_HDR.NumImages > 0) then
+    begin
+      IsSHP := true;
+      for x := 0 to SHP_HDR.NumImages-1 do
+      begin
+        FileRead(srcHandle,SHP_ENT,SizeOf(WestwoodMIX_SHP_Entry));
+        IsSHP := IsSHP and (((SHP_ENT.Offset and $00FFFFFF)<Size))
+                       and ( (((SHP_ENT.offset and $FF000000) = $80000000) and (SHP_ENT.RefOffs = 0) )
+                        or   (((SHP_ENT.offset and $FF000000) = $40000000) and ((SHP_ENT.RefOffs and $00FFFFFF)<Size) )
+                        or   (((SHP_ENT.offset and $FF000000) = $20000000) and ((SHP_ENT.RefOffs and $FF000000) = $48000000) )
+                        or   ((SHP_ENT.offset and $FF000000) = 0));
+      end;
+      if IsSHP then
+        result := '.shp';
+    end;
+    if (result = '') and (size = 768) then
+      result := '.pal';
+  end;
+
+  FileSeek(srcHandle,curOffset,0);
 
 end;
 
@@ -12297,6 +12427,7 @@ var HDR: WestwoodMIX_Header;
 //    Flag: cardinal;    // For encrypted MIX files (unsupported yet)
     x, BodyOffset: cardinal;
     Per, OldPer: byte;
+    disp: string;
 begin
 
   Fhandle := FileOpen(fil, fmOpenRead);
@@ -12337,7 +12468,10 @@ begin
       begin
 
         FileRead(FHandle,ENT,SizeOf(WestwoodMIX_Entry));
-        FSE_Add(findNameByID(ENT.ID),ENT.offset+BodyOffset,ENT.size,0,0);
+        disp := findNameByID(ENT.ID);
+        if pos('.',disp) = 0 then
+          disp := disp + GetWestwoodMIXExt(FHandle,ENT.offset+BodyOffset,ENT.size);
+        FSE_Add(disp,ENT.offset+BodyOffset,ENT.size,0,0);
         Per := Round((x / HDR.NumFiles)*100);
         if Per >= OldPer + 1 then
         begin
@@ -12763,6 +12897,8 @@ var ID: array[0..3] of char;
     res,Test1,Test3,testpko,FSize: integer;
     Test2: Word;
     testpk: byte;
+    mixtest1: word;
+    mixtest2,mixtest3: cardinal;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead);
@@ -12784,16 +12920,27 @@ begin
     FileRead(FHandle,Test1,4);
     FileSeek(FHandle,0,0);
     FileRead(FHandle,Test3,4);
+    FileSeek(FHandle,0,0);
+    FileRead(FHandle,mixtest1,2);
+    FileRead(FHandle,mixtest2,4);
+    FileSeek(FHandle,0,0);
+    FileRead(FHandle,mixtest3,4);
     if ID = 'PACK' then
       res := ReadQuakePAK
     else if ID12 = 'tlj_pack0001' then
       res := ReadDreamfallTLJPAK(src)
+    else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
+      res := ReadSpellforcePAK
+    else if ((mixtest1 = 0) and ((mixtest3 = $20000) or (mixtest3 = $30000)))
+         or ((mixtest1 > 0) and ((mixtest2 + mixtest1*12 + 6) = FSize)) then
+    begin
+      FileClose(FHandle);
+      Result := ReadWestwoodMIX(src);
+    end
     else if (ID[0] = #5) and (ID[1] = #0) and (ID[2] = #0) and (ID[3] = #0) then
       res := ReadTheMoviesPAK
     else if (ID[0] = #0) and (ID[1] = #0) and (ID[2] = #0) and (ID[3] = #0) then
       res := ReadZanzarahPAK
-    else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
-      res := ReadSpellforcePAK
     else if checkFlorensiaPAK(FHandle) then
       res := ReadFlorensiaPAK
     else if ((testpk = 0) or (testpk = 1)) and (testpko <= FSize) and (testpko > 0) then
@@ -13404,7 +13551,7 @@ begin
         FileClose(FHandle);
         Result := ReadPrototypeRCF(fil)
       end
-      else if (ext = 'MIX') then
+      else if (ext = 'MIX') or (ext = 'TLK') then
       begin
         if ((mixtest1 = 0) and ((mixtest3 = $20000) or (mixtest3 = $30000)))
              or ((mixtest1 > 0) and ((mixtest2 + mixtest1*12 + 6) = FSize)) then
@@ -13933,7 +14080,7 @@ begin
     else if (ID127[8] = #3) and (ID127[9] = #0) and (ID127[10] = #0) and (ID127[11] = #0)
         and (ID127[12] = #4) and (ID127[13] = #0) and (ID127[14] = #0) and (ID127[15] = #0) then
       Result := true
-    else if ext = 'MIX' then
+    else if (ext = 'MIX') or (ext = 'TLK') then
     begin
       result := ((mixtest1 = 0) and ((mixtest3 = $20000) or (mixtest3 = $30000)))
              or ((mixtest1 > 0) and ((mixtest2 + mixtest1*12 + 6) = FSize));

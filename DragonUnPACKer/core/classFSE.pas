@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.13 2009-07-10 20:59:51 elbereth Exp $
+// $Id: classFSE.pas,v 1.14 2009-07-20 21:57:36 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -901,7 +901,7 @@ begin
 
           res := dlOK;
 
-          dup5Main.writeLogVerbose(1,ReplaceValue('%p',ReplaceValue('%f',DLNGStr('LOG504'),Drivers[CurrentDriver].Info.Name),DriverID));
+          dup5Main.writeLogVerbose(1,ReplaceValue('%p',ReplaceValue('%f',DLNGStr('LOG504'),DriverID),Drivers[CurrentDriver].Info.Name));
 
           break;
 

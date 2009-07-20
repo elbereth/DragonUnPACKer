@@ -1,6 +1,6 @@
 unit lib_version;
 
-// $Id: lib_version.pas,v 1.2 2005-12-19 23:30:35 elbereth Exp $
+// $Id: lib_version.pas,v 1.3 2009-07-20 21:34:51 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_version.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -19,7 +19,7 @@ unit lib_version;
 // =============================================================================
 // Dragon UnPACKer Version Management library
 // =============================================================================
-//  
+//
 //  Functions:
 //  function getVersion(version: integer): string;
 //
@@ -30,9 +30,20 @@ uses StrUtils, SysUtils;
 
 function getVersion(version: integer): string;
 function getCVSRevision(CVSRevisionTag: string): string;
+function getCVSBuild(CVSRevisionTag: string): cardinal;
 function getCVSDate(CVSDateTag: string): string;
 
 implementation
+
+function getCVSBuild(CVSRevisionTag: string): cardinal;
+var buildStr: string;
+begin
+
+  buildStr := rightstr(CVSRevisionTag,length(CVSRevisionTag)-pos('.',CVSRevisionTag));
+  buildStr := leftstr(buildStr,length(buildStr)-2);
+  result := strtoint(buildStr);
+
+end;
 
 function getCVSDate(CVSDateTag: string): string;
 begin
@@ -58,7 +69,7 @@ begin
 
 end;
 
-function getVersion(version: integer): string;
+function getVersion(version: integer): string; overload;
 var majVer: integer;
     minVer: integer;
     revVer: integer;

@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.59 2009-07-20 21:34:06 elbereth Exp $
+// $Id: drv_default.dpr,v 1.60 2009-07-21 11:32:30 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -225,8 +225,8 @@ const
   DUDI_VERSION_COMPATIBLE = 4;
   DRIVER_VERSION = 20840;
   DUP_VERSION = 55110;
-  CVS_REVISION = '$Revision: 1.59 $';
-  CVS_DATE = '$Date: 2009-07-20 21:34:06 $';
+  CVS_REVISION = '$Revision: 1.60 $';
+  CVS_DATE = '$Date: 2009-07-21 11:32:30 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -11852,6 +11852,8 @@ type WestwoodMIX_Header = packed record
        Hash1: array of cardinal;
        Hash2: array of cardinal;
        Size: cardinal;
+       SourceAge: integer;
+       SourceSize: cardinal;
      end;
      WestwoodMIX_SHP_Header = packed record
        NumImages: word;    {Number of images}
@@ -11942,9 +11944,11 @@ end;
 
 function findNameByID(ID: cardinal; RAorTS: boolean = false): string;
 var x: integer;
+    found: boolean;
 begin
 
   result := inttohex(ID,8);
+  found := false;
 
   if MIXNamesLoaded then
   begin
@@ -11953,8 +11957,10 @@ begin
       if (not(RAorTS) and (ID = MIXNames.Hash1[x]))
       or ((RAorTS) and (ID = MIXNames.Hash2[x])) then
       begin
-        result := MIXNames.Names[x];
-        exit;
+        if not(found) then
+          result := '';
+        result := result + MIXNames.Names[x];
+//        exit;
       end;
     end;
   end;
@@ -11975,58 +11981,93 @@ begin
 
 end;
 
-procedure createWestWoodMIXDatabase;
+function createWestWoodMIXDatabase: boolean;
 var LstFile: TextFile;
     Line: String;
     DBNameNum, x: Cardinal;
     DBNameString: array of String;
     Buffer: TMemoryStream;
     HDR: WestwoodMIX_DBHeader;
-    Empty: byte;
+    Per, Empty: byte;
+    UpdateTrigger, UpdateCount: cardinal;
 const DBINCNUM = 10000;
 begin
 
-   FillChar(HDR,SizeOf(WestwoodMIX_DBHeader),0);
+  result := false;
 
-   AssignFile(LstFile, CurPath+'drv_default_mix.lst');
-   Reset(LstFile);
+  if FileExists(CurPath+'drv_default_mix.lst') then
+  begin
 
-   DBNameNum := 0;
-   while not(Eof(LstFile)) do
-   begin
-     Readln(LstFile, Line);
-     Line := Trim(Line);
-     if (Line[1] <> '/') and (Line[2] <> '/') then
-     begin
-       if Length(DBNameString) < (DBNameNum + 1) then
-         SetLength(DBNameString,length(DBNameString)+DBINCNUM);
-       DBNameString[DBNameNum] := Line;
-       Inc(DBNameNum);
-     end;
-   end;
-   CloseFile(LstFile);
+    try
+      FillChar(HDR,SizeOf(WestwoodMIX_DBHeader),0);
 
-   Buffer := TMemoryStream.Create;
+      AssignFile(LstFile, CurPath+'drv_default_mix.lst');
+      Reset(LstFile);
 
-   HDR.ID := WSMIX_DBS_ID;
-   HDR.Eof := WSMIX_DB_EOF;
-   HDR.Version := WSMIX_DB_VER;
-   HDR.SourceDate := FileAge(CurPath+'drv_default_mix.lst');
-   HDR.SourceSize := GetFSize(CurPath+'drv_default_mix.lst');
-   HDR.NumEntries := DBNameNum;
+      DBNameNum := 0;
+      while not(Eof(LstFile)) do
+      begin
+        Readln(LstFile, Line);
+        Line := Trim(Line);
+        if (Line[1] <> '/') and (Line[2] <> '/') then
+        begin
+          if Length(MIXNames.Names) < (DBNameNum + 1) then
+          SetLength(MIXNames.Names,length(MIXNames.Names)+DBINCNUM);
+          MIXNames.Names[DBNameNum] := Line;
+          Inc(DBNameNum);
+        end;
+      end;
+      CloseFile(LstFile);
 
-   Buffer.WriteBuffer(HDR,SizeOf(WestwoodMIX_DBHeader));
+      MIXNames.Size := DBNameNum;
 
-   Empty := 0;
-   for x := 0 to DBNameNum - 1 do
-   begin
-     Buffer.WriteBuffer(DBNameString[x][1],Length(DBNameString[x]));
-     Buffer.WriteBuffer(Empty,1);
-   end;
+      setLength(MIXNames.Names,MIXNames.Size);
+      setLength(MIXNames.Hash1,MIXNames.Size);
+      setLength(MIXNames.Hash2,MIXNames.Size);
 
-   Buffer.SaveToFile(CurPath+'drv_default_mix.dbs');
+      Buffer := TMemoryStream.Create;
 
-   Buffer.Free;
+      HDR.ID := WSMIX_DBS_ID;
+      HDR.Eof := WSMIX_DB_EOF;
+      HDR.Version := WSMIX_DB_VER;
+      HDR.SourceDate := FileAge(CurPath+'drv_default_mix.lst');
+      HDR.SourceSize := GetFSize(CurPath+'drv_default_mix.lst');
+      HDR.NumEntries := DBNameNum;
+
+      MIXNames.SourceAge := HDR.SourceDate;
+      MIXNames.SourceSize := HDR.SourceSize;
+
+      Buffer.WriteBuffer(HDR,SizeOf(WestwoodMIX_DBHeader));
+
+      Empty := 0;
+      UpdateTrigger := DBNameNum div 33;
+      UpdateCount := 0;
+      Per := 0;
+      SetPercent(0);
+      for x := 0 to DBNameNum - 1 do
+      begin
+        Buffer.WriteBuffer(MIXNames.Names[x][1],Length(MIXNames.Names[x]));
+        Buffer.WriteBuffer(Empty,1);
+        inc(UpdateCount);
+        if UpdateCount = UpdateTrigger then
+        begin
+          UpdateCount := 0;
+          Inc(Per);
+          SetPercent(Per);
+        end;
+      end;
+
+      Buffer.SaveToFile(CurPath+'drv_default_mix.dbs');
+
+      result := true;
+      MIXNamesLoaded := true;
+
+    finally
+      if Buffer <> Nil then
+        FreeAndNil(Buffer);
+    end;
+
+  end;
 
 end;
 
@@ -12105,54 +12146,101 @@ function loadWestWoodMIXDatabase: boolean;
 var DATFile: TFileStream;
     Buffer: TMemoryStream;
     x, TestValue: cardinal;
-    CreateHashDB: boolean;
+    CreateHashDB,SkipLoadStringDB: boolean;
     DBSHDR, DB1HDR, DB2HDR: WestwoodMIX_DBHeader;
+    Per: Byte;
+    UpdateTrigger, UpdateCount: cardinal;
+    SourceAge: integer;
+    SourceSize: cardinal;
 begin
 
-  result := false;
-
-  if FileExists(CurPath+'drv_default_mix.dbs') then
+  if FileExists(CurPath+'drv_default_mix.dbs') or FileExists(CurPath+'drv_default_mix.lst') then
   begin
 
     try
 
-      DATFile := TFileStream.Create(CurPath+'drv_default_mix.dbs',fmOpenRead);
       Buffer := TMemorystream.Create;
 
-      Buffer.CopyFrom(DATFile,DATFile.Size);
-      Buffer.Seek(0,0);
+      if FileExists(CurPath+'drv_default_mix.dbs') then
+      begin
 
-      Buffer.ReadBuffer(DBSHDR,SizeOf(WestwoodMIX_DBHeader));
+        DATFile := TFileStream.Create(CurPath+'drv_default_mix.dbs',fmOpenRead);
 
-      // Sanity checks
-      if (DBSHDR.ID <> WSMIX_DBS_ID) or (DBSHDR.Eof <> 26)
-      or (DBSHDR.Version <> WSMIX_DB_VER) or (DBSHDR.Empty <> 0)
-      // If source file has changed Database needs to be rebuilded
-      or (FileAge(CurPath+'drv_default_mix.lst') <> DBSHDR.SourceDate)
-      or (GetFSize(CurPath+'drv_default_mix.lst') <> DBSHDR.SourceSize) then
+        Buffer.CopyFrom(DATFile,DATFile.Size);
+        FreeAndNil(DATFile);
+
+        Buffer.Seek(0,0);
+
+        Buffer.ReadBuffer(DBSHDR,SizeOf(WestwoodMIX_DBHeader));
+
+        SkipLoadStringDB := false;
+
+        SourceAge := FileAge(CurPath+'drv_default_mix.lst');
+        SourceSize := GetFSize(CurPath+'drv_default_mix.lst');
+        // Sanity checks
+        if (DBSHDR.ID <> WSMIX_DBS_ID) or (DBSHDR.Eof <> 26)
+        or (DBSHDR.Version <> WSMIX_DB_VER) or (DBSHDR.Empty <> 0)
+        // If source file has changed Database needs to be rebuilded
+        or (SourceAge <> DBSHDR.SourceDate)
+        or (SourceSize <> DBSHDR.SourceSize) then
+        begin
+          if not(createWestWoodMIXDatabase) then
+          begin
+            result := false;
+            exit;
+          end;
+          SkipLoadStringDB := true;
+        end;
+
+        if not(SkipLoadStringDB) then
+        begin
+
+          // If data is already loaded, no need to do it again
+          if (MIXNames.SourceAge = SourceAge)
+          and (MIXNames.SourceSize = SourceSize) then
+          begin
+            result := true;
+            exit;
+          end;
+
+          MIXNames.SourceAge := SourceAge;
+          MIXNames.SourceSize := SourceSize;
+
+          MIXNames.Size := DBSHDR.NumEntries;
+
+          setLength(MIXNames.Names,MIXNames.Size);
+          setLength(MIXNames.Hash1,MIXNames.Size);
+          setLength(MIXNames.Hash2,MIXNames.Size);
+
+          UpdateTrigger := (MIXNames.Size - 1) div 33;
+          Per := 0;
+          Updatecount := 0;
+          for x := 0 to MIXNames.Size - 1 do
+          begin
+            MIXNames.Names[x] := Strip0(Get0(Buffer));
+            if (Buffer.Seek(0,1) > Buffer.Size) then
+            begin
+              result := false;
+              exit;
+            end;
+            Inc(UpdateCount);
+            if UpdateCount = UpdateTrigger then
+            begin
+              UpdateCount := 0;
+              Inc(Per);
+              SetPercent(Per);
+            end;
+          end;
+        end;
+
+        Buffer.Clear;
+
+      end
+      else if not(createWestWoodMIXDatabase) then
       begin
         result := false;
         exit;
       end;
-
-      MIXNames.Size := DBSHDR.NumEntries;
-
-      setLength(MIXNames.Names,MIXNames.Size);
-      setLength(MIXNames.Hash1,MIXNames.Size);
-      setLength(MIXNames.Hash2,MIXNames.Size);
-
-      for x := 0 to MIXNames.Size - 1 do
-      begin
-        MIXNames.Names[x] := Strip0(Get0(Buffer));
-        if (Buffer.Seek(0,1) > Buffer.Size) then
-        begin
-          result := false;
-          exit;
-        end;
-      end;
-
-      Buffer.Clear;
-      FreeAndNil(DATFile);
 
       CreateHashDB := not(FileExists(CurPath+'drv_default_mix.db1'));
 
@@ -12170,8 +12258,8 @@ begin
         CreateHashDB := (DB1HDR.ID <> WSMIX_DB1_ID) or (DB1HDR.Eof <> 26)
                      or (DB1HDR.Version <> WSMIX_DB_VER) or (DB1HDR.Empty <> 0)
         // or if string DB has changed and Hash DB needs to be rebuilded
-                     or (DB1HDR.SourceDate <> DBSHDR.SourceDate)
-                     or (DB1HDR.SourceSize <> DBSHDR.SourceSize);
+                     or (DB1HDR.SourceDate <> MIXNames.SourceAge)
+                     or (DB1HDR.SourceSize <> MIXNames.SourceSize);
 
         if not(CreateHashDB) then
         begin
@@ -12207,10 +12295,20 @@ begin
 
         Buffer.WriteBuffer(DB1HDR,SizeOf(WestwoodMIX_DBHeader));
 
+        Per := 33;
+        Updatecount := 0;
+        UpdateTrigger := (MIXNames.Size - 1) div 33;
         for x := 0 to MIXNames.Size - 1 do
         begin
           MIXNames.Hash1[x] := getCommandAndConquerID(MIXNames.Names[x]);
           Buffer.WriteBuffer(MIXNames.Hash1[x],4);
+          inc(UpdateCount);
+          if UpdateCount = UpdateTrigger then
+          begin
+            UpdateCount := 0;
+            Inc(Per);
+            SetPercent(Per);
+          end;
         end;
 
         Buffer.SaveToFile(CurPath+'drv_default_mix.db1');
@@ -12237,8 +12335,8 @@ begin
         CreateHashDB := (DB2HDR.ID <> WSMIX_DB2_ID) or (DB2HDR.Eof <> 26)
                      or (DB2HDR.Version <> WSMIX_DB_VER) or (DB2HDR.Empty <> 0)
         // or if string DB has changed and Hash DB needs to be rebuilded
-                     or (DB2HDR.SourceDate <> DBSHDR.SourceDate)
-                     or (DB2HDR.SourceSize <> DBSHDR.SourceSize);
+                     or (DB2HDR.SourceDate <> MIXNames.SourceAge)
+                     or (DB2HDR.SourceSize <> MIXNames.SourceSize);
 
         if not(CreateHashDB) then
         begin
@@ -12274,10 +12372,20 @@ begin
 
         Buffer.WriteBuffer(DB2HDR,SizeOf(WestwoodMIX_DBHeader));
 
+        UpdateTrigger := (MIXNames.Size - 1) div 33;
+        Per := 66;
+        UpdateCount := 0;
         for x := 0 to MIXNames.Size - 1 do
         begin
           MIXNames.Hash2[x] := getRedAlertAndTiberianSunID(MIXNames.Names[x]);
           Buffer.WriteBuffer(MIXNames.Hash2[x],4);
+          inc(UpdateCount);
+          if UpdateCount = UpdateTrigger then
+          begin
+            UpdateCount := 0;
+            Inc(Per);
+            SetPercent(Per);
+          end;
         end;
 
         Buffer.SaveToFile(CurPath+'drv_default_mix.db2');
@@ -12452,13 +12560,8 @@ begin
     begin
 
       // Load filenames Database and generate IDs
-      if not(loadWestWoodMIXDatabase) then
-      begin
-        // If filenames database does not exist we create it from the XCC-Util DAT file
-        createWestWoodMIXDatabase;
-        // Then we load it and generate the IDs
-        loadWestWoodMIXDatabase;
-      end;
+      // Database will be created if needed
+      loadWestWoodMIXDatabase;
       // In any case if database is not loaded the name will be the hexa ID
 
       OldPer := 0;

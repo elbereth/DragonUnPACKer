@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.22 2009-07-19 21:01:03 elbereth Exp $
+// $Id: Main.pas,v 1.23 2009-08-30 19:34:46 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -23,7 +23,8 @@ uses
   Dialogs, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, Menus, ImgList,
   lib_language, translation, ShellApi, VirtualTrees, lib_look, ToolWin,
   DropSource, XPMan, DragDrop, DragDropFile, prg_ver, StrUtils,
-  classIconsFromExt, DateUtils, cxCpu40, lib_binutils, commonTypes,
+  classIconsFromExt, DateUtils, // cxCpu40,
+  lib_binutils, commonTypes,
   BrowseForFolderU,
   // Vampyre Imaging Library
   ImagingTypes, Imaging, ImagingClasses, ImagingComponents, ImagingCanvases,
@@ -566,9 +567,9 @@ begin
   frmAbout.txtMoreinfo.Lines.Add('VirtualTree v'+VTVersion);
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
   frmAbout.txtMoreinfo.Lines.Add('http://www.delphi-gems.com');
-  frmAbout.txtMoreinfo.Lines.Add('cxCpu v'+cxCpu.Version.FormatVersion);
-  setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
-  frmAbout.txtMoreinfo.Lines.Add('http://www.carbonsoft.com/cxcpu/');
+//  frmAbout.txtMoreinfo.Lines.Add('cxCpu v'+cxCpu.Version.FormatVersion);
+//  setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
+//  frmAbout.txtMoreinfo.Lines.Add('http://www.carbonsoft.com/cxcpu/');
   frmAbout.txtMoreinfo.Lines.Add('Drag and Drop Component Suite');
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
   frmAbout.txtMoreinfo.Lines.Add('http://melander.dk/');
@@ -1722,7 +1723,7 @@ begin
 
   dup5Main.writeLogVerbose(1,DLNGstr('LOG005'));
 
-  dup5Main.writeLogVerbose(1,' + cxCpu v'+cxCpu.Version.FormatVersion);
+//  dup5Main.writeLogVerbose(1,' + cxCpu v'+cxCpu.Version.FormatVersion);
 //  dup5Main.writeLogVerbose(1,' + JEDI Code Library [JCL] v'+inttostr(JclVersionMajor)+'.'+inttostr(JclVersionMinor)+'.'+inttostr(JclVersionRelease)+' Build '+inttostr(JclVersionBuild));
 //  dup5Main.writeLogVerbose(1,' + JEDI Visual Component Library [JVCL] v'+JVCL_VERSIONSTRING);
   dup5Main.writeLogVerbose(1,' + Vampyre Imaging Library v'+Imaging.GetVersionStr);

@@ -1,6 +1,6 @@
 unit Error;
 
-// $Id: Error.pas,v 1.5 2009-06-26 21:05:31 elbereth Exp $
+// $Id: Error.pas,v 1.6 2009-08-30 19:34:13 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Error.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -20,7 +20,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, DateUtils, lib_utils, cxCPU40, Main,
+  Dialogs, StdCtrls, DateUtils, lib_utils, // cxCPU40,
+  Main,
   ExtCtrls, lib_language, translation, ShellApi;
 
 type
@@ -73,7 +74,7 @@ implementation
 procedure TfrmError.FillTxtError(E: Exception; from, subfrom: String);
 var x: byte;
     OSInfo: TOSInfo;
-    cxCPU: TcxCPU;
+//    cxCPU: TcxCPU;
 begin
 
 frmError.Height := 153;
@@ -112,15 +113,15 @@ txtError.Lines.Add('__________ Computer status: __________');
 txtError.Lines.Add('');
 txtError.Lines.Add(OSInfo.WinVersion);
 
-cxCpu := TcxCpu.Create;
-try
-  for x := 1 to cxCpu.ProcessorCount.Available.AsNumber do
-  begin
-    txtError.Lines.Add('CPU '+inttostr(x)+': '+cxCpu.Processors[x-1].Name.AsString );
-  end;
-finally
-  FreeAndNil(cxCPU);
-end;
+//cxCpu := TcxCpu.Create;
+//try
+//  for x := 1 to cxCpu.ProcessorCount.Available.AsNumber do
+//  begin
+//    txtError.Lines.Add('CPU '+inttostr(x)+': '+cxCpu.Processors[x-1].Name.AsString );
+//  end;
+//finally
+//  FreeAndNil(cxCPU);
+//end;
 
 txtError.Lines.Add('Memory: Free='+inttostr(OSInfo.MemAvailable div 1048576)+'MB / Total='+inttostr(OSInfo.MemTotal div 1048576)+'MB');
 txtError.Lines.Add('');

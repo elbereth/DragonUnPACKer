@@ -1,6 +1,6 @@
 unit lib_Utils;
 
-// $Id: lib_Utils.pas,v 1.9 2009-06-26 21:05:31 elbereth Exp $
+// $Id: lib_Utils.pas,v 1.10 2009-08-30 19:32:48 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_Utils.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -596,10 +596,25 @@ begin
 
 end;
 
+type
+TMemoryStatusEx = packed record
+dwLength: DWORD;
+dwMemoryLoad: DWORD;
+ullTotalPhys: Int64;
+ullAvailPhys: Int64;
+ullTotalPageFile: Int64;
+ullAvailPageFile: Int64;
+ullTotalVirtual: Int64;
+ullAvailVirtual: Int64;
+ullAvailExtendedVirtual: Int64;
+end;
+
+function GlobalMemoryStatusEx(var lpBuffer: TMemoryStatusEx): BOOL; stdcall; external kernel32;
+
 function GetAllSystemInfo(): TOSInfo;
 var OS: TOSVersionInfo;
 //    SI: TSystemInfo;
-    MS: TMemoryStatus;
+    MS: TMemoryStatusEx;
 begin
 
     // get win plattform & version
@@ -632,6 +647,15 @@ begin
             else
               result.WinVersion := 'Windows NT v';
           end
+          else if OS.dwMajorVersion = 6 Then
+          begin
+            If OS.dwMinorVersion = 0 Then
+              result.WinVersion := 'Windows Vista v'
+            else if OS.dwMinorVersion = 1 then
+              result.WinVersion := 'Windows 7 v'
+            else
+              result.WinVersion := 'Windows NT v';
+          end
           else
             result.WinVersion := 'Windows NT v';
           result.WinVersion := result.WinVersion+inttostr(OS.dwMajorVersion)+'.'+inttostr(OS.dwMinorVersion)+' build '+inttostr(OS.dwBuildNumber and $FFFF)+' '+OS.szCSDVersion;
@@ -641,10 +665,10 @@ begin
       end;
     end; // with OS
 
-    MS.dwLength := SizeOf(TMemoryStatus);
-    GlobalMemoryStatus(MS);
-    Result.MemTotal := MS.dwTotalPhys;
-    Result.MemAvailable := MS.dwAvailPhys;
+    MS.dwLength := SizeOf(TMemoryStatusEx);
+    GlobalMemoryStatusEx(MS);
+    Result.MemTotal := MS.ullTotalPhys;
+    Result.MemAvailable := MS.ullAvailPhys;
 
 end; {.GetAllSystemInfo}
 

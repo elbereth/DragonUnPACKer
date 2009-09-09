@@ -102,7 +102,7 @@ object dup5Main: Tdup5Main
     Anchors = [akLeft, akTop, akRight, akBottom]
     AutoSize = True
     TabOrder = 0
-    object Percent: TProgressBar
+    object Percent: TdwProgressBar
       Left = 104
       Top = 2
       Width = 150
@@ -111,6 +111,9 @@ object dup5Main: Tdup5Main
       Align = alTop
       Smooth = True
       TabOrder = 0
+      DoubleBuffered = False
+      MarqueeEnabled = True
+      MarqueeInterval = 50
     end
     object ToolBar: TToolBar
       Left = 11
@@ -174,6 +177,7 @@ object dup5Main: Tdup5Main
     DragMode = dmAutomatic
     DragOperations = []
     Header.AutoSizeIndex = -1
+    Header.DefaultHeight = 17
     Header.Font.Charset = DEFAULT_CHARSET
     Header.Font.Color = clWindowText
     Header.Font.Height = -11
@@ -229,6 +233,7 @@ object dup5Main: Tdup5Main
     HelpContext = 12
     Align = alLeft
     Header.AutoSizeIndex = 0
+    Header.DefaultHeight = 17
     Header.Font.Charset = DEFAULT_CHARSET
     Header.Font.Color = clWindowText
     Header.Font.Height = -11

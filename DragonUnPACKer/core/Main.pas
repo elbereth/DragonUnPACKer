@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.23 2009-08-30 19:34:46 elbereth Exp $
+// $Id: Main.pas,v 1.24 2009-09-09 20:08:24 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -23,18 +23,17 @@ uses
   Dialogs, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, Menus, ImgList,
   lib_language, translation, ShellApi, VirtualTrees, lib_look, ToolWin,
   DropSource, XPMan, DragDrop, DragDropFile, prg_ver, StrUtils,
-  classIconsFromExt, DateUtils, // cxCpu40,
-  lib_binutils, commonTypes,
-  BrowseForFolderU,
+  classIconsFromExt, DateUtils, cxCpu40, lib_binutils, commonTypes,
+  BrowseForFolderU, dwProgressBar,
   // Vampyre Imaging Library
   ImagingTypes, Imaging, ImagingClasses, ImagingComponents, ImagingCanvases,
-  ImagingFormats, ImagingUtility;
+  ImagingFormats, ImagingUtility, dwTaskbarComponents;
 
 type
   Tdup5Main = class(TForm)
     Splitter: TSplitter;
     ctrlBar: TControlBar;
-    Percent: TProgressBar;
+    Percent: TdwProgressBar;
     ToolBar: TToolBar;
     Bouton_Ouvrir: TToolButton;
     OpenDialog: TOpenDialog;
@@ -564,18 +563,21 @@ begin
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsItalic]);
   frmAbout.txtMoreinfo.Lines.Add('');
   frmAbout.txtMoreinfo.Lines.Add(DLNGstr('ABT004'));
-  frmAbout.txtMoreinfo.Lines.Add('VirtualTree v'+VTVersion);
+  frmAbout.txtMoreinfo.Lines.Add('cxCpu v'+cxCpu.Version.FormatVersion);
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
-  frmAbout.txtMoreinfo.Lines.Add('http://www.delphi-gems.com');
-//  frmAbout.txtMoreinfo.Lines.Add('cxCpu v'+cxCpu.Version.FormatVersion);
-//  setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
-//  frmAbout.txtMoreinfo.Lines.Add('http://www.carbonsoft.com/cxcpu/');
+  frmAbout.txtMoreinfo.Lines.Add('http://www.carbonsoft.com/cxcpu/');
+  frmAbout.txtMoreinfo.Lines.Add('Delphi for Windows: Windows 7 Component Library');
+  setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
+  frmAbout.txtMoreinfo.Lines.Add('http://www.gumpi.com/blog');
   frmAbout.txtMoreinfo.Lines.Add('Drag and Drop Component Suite');
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
   frmAbout.txtMoreinfo.Lines.Add('http://melander.dk/');
   frmAbout.txtMoreinfo.Lines.Add('Vampyre Imaging Livrary v'+Imaging.GetVersionStr);
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
   frmAbout.txtMoreinfo.Lines.Add('http://imaginglib.sourceforge.net/');
+  frmAbout.txtMoreinfo.Lines.Add('VirtualTree v'+VTVersion);
+  setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
+  frmAbout.txtMoreinfo.Lines.Add('http://www.delphi-gems.com');
 
 //  Compile Time Expert
 
@@ -995,6 +997,7 @@ begin
 
   if p>100 then
     p := 100;
+  dup5Main.Percent.ShowInTaskbar := not((p = 0) or (p = 100));
   dup5Main.Percent.Position := p;
   dup5Main.Refresh;
 
@@ -1285,7 +1288,7 @@ begin
 
     Node := lstContent.GetFirstSelected;
     numper := 0;
-    Percent.Position := 0;
+    PercentCB(0);
 
     while Node <> nil do
     begin
@@ -1297,12 +1300,12 @@ begin
       perc := Round((CurFiles / lstContent.SelectedCount)*100);
       if (perc >= numper+5) then
       begin
-        Percent.Position := perc;
+        PercentCB(perc);
         numper := perc;
       end;
       Node := lstContent.GetNextSelected(Node);
     end;
-    Percent.Position := 100;
+    PercentCB(100);
   end;
 
 end;
@@ -1340,7 +1343,7 @@ begin
     Randomize;
 
     Oldperc := 0;
-    Percent.Position := 0;
+    PercentCB(0);
 
     Node := lstContent.GetFirstSelected;
 
@@ -1408,7 +1411,7 @@ begin
       if perc >= (oldperc+5) then
       begin
         oldperc := perc;
-        Percent.Position := perc;
+        PercentCB(perc);
         Percent.Refresh;
       end;
       Node := lstContent.GetNextSelected(Node);
@@ -2133,7 +2136,7 @@ begin
 
     Node := lstContent.GetFirstSelected;
     numper := 0;
-    Percent.Position := 0;
+    PercentCB(0);
 
     while Node <> nil do
     begin
@@ -2147,12 +2150,12 @@ begin
       perc := Round((CurFiles / lstContent.SelectedCount)*100);
       if (perc >= numper+5) then
       begin
-        Percent.Position := perc;
+        PercentCB(perc);
         numper := perc;
       end;
       Node := lstContent.GetNextSelected(Node);
     end;
-    Percent.Position := 100;
+    PercentCB(100);
   end;
 
 end;

@@ -1265,7 +1265,7 @@ object frmHyperRipper: TfrmHyperRipper
     Top = 8
     Width = 417
     Height = 297
-    ActivePage = tabFormats
+    ActivePage = tabSearch
     TabOrder = 0
     object tabAbout: TTabSheet
       Caption = 'A Propos..'
@@ -4817,12 +4817,14 @@ object frmHyperRipper: TfrmHyperRipper
         TabOrder = 2
         OnChange = txtSourceChange
       end
-      object Progress: TProgressBar
+      object Progress: TdwProgressBar
         Left = 8
         Top = 88
         Width = 393
         Height = 16
         TabOrder = 3
+        DoubleBuffered = False
+        MarqueeInterval = 50
       end
       object cmdBrowse: TButton
         Left = 376

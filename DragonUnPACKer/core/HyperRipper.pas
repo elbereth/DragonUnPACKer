@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.18 2009-06-26 21:01:29 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.19 2009-09-09 20:07:03 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -46,6 +46,8 @@ unit HyperRipper;
   * 51040 Removed unstable status for Dragon UnPACKer v5.4.0 release
   * 51140 Removed JVCL use, changed to Delphi VCL (TSpinEdit)
   * 56011 Not a plugin anymore -> Merged with HyperRipper v55044
+  * 56012 Fixed BMFind mistakes (many formats were unable to be found)
+  *       Speed-up (on par or slightly faster than plugin version)
   * }
 
 interface
@@ -54,14 +56,14 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, declFSE, lib_language, Registry, Math, spec_DDS,
   ExtCtrls, lib_utils, classFSE, spec_HRF, DateUtils, translation, U_IntList,
-  StrUtils, MpegAudioOptions;
+  StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar;
 
 const MP_FRAMES_FLAG = 1;
       MP_BYTES_FLAG = 2;
       MP_TOC_FLAG = 4;
       MP_VBR_SCALE_FLAG = 8;
 
-      HR_VERSION = 56011;	// HyperRipper version
+      HR_VERSION = 56012;	// HyperRipper version
 
 type FormatsListElem = record
        GenType: Integer;
@@ -500,7 +502,7 @@ type FormatsListElem = record
     cmdOk: TButton;
     cmdSearch: TButton;
     txtSource: TEdit;
-    Progress: TProgressBar;
+    Progress: TdwProgressBar;
     cmdBrowse: TButton;
     Panel1: TPanel;
     lblHexDump: TLabel;
@@ -900,6 +902,7 @@ begin
   cmdOk.Enabled := false;
   cmdSearch.Visible := false;
   cmdCancel.Visible := true;
+  Progress.ShowInTaskbar := true;
   SearchThread.Resume;
 
 end;
@@ -1041,7 +1044,7 @@ end;
 procedure THRipSearch.Execute;
 begin
 
-  Synchronize(doSearch);
+  doSearch;
 
 end;
 
@@ -1080,7 +1083,7 @@ begin
   hrip.addResult(ReplaceValue('%f',DLNGstr('HRLG03'),ExtractFileName(filename)));
 
   hSRC := FileOpen(filename,fmOpenRead or fmShareExclusive);
-  sSRC := THandleStream.Create(hSRC); 
+  sSRC := THandleStream.Create(hSRC);
 
   if (hrip.chkNamingAuto.Checked) then
     prefix := '%f_%x-%n'
@@ -1114,7 +1117,7 @@ begin
   numFound := 0;
 
   // Rollback to 32bytes, 128bytes was too high (no format needs more than 12 bytes actually...)
-  rollback := 32;
+  rollback := 16;
 
   if rollback < 1024 then
     hrip.lblRollback.Caption := inttostr(rollback) +'B'
@@ -1184,8 +1187,8 @@ begin
           // That is Current position in file + Current Buffer
           FileSeek(hSRC,CurPos+CurPosBuf,0);
 
-          // We store the relative offset to buffer position for absolute offset calculation afterwards
-          bufferOffset := curPosBuf;
+          // We store the offset to data
+          bufferOffset := curPos+curPosBuf;
 
           // We read the buffer
           TestSize := FileRead(hSRC,buffer^,bufsize);
@@ -1209,7 +1212,7 @@ begin
             for iNumOffset := 0 to foundOffsets.Count - 1 do
             begin
               new(fitem);
-              fitem^.Offset := foundOffsets.Integers[iNumOffset];
+              fitem^.Offset := bufferOffset+foundOffsets.Integers[iNumOffset];
               fitem^.Index := x;
               flisttot.Add(fitem);
             end;
@@ -1227,10 +1230,9 @@ begin
         begin
           fitem := flisttot.Items[x];
           absoluteOffset := fitem^.offset;
-          absoluteOffset := absoluteOffset + bufferOffset + curPos;
-          if LastOffset <> absoluteOffset then
+//          absoluteOffset := absoluteOffset + bufferOffset + curPos;
+          if absoluteOffset > LastOffset then
           begin
-            LastOffset := absoluteOffset;
             try
 
 //  TODO ///             Found := frmHyperRipper.formats.verifyInStream(slist.items[fitem^.Index].DriverNum,slist.items[fitem^.Index].ID,hSRC,absoluteOffset);
@@ -1242,7 +1244,7 @@ begin
               end;
             end;
 //          Found := HPlug.plugins[slist.items[fitem^.Index].DriverNum].SearchFile(slist.items[fitem^.Index].ID,hSRC,curPos+fitem^.Offset);
-            Found := frmHyperRipper.formats.verifyInStream(slist.items[fitem^.Index].ID,sSRC,curPos+fitem^.Offset);
+            Found := frmHyperRipper.formats.verifyInStream(slist.items[fitem^.Index].ID,sSRC,fitem^.Offset);
             if (Found.GenType <> HR_TYPE_ERROR) and (Found.Size > 0) then
             begin
               if (hrip.chkMakeDirs.Checked) then
@@ -1275,7 +1277,10 @@ begin
               FSE.SetListElem(predir+resprefix+'.'+Found.Ext,Found.Offset,Found.Size,0,0);
               curPos := Found.Offset+Found.Size;
               SomethingFound := true;
-              break;
+              LastOffset := curPos;
+              if Found.Size = 0 then
+                inc(LastOffset);
+//              break;
             end;
           end;
         end;
@@ -1432,6 +1437,7 @@ begin
   cmdOk.Enabled := true;
   cmdSearch.Visible := true;
   cmdCancel.Visible := false;
+  Progress.ShowInTaskbar := false;
 
 end;
 
@@ -2245,15 +2251,15 @@ begin
      Result := 0;
      Exit
    end;
-   iMaxSubStrIdx := iOffset + iSubStrLen - 1;
+   iMaxSubStrIdx := iSubStrLen - 1;
 
    { Initialise the skip table }
    for ch := Low(skip) to High(skip) do skip[ch] := iSubStrLen;
-   for iSubStrIdx := 0 to (iMaxSubStrIdx - 1) do
-     skip[ord(szSubStr[iSubStrIdx])] := iMaxSubStrIdx - iSubStrIdx;
+   for iSubStrIdx := 0 to (iSubStrLen - 1) do
+     skip[ord(szSubStr[iSubStrIdx])] := Max(iMaxSubStrIdx - iSubStrIdx,1);
 
    { Scan the buffer, starting comparisons at the end of the substring }
-   iBufScanStart := iMaxSubStrIdx;
+   iBufScanStart := iOffset + iMaxSubStrIdx;
    while (not found) and (iBufScanStart < iBufSize) do
    begin
      iBufIdx := iBufScanStart;
@@ -2868,6 +2874,7 @@ begin
 
   Application.ProcessMessages;
 
+ try
   case formatid of
     1000: begin
             inStm.Seek(offset,0);
@@ -3747,6 +3754,18 @@ begin
     result.Ext := '';
     result.GenType := HR_TYPE_ERROR;
   end;
+
+ except
+
+   on e: EReadError do
+   begin
+     result.Offset := -1;
+     result.Size := -1;
+     result.Ext := '';
+     result.GenType := HR_TYPE_ERROR;
+   end;
+
+ end;
 
 end;
 

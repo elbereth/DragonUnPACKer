@@ -1,6 +1,6 @@
 unit Installer;
 
-// $Id: Installer.pas,v 1.17 2009-07-11 14:55:57 elbereth Exp $
+// $Id: Installer.pas,v 1.18 2009-09-09 20:10:49 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/Installer.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -193,7 +193,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 32040;
+  VERSION: Integer = 32140;
 
 implementation
 
@@ -1527,6 +1527,7 @@ begin
     stepInstall.Visible := false;
     stepInternet.Visible := true;
     applyProxyValues;
+    imgBanner.Visible := false;
     refresh;
     butRefresh.Click;
   end;
@@ -1539,6 +1540,7 @@ begin
     stepInstall.Visible := true;
     stepInternet.Visible := false;
     lstUpd.Add(txtPathD5P.Text);
+    imgBanner.Visible := true;
     curUpd := 0;
     if not(loadDupp(txtPathD5P.Text)) then
       close
@@ -2065,6 +2067,7 @@ begin
     butDownload.Visible := false;
     stepInternet.Visible := false;
     stepInstall.Visible := true;
+    imgBanner.Visible := true;
 
     if loadDupp(lstUpd.Strings[curUpd]) then
       if not(infosDupp()) then
@@ -2100,6 +2103,7 @@ begin
   butInstall.Visible := true;
   panIntro.Visible := true;
   panInstall.Visible := false;
+  imgBanner.Visible := true;
 
   translate;
 

@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-# Programa: Dragon UnPACKer v5.4.0 "Degei"
+# Programa: Dragon UnPACKer v5.5.1 Beta
 # Lenguaje: Español
-#  Version: 12
+#  Version: 13
 #    Autor: Alexandre Devilliers (con la ayuda de Cinthia)
 # ============================================================================
 {LSF}
@@ -12,7 +12,7 @@ Author = Alexandre Devilliers
 Email = translation@dragonunpacker.com
 URL = http://www.dragonunpacker.com
 ProgramID = UP
-ProgramVer = 12
+ProgramVer = 13
 IconFile = flag_sp.bmp
 Compression=99
 OutFile = spanish.lng
@@ -241,6 +241,7 @@ HR2011=Formato
 HR2012=Tipo
 HR2021=Configurar
 HR2022=Todos/Ning.
+HR2031=Eliminar los formatos de ficheros que pueden dar falsos positivos
 HR3000=Fichero HyperRipper
 HR3010=Incluir información siguiente:
 HR3011=Titulo:

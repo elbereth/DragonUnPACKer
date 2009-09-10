@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-#  Program: Dragon UnPACKer v5.4.0
+#  Program: Dragon UnPACKer v5.5.1 Beta
 # Language: English
-#  Version: 12
+#  Version: 13
 #   Author: Alex Devilliers
 # ============================================================================
 #
@@ -27,6 +27,9 @@
 # ============================================================================
 # Informations about this translation
 # ============================================================================
+#
+# version 13:
+# Added HR2031
 #
 # version 12:
 # Added missing preview keywords
@@ -144,9 +147,10 @@ URL = http://www.dragonunpacker.com
 # Dragon UnPACKer v5.3.2         UP      10
 # Dragon UnPACKer v5.3.3 Beta    UP      11
 # Dragon UnPACKer v5.4.0         UP      12
+# Dragon UnPACKer v5.5.1 Beta    UP      13
 #
 ProgramID = UP
-ProgramVer = 12
+ProgramVer = 13
 #
 # + IconFile +
 # Path & FileName of the "icon" displayed with language name (ex: c:\test.bmp)
@@ -421,6 +425,7 @@ HR2011=Format
 HR2012=Type
 HR2021=Setup
 HR2022=All / None
+HR2031=Exclude file formats which might find false positives
 HR3000=HyperRipper File
 HR3010=Include following information:
 HR3011=Title:

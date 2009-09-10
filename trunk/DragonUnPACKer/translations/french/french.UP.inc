@@ -447,6 +447,8 @@ begin
     result := 'Configurer'
   else if sch = 'HR2022' then
     result := 'Tous/Aucun'
+  else if sch = 'HR2031' then
+    result := 'Exclure les formats de fichiers pouvant trouver de faux positifs'
   else if sch = 'HR3000' then
     result := 'Fichier HyperRipper'
   else if sch = 'HR3010' then

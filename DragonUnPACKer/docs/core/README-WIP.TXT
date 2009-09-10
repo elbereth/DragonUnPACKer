@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.5.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    27/06/2009
+Dragon UnPACKer v5.5.1 Beta                                 MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    10/09/2009
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -35,6 +35,35 @@ by Alexande "Elbereth" Devilliers                                    27/06/2009
 
 -------------------------------------------------------------------------------
 Main program version and versions history:
+
+Version 5.5.1.224
+Beta [Unreleased]
+
+ i Merged Giants: Citizen Kabuto .GZP driver with default one.
+ - Removed old Felix Riemann drv_mix driver (for which no source is available).
+ ! Fixed opening message bug in logs (%f).
+ ! Fixed small log bug (invertion of variable texts when logging a successful
+   opening).
+ ! Fixed memory amount retrieval in Error box when more than 2GB of RAM in the
+   system.
+ * Changed application title to include version and currently open file.
+ + Added Windows Vista/7 taskbar progress indicator when Aero is enabled.
+ * HyperRipper v5.6 Beta 2:
+   ! Fixed BMFind broken in last version (could not find any WAV or AVI for ex)
+   * Speed-up (same or slightly faster than plugin version now).
+   + Added Windows Vista/7 Taskbar Progress support.
+   + Added Exclude False positive option (checked by default).
+     This prevent selecting file formats that will most probably retrieve tons
+	 of False positives (669, IT & FLIC which are very old file formats which
+	 are never used nowadays).
+ * Elbereth's Main Driver plugin v2.0.8:
+   + Added Blade Runner .MIX support.
+	 Added Command & Conquer .MIX support.
+	 Added Command & Conquer: Red Alert .MIX support.
+	 Only non-crypted files are supported, decryption code it still a no-go.
+     Should work as Felix Riemann driver, but with detection of filenames based
+	 on XCC-Util database.
+ 
 
 Version 5.5.0.218
 Beta [27/06/2009]

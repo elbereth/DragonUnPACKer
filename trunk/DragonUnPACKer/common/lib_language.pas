@@ -1,6 +1,6 @@
 unit lib_language;
 
-// $Id: lib_language.pas,v 1.14 2009-07-11 14:20:09 elbereth Exp $
+// $Id: lib_language.pas,v 1.15 2009-09-10 06:47:35 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_language.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -52,7 +52,7 @@ uses SysUtils, forms,Dialogs,lib_zlib,lib_crc,spec_DLNG,Classes,lib_binutils;
 
 {$IFDEF DRGUNPACK}
 const DLNG_PRGID : string = 'UP';
-      DLNG_PRGVER : byte = 12;
+      DLNG_PRGVER : byte = 13;
 {$ELSE}
 const DLNG_PRGID : string = 'PI';
       DLNG_PRGVER : byte = 3;

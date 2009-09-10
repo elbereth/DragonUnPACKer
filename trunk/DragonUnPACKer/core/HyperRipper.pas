@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.19 2009-09-09 20:07:03 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.20 2009-09-10 06:46:29 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -56,7 +56,7 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, declFSE, lib_language, Registry, Math, spec_DDS,
   ExtCtrls, lib_utils, classFSE, spec_HRF, DateUtils, translation, U_IntList,
-  StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar;
+  StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar, ImgList;
 
 const MP_FRAMES_FLAG = 1;
       MP_BYTES_FLAG = 2;
@@ -71,6 +71,7 @@ type FormatsListElem = record
        Desc: ShortString;
        ID: Integer;
        IsConfig: Boolean;
+       FalsePositives: Boolean;
      end;
      PFormatListElem = ^FormatsListElem;
      SearchFormatsList = record
@@ -584,6 +585,9 @@ type FormatsListElem = record
     lblNumThreads: TLabel;
     lblHRVersion: TLabel;
     lblHRVersionShadow: TLabel;
+    imgState: TImageList;
+    Image1: TImage;
+    chkExcludeFalsePositive: TCheckBox;
     procedure cmdOkClick(Sender: TObject);
     procedure cmdSearchClick(Sender: TObject);
     procedure cmdBrowseClick(Sender: TObject);
@@ -627,6 +631,8 @@ type FormatsListElem = record
     procedure radiov10Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure chkExcludeFalsePositiveClick(Sender: TObject);
+    procedure lstFormatsClick(Sender: TObject);
 //    procedure sliderMTChange(Sender: TObject);
   private
     formats: THyperRipperFormat;
@@ -814,6 +820,8 @@ begin
         PageControl.ActivePageIndex := Reg.ReadInteger('LastActiveTab')
       else
         PageControl.ActivePageIndex := 0;
+      if Reg.ValueExists('ExcludeFalsePositive') then
+        chkExcludeFalsePositive.Checked := Reg.ReadBool('ExcludeFalsePositive');
       if Reg.ValueExists('CreateHRF') then
         chkHRF.Checked := Reg.ReadBool('CreateHRF');
       if Reg.ValueExists('HRF3_NoPRGID') then
@@ -865,7 +873,7 @@ begin
   for x:=0 to lstFormats.Items.Count-1 do
   begin
     cformat := lstFormats.Items.Item[x].Data;
-    lstFormats.Items.Item[x].Checked := CheckRegistryHR('hr_default.d5h',cformat^.ID);
+    lstFormats.Items.Item[x].Checked := not(cformat.FalsePositives and chkExcludeFalsePositive.Checked) and CheckRegistryHR('hr_default.d5h',cformat^.ID);
   end;
 
   Loading := False;
@@ -1790,17 +1798,30 @@ begin
 end;
 
 procedure TfrmHyperRipper.cmdAllClick(Sender: TObject);
-var x, nc: integer;
+var x, nc, excl: integer;
+    cformat: PFormatListElem;
 begin
 
   nc := 0;
+  excl := 0;
 
   for x := 0 to lstFormats.Items.Count-1 do
-    if lstFormats.Items.Item[x].Checked then
+  begin
+    cformat := lstFormats.Items.item[x].Data;
+    if chkExcludeFalsePositive.Checked and cformat.FalsePositives then
+      inc(excl)
+    else if lstFormats.Items.Item[x].Checked then
       inc(nc);
+  end;
 
   for x := 0 to lstFormats.Items.Count-1 do
-    lstFormats.Items.Item[x].Checked := not(nc = lstFormats.Items.Count);
+  begin
+    cformat := lstFormats.Items.item[x].Data;
+    if chkExcludeFalsePositive.Checked and cformat.FalsePositives then
+      lstFormats.Items.Item[x].Checked := false
+    else
+      lstFormats.Items.Item[x].Checked := not(nc = (lstFormats.Items.Count - excl));
+  end;
 
 end;
 
@@ -1815,7 +1836,9 @@ begin
   for x := 0 to lstFormats.Items.Count-1 do
   begin
     cformat := lstFormats.Items.item[x].Data;
-    if cformat.GenType = HR_TYPE_IMAGE then
+    if ((chkExcludeFalsePositive.Checked and not(cformat.FalsePositives))
+    or not(chkExcludeFalsePositive.Checked))
+    and (cformat.GenType = HR_TYPE_IMAGE) then
     begin
       inc(gt);
       if lstFormats.Items.Item[x].Checked then
@@ -1826,7 +1849,9 @@ begin
   for x := 0 to lstFormats.Items.Count-1 do
   begin
     cformat := lstFormats.Items.item[x].Data;
-    if cformat.GenType = HR_TYPE_IMAGE then
+    if chkExcludeFalsePositive.Checked and cformat.FalsePositives then
+      lstFormats.Items.Item[x].Checked := false
+    else if cformat.GenType = HR_TYPE_IMAGE then
       lstFormats.Items.Item[x].Checked := not(nc = gt);
   end;
 
@@ -1843,7 +1868,9 @@ begin
   for x := 0 to lstFormats.Items.Count-1 do
   begin
     cformat := lstFormats.Items.item[x].Data;
-    if cformat.GenType = HR_TYPE_VIDEO then
+    if ((chkExcludeFalsePositive.Checked and not(cformat.FalsePositives))
+    or not(chkExcludeFalsePositive.Checked))
+    and (cformat.GenType = HR_TYPE_VIDEO) then
     begin
       inc(gt);
       if lstFormats.Items.Item[x].Checked then
@@ -1854,7 +1881,9 @@ begin
   for x := 0 to lstFormats.Items.Count-1 do
   begin
     cformat := lstFormats.Items.item[x].Data;
-    if cformat.GenType = HR_TYPE_VIDEO then
+    if chkExcludeFalsePositive.Checked and cformat.FalsePositives then
+      lstFormats.Items.Item[x].Checked := false
+    else if cformat.GenType = HR_TYPE_VIDEO then
       lstFormats.Items.Item[x].Checked := not(nc = gt);
   end;
 
@@ -1871,7 +1900,9 @@ begin
   for x := 0 to lstFormats.Items.Count-1 do
   begin
     cformat := lstFormats.Items.item[x].Data;
-    if cformat.GenType = HR_TYPE_AUDIO then
+    if ((chkExcludeFalsePositive.Checked and not(cformat.FalsePositives))
+    or not(chkExcludeFalsePositive.Checked))
+    and (cformat.GenType = HR_TYPE_AUDIO) then
     begin
       inc(gt);
       if lstFormats.Items.Item[x].Checked then
@@ -1882,7 +1913,9 @@ begin
   for x := 0 to lstFormats.Items.Count-1 do
   begin
     cformat := lstFormats.Items.item[x].Data;
-    if cformat.GenType = HR_TYPE_AUDIO then
+    if chkExcludeFalsePositive.Checked and cformat.FalsePositives then
+      lstFormats.Items.Item[x].Checked := false
+    else if cformat.GenType = HR_TYPE_AUDIO then
       lstFormats.Items.Item[x].Checked := not(nc = gt);
   end;
 
@@ -2296,119 +2329,142 @@ begin
   result.FormatsList[1].Desc := 'Wave/RIFF';
   result.FormatsList[1].ID := 1000;
   result.FormatsList[1].IsConfig := False;
+  result.FormatsList[1].FalsePositives := False;
   result.FormatsList[2].GenType := HR_TYPE_AUDIO;
   result.FormatsList[2].Format := 'VOC';
   result.FormatsList[2].Desc := 'Creative VOice';
   result.FormatsList[2].ID := 1001;
   result.FormatsList[2].IsConfig := False;
+  result.FormatsList[2].FalsePositives := False;
   result.FormatsList[3].GenType := HR_TYPE_AUDIO;
   result.FormatsList[3].Format := 'MIDI';
   result.FormatsList[3].Desc := 'MIDI';
   result.FormatsList[3].ID := 1002;
   result.FormatsList[3].IsConfig := False;
+  result.FormatsList[3].FalsePositives := False;
   result.FormatsList[4].GenType := HR_TYPE_AUDIO;
   result.FormatsList[4].Format := '669';
   result.FormatsList[4].Desc := '669';
   result.FormatsList[4].ID := 1003;
   result.FormatsList[4].IsConfig := False;
+  result.FormatsList[4].FalsePositives := True;
   result.FormatsList[5].GenType := HR_TYPE_AUDIO;
   result.FormatsList[5].Format := '669 EXT.';
   result.FormatsList[5].Desc := 'Extended 669';
   result.FormatsList[5].ID := 1004;
   result.FormatsList[5].IsConfig := False;
+  result.FormatsList[5].FalsePositives := True;
   result.FormatsList[6].GenType := HR_TYPE_AUDIO;
   result.FormatsList[6].Format := 'XM';
   result.FormatsList[6].Desc := 'eXtended Module/FT2';
   result.FormatsList[6].ID := 1005;
   result.FormatsList[6].IsConfig := False;
+  result.FormatsList[6].FalsePositives := False;
   result.FormatsList[12].GenType := HR_TYPE_AUDIO;
   result.FormatsList[12].Format := 'MPEG Audio';
   result.FormatsList[12].Desc := 'MPEG Audio';
   result.FormatsList[12].ID := 1006;
   result.FormatsList[12].IsConfig := True;
+  result.FormatsList[12].FalsePositives := False;
   result.FormatsList[19].GenType := HR_TYPE_AUDIO;
   result.FormatsList[19].Format := 'S3M';
   result.FormatsList[19].Desc := 'Scream Tracker 3 Module';
   result.FormatsList[19].ID := 1007;
   result.FormatsList[19].IsConfig := False;
+  result.FormatsList[19].FalsePositives := False;
   result.FormatsList[20].GenType := HR_TYPE_AUDIO;
   result.FormatsList[20].Format := 'IT';
   result.FormatsList[20].Desc := 'Impulse Tracker Module';
   result.FormatsList[20].ID := 1008;
   result.FormatsList[20].IsConfig := False;
+  result.FormatsList[20].FalsePositives := true;
   result.FormatsList[21].GenType := HR_TYPE_AUDIO;
   result.FormatsList[21].Format := 'OGG';
   result.FormatsList[21].Desc := 'Ogg Stream';
   result.FormatsList[21].ID := 1009;
   result.FormatsList[21].IsConfig := False;
+  result.FormatsList[21].FalsePositives := False;
 
   result.FormatsList[13].GenType := HR_TYPE_VIDEO;
   result.FormatsList[13].Format := 'AVI';
   result.FormatsList[13].Desc := 'AVI/RIFF';
   result.FormatsList[13].ID := 2000;
   result.FormatsList[13].IsConfig := false;
+  result.FormatsList[13].FalsePositives := False;
   result.FormatsList[16].GenType := HR_TYPE_VIDEO;
   result.FormatsList[16].Format := 'MOV';
   result.FormatsList[16].Desc := 'QuickTime Movie';
   result.FormatsList[16].ID := 2001;
   result.FormatsList[16].IsConfig := false;
+  result.FormatsList[16].FalsePositives := False;
   result.FormatsList[17].GenType := HR_TYPE_VIDEO;
   result.FormatsList[17].Format := 'BIK';
   result.FormatsList[17].Desc := 'Bink/RAD';
   result.FormatsList[17].ID := 2002;
   result.FormatsList[17].IsConfig := false;
+  result.FormatsList[17].FalsePositives := False;
   result.FormatsList[18].GenType := HR_TYPE_VIDEO;
   result.FormatsList[18].Format := 'FLIC';
   result.FormatsList[18].Desc := 'Autodesk Animator & EGI/DTA FLIC';
   result.FormatsList[18].ID := 2003;
   result.FormatsList[18].IsConfig := false;
+  result.FormatsList[18].FalsePositives := true;
 
   result.FormatsList[7].GenType := HR_TYPE_IMAGE;
   result.FormatsList[7].Format := 'BMP';
   result.FormatsList[7].Desc := 'Windows BitMaP';
   result.FormatsList[7].ID := 3000;
   result.FormatsList[7].IsConfig := False;
+  result.FormatsList[7].FalsePositives := False;
   result.FormatsList[8].GenType := HR_TYPE_IMAGE;
   result.FormatsList[8].Format := 'EMF';
   result.FormatsList[8].Desc := 'Windows Enhanced MetaFile';
   result.FormatsList[8].ID := 3001;
   result.FormatsList[8].IsConfig := False;
+  result.FormatsList[8].FalsePositives := False;
   result.FormatsList[9].GenType := HR_TYPE_IMAGE;
   result.FormatsList[9].Format := 'WMF';
   result.FormatsList[9].Desc := 'Windows MetaFile';
   result.FormatsList[9].ID := 3002;
   result.FormatsList[9].IsConfig := False;
+  result.FormatsList[9].FalsePositives := False;
   result.FormatsList[10].GenType := HR_TYPE_IMAGE;
   result.FormatsList[10].Format := 'PNG';
   result.FormatsList[10].Desc := 'Portable Network Graphics';
   result.FormatsList[10].ID := 3003;
   result.FormatsList[10].IsConfig := False;
+  result.FormatsList[10].FalsePositives := False;
   result.FormatsList[11].GenType := HR_TYPE_IMAGE;
   result.FormatsList[11].Format := 'GIF';
   result.FormatsList[11].Desc := 'Graphics Interchange Format';
   result.FormatsList[11].ID := 3004;
   result.FormatsList[11].IsConfig := False;
+  result.FormatsList[11].FalsePositives := False;
   result.FormatsList[14].GenType := HR_TYPE_IMAGE;
   result.FormatsList[14].Format := 'LBM';
   result.FormatsList[14].Desc := 'LBM/EA IFF 1985';
   result.FormatsList[14].ID := 3005;
   result.FormatsList[14].IsConfig := False;
+  result.FormatsList[14].FalsePositives := False;
   result.FormatsList[15].GenType := HR_TYPE_IMAGE;
   result.FormatsList[15].Format := 'JPEG';
   result.FormatsList[15].Desc := 'JPEG/JFIF';
   result.FormatsList[15].ID := 3006;
   result.FormatsList[15].IsConfig := False;
+  result.FormatsList[15].FalsePositives := False;
   result.FormatsList[22].GenType := HR_TYPE_IMAGE;
   result.FormatsList[22].Format := 'DDS';
   result.FormatsList[22].Desc := 'DirectX Texture';
   result.FormatsList[22].ID := 3007;
   result.FormatsList[22].IsConfig := False;
+  result.FormatsList[22].FalsePositives := False;
   // TGA RGB by Psych0phobiA -- Start //
   result.FormatsList[0].GenType := HR_TYPE_IMAGE;
   result.FormatsList[0].Format := 'TGA';
   result.FormatsList[0].Desc := 'TrueVision Targa (RGB)';
   result.FormatsList[0].ID := 3008;
   result.FormatsList[0].IsConfig := False;
+  result.FormatsList[0].FalsePositives := False;
   // TGA RGB by Psych0phobiA -- End //
 
 end;
@@ -3784,6 +3840,7 @@ begin
   lblNumFormats.Caption := inttostr(List.NumFormats);
   lblHRVersion.Caption := getHRVersion(HR_VERSION);
   lblHRVersionShadow.Caption := lblHRVersion.Caption;
+  frmHyperRipper.Caption := 'HyperRipper v'+lblHRVersion.Caption;
 
   lstFormats.Items.Clear;
 
@@ -3801,10 +3858,15 @@ begin
       itemx.SubItems.Add (ReplaceValue('%i',DLNGstr('HRTYPE'),inttostr(List.FormatsList[x].GenType)));
     end;
     itemx.SubItems.Add (List.FormatsList[x].Desc);
+    if List.FormatsList[x].FalsePositives then
+      itemx.ImageIndex := 0
+    else
+      itemx.ImageIndex := -1;
     GetMem(cformat,SizeOf(List.FormatsList[x]));
     cformat^.GenType := List.FormatsList[x].GenType;
     cformat^.ID := List.FormatsList[x].ID;
     cformat^.IsConfig := List.FormatsList[x].IsConfig;
+    cformat^.FalsePositives := List.FormatsList[x].FalsePositives;
     itemx.Data := cformat;
   end;
 
@@ -3862,5 +3924,58 @@ begin
 
 end;
 
+
+procedure TfrmHyperRipper.chkExcludeFalsePositiveClick(Sender: TObject);
+var Reg: TRegistry;
+    x: integer;
+    cformat: PFormatListElem;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Not(Reg.KeyExists('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper')) then
+      Reg.CreateKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper');
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
+    begin
+      Reg.WriteBool('ExcludeFalsePositive',chkExcludeFalsePositive.Checked);
+      Reg.CloseKey;
+    end;
+  Finally
+    FreeAndNil(Reg);
+  end;
+
+  if chkExcludeFalsePositive.Checked then
+  begin
+
+    for x := 0 to lstFormats.Items.Count-1 do
+    begin
+      cformat := lstFormats.Items.item[x].Data;
+      if cformat.FalsePositives then
+        lstFormats.Items.Item[x].Checked := false
+    end;
+
+  end;
+
+end;
+
+procedure TfrmHyperRipper.lstFormatsClick(Sender: TObject);
+var x: integer;
+    cformat: PFormatListElem;
+begin
+
+  if chkExcludeFalsePositive.Checked then
+  begin
+
+    for x := 0 to lstFormats.Items.Count-1 do
+    begin
+      cformat := lstFormats.Items.item[x].Data;
+      if cformat.FalsePositives then
+        lstFormats.Items.Item[x].Checked := false
+    end;
+
+  end;
+
+end;
 
 end.

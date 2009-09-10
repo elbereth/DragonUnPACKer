@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.13 2009-06-26 21:04:05 elbereth Exp $
+// $Id: Translation.pas,v 1.14 2009-09-10 06:46:54 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -587,6 +587,8 @@ begin
     cmdVideo.Font.Name := getFont();
     cmdImage.Caption := DLNGstr('HRTYP3');
     cmdImage.Font.Name := getFont();
+    chkExcludeFalsePositive.Caption := DLNGstr('HR2031');
+    chkExcludeFalsePositive.Font.Name := getFont();
 
     tabHRF.Caption := DLNGstr('HR3000');
     tabHRF.Font.Name := getFont();

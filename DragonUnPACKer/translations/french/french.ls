@@ -1,8 +1,8 @@
 # Language Source File (pour DLNGC v4.0)
 # ============================================================================
-#  Programme: Dragon UnPACKer v5.4.0
+#  Programme: Dragon UnPACKer v5.5.1 Beta
 #     Langue: English
-#    Version: 12
+#    Version: 13
 #     Auteur: Alex Devilliers
 # ============================================================================
 #
@@ -28,6 +28,9 @@
 # ============================================================================
 # Informations sur cette traduction
 # ============================================================================
+#
+# version 13:
+# Ajout de HR2031
 #
 # version 11:
 # Nouvelles entrées pour la prévisualisation
@@ -90,9 +93,10 @@ URL = http://www.dragonunpacker.com
 # Dragon UnPACKer v5.3.2         UP      10
 # Dragon UnPACKer v5.3.3 Beta    UP      11
 # Dragon UnPACKer v5.4.0         UP      12
+# Dragon UnPACKer v5.5.1 Beta    UP      13
 #
 ProgramID = UP
-ProgramVer = 12
+ProgramVer = 13
 #
 # + IconFile +
 # Chemin & nom du fichier de l'icône affichée avec le nom de langue.
@@ -368,6 +372,7 @@ HR2011=Format
 HR2012=Type
 HR2021=Configurer
 HR2022=Tous/Aucun
+HR2031=Exclure les formats de fichiers pouvant trouver de faux positifs
 HR3000=Fichier HyperRipper
 HR3010=Inclure les informations suivantes:
 HR3011=Titre:

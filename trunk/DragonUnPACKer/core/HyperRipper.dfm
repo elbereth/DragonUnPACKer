@@ -1,6 +1,6 @@
 object frmHyperRipper: TfrmHyperRipper
-  Left = 441
-  Top = 454
+  Left = 738
+  Top = 613
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'HyperRipper'
@@ -1265,7 +1265,7 @@ object frmHyperRipper: TfrmHyperRipper
     Top = 8
     Width = 417
     Height = 297
-    ActivePage = tabAbout
+    ActivePage = tabAdvanced
     TabOrder = 0
     OnChange = lstFormatsClick
     object tabAbout: TTabSheet
@@ -5346,64 +5346,13 @@ object frmHyperRipper: TfrmHyperRipper
     object tabAdvanced: TTabSheet
       Caption = 'Advanced Options'
       ImageIndex = 2
-      object grpRollback: TGroupBox
-        Left = 152
-        Top = 8
-        Width = 249
-        Height = 89
-        Caption = 'Buffer Rollback'
-        TabOrder = 0
-        Visible = False
-        object chkRollback0: TRadioButton
-          Left = 8
-          Top = 16
-          Width = 233
-          Height = 17
-          Caption = 'No Rollback (not recommended)'
-          Checked = True
-          Enabled = False
-          TabOrder = 0
-          TabStop = True
-          OnClick = chkRollback0Click
-        end
-        object chkRollback1: TRadioButton
-          Left = 8
-          Top = 32
-          Width = 233
-          Height = 17
-          Caption = 'Default Rollback (128bytes)'
-          Enabled = False
-          TabOrder = 1
-          OnClick = chkRollback1Click
-        end
-        object chkRollback2: TRadioButton
-          Left = 8
-          Top = 48
-          Width = 233
-          Height = 17
-          Caption = 'Big Rollback (1/4 of the Buffer)'
-          Enabled = False
-          TabOrder = 2
-          OnClick = chkRollback2Click
-        end
-        object chkRollback3: TRadioButton
-          Left = 8
-          Top = 64
-          Width = 233
-          Height = 17
-          Caption = 'Huge Rollback (1/2 of the Buffer)'
-          Enabled = False
-          TabOrder = 3
-          OnClick = chkRollback3Click
-        end
-      end
       object grpFormatting: TGroupBox
         Left = 8
         Top = 8
         Width = 393
         Height = 153
         Caption = 'Entries formatting'
-        TabOrder = 1
+        TabOrder = 0
         object chkMakeDirs: TCheckBox
           Left = 8
           Top = 16
@@ -5535,6 +5484,74 @@ object frmHyperRipper: TfrmHyperRipper
           end
         end
       end
+      object grpAdv: TGroupBox
+        Left = 8
+        Top = 168
+        Width = 393
+        Height = 97
+        TabOrder = 1
+        object lblBufferSize: TLabel
+          Left = 208
+          Top = 72
+          Width = 153
+          Height = 13
+          Hint = 
+            'HKEY_CURRENT_USER\Software\Dragon Software\Dragon UnPACKer 5\Hyp' +
+            'erRipper\BufferSize'
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = '131072 Bytes'
+          Color = clBtnFace
+          ParentColor = False
+          ParentShowHint = False
+          ShowHint = True
+          Visible = False
+        end
+        object chkAutoClose: TCheckBox
+          Left = 8
+          Top = 32
+          Width = 377
+          Height = 17
+          Caption = 
+            'Auto-Close HyperRipper when search is finished & entries were fo' +
+            'und'
+          TabOrder = 0
+          OnClick = chkAutoCloseClick
+        end
+        object chkForceBufferSize: TCheckBox
+          Left = 8
+          Top = 72
+          Width = 201
+          Height = 17
+          Caption = 'Force buffer size'
+          TabOrder = 1
+          OnClick = chkForceBufferSizeClick
+        end
+        object butBufferSizeCheck: TButton
+          Left = 368
+          Top = 72
+          Width = 17
+          Height = 16
+          Hint = 
+            'HKEY_CURRENT_USER\Software\Dragon Software\Dragon UnPACKer 5\Hyp' +
+            'erRipper\BufferSize'
+          Caption = '*'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 2
+          Visible = False
+          OnClick = butBufferSizeCheckClick
+        end
+        object chkAutoStart: TCheckBox
+          Left = 8
+          Top = 16
+          Width = 377
+          Height = 17
+          Caption = 'Auto-Start HyperRipper search when unknown source format'
+          TabOrder = 3
+          OnClick = chkAutoStartClick
+        end
+      end
     end
   end
   object cmdOk: TButton
@@ -5558,7 +5575,7 @@ object frmHyperRipper: TfrmHyperRipper
     Left = 72
     Top = 304
     Bitmap = {
-      494C010101000400040010001000FFFFFFFFFF00FFFFFFFFFFFFFFFF424D3600
+      494C010101000400040010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010
       000000000000000000000000000000000000000000009C9494006B4A4A006B52
       5A00735A5A00735A5A006B5A63006B5A6300735A5A00735A5A00735A5A00735A
@@ -5694,6 +5711,7 @@ object frmHyperRipper: TfrmHyperRipper
       0001000000000000000100000000000080030000000000008003000000000000
       C007000000000000C007000000000000E00F000000000000E00F000000000000
       F01F000000000000F01F000000000000F83F000000000000F83F000000000000
-      FC7F000000000000FCFF000000000000}
+      FC7F000000000000FCFF00000000000000000000000000000000000000000000
+      000000000000}
   end
 end

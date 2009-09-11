@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.20 2009-09-10 06:46:29 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.21 2009-09-11 20:13:51 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -56,7 +56,8 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, declFSE, lib_language, Registry, Math, spec_DDS,
   ExtCtrls, lib_utils, classFSE, spec_HRF, DateUtils, translation, U_IntList,
-  StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar, ImgList;
+  StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar, ImgList,
+  UBufferedFS;
 
 const MP_FRAMES_FLAG = 1;
       MP_BYTES_FLAG = 2;
@@ -519,11 +520,6 @@ type FormatsListElem = record
     lstFormats: TListView;
     lblFound: TLabel;
     strFound: TLabel;
-    grpRollback: TGroupBox;
-    chkRollback0: TRadioButton;
-    chkRollback1: TRadioButton;
-    chkRollback2: TRadioButton;
-    chkRollback3: TRadioButton;
     strRollBack: TLabel;
     lblRollback: TLabel;
     cmdCancel: TButton;
@@ -588,6 +584,12 @@ type FormatsListElem = record
     imgState: TImageList;
     Image1: TImage;
     chkExcludeFalsePositive: TCheckBox;
+    grpAdv: TGroupBox;
+    chkAutoClose: TCheckBox;
+    chkForceBufferSize: TCheckBox;
+    lblBufferSize: TLabel;
+    butBufferSizeCheck: TButton;
+    chkAutoStart: TCheckBox;
     procedure cmdOkClick(Sender: TObject);
     procedure cmdSearchClick(Sender: TObject);
     procedure cmdBrowseClick(Sender: TObject);
@@ -633,6 +635,10 @@ type FormatsListElem = record
     procedure FormDestroy(Sender: TObject);
     procedure chkExcludeFalsePositiveClick(Sender: TObject);
     procedure lstFormatsClick(Sender: TObject);
+    procedure chkForceBufferSizeClick(Sender: TObject);
+    procedure butBufferSizeCheckClick(Sender: TObject);
+    procedure chkAutoCloseClick(Sender: TObject);
+    procedure chkAutoStartClick(Sender: TObject);
 //    procedure sliderMTChange(Sender: TObject);
   private
     formats: THyperRipperFormat;
@@ -822,6 +828,18 @@ begin
         PageControl.ActivePageIndex := 0;
       if Reg.ValueExists('ExcludeFalsePositive') then
         chkExcludeFalsePositive.Checked := Reg.ReadBool('ExcludeFalsePositive');
+      if Reg.ValueExists('AutoClose') and (Reg.GetDataType('AutoClose') = rdInteger) then
+        chkAutoClose.Checked := Reg.ReadBool('AutoClose')
+      else
+        chkAutoClose.Checked := false;
+      if Reg.ValueExists('AutoStart') and (Reg.GetDataType('AutoStart') = rdInteger) then
+        chkAutoStart.Checked := Reg.ReadBool('AutoStart')
+      else
+        chkAutoStart.Checked := false;
+      if Reg.ValueExists('ForceBufferSize') and (Reg.GetDataType('ForceBufferSize') = rdInteger) then
+        chkForceBufferSize.Checked := Reg.ReadBool('ForceBufferSize')
+      else
+        chkForceBufferSize.Checked := false;
       if Reg.ValueExists('CreateHRF') then
         chkHRF.Checked := Reg.ReadBool('CreateHRF');
       if Reg.ValueExists('HRF3_NoPRGID') then
@@ -877,6 +895,12 @@ begin
   end;
 
   Loading := False;
+
+  if chkAutoStart.Checked and (Tag = 1) then
+  begin
+    PageControl.ActivePageIndex := 1;
+    cmdSearch.Click;
+  end;
 
 end;
 
@@ -1083,7 +1107,7 @@ var hSRC, x: integer;
     iNumOffset: Integer;
     tmpspeedcalc: single;
     itmX: Pointer;
-    sSRC: THandleStream;
+    sSRC: TBufferedFS;
 begin
 
   cancel := false;
@@ -1091,7 +1115,6 @@ begin
   hrip.addResult(ReplaceValue('%f',DLNGstr('HRLG03'),ExtractFileName(filename)));
 
   hSRC := FileOpen(filename,fmOpenRead or fmShareExclusive);
-  sSRC := THandleStream.Create(hSRC);
 
   if (hrip.chkNamingAuto.Checked) then
     prefix := '%f_%x-%n'
@@ -1110,8 +1133,14 @@ begin
 
   startTime := GetTickCount;
 
-  // Best speed achieved with 128k (4x better than 8k)
-  MAXSIZE := 131072;
+  if hrip.chkForceBufferSize.Checked then
+  begin
+    hrip.butBufferSizeCheck.Click;
+    MAXSIZE := hrip.chkForceBufferSize.Tag;
+  end
+  else
+    // Best speed achieved with 128k (4x better than 8k)
+    MAXSIZE := 131072;
 
   if MAXSIZE < 1024 then
     hrip.lblBufferLength.Caption := inttostr(MAXSIZE) +'B'
@@ -1145,13 +1174,15 @@ begin
   if hSRC >= 0 then
   begin
 
+    sSRC := TBufferedFS.Create(hSRC);
+
     hrip.LastResult(ReplaceValue('%f',DLNGstr('HRLG03'),ExtractFileName(filename))+' '+DLNGstr('HRLG04'));
     hrip.AddResult(DLNGstr('HRLG05'));
 
     flisttot := TList.Create;
 
     curPos := 0;
-    totsize := FileSeek(hSRC,curPos,2);
+    totsize := sSRC.Size;
     getmem(Buffer,MAXSIZE);
     BufSize := MAXSIZE;
     try
@@ -1193,13 +1224,13 @@ begin
         begin
           // We seek into location
           // That is Current position in file + Current Buffer
-          FileSeek(hSRC,CurPos+CurPosBuf,0);
+          sSRC.Seek(CurPos+CurPosBuf,soFromBeginning);
 
           // We store the offset to data
           bufferOffset := curPos+curPosBuf;
 
           // We read the buffer
-          TestSize := FileRead(hSRC,buffer^,bufsize);
+          TestSize := sSRC.Read(buffer^,bufsize);
           if (TestSize <> bufsize) then
             raise Exception.create(ReplaceValue('%b',DLNGstr('HRLG07'),inttostr(bufsize-TestSize)));
 
@@ -1378,6 +1409,10 @@ begin
       FSE.LoadHyperRipper(filename,hSRC,loadTime,hrip.chkMakeDirs.Checked);
       //FSE.BrowseDir('');
       hrip.LastResult(DLNGstr('HRLG15')+' '+DLNGstr('HRLG04'));
+      if (FSE.GetNumEntries > 0) and (hrip.chkAutoClose.Checked) then
+      begin
+        hrip.Close;
+      end;
      except
       hrip.AddResult(DLNGstr('HRLG16'));
       hrip.stopSearch;
@@ -3974,6 +4009,106 @@ begin
         lstFormats.Items.Item[x].Checked := false
     end;
 
+  end;
+
+end;
+
+procedure TfrmHyperRipper.chkForceBufferSizeClick(Sender: TObject);
+  var Reg: TRegistry;
+begin
+
+  if chkForceBufferSize.Checked then
+    butBufferSizeCheckClick(Sender);
+
+  lblBufferSize.Visible := chkForceBufferSize.Checked;
+  butBufferSizeCheck.Visible := chkForceBufferSize.Checked;
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Not(Reg.KeyExists('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper')) then
+      Reg.CreateKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper');
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
+    begin
+      Reg.WriteBool('ForceBufferSize',chkForceBufferSize.Checked);
+      Reg.CloseKey;
+    end;
+  Finally
+    FreeAndNil(Reg);
+  end;
+
+end;
+
+procedure TfrmHyperRipper.butBufferSizeCheckClick(Sender: TObject);
+var Reg: TRegistry;
+    testRegType: TRegDataType;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
+    begin
+      if Reg.ValueExists('BufferSize') and (Reg.GetDataType('BufferSize') = rdInteger) then
+        chkForceBufferSize.Tag := Reg.ReadInteger('BufferSize')
+      else
+        chkForceBufferSize.Tag := 131072;
+    end;
+  finally
+    FreeAndNil(Reg);
+  end;
+
+  if chkForceBufferSize.Tag < 32 then
+    chkForceBufferSize.Tag := 32
+  else if chkforceBufferSize.Tag > 33554432 then
+    chkForceBufferSize.Tag := 33554432;
+
+  if chkForceBufferSize.Tag < 1024 then
+    lblBufferSize.Caption := StringReplace(DLNGStr('OPT033'),'%d',inttostr(chkForceBufferSize.Tag),[rfReplaceAll])
+  else if chkForceBufferSize.Tag < 1048576 then
+    lblBufferSize.Caption := StringReplace(DLNGStr('OPT034'),'%d',floattostr(round((chkForceBufferSize.Tag / 1024)*10)/10),[rfReplaceAll])
+  else
+    lblBufferSize.Caption := StringReplace(DLNGStr('OPT035'),'%d',floattostr(round((chkForceBufferSize.Tag / 1048576)*10)/10),[rfReplaceAll]);
+
+
+end;
+
+procedure TfrmHyperRipper.chkAutoCloseClick(Sender: TObject);
+  var Reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Not(Reg.KeyExists('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper')) then
+      Reg.CreateKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper');
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
+    begin
+      Reg.WriteBool('AutoClose',chkAutoClose.Checked);
+      Reg.CloseKey;
+    end;
+  Finally
+    FreeAndNil(Reg);
+  end;
+
+end;
+
+procedure TfrmHyperRipper.chkAutoStartClick(Sender: TObject);
+  var Reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Not(Reg.KeyExists('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper')) then
+      Reg.CreateKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper');
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper',True) then
+    begin
+      Reg.WriteBool('AutoStart',chkAutoStart.Checked);
+      Reg.CloseKey;
+    end;
+  Finally
+    FreeAndNil(Reg);
   end;
 
 end;

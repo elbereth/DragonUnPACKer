@@ -1,6 +1,6 @@
 unit Translation;
 
-// $Id: Translation.pas,v 1.14 2009-09-10 06:46:54 elbereth Exp $
+// $Id: Translation.pas,v 1.15 2009-09-11 20:16:04 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Translation.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -631,16 +631,16 @@ begin
 //    chkBuffer128K.Font.Name := getFont();
 //    lblBufferUD.Caption := DLNGstr('HR4012');
 //    lblBufferUD.Font.Name := getFont();
-    grpRollback.Caption := DLNGstr('HR4020');
-    grpRollback.Font.Name := getFont();
-    chkRollback0.Caption := DLNGstr('HR4021');
-    chkRollback0.Font.Name := getFont();
-    chkRollback1.Caption := DLNGstr('HR4022');
-    chkRollback1.Font.Name := getFont();
-    chkRollback2.Caption := DLNGstr('HR4023');
-    chkRollback2.Font.Name := getFont();
-    chkRollback3.Caption := DLNGstr('HR4024');
-    chkRollback3.Font.Name := getFont();
+//    grpRollback.Caption := DLNGstr('HR4020');
+//    grpRollback.Font.Name := getFont();
+//    chkRollback0.Caption := DLNGstr('HR4021');
+//    chkRollback0.Font.Name := getFont();
+//    chkRollback1.Caption := DLNGstr('HR4022');
+//    chkRollback1.Font.Name := getFont();
+//    chkRollback2.Caption := DLNGstr('HR4023');
+//    chkRollback2.Font.Name := getFont();
+//    chkRollback3.Caption := DLNGstr('HR4024');
+//    chkRollback3.Font.Name := getFont();
     grpFormatting.Caption := DLNGstr('HR4030');
     grpFormatting.Font.Name := getFont();
     chkMakeDirs.Caption := DLNGstr('HR4031');
@@ -665,6 +665,13 @@ begin
     lblNamingLegN.Font.Name := getFont();
     lblNamingLegH.Caption := '%h = '+DLNGstr('HRLEGH');
     lblNamingLegH.Font.Name := getFont();
+
+    chkAutoStart.Caption := DLNGstr('HR4061');
+    chkAutoStart.Font.Name := getFont();
+    chkAutoClose.Caption := DLNGstr('HR4062');
+    chkAutoClose.Font.Name := getFont();
+    chkForceBufferSize.Caption := DLNGstr('HR4063');
+    chkForceBufferSize.Font.Name := getFont();
 
     tabAbout.Caption := DLNGstr('HR0000');
     tabAbout.Font.Name := getFont();

@@ -1,6 +1,6 @@
 unit auxFSE;
 
-// $Id: auxFSE.pas,v 1.5 2009-06-26 21:05:31 elbereth Exp $
+// $Id: auxFSE.pas,v 1.6 2009-09-11 20:11:20 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/auxFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -401,7 +401,7 @@ begin
 
   dup5Main.lstIndex2.RootNodeCount := 1;
   dup5Main.lstIndex2.FocusedNode := Nod;
-  dup5Main.lstIndex2FocusChanged(dup5Main.lstIndex2,Nod,-1);
+//  dup5Main.lstIndex2FocusChanged(dup5Main.lstIndex2,Nod,-1);
 
 {  dup5Main.lstIndex.Items.Clear;
   //Nod := TView.Items.AddFirst(Nil,Fname);

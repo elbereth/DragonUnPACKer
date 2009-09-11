@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.5.1 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    10/09/2009
+by Alexande "Elbereth" Devilliers                                    11/09/2009
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -36,10 +36,9 @@ by Alexande "Elbereth" Devilliers                                    10/09/2009
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.5.1.224
+Version 5.5.1.226
 Beta [Unreleased]
 
- i Merged Giants: Citizen Kabuto .GZP driver with default one.
  - Removed old Felix Riemann drv_mix driver (for which no source is available).
  ! Fixed opening message bug in logs (%f).
  ! Fixed small log bug (invertion of variable texts when logging a successful
@@ -56,6 +55,25 @@ Beta [Unreleased]
      This prevent selecting file formats that will most probably retrieve tons
 	 of False positives (669, IT & FLIC which are very old file formats which
 	 are never used nowadays).
+   + Added Auto-Start scanning option (in advanced options).
+     If you use this with the option to auto use HyperRipper when file format
+	 is unknown, scanning will start automatically in those cases.
+   + Added Auto-Close when entries found (in advanced options).
+     HyperRipper will auto close when scanning is finished and entries where
+	 found.
+   + Added Force buffer size option (in advanced options).
+     This can be used to force the size of the buffer from the standard 128k.
+	 Although this is NOT recommended (big/low values can be/are slower) if
+	 you want to try, feel free.
+	 The only way to change the value is by directly editing the registry:
+	 HKEY_CURRENT_USER\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper
+	 DWORD key BufferSize
+	 Smallest possible value is 32, largest is 32MB.
+	 Rollback is fixed to 16 bytes.
+ - Giants: Citizen Kabuto drv_giant .GZP plugin.
+   Support is now in Elbereth's Main Driver.
+ - Felix Riemann drv_mix .MIX plugin.
+   Support is now in Elbereth's Main Driver.
  * Elbereth's Main Driver plugin v2.0.8:
    + Added Blade Runner .MIX support.
 	 Added Command & Conquer .MIX support.
@@ -63,6 +81,8 @@ Beta [Unreleased]
 	 Only non-crypted files are supported, decryption code it still a no-go.
      Should work as Felix Riemann driver, but with detection of filenames based
 	 on XCC-Util database.
+   + Added Giant: Citizen Kabuto .GZP support.
+     Merged from the now removed stand alone plugin.
  
 
 Version 5.5.0.218

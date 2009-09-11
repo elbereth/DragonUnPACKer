@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.24 2009-09-09 20:08:24 elbereth Exp $
+// $Id: Main.pas,v 1.25 2009-09-11 20:15:10 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -351,6 +351,7 @@ begin
     begin
       writeLog(DLNGStr('LOG103'));
       frmHyperRipper.txtSource.Text := src;
+      frmHyperRipper.Tag := 1;
       frmHyperRipper.ShowModal;
     end;
 
@@ -1125,6 +1126,7 @@ procedure Tdup5Main.menuFichier_HyperRipperClick(Sender: TObject);
 begin
 
   translateHyperRipper;
+  frmHyperRipper.Tag := 0;
   frmHyperRipper.ShowModal;
 
 end;
@@ -1726,7 +1728,9 @@ begin
 
   dup5Main.writeLogVerbose(1,DLNGstr('LOG005'));
 
-//  dup5Main.writeLogVerbose(1,' + cxCpu v'+cxCpu.Version.FormatVersion);
+  dup5Main.writeLogVerbose(1,' + cxCpu v'+cxCpu.Version.FormatVersion);
+  dup5Main.writeLogVerbose(1,' + Drag and Drop Component Suite v4.2.20080604');
+  dup5Main.writeLogVerbose(1,' + Delphi for Windows: Windows 7 Component Library');
 //  dup5Main.writeLogVerbose(1,' + JEDI Code Library [JCL] v'+inttostr(JclVersionMajor)+'.'+inttostr(JclVersionMinor)+'.'+inttostr(JclVersionRelease)+' Build '+inttostr(JclVersionBuild));
 //  dup5Main.writeLogVerbose(1,' + JEDI Visual Component Library [JVCL] v'+JVCL_VERSIONSTRING);
   dup5Main.writeLogVerbose(1,' + Vampyre Imaging Library v'+Imaging.GetVersionStr);

@@ -1,6 +1,6 @@
 unit lib_Utils;
 
-// $Id: lib_Utils.pas,v 1.10 2009-08-30 19:32:48 elbereth Exp $
+// $Id: lib_Utils.pas,v 1.11 2009-09-12 05:54:06 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_Utils.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -627,38 +627,43 @@ begin
           If OS.dwMajorVersion = 4 Then
           begin
             If OS.dwMinorVersion = 0 Then
-              result.WinVersion := 'Windows 95 v'
+              result.WinVersion := 'Windows 95 (v'
             else if OS.dwMinorVersion < 90 then
-              result.WinVersion := 'Windows 98 v'
+              result.WinVersion := 'Windows 98 (v'
             else
-              result.WinVersion := 'Windows ME v';
+              result.WinVersion := 'Windows ME (v';
           end
           else
             result.WinVersion := 'Windows v';
           result.WinVersion := result.WinVersion+inttostr(OS.dwMajorVersion)+'.'+inttostr(OS.dwMinorVersion)+' build '+inttostr(OS.dwBuildNumber and $FFFF)+' '+OS.szCSDVersion;
+          If OS.dwMajorVersion = 4 Then
+            result.WinVersion := result.WinVersion+')';
         end;
         VER_PLATFORM_WIN32_NT: begin
           If OS.dwMajorVersion = 5 Then
           begin
             If OS.dwMinorVersion = 0 Then
-              result.WinVersion := 'Windows 2000 v'
+              result.WinVersion := 'Windows 2000 (v'
             else if OS.dwMinorVersion = 1 then
-              result.WinVersion := 'Windows XP v'
+              result.WinVersion := 'Windows XP (v'
             else
               result.WinVersion := 'Windows NT v';
           end
           else if OS.dwMajorVersion = 6 Then
           begin
             If OS.dwMinorVersion = 0 Then
-              result.WinVersion := 'Windows Vista v'
+              result.WinVersion := 'Windows Vista (v'
             else if OS.dwMinorVersion = 1 then
-              result.WinVersion := 'Windows 7 v'
+              result.WinVersion := 'Windows 7 (v'
             else
               result.WinVersion := 'Windows NT v';
           end
           else
             result.WinVersion := 'Windows NT v';
           result.WinVersion := result.WinVersion+inttostr(OS.dwMajorVersion)+'.'+inttostr(OS.dwMinorVersion)+' build '+inttostr(OS.dwBuildNumber and $FFFF)+' '+OS.szCSDVersion;
+          If (OS.dwMajorVersion = 5) or (OS.dwMajorVersion = 6) Then
+            If (OS.dwMinorVersion = 0) or (OS.dwMinorVersion = 1) then
+              result.WinVersion := result.WinVersion+')';
         end;
       else
         result.WinVersion := 'Unknown v'+inttostr(OS.dwMajorVersion)+'.'+inttostr(OS.dwMinorVersion)+' build '+inttostr(OS.dwBuildNumber and $FFFF)+' '+OS.szCSDVersion;

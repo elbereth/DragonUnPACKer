@@ -81,6 +81,8 @@ Beta [12/09/2009]
 	 Only non-crypted files are supported, decryption code it still a no-go.
      Should work as Felix Riemann driver, but with detection of filenames based
 	 on XCC-Util database.
+	 New filenames can be added by editing the drv_default_mix.lst text file,
+	 one entry per file. Check file header for more info.
    + Added Giant: Citizen Kabuto .GZP support.
      Merged from the now removed stand alone plugin.
    ! Fixed extraction from realMyst 3D sho.dni files (some entries were zlib

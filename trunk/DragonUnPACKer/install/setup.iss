@@ -1,4 +1,4 @@
-; $Id: setup.iss,v 1.14 2009-06-26 20:54:15 elbereth Exp $
+; $Id: setup.iss,v 1.15 2009-09-12 06:41:06 elbereth Exp $
 ; $Source: /home/elbzone/backup/cvs/DragonUnPACKer/install/setup.iss,v $
 ;
 ; The contents of this file are subject to the Mozilla Public License
@@ -16,9 +16,9 @@
 
 [Setup]
 Compression=lzma/ultra64
-SolidCompression=yes
+SolidCompression=true
 AppName=Dragon UnPACKer 5
-AppVerName=Dragon UnPACKer v5.5.0 Beta (build 218/unstable)
+AppVerName=Dragon UnPACKer v5.5.1 Beta (build 226/unstable)
 AppPublisher=Alexandre Devilliers (aka Elbereth)
 AppPublisherURL=http://www.elberethzone.net
 AppSupportURL=http://www.elberethzone.net/dup-support.html
@@ -26,19 +26,28 @@ AppUpdatesURL=http://www.dragonunpacker.com
 AppCopyright=Mozilla Public License 1.1
 DefaultDirName={pf}\Dragon UnPACKer 5
 DefaultGroupName=Dragon UnPACKer 5
-OutputBaseFilename=dup550beta-setup
+OutputBaseFilename=dup551beta-setup
 AppMutex=DragonUnPACKer5
 AppId=DragonUnPACKer5
-DisableStartupPrompt=yes
+DisableStartupPrompt=true
 UninstallDisplayName=Dragon UnPACKer 5
-UninstallDisplayIcon={app}\dunpacker5.exe
-WizardImageBackColor=$FFFFFF
+UninstallDisplayIcon={app}\drgunpack5.exe
+WizardImageBackColor=$ffffff
 WizardImageFile=dup5-instimage.bmp
 WizardSmallImageFile=dup5-inst55x55.bmp
-VersionInfoVersion=5.5.0.218
+VersionInfoVersion=5.5.1.226
 ; uncomment the following line if you want your installation to run on NT 3.51 too.
 MinVersion=4.10,4.0sp6
 LicenseFile=..\docs\core\source\LICENCE.txt
+InternalCompressLevel=ultra64
+VersionInfoDescription=Dragon UnPACKer 5 Setup
+VersionInfoTextVersion=5.5.1 Beta (Build 226)
+VersionInfoCopyright=Elbereth / MPL 1.1
+VersionInfoProductName=Dragon UnPACKer
+VersionInfoProductVersion=5.5.1.226
+AppVersion=5.5.1 Beta
+SetupIconFile=E:\Developpement\dup-HEAD-2008\DragonUnPACKer\tools\duppi\duppi.ico
+AppReadmeFile={app}\readme.txt
 
 [Languages]
 Name: en; MessagesFile: compiler:Default.isl; InfoBeforeFile: setup-info-english.rtf
@@ -52,9 +61,9 @@ Name: desktopicon; Languages: fr; Description: Placer une icone sur le bureau; G
 Name: quicklaunchicon; Languages: fr; Description: Placer une icone sur la barre de lancement rapide; GroupDescription: Icones supplémentaires:; MinVersion: 4,4; Flags: unchecked
 Name: desktopicon; Languages: sp; Description: Poner un icono sobre el desktop; GroupDescription: Iconos adicionales:; MinVersion: 4,4
 Name: quicklaunchicon; Languages: sp; Description: Poner un icono en la bara de lanzamiento rapido; GroupDescription: Iconos adicionales:; MinVersion: 4,4; Flags: unchecked
-Name: deleteoldhrplugins; Description: Remove old useless HyperRipper plugins; GroupDescription: Update from previous versions; Flags: checkedonce; Languages: en
-Name: deleteoldhrplugins; Description: Supprimer les anciennes extensiosn HyperRipper; GroupDescription: Mise à jour depuis une ancienne version; Flags: checkedonce; Languages: fr
-Name: deleteoldhrplugins; Description: Borrar las antiguas versiones de las extenciones HyperRipper; GroupDescription: Antiguas versiones; Flags: checkedonce; Languages: sp
+Name: deleteoldhrplugins; Description: Remove old useless plugins; GroupDescription: Update from previous versions; Flags: checkedonce; Languages: en
+Name: deleteoldhrplugins; Description: Supprimer les anciennes extensiosn; GroupDescription: Mise à jour depuis une ancienne version; Flags: checkedonce; Languages: fr
+Name: deleteoldhrplugins; Description: Borrar las antiguas versiones de las extenciones; GroupDescription: Antiguas versiones; Flags: checkedonce; Languages: sp
 
 [Files]
 Source: E:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe; DestDir: {app}; Flags: ignoreversion
@@ -107,5 +116,7 @@ Languages: sp; Filename: {app}\DrgUnPack5.exe; Parameters: /lng; Description: La
 Type: files; Name: {app}\DrgUnPack5.url
 
 [InstallDelete]
-Name: {app}\data\HyperRipper\*.d5h; Type: files; Tasks: ; Languages: 
+Name: {app}\data\drivers\drv_mix.d5d; Type: files; Tasks: 
+Name: {app}\data\drivers\drv_giants.d5d; Type: files; Tasks: 
+Name: {app}\data\HyperRipper\*.d5h; Type: files; Tasks: 
 Name: {app}\data\HyperRipper; Type: dirifempty; Tasks: 

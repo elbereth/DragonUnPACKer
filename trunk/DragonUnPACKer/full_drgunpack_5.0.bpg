@@ -10,9 +10,8 @@ DCC = $(ROOT)\bin\dcc32.exe $**
 BRCC = $(ROOT)\bin\brcc32.exe $**
 #------------------------------------------------------------------------------
 PROJECTS = drgunpack5.exe cnv_pictex.d5c drv_11th.d5d drv_default.d5d \
-  drv_giants.d5d drv_multiex.d5d drv_ut.d5d drv_zip.d5d hr_default.d5h dlngc.exe \
-  dlngcomp.exe dlookc.exe dlookd.exe dpackc.exe duhtcomp.exe duppi.exe \
-  DuppiInstall.exe
+  drv_multiex.d5d drv_ut.d5d drv_zip.d5d dlngc.exe dlngcomp.exe dlookc.exe \
+  dlookd.exe dpackc.exe duhtcomp.exe duppi.exe DuppiInstall.exe fngen.exe
 #------------------------------------------------------------------------------
 default: drgunpack5.exe
 #------------------------------------------------------------------------------
@@ -29,9 +28,6 @@ drv_11th.d5d: plugins\drivers\11th\drv_11th.dpr
 drv_default.d5d: plugins\drivers\default\drv_default.dpr
   $(DCC)
 
-drv_giants.d5d: plugins\drivers\giants\drv_giants.dpr
-  $(DCC)
-
 drv_multiex.d5d: plugins\drivers\multiex\drv_multiex.dpr
   $(DCC)
 
@@ -39,9 +35,6 @@ drv_ut.d5d: plugins\drivers\ut\drv_ut.dpr
   $(DCC)
 
 drv_zip.d5d: plugins\drivers\zip\drv_zip.dpr
-  $(DCC)
-
-hr_default.d5h: plugins\hyperripper\default\hr_default.dpr
   $(DCC)
 
 dlngc.exe: tools\dlngc\dlngc.dpr
@@ -66,6 +59,9 @@ duppi.exe: tools\duppi\duppi.dpr
   $(DCC)
 
 DuppiInstall.exe: tools\duppi\DuppiInstall.dpr
+  $(DCC)
+
+fngen.exe: tools\fngen\fngen.dpr
   $(DCC)
 
 

@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.60 2009-07-21 11:32:30 elbereth Exp $
+// $Id: drv_default.dpr,v 1.61 2009-09-12 05:51:55 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -204,6 +204,7 @@ type FSE = ^element;
                    http://xhp.xwis.net/documents/MIX_Format.html
                   Encrypted files are not supported (yet?), don't hesitate in using the very good XCC-Utils
                   Thanks to this added support drv_mix.d5d from Felix Riemann is not needed anymore (way to go x64!!!)
+                 Fixed realMyst 3D .DNI support (implemented zlib decompression of entries)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -225,8 +226,8 @@ const
   DUDI_VERSION_COMPATIBLE = 4;
   DRIVER_VERSION = 20840;
   DUP_VERSION = 55110;
-  CVS_REVISION = '$Revision: 1.60 $';
-  CVS_DATE = '$Date: 2009-07-21 11:32:30 $';
+  CVS_REVISION = '$Revision: 1.61 $';
+  CVS_DATE = '$Date: 2009-09-12 05:51:55 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -8402,7 +8403,6 @@ begin
 
 end;
 
-
 // -------------------------------------------------------------------------- //
 // Operation: Flashpoint .PBO support ======================================= //
 // -------------------------------------------------------------------------- //
@@ -8477,6 +8477,27 @@ begin
     Result := -2;
 
 end;
+
+
+// -------------------------------------------------------------------------- //
+// Overlord .PRP/.PVP research ============================================== //
+// -------------------------------------------------------------------------- //
+
+type RPK_Header = packed record
+       ID: array[0..3] of char;
+       Unknown1: word;
+       Unknown2: word;
+       NumEntries: cardinal;
+       DataSize: cardinal;
+       Description: array[0..159] of char;  // Text + 0x0 Fill
+       Unknown3: cardinal;                  // Offset?
+       Unknown4: array[0..2] of cardinal;
+     end;
+     // RelOffset: cardinal (relative to end of header + offset list)
+     // Unknown: cardinal (counter?) not present at last iteration
+     // Uses Get32 structure for strings
+     // Does not make much sense to me... Looks like serialized stuff
+
 
 // -------------------------------------------------------------------------- //
 // Painkiller .PAK support ================================================== //
@@ -9310,7 +9331,7 @@ type DNIHeader = packed record
        OffsetNameNext: integer;
        Length: integer;
        Offset: integer;
-       Empty: integer;
+       CompressedLength: integer;
      end;
 
 procedure DNIDirectory(cdir: string; coffset: integer; ftoffset:integer);
@@ -9322,8 +9343,7 @@ begin
 
   FileSeek(FHandle, coffset,0);
 
-  FileRead(FHandle,DIR.Offset,4);
-  FileRead(FHandle,DIR.NumObj,4);
+  FileRead(FHandle,DIR,SizeOf(DNIDir));
 
   FileSeek(FHandle,DIR.Offset,0);
 
@@ -9343,15 +9363,11 @@ begin
     else
     begin
       FileSeek(FHandle,ObjOffset,0);
-      FileRead(FHandle,FIL.OffsetName, 4);
-      FileRead(FHandle,FIL.OffsetNameNext, 4);
-      FileRead(FHandle,FIL.Length, 4);
-      FileRead(FHandle,FIL.Offset, 4);
-      FileRead(FHandle,FIL.Empty, 4);
+      FileRead(FHandle,FIL, SizeOf(DNIFile));
       FileSeek(FHandle,FIL.OffsetName,0);
       nam := strip0(get0(FHandle));
       Inc(DNISize);
-      FSE_Add(cdir + nam,FIL.Offset, FIL.Length, 0, 0);
+      FSE_Add(cdir + nam,FIL.Offset, FIL.Length, FIL.CompressedLength, 0);
     end;
     Inc(coffset,4);
   end;
@@ -9369,13 +9385,7 @@ begin
     TotFSize := FileSeek(FHandle,0,2);
 
     FileSeek(Fhandle, 0, 0);
-    FileRead(FHandle, HDR.ID, 4);
-    FileRead(FHandle, HDR.Version, 4);
-    FileRead(FHandle, HDR.DIROffset, 4);
-    FileRead(FHandle, HDR.FTOffset, 4);
-    FileRead(FHandle, HDR.NLOffset, 4);
-    FileRead(FHandle, HDR.DataOffset, 4);
-    FileRead(FHandle, HDR.FTOffsetA, 4);
+    FileRead(FHandle, HDR, SizeOf(DNIHeader));
 
     if (HDR.ID <> 'Dirt') or (HDR.Version <> 65536) then
     begin
@@ -9398,7 +9408,7 @@ begin
       DrvInfo.ID := 'DNI';
       DrvInfo.Sch := '\';
       DrvInfo.FileHandle := FHandle;
-      DrvInfo.ExtractInternal := False;
+      DrvInfo.ExtractInternal := true;
 
     end;
 
@@ -14996,6 +15006,17 @@ begin
     if (DataX = 1) then
     begin
       DecompressZlibToStream(outputstream, DataY, Size);
+    end
+    else
+    begin
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+    end;
+  end
+  else if DrvInfo.ID = 'DNI' then
+  begin
+    if (DataX > 0) then
+    begin
+      DecompressZlibToStream(outputstream, DataX, Size);
     end
     else
     begin

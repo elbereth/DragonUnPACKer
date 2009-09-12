@@ -1,5 +1,5 @@
-Dragon UnPACKer 5.4.0 "Degei" Source Code                       MPL open source
-by Alexande "Elbereth" Devilliers                                    20/11/2008
+Dragon UnPACKer 5.5.1 Beta Source Code                          MPL open source
+by Alexande "Elbereth" Devilliers                                    12/09/2009
 ===============================================================================
 
 This source code can be used and modified if following the Mozilla Public
@@ -13,22 +13,26 @@ Needed:
 -------
 
 You need a Delphi compiler. The Borland Delphi Personnal Edition (which is
-free) version 6 or 7 will do the job.
+free) version 6 or 7 will do the job (current version is compiled with 
+Borland Delphi 7.1 Personal).
 You obviously also need some Delphi programming skills. :P
 
-Needed libraries:
-- VirtualTreeView v4.7.0        http://www.soft-gems.net/VirtualTreeview/
-- JEDI Code Library JCL         http://jcl.sourceforge.net
-- JEDI Visual Component Library http://jvcl.sourceforge.net
-- ICS Internet Component Suite  http://www.overbyte.be
-- Drag&Drop Component Suite 4.0 http://melander.dk/
-- cxCPU v4.x                    http://www.carbonsoft.com/cxcpu/
-- Vampyre Imaging Library v0.24 http://imaginglib.sourceforge.net/
+Lazarus/FPC compilation can be tried, some plugins can be compiled for ex.
 
+Needed libraries:
+- cxCPU v4.x                    http://www.carbonsoft.com/cxcpu/
+- Drag&Drop Component Suite 4.2 http://melander.dk/
+- Vampyre Imaging Library v0.26.2 http://imaginglib.sourceforge.net/
+- VirtualTreeView v4.8.5        http://www.soft-gems.net/VirtualTreeview/
+- Windows 7 Component Library   http://www.gumpi.com/blog
+  (This can be avoided by changing TdwProgresBar to TProgressBar in Core
+   and HyperRipper and correcting the few lines calling special features
+   in those components)
+   
 For Compile Time (in about box) :
 - Compile Time Expert v1.12	    http://www.fi.muni.cz/~xkovalc/
 
-For setup compilation you need Inno Setup v5.2.3 from:
+For setup compilation you need Inno Setup v5.3.4 from:
 http://www.jrsoftware.org/isinfo.php
 
 

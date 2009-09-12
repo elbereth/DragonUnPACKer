@@ -136,7 +136,7 @@ object frmMain: TfrmMain
     Top = 56
     Width = 537
     Height = 321
-    ActivePage = TabSheet4
+    ActivePage = TabSheet1
     TabOrder = 0
     object TabSheet1: TTabSheet
       Caption = 'About...'

@@ -111,7 +111,7 @@ AutoIncBuild=1
 MajorVer=5
 MinorVer=5
 Release=1
-Build=219
+Build=226
 Debug=0
 PreRelease=1
 Special=0
@@ -122,7 +122,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElbererhZone
 FileDescription=Dragon UnPACKer 5
-FileVersion=5.5.1.219
+FileVersion=5.5.1.226
 InternalName=DrgUnPack5
 LegalCopyright=Created by Alexandre "Elbereth" Devilliers under Mozilla Public License 1.1
 LegalTrademarks=
@@ -137,7 +137,5 @@ Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 Count=1
 Item0=E:\Developpement\dup-dev-5.1-dcu
 [HistoryLists\hlOutputDirectorry]
-Count=3
-Item0=E:\Developpement\dup-dev-5.1-compiled\data\drivers
-Item1=E:\Developpement\dup-dev-5.1-compiled
-Item2=E:\Developpement\dup-dev-5.1-compiled\utils
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-compiled\utils

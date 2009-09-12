@@ -29,7 +29,7 @@
 # ============================================================================
 #
 # version 13:
-# Added HR2031
+# Added HR2031, HR4061, HR4062 and HR4063
 #
 # version 12:
 # Added missing preview keywords
@@ -454,6 +454,9 @@ HR4050=Naming
 HR4051=Automatic
 HR4052=Custom
 HR4053=Example
+HR4061=Auto-Start search when unknown source file format
+HR4062=Auto-Close HyperRipper when search is finished & entries were found
+HR4063=Force buffer size
 HRLEGF=filename
 HRLEGN=number
 HRLEGX=extension

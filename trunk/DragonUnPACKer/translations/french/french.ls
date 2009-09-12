@@ -30,7 +30,7 @@
 # ============================================================================
 #
 # version 13:
-# Ajout de HR2031
+# Ajout de HR2031, HR4061, HR4062 et HR4063
 #
 # version 11:
 # Nouvelles entrées pour la prévisualisation
@@ -363,7 +363,7 @@ HR1000=Rechercher
 HR1001=Source:
 HR1002=Créer un fichier HyperRipper (HRF):
 HR1003=Annuler / Arreter
-HR1011=Taille du buffer:
+HR1011=Taille du cache:
 HR1012=Taille du rollback:
 HR1013=Vitesse de recherche:
 HR1014=Fichiers trouvées:
@@ -387,7 +387,7 @@ HR3034=%c caractères
 HR3035=Compatible avec version:
 HR3036=%v et plus recentes
 HR4000=Options Avancées
-HR4010=Tampon mémoire
+HR4010=Cache
 HR4011=Koctets
 HR4012=octets
 HR4020=Rollback de mémoire
@@ -401,6 +401,9 @@ HR4050=Nommage
 HR4051=Automatique
 HR4052=Personnalisé
 HR4053=Exemple
+HR4061=Démarrage automatique lorsque le format du fichier source est inconnu
+HR4062=Fermeture automatique lorsque des entrées ont été trouvés
+HR4063=Forcer la taille du cache
 HRLEGF=fichier
 HRLEGN=nombre
 HRLEGX=extension

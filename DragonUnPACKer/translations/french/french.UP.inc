@@ -478,7 +478,7 @@ begin
   else if sch = 'HR4000' then
     result := 'Options Avancées'
   else if sch = 'HR4010' then
-    result := 'Tampon mémoire'
+    result := 'Cache'
   else if sch = 'HR4011' then
     result := 'Koctets'
   else if sch = 'HR4012' then
@@ -505,6 +505,12 @@ begin
     result := 'Personnalisé'
   else if sch = 'HR4053' then
     result := 'Exemple'
+  else if sch = 'HR4061' then
+    result := 'Démarrage automatique lorsque le format du fichier source est inconnu'
+  else if sch = 'HR4062' then
+    result := 'Fermeture automatique lorsque des entrées ont été trouvés'
+  else if sch = 'HR4063' then
+    result := 'Forcer la taille du cache'
   else if sch = 'HRLEGF' then
     result := 'fichier'
   else if sch = 'HRLEGN' then

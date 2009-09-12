@@ -1,6 +1,6 @@
 unit List;
 
-// $Id: List.pas,v 1.4 2009-06-26 21:05:31 elbereth Exp $
+// $Id: List.pas,v 1.5 2009-09-12 05:53:05 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/List.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -509,6 +509,9 @@ begin
 
     status.simpletext := '[9/9] '+DLNGStr('LST509');
     frmList.Refresh;
+
+    ShowMessage(DLNGStr('LST509'));
+    frmList.Close;
 
   end;
 

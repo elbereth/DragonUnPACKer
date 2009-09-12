@@ -1,11 +1,11 @@
 Dragon UnPACKer v5.5.1 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    11/09/2009
+by Alexande "Elbereth" Devilliers                                    12/09/2009
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
            use it at your own risk. Might be unstable. You were warned! **
 
-  Documentation files are not updated since last stable release (v5.2.0b).
+  Documentation files are not updated since last stable release (v5.4.0a).
   
   Purpose of v5.5 (CVS branch HEAD):
   - Migrate to Lazarus/FreePascal platform instead of Borland Delphi 7.
@@ -15,6 +15,7 @@ by Alexande "Elbereth" Devilliers                                    11/09/2009
     core.
   - Some non compatible components were replaced by compatible ones.
   - HyperRipper plugin was merged into the core.
+  - drv_mix & drv_giants were "merged" to drv_default.
   
   To Do until v5.6 stable release :
   - Migrate core application (DrgUnPACKer.exe).
@@ -37,9 +38,8 @@ by Alexande "Elbereth" Devilliers                                    11/09/2009
 Main program version and versions history:
 
 Version 5.5.1.226
-Beta [Unreleased]
+Beta [12/09/2009]
 
- - Removed old Felix Riemann drv_mix driver (for which no source is available).
  ! Fixed opening message bug in logs (%f).
  ! Fixed small log bug (invertion of variable texts when logging a successful
    opening).
@@ -72,7 +72,7 @@ Beta [Unreleased]
 	 Rollback is fixed to 16 bytes.
  - Giants: Citizen Kabuto drv_giant .GZP plugin.
    Support is now in Elbereth's Main Driver.
- - Felix Riemann drv_mix .MIX plugin.
+ - Felix Riemann drv_mix .MIX plugin (no source was available).
    Support is now in Elbereth's Main Driver.
  * Elbereth's Main Driver plugin v2.0.8:
    + Added Blade Runner .MIX support.
@@ -83,6 +83,8 @@ Beta [Unreleased]
 	 on XCC-Util database.
    + Added Giant: Citizen Kabuto .GZP support.
      Merged from the now removed stand alone plugin.
+   ! Fixed extraction from realMyst 3D sho.dni files (some entries were zlib
+     compressed but were not decompressed).
  
 
 Version 5.5.0.218

@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.25 2009-09-11 20:15:10 elbereth Exp $
+// $Id: Main.pas,v 1.26 2010-02-26 20:12:56 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -3035,7 +3035,7 @@ procedure Tdup5Main.actionPreviewOptions(Sender: TObject);
 begin
 
   InitOptions;
-  TabSelect := 9;
+  TabSelect := 8;
   frmConfig.ShowModal;
 
 end;

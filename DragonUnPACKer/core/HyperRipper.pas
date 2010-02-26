@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.22 2010-02-26 15:18:02 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.23 2010-02-26 20:11:59 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -55,11 +55,11 @@ unit HyperRipper;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Windows, Messages, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, declFSE, lib_language, Registry, Math, spec_DDS,
   ExtCtrls, lib_utils, classFSE, spec_HRF, DateUtils, translation, U_IntList,
   StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar, ImgList,
-  UBufferedFS;
+  UBufferedFS, SysUtils;
 
 const MP_FRAMES_FLAG = 1;
       MP_BYTES_FLAG = 2;
@@ -488,14 +488,14 @@ type FormatsListElem = record
   private
     function BigToLittle2(src: array of byte): word;
     function BigToLittle4(src: array of byte): integer;
-    function BMFind(szSubStr: PChar; pbuf: PByteArray; iBufSize: integer; iOffset: integer = 0): integer;
+    function BMFind(szSubStr: PChar; buf: PByteArray; iBufSize: integer; iOffset: integer = 0): integer;
     function posBuf(search: byte; buffer: PByteArray; bufSize: integer; startpos: integer = 0): integer;
     function getMPEGOptions(): MPEGOptions;
   protected
   public
     function GetFormatsList(): ExtSearchFormatsList;
     procedure showConfigBox(formatid: integer);
-    function findInBuffer(formatid: Integer; pbuffer: PByteArray; bufSize: integer): TIntList;
+    function findInBuffer(formatid: Integer; buffer: PByteArray; bufSize: integer): TIntList;
     function verifyInStream(formatid: integer; inStm: TStream; offset: int64): FoundInfo64;
   end;
   TfrmHyperRipper = class(TForm)
@@ -1270,7 +1270,7 @@ begin
           fitem := flisttot.Items[x];
           absoluteOffset := fitem^.offset;
 //          absoluteOffset := absoluteOffset + bufferOffset + curPos;
-          if absoluteOffset > LastOffset then
+          if absoluteOffset >= LastOffset then
           begin
             try
 
@@ -1340,7 +1340,7 @@ begin
           hrip.lblFound.Caption := IntTostr(numFound);
           hrip.lblHexDump.Caption := '';
           for x := 0 to 17 do
-            hrip.lblHexDump.Caption := hrip.lblHexDump.Caption + IntToHex(TByteArray(buffer)[x],2)+' ';
+            hrip.lblHexDump.Caption := hrip.lblHexDump.Caption + IntToHex(buffer[x],2)+' ';
           OldPer := Per;
           if (GetTickCount - StartTime) > 0 then
           begin
@@ -2293,7 +2293,7 @@ begin
   result := -1;
   for x := startpos to bufSize do
   begin
-    if TByteArray(buffer)[x] = search then
+    if buffer[x] = search then
     begin
       result := x;
       break;
@@ -2302,7 +2302,7 @@ begin
 
 end;
 
-function THyperRipperFormat.BMFind(szSubStr: PChar; pbuf: PByteArray; iBufSize: integer; iOffset: integer = 0): integer;
+function THyperRipperFormat.BMFind(szSubStr: PChar; buf: PByteArray; iBufSize: integer; iOffset: integer = 0): integer;
 { Returns -1 if substring not found,
    or zero-based index into buffer if substring found }
 var
@@ -2316,12 +2316,10 @@ var
    mismatch: boolean;
    iBufScanStart: integer;
    ch: byte;
-   buf: TByteArray;
 begin
    { Initialisations }
    found := False;
    Result := -1;
-   buf := TByteArray(pbuf);
 
    { Check if trivial scan for empty string }
    iSubStrLen := StrLen(szSubStr);
@@ -2515,14 +2513,11 @@ begin
 
 end;
 
-function THyperRipperFormat.findInBuffer(formatid: Integer; pbuffer: PByteArray; bufSize: integer): TIntList;
+function THyperRipperFormat.findInBuffer(formatid: Integer; buffer: PByteArray; bufSize: integer): TIntList;
 var tmpRes,tmpPos1,tmpPos2,tmpPosMax: integer;
 //    memBuf: TMemoryStream;
     szFind: array [0..255] of char;
-    buffer: TByteArray;
 begin
-
-    buffer := TByteArray(pbuffer);
 
     result := TIntList.Create;
 //  memBuf := TMemoryStream.create();
@@ -2539,7 +2534,7 @@ begin
       case formatid of
         1000: begin
                 strPCopy(szFind,'RIFF');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                   if ((tmpRes+11) <= bufSize) and (buffer[tmpRes+8] = 87)
                                               and (buffer[tmpRes+9] = 65)
@@ -2556,7 +2551,7 @@ begin
               end;
         1001: begin
                 strPCopy(szFind,'Creative Voice File'+chr(26));
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2567,7 +2562,7 @@ begin
               end;
         1002: begin
                 strPCopy(szFind,'MThd');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                   if (buffer[tmpRes+4] = 0) and
                      (buffer[tmpRes+5] = 0) and
@@ -2585,7 +2580,7 @@ begin
               end;
         1003: begin
                 strPCopy(szFind,'if');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2596,7 +2591,7 @@ begin
               end;
         1004: begin
                 strPCopy(szFind,'JN');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2607,7 +2602,7 @@ begin
               end;
         1005: begin
                 strPCopy(szFind,'Extended Module: ');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2619,7 +2614,7 @@ begin
         1006: begin
                 //strPCopy(szFind,char(255));
                 //tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
-                tmpRes := posBuf(255,pbuffer,bufsize,tmpRes);
+                tmpRes := posBuf(255,buffer,bufsize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   if ((tmpRes < (bufsize - 1))
@@ -2633,7 +2628,7 @@ begin
               end;
         1007: begin
                 strPCopy(szFind,'SCRM');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2644,7 +2639,7 @@ begin
               end;
         1008: begin
                 strPCopy(szFind,'IMPM');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2655,7 +2650,7 @@ begin
               end;
         1009: begin
                 strPCopy(szFind,'OggS');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                   if (buffer[tmpRes+4] = 0) then
                   begin
@@ -2671,7 +2666,7 @@ begin
 
         2000: begin
                 strPCopy(szFind,'RIFF');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                   if ((tmpRes+11) <= bufSize) and (buffer[tmpRes+8] = 65)
                                               and (buffer[tmpRes+9] = 86)
@@ -2688,7 +2683,7 @@ begin
               end;
         2001: begin
                 strPCopy(szFind,'moov');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2699,7 +2694,7 @@ begin
               end;
         2002: begin
                 strPCopy(szFind,'BIK');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2710,19 +2705,19 @@ begin
               end;
         2003: begin
                 strPCopy(szFind,#17+#175);
-                tmpPos1 := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpPos1 := BMFind(szFind,buffer,bufSize,tmpRes);
                 strPCopy(szFind,#18+#175);
-                tmpPos2 := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpPos2 := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpPos1 = -1) or ((tmpPos2 > -1) and (tmpPos2 < tmpPos1)) then
                   tmpPos1 := tmpPos2;
                 tmpPosMax := max(tmpPos1,tmpPos2);
                 strPCopy(szFind,#48+#175);
-                tmpPos2 := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpPos2 := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpPos1 = -1) or ((tmpPos2 > -1) and (tmpPos2 < tmpPos1)) then
                   tmpPos1 := tmpPos2;
                 tmpPosMax := max(tmpPosMax,tmpPos2);
                 strPCopy(szFind,#68+#175);
-                tmpPos2 := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpPos2 := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpPos2 > -1) and (tmpPos2 < tmpPos1) then
                   tmpPos1 := tmpPos2;
                 tmpPosMax := max(tmpPosMax,tmpPos2);
@@ -2740,7 +2735,7 @@ begin
 
         3000: begin
                 strPCopy(szFind,'BM');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2751,7 +2746,7 @@ begin
               end;
         3001: begin
                 strPCopy(szFind,' EMF');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2762,7 +2757,7 @@ begin
               end;
         3002: begin
                 strPCopy(szFind,'×ÍÆš');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2773,7 +2768,7 @@ begin
               end;
         3003: begin
                 strPCopy(szFind,#137 + #80 + #78 + #71 + #13 + #10 + #26 + #10);
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2784,7 +2779,7 @@ begin
               end;
         3004: begin
                 strPCopy(szFind,'GIF8');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2795,7 +2790,7 @@ begin
               end;
         3005: begin
                 strPCopy(szFind,'FORM');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 // If magic ID is found
                 if (tmpRes <> -1) then
                   // Check if +8 bytes after ILBM magic ID is found
@@ -2815,7 +2810,7 @@ begin
               end;
         3006: begin
                 strPCopy(szFind,#255+#216+#255);
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   if ((tmpRes+9) <= bufsize) then
@@ -2855,7 +2850,7 @@ begin
               end;
         3007: begin
                 strPCopy(szFind,'DDS ');
-                tmpRes := BMFind(szFind,pbuffer,bufSize,tmpRes);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   // Add found offset to the list
@@ -2866,7 +2861,7 @@ begin
               end;
         // TGA RGB search by Psych0phobiA -- Start //
         3008: begin
-                tmpRes := posBuf(0,pbuffer,bufSize,tmpRes);
+                tmpRes := posBuf(0,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin
                   if (tmpRes > (bufSize - 17)) then

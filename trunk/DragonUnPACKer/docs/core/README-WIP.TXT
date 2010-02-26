@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.5.1 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    12/09/2009
+Dragon UnPACKer v5.5.2 Beta                                 MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    26/02/2010
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -8,7 +8,8 @@ by Alexande "Elbereth" Devilliers                                    12/09/2009
   Documentation files are not updated since last stable release (v5.4.0a).
   
   Purpose of v5.5 (CVS branch HEAD):
-  - Migrate to Lazarus/FreePascal platform instead of Borland Delphi 7.
+  - Facilitate transition to v6.0 (recode of GUI under Lazarus/FreePascal).
+    (was: Migrate to Lazarus/FreePascal platform instead of Borland Delphi 7)
   
   Done in this version:
   - drv_default can be compiled with Lazarus/FPC and run fine in Delphi built
@@ -18,12 +19,12 @@ by Alexande "Elbereth" Devilliers                                    12/09/2009
   - drv_mix & drv_giants were "merged" to drv_default.
   
   To Do until v5.6 stable release :
-  - Migrate core application (DrgUnPACKer.exe).
   - Migrate convert plugin, create standalone configuration tool.
     Another solution would be to merge to the core.
   - Migrate driver plugins.
   - Migrate tools applications (Duppi, Dlngc, Dlngcomp, Dlookc, Dlookd,
     duhtcomp & Dpackc).
+  - Fix bugs & regressions.
   
   Ideas for the future:
   - Add popup to select between different driver plugin when more than one
@@ -32,10 +33,24 @@ by Alexande "Elbereth" Devilliers                                    12/09/2009
     Ex:   High if smart used with a very good ID/Magic string
         Medium if smart used with a weak ID/Magic string
            Low if smart was not used (only based on extension)        
-  - "Create" plugins (do not integrate the creation to the drivers plugins.
+  - "Create" plugins (do not integrate the creation to the drivers plugins).
 
 -------------------------------------------------------------------------------
 Main program version and versions history:
+
+Version 5.5.2.228
+Beta [Unreleased]
+
+ ! Fixed Preview option main menu & popup menu (ETreeViewError with Invalid
+   Index message).
+ * HyperRipper v5.6 Beta 3:
+   ! Fixed BigToLittle2 which was doing wrong calculation...
+   + Added JPEG Exif support (APP1 marker instead of APP0).
+   * Enhanced JPEG support to use markers as much as posible before BMFind to
+     EOI marker.
+   ! Fixed check which was preventing finding some files if they were just
+     behind each other.
+
 
 Version 5.5.1.226
 Beta [12/09/2009]

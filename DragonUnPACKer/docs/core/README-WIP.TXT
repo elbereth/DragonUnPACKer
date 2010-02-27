@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.5.2 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    26/02/2010
+by Alexande "Elbereth" Devilliers                                    27/02/2010
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -38,11 +38,18 @@ by Alexande "Elbereth" Devilliers                                    26/02/2010
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.5.2.228
+Version 5.5.2.233
 Beta [Unreleased]
 
  ! Fixed Preview option main menu & popup menu (ETreeViewError with Invalid
    Index message).
+ ! Fixed Look & File types option menu leading to the wrong Option tab.
+ + Added version number to Error box for unhandled exceptions.
+ ! Fixed empty "More details" sections in Error box when there was no lines
+   to display.
+ * Updated Drag and Drop Component to v5.1.
+   Now Dragon UnPACKer dynamically indicates the version number (in log and
+   About box).
  * HyperRipper v5.6 Beta 3:
    ! Fixed BigToLittle2 which was doing wrong calculation...
    + Added JPEG Exif support (APP1 marker instead of APP0).
@@ -50,6 +57,14 @@ Beta [Unreleased]
      EOI marker.
    ! Fixed check which was preventing finding some files if they were just
      behind each other.
+   * Enhanced MPEG Audio search to give feedback while determining file size.
+     This also allows to click on Cancel while HyperRipper is finding a huge
+	 MPEG Audio file.
+ * Elbereth's Main Driver plugin v2.0.9:
+   + Added support for Battleforge .PAK files.
+   + Added support for Dragon Age: Origins .ERF files.
+   i Internal changes to the source make it easier to add new formats.
+     Also added compile time parameter to enable experimental file formats.
 
 
 Version 5.5.1.226

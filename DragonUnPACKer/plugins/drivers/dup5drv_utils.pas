@@ -1,6 +1,6 @@
 unit dup5drv_utils;
 
-// $Id: dup5drv_utils.pas,v 1.1.1.1 2004-05-08 10:26:52 elbereth Exp $
+// $Id: dup5drv_utils.pas,v 1.2 2010-02-27 15:57:50 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/dup5drv_utils.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -22,9 +22,6 @@ unit dup5drv_utils;
 // ===========================================================
 
 interface
-
-function strip0(str : string): string;
-function posrev(substr: string; str: string): integer;
 
 type
    // Record to store current file format information
@@ -84,42 +81,20 @@ type
    // You must know the language code (ex: MNU1S1).
    // If the language code doesn't exist this function returns "*Undefined*"
    TLanguageCallback = function (lngid: ShortString): ShortString;
+   // Procedure to display a message box by using host application
+   TMsgBoxCallback = procedure(const title, msg: AnsiString);
+
+procedure addFormat(var drvInfo: DriverInfo; formatExts, formatName: string);
 
 implementation
 
-function strip0(str : string): string;
-var pos0: integer;
+procedure addFormat(var drvInfo: DriverInfo; formatExts, formatName: string);
 begin
 
-  pos0 := pos(chr(0),str);
-
-  if pos0 > 0 then
-    strip0 := copy(str, 1, pos0 - 1)
-  else
-    strip0 := str;
+  inc(drvInfo.NumFormats);
+  drvInfo.Formats[drvInfo.NumFormats].Extensions := formatExts;
+  drvInfo.Formats[drvInfo.NumFormats].Name := formatName;
 
 end;
-
-function posrev(substr: string; str: string): integer;
-var res,x : integer;
-begin
-
-  res := 0;
-  x := (length(str) - length(substr) + 1);
-
-  while (x >= 1) and (res = 0) do
-  begin
-
-    if copy(str,x, length(substr)) = substr then
-      res := x;
-
-    x := x - 1;
-
-  end;
-
-  posrev := res;
-
-end;
-
 
 end.

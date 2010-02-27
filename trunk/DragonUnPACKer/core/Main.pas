@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.26 2010-02-26 20:12:56 elbereth Exp $
+// $Id: Main.pas,v 1.27 2010-02-27 16:01:53 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -1079,7 +1079,7 @@ procedure Tdup5Main.MenuOptions_LookClick(Sender: TObject);
 begin
 
   InitOptions;
-  TabSelect := 7;
+  TabSelect := 6;
   frmConfig.ShowModal;
 
 end;
@@ -1117,7 +1117,7 @@ procedure Tdup5Main.menuOptions_AssocClick(Sender: TObject);
 begin
 
   InitOptions;
-  TabSelect := 8;
+  TabSelect := 7;
   frmConfig.ShowModal;
 
 end;
@@ -1729,7 +1729,7 @@ begin
   dup5Main.writeLogVerbose(1,DLNGstr('LOG005'));
 
   dup5Main.writeLogVerbose(1,' + cxCpu v'+cxCpu.Version.FormatVersion);
-  dup5Main.writeLogVerbose(1,' + Drag and Drop Component Suite v4.2.20080604');
+  dup5Main.writeLogVerbose(1,' + Drag and Drop Component Suite v'+inttostr(DragDropSuiteVersionMajor)+'.'+inttostr(DragDropSuiteVersionMinor));
   dup5Main.writeLogVerbose(1,' + Delphi for Windows: Windows 7 Component Library');
 //  dup5Main.writeLogVerbose(1,' + JEDI Code Library [JCL] v'+inttostr(JclVersionMajor)+'.'+inttostr(JclVersionMinor)+'.'+inttostr(JclVersionRelease)+' Build '+inttostr(JclVersionBuild));
 //  dup5Main.writeLogVerbose(1,' + JEDI Visual Component Library [JVCL] v'+JVCL_VERSIONSTRING);

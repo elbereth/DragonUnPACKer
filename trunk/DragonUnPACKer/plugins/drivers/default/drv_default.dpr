@@ -1,6 +1,6 @@
 library drv_default;
 
-// $Id: drv_default.dpr,v 1.61 2009-09-12 05:51:55 elbereth Exp $
+// $Id: drv_default.dpr,v 1.62 2010-02-27 15:59:54 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/drivers/default/drv_default.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -31,7 +31,8 @@ uses
   lib_version in '..\..\..\common\lib_version.pas' {,
   class_decompressRA in 'class_decompressRA.pas'},
   lib_unlzw in '..\..\..\common\lib_unlzw.pas',
-  lib_crc in '..\..\..\common\lib_crc.pas';
+  lib_crc in '..\..\..\common\lib_crc.pas',
+  dup5drv_utils in '..\dup5drv_utils.pas';
 
 {$E d5d}
 
@@ -55,31 +56,6 @@ type FSE = ^element;
         Value : Integer;
         suiv : TInts;
      end;
-   CurrentDriverInfo = record
-     Sch : ShortString;
-     ID : ShortString;
-     FileHandle : Integer;
-     ExtractInternal : Boolean;
-   end;
-   FormatInfo = record
-     Extensions : ShortString;
-     Name : ShortString;
-   end;
-   DriverInfo = record
-     Name : ShortString;
-     Author : ShortString;
-     Version : ShortString;
-     Comment : ShortString;
-     NumFormats : Byte;
-     Formats : array[1..255] of FormatInfo;
-   end;
-   ErrorInfo = record
-     Format : ShortString;
-     Games : ShortString;
-   end;
-   TPercentCallback = procedure (p: byte);
-   TLanguageCallback = function (lngid: ShortString): ShortString;
-   TMsgBoxCallback = procedure(const title, msg: AnsiString);
 
 { ////////////////////////////////////////////////////////////////////////////
   Driver History:
@@ -205,6 +181,8 @@ type FSE = ^element;
                   Encrypted files are not supported (yet?), don't hesitate in using the very good XCC-Utils
                   Thanks to this added support drv_mix.d5d from Felix Riemann is not needed anymore (way to go x64!!!)
                  Fixed realMyst 3D .DNI support (implemented zlib decompression of entries)
+    20940  55210 Added Dragon Age: Origins .ERF files support
+                 Added Battleforge .PAK files support
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -214,20 +192,22 @@ type FSE = ^element;
   Dungeon Keeper 2 DWFB files (.WAD) have compressed entries sometimes.
   (Those are not decompressed.. unknown compression used, maybe hauffman)
 
-  Coded but disabled:
+  Coded but disabled (declare EXPFORMATS to enable them during compilation):
   Game                        Ext.   Description
+  Assassin's Creed            FORGE  Looks strange...
   Heath: The Unchosen Path    NRM    Extraction problem (maybe some sort of RLE encoding)
                                      Need to fix the unamed file in root
+  Heroes of Might & Magic 4   H4R    Unknown compression method
 
   //////////////////////////////////////////////////////////////////////////// }
 
 const
   DUDI_VERSION = 5;
   DUDI_VERSION_COMPATIBLE = 4;
-  DRIVER_VERSION = 20840;
-  DUP_VERSION = 55110;
-  CVS_REVISION = '$Revision: 1.61 $';
-  CVS_DATE = '$Date: 2009-09-12 05:51:55 $';
+  DRIVER_VERSION = 20940;
+  DUP_VERSION = 55210;
+  CVS_REVISION = '$Revision: 1.62 $';
+  CVS_DATE = '$Date: 2010-02-27 15:59:54 $';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -297,167 +277,102 @@ end;
 function GetDriverInfo: DriverInfo; stdcall;
 begin
 
-  GetDriverInfo.Name := 'Elbereth''s Main Driver';
-  GetDriverInfo.Author := 'Alexandre Devilliers (aka Elbereth)';
-  GetDriverInfo.Version := getVersion(DRIVER_VERSION);
-  GetDriverInfo.Comment := 'This driver support 84 different file formats. This is the official main driver.'+#10+'Check about box for more info.';
-  GetDriverInfo.NumFormats := 75;
-  GetDriverInfo.Formats[1].Extensions := '*.pak';
-  GetDriverInfo.Formats[1].Name := 'Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)';
-  GetDriverInfo.Formats[2].Extensions := '*.bun';
-  GetDriverInfo.Formats[2].Name := 'Monkey Island 3 (*.BUN)';
-  GetDriverInfo.Formats[3].Extensions := '*.grp;*.art';
-  GetDriverInfo.Formats[3].Name := 'Duke Nukem 3D (*.GRP;*.ART)|Shadow Warrior (*.GRP;*.ART)';
-  GetDriverInfo.Formats[4].Extensions := '*.pff';
-  GetDriverInfo.Formats[4].Name := 'Comanche 4 (*.PFF)|Delta Force (*.PFF)|Delta Force 2 (*.PFF)|Delta Force: Land Warrior (*.PFF)|F-22 Lightning 3';
-  GetDriverInfo.Formats[5].Extensions := '*.rez';
-  GetDriverInfo.Formats[5].Name := 'Alien vs Predator 2 (*.REZ)|No One Lives Forever (*.REZ)|No One Lives Forever 2 (*.REZ)|Sanity Aiken''s Artifact (*.REZ)|Shogo: Mobile Armor Division (*.REZ)|Purge (*.REZ)|Tron 2.0 (*.REZ)';
-  GetDriverInfo.Formats[6].Extensions := '*.drs';
-  GetDriverInfo.Formats[6].Name := 'Age of Empires 2: Age of Kings (*.DRS)';
-  GetDriverInfo.Formats[7].Extensions := '*.ffl';
-  GetDriverInfo.Formats[7].Name := 'Alien vs Predator (*.FFL)';
-  GetDriverInfo.Formats[8].Extensions := '*.gob';
-  GetDriverInfo.Formats[8].Name := 'Dark Forces (*.GOB)|Indiana Jones 3D (*.GOB)|Jedi Knight: Dark Forces 2 (*.GOB)';
-  GetDriverInfo.Formats[9].Extensions := '*.hog;*.mn3';
-  GetDriverInfo.Formats[9].Name := 'Descent (*.HOG)|Descent 2 (*.HOG)|Descent 3 (*.HOG;*.MN3)';
-  GetDriverInfo.Formats[10].Extensions := '*.pak;*.tlk';
-  GetDriverInfo.Formats[10].Name := 'Hands of Fate (*.PAK;*.TLK)|Lands of Lore (*.PAK;*.TLK)';
-  GetDriverInfo.Formats[11].Extensions := '*.wad;*.sdt';
-  GetDriverInfo.Formats[11].Name := 'Dungeon Keeper 2 (*.WAD;*.SDT;*.DWFB)|Theme Park World (*.WAD;*.SDT)';
-  GetDriverInfo.Formats[12].Extensions := '*.vp';
-  GetDriverInfo.Formats[12].Name := 'Conflict: Freespace (*.VP)|Freespace (*.VP)|Freespace 2 (*.VP)';
-  GetDriverInfo.Formats[13].Extensions := '*.zfs';
-  GetDriverInfo.Formats[13].Name := 'Interstate ''76 (*.ZFS)|Interstate ''82 (*.ZFS)';
-  GetDriverInfo.Formats[14].Extensions := '*.pod';
-  GetDriverInfo.Formats[14].Name := 'Terminal Velocity (*.POD)|BloodRayne (*.POD)|Nocturne (*.POD)';
-  GetDriverInfo.Formats[15].Extensions := '*.hrf';
-  GetDriverInfo.Formats[15].Name := 'Dragon UnPACKer HyperRipper (*.HRF)';
-  GetDriverInfo.Formats[16].Extensions := '*.far';
-  GetDriverInfo.Formats[16].Name := 'The Sims (*.FAR)';
-  GetDriverInfo.Formats[17].Extensions := '*.sad';
-  GetDriverInfo.Formats[17].Name := 'Black & White (*.SAD)';
-  GetDriverInfo.Formats[18].Extensions := '*.x13';
-  GetDriverInfo.Formats[18].Name := 'Hooligans (*.X13)';
-  GetDriverInfo.Formats[19].Extensions := '*.slf';
-  GetDriverInfo.Formats[19].Name := 'Jagged Alliance 2 (*.SLF)';
-  GetDriverInfo.Formats[20].Extensions := '*.bag;*.rfh';
-  GetDriverInfo.Formats[20].Name := 'Emperor: Battle for Dune (*.BAG;*.RFH)';
-  GetDriverInfo.Formats[21].Extensions := '*.mtf';
-  GetDriverInfo.Formats[21].Name := 'Darkstone (*.MTF)';
-  GetDriverInfo.Formats[22].Extensions := '*.syn';
-  GetDriverInfo.Formats[22].Name := 'Breakneck (*.SYN)|Excessive Speed (*.SYN)|N.I.C.E.2 (*.SYN)';
-  GetDriverInfo.Formats[23].Extensions := '*.res';
-  GetDriverInfo.Formats[23].Name := 'Electranoid (*.RES)|Evil Islands (*.RES)|Fuzzy''s World of Miniature Space Golf (*.RES)|Laser Light (*.RES)|Rage of Mages 2 (*.RES)|Xatax (*.RES)';
-  GetDriverInfo.Formats[24].Extensions := '*.dta';
-  GetDriverInfo.Formats[24].Name := 'Hidden & Dangerous (*.DTA)';
-  GetDriverInfo.Formats[25].Extensions := '*.box';
-  GetDriverInfo.Formats[25].Name := 'Lemmings Revolution (*.BOX)';
-  GetDriverInfo.Formats[26].Extensions := '*.hal';
-  GetDriverInfo.Formats[26].Name := 'Mortyr (*.HAL)';
-  GetDriverInfo.Formats[27].Extensions := '*.bkf';
-  GetDriverInfo.Formats[27].Name := 'Moto Racer (*.BKF)';
-  GetDriverInfo.Formats[28].Extensions := '*.dat';
-  GetDriverInfo.Formats[28].Name := 'Nascar Racing (*.DAT)|Gunlok (*.DAT)|LEGO Star Wars (*.DAT)|Act of War (*.DAT)|F-22 Air Dominance Fighter (*.DAT)|F-22 Total Air War (*.DAT)|Super EF2000 (*.DAT)';
-  GetDriverInfo.Formats[29].Extensions := '*.pbo';
-  GetDriverInfo.Formats[29].Name := 'Operation Flashpoint (*.PBO)';
-  GetDriverInfo.Formats[30].Extensions := '*.awf';
-  GetDriverInfo.Formats[30].Name := 'Qui veut gagner des millions (*.AWF)|Who wants to be a millionaire (*.AWF)';
-  GetDriverInfo.Formats[31].Extensions := '*.pkr';
-  GetDriverInfo.Formats[31].Name := 'Tony Hawk Pro Skater 2 (*.PKR)';
-  GetDriverInfo.Formats[32].Extensions := '*.xcr';
-  GetDriverInfo.Formats[32].Name := 'Warlords Battlecry (*.XCR)|Warlords Battlecry 2 (*.XCR)';
-  GetDriverInfo.Formats[33].Extensions := '*.snd';
-  GetDriverInfo.Formats[33].Name := 'Heroes of Might & Magic 3 (*.SND)';
-  GetDriverInfo.Formats[34].Extensions := '*.art';
-  GetDriverInfo.Formats[34].Name := 'Blood (*.ART)';
-  GetDriverInfo.Formats[35].Extensions := '*.pak;*.wad';
-  GetDriverInfo.Formats[35].Name := 'Quake (*.PAK;*.WAD)|Quake 2 (*.PAK;*.WAD)|Half-Life (*.PAK;*.WAD)|Heretic 2 (*.PAK;*.WAD)';
-  GetDriverInfo.Formats[36].Extensions := '*.sni';
-  GetDriverInfo.Formats[36].Name := 'MDK (*.SNI)';
-  GetDriverInfo.Formats[37].Extensions := '*.wad';
-  GetDriverInfo.Formats[37].Name := 'Gunman Chronicle (*.WAD)';
-  GetDriverInfo.Formats[38].Extensions := '*.hpi;*.ufo';
-  GetDriverInfo.Formats[38].Name := 'Total Annihilation (*.HPI;*.UFO)';
-  GetDriverInfo.Formats[39].Extensions := '*.ccx';
-  GetDriverInfo.Formats[39].Name := 'Total Annihilation: Counter-Strike (*.CCX)';
-  GetDriverInfo.Formats[40].Extensions := '*.dni';
-  GetDriverInfo.Formats[40].Name := 'realMyst 3D (*.DNI)';
-  GetDriverInfo.Formats[41].Extensions := '*.vol';
-  GetDriverInfo.Formats[41].Name := 'Earth Siege 2 (*.VOL)|Starsiege: Tribes (*.VOL)';
-  GetDriverInfo.Formats[42].Extensions := '*.rfa';
-  GetDriverInfo.Formats[42].Name := 'Battlefield 1942 (*.RFA)';
-  GetDriverInfo.Formats[43].Extensions := '*.sin';
-  GetDriverInfo.Formats[43].Name := 'Sin (*.SIN)';
-  GetDriverInfo.Formats[44].Extensions := '*.img;*.adf';
-  GetDriverInfo.Formats[44].Name := 'GTA3/Grand Theft Auto 3 (*.ADF;*.IMG)';
-  GetDriverInfo.Formats[45].Extensions := '*.bar';
-  GetDriverInfo.Formats[45].Name := 'Age of Mythology (*.BAR)|Age of Empires 3 (*.BAR)';
-  GetDriverInfo.Formats[46].Extensions := '*.sak';
-  GetDriverInfo.Formats[46].Name := 'Postal (*.SAK)';
-  GetDriverInfo.Formats[47].Extensions := '*.007';
-  GetDriverInfo.Formats[47].Name := 'James Bond 007: NightFire (*.007)';
-  GetDriverInfo.Formats[48].Extensions := '*.CPR';
-  GetDriverInfo.Formats[48].Name := 'Port Royale (*.CPR)|Patrician II (*.CPR)';
-  GetDriverInfo.Formats[49].Extensions := '*.SQH';
-  GetDriverInfo.Formats[49].Name := 'Harbinger (*.SQH)';
-  GetDriverInfo.Formats[50].Extensions := '*.XRS';
-  GetDriverInfo.Formats[50].Name := 'Dig It! (*.XRS)';
-  GetDriverInfo.Formats[51].Extensions := '*.BIG';
-  GetDriverInfo.Formats[51].Name := 'Command & Conquer: Generals (*.BIG)|Command & Conquer: Generals - Zero Hour (*.BIG)|The Lord of the Rings: Battle for Middle Earth (*.BIG)|Command & Conquer: Red Alert 3 (*.BIG)';
-  GetDriverInfo.Formats[52].Extensions := '*.PCK';
-  GetDriverInfo.Formats[52].Name := 'Commandos 3 (*.PCK)';
-  GetDriverInfo.Formats[53].Extensions := '*.SSA';
-  GetDriverInfo.Formats[53].Name := 'Empires: Dawn of the Modern World (*.SSA)';
-  GetDriverInfo.Formats[54].Extensions := '*.STUFF';
-  GetDriverInfo.Formats[54].Name := 'Eve Online (*.STUFF)';
-  GetDriverInfo.Formats[55].Extensions := '*.TEX;*.PRM';
-  GetDriverInfo.Formats[55].Name := 'Freedom Fighters (*.TEX;*.PRM)|Hitman 2: Silent Assassin (*.TEX;*.PRM)|Hitman: Contracts (*.TEX;*.PRM)';
-  GetDriverInfo.Formats[56].Extensions := '*.BIN';
-  GetDriverInfo.Formats[56].Name := 'CyberBykes: Shadow Racer VR (*.BIN)';
-  GetDriverInfo.Formats[57].Extensions := '*.M4B';
-  GetDriverInfo.Formats[57].Name := 'Myst IV: Revelation (*.M4B)';
-  GetDriverInfo.Formats[58].Extensions := '*.JAM';
-  GetDriverInfo.Formats[58].Name := 'Leisure Suite Larry: Magna Cum Laude (*.JAM)';
-  GetDriverInfo.Formats[59].Extensions := '*.LUG';
-  GetDriverInfo.Formats[59].Name := 'Fable: The Lost Chapter (*.LUG)';
-  GetDriverInfo.Formats[60].Extensions := '*.STUFF;*.LUG';
-  GetDriverInfo.Formats[60].Name := 'Black & White 2 (*.LUG;*.STUFF)';
-  GetDriverInfo.Formats[61].Extensions := '*.FPK';
-  GetDriverInfo.Formats[61].Name := 'Civilization 4 (*.FPK)';
-  GetDriverInfo.Formats[62].Extensions := '*.LUG;*.BIG';
-  GetDriverInfo.Formats[62].Name := 'The Movies (*.BIG;*.LUG)';
-  GetDriverInfo.Formats[63].Extensions := '*.ARCH00';
-  GetDriverInfo.Formats[63].Name := 'F.E.A.R. (*.ARCH00)';
-  GetDriverInfo.Formats[64].Extensions := '*.BSA';
-  GetDriverInfo.Formats[64].Name := 'The Elder Scrolls 4: Oblivion (*.BSA)';
-  GetDriverInfo.Formats[65].Extensions := '*.VFS';
-  GetDriverInfo.Formats[65].Name := 'UFO: Aftermath (*.VFS)|UFO: Aftershock (*.VFS)|UFO: Afterlight (*.VFS)';
-  GetDriverInfo.Formats[66].Extensions := '*.OPK';
-  GetDriverInfo.Formats[66].Name := 'Sinking Island (*.OPK)|L''Ile Noyée (*.OPK)';
-  GetDriverInfo.Formats[67].Extensions := '*.BNT';
-  GetDriverInfo.Formats[67].Name := 'Entropia Universe (*.BNT)';
-  GetDriverInfo.Formats[68].Extensions := '*.SFL';
-  GetDriverInfo.Formats[68].Name := 'AGON: The Lost Sword of Toledo (*.SFL)';
-  GetDriverInfo.Formats[69].Extensions := '*.XWC;.XTC';
-  GetDriverInfo.Formats[69].Name := 'Enclave (*.XTC;*.XWC)|The Chronicles of Riddick: Butcher Bay (*.XTC;*.XWC)|The Chronicles of Riddick: Dark Athena (*.XTC;*.XWC)';
-  GetDriverInfo.Formats[70].Extensions := '*.COB';
-  GetDriverInfo.Formats[70].Name := 'Ascendancy (*.COB)';
-  GetDriverInfo.Formats[71].Extensions := '*.MRC';
-  GetDriverInfo.Formats[71].Name := 'The Fifth Element (*.MRC)';
-  GetDriverInfo.Formats[72].Extensions := '*.RCF';
-  GetDriverInfo.Formats[72].Name := 'Prototype (*.RCF)|Scarface (*.RCF)';
-  GetDriverInfo.Formats[73].Extensions := '*.GZP';
-  GetDriverInfo.Formats[73].Name := 'Giants: Citizen Kabuto (*.GZP)';
-  GetDriverInfo.Formats[74].Extensions := '*.MIX';
-  GetDriverInfo.Formats[74].Name := 'Command & Conquer (*.MIX)';
-  GetDriverInfo.Formats[75].Extensions := '*.MIX;*.TLK';
-  GetDriverInfo.Formats[75].Name := 'Blade Runner (*.MIX;*.TLK)';
-//  GetDriverInfo.Formats[63].Extensions := '*.FORGE';
-//  GetDriverInfo.Formats[63].Name := 'Assassin''s Creed (*.FORGE)';
-//  GetDriverInfo.Formats[50].Extensions := '*.PAXX.NRM';
-//  GetDriverInfo.Formats[50].Name := 'Heath: The Unchosen Path (*.PAXX.NRM)'
-//  GetDriverInfo.Formats[41].Extensions := '*.h4r';
-//  GetDriverInfo.Formats[41].Name := 'Heroes of Might & Magic 4 (*.H4R)';
+  // Initialize output to 0 filled
+  FillChar(result,SizeOf(DriverInfo),0);
+
+  // Information about the plugin
+  with result do
+  begin
+    Name := 'Elbereth''s Main Driver';
+    Author := 'Alexandre Devilliers (aka Elbereth)';
+    Version := getVersion(DRIVER_VERSION);
+    Comment := 'This driver support 84 different file formats. This is the official main driver.'+#10+'Check about box for more info.';
+  end;
+
+  // Supported file formats
+  addFormat(result,'*.007','James Bond 007: NightFire (*.007)');
+  addFormat(result,'*.ARCH00','F.E.A.R. (*.ARCH00)');
+  addFormat(result,'*.ART','Blood (*.ART)');
+  addFormat(result,'*.AWF','Qui veut gagner des millions (*.AWF)|Who wants to be a millionaire (*.AWF)');
+  addFormat(result,'*.BAG;*.RFH','Emperor: Battle for Dune (*.BAG;*.RFH)');
+  addFormat(result,'*.BAR','Age of Mythology (*.BAR)|Age of Empires 3 (*.BAR)');
+  addFormat(result,'*.BIG','Command & Conquer: Generals (*.BIG)|Command & Conquer: Generals - Zero Hour (*.BIG)|The Lord of the Rings: Battle for Middle Earth (*.BIG)|Command & Conquer: Red Alert 3 (*.BIG)');
+  addFormat(result,'*.BIN','CyberBykes: Shadow Racer VR (*.BIN)');
+  addFormat(result,'*.BKF','Moto Racer (*.BKF)');
+  addFormat(result,'*.BOX','Lemmings Revolution (*.BOX)');
+  addFormat(result,'*.BNT','Entropia Universe (*.BNT)');
+  addFormat(result,'*.BSA','The Elder Scrolls 4: Oblivion (*.BSA)');
+  addFormat(result,'*.BUN','Monkey Island 3 (*.BUN)');
+  addFormat(result,'*.CCX','Total Annihilation: Counter-Strike (*.CCX)');
+  addFormat(result,'*.COB','Ascendancy (*.COB)');
+  addFormat(result,'*.CPR','Port Royale (*.CPR)|Patrician II (*.CPR)');
+  addFormat(result,'*.DAT','Nascar Racing (*.DAT)|Gunlok (*.DAT)|LEGO Star Wars (*.DAT)|Act of War (*.DAT)|F-22 Air Dominance Fighter (*.DAT)|F-22 Total Air War (*.DAT)|Super EF2000 (*.DAT)');
+  addFormat(result,'*.DNI','realMyst 3D (*.DNI)');
+  addFormat(result,'*.DRS','Age of Empires 2: Age of Kings (*.DRS)');
+  addFormat(result,'*.DTA','Hidden & Dangerous (*.DTA)');
+  addFormat(result,'*.ERF','Dragon Age: Origins (*.ERF)');
+  addFormat(result,'*.FAR','The Sims (*.FAR)');
+  addFormat(result,'*.FFL','Alien vs Predator (*.FFL)');
+  addFormat(result,'*.FPK','Civilization 4 (*.FPK)');
+  addFormat(result,'*.GOB','Dark Forces (*.GOB)|Indiana Jones 3D (*.GOB)|Jedi Knight: Dark Forces 2 (*.GOB)');
+  addFormat(result,'*.GRP;*.ART','Duke Nukem 3D (*.GRP;*.ART)|Shadow Warrior (*.GRP;*.ART)');
+  addFormat(result,'*.GZP','Giants: Citizen Kabuto (*.GZP)');
+  addFormat(result,'*.HAL','Mortyr (*.HAL)');
+  addFormat(result,'*.HOG;*.MN3','Descent (*.HOG)|Descent 2 (*.HOG)|Descent 3 (*.HOG;*.MN3)');
+  addFormat(result,'*.HPI;*.UFO','Total Annihilation (*.HPI;*.UFO)');
+  addFormat(result,'*.HRF','Dragon UnPACKer HyperRipper (*.HRF)');
+  addFormat(result,'*.IMG;*.ADF','GTA3/Grand Theft Auto 3 (*.ADF;*.IMG)');
+  addFormat(result,'*.JAM','Leisure Suite Larry: Magna Cum Laude (*.JAM)');
+  addFormat(result,'*.LUG','Fable: The Lost Chapter (*.LUG)');
+  addFormat(result,'*.LUG;*.BIG','The Movies (*.BIG;*.LUG)');
+  addFormat(result,'*.M4B','Myst IV: Revelation (*.M4B)');
+  addFormat(result,'*.MIX','Command & Conquer (*.MIX)');
+  addFormat(result,'*.MIX;*.TLK','Blade Runner (*.MIX;*.TLK)');
+  addFormat(result,'*.MRC','The Fifth Element (*.MRC)');
+  addFormat(result,'*.MTF','Darkstone (*.MTF)');
+  addFormat(result,'*.OPK','Sinking Island (*.OPK)|L''Ile Noyée (*.OPK)');
+  addFormat(result,'*.PAK','Battleforge (*.PAK)|Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)');
+  addFormat(result,'*.PAK;*.TLK','Hands of Fate (*.PAK;*.TLK)|Lands of Lore (*.PAK;*.TLK)');
+  addFormat(result,'*.PAK;*.WAD','Quake (*.PAK;*.WAD)|Quake 2 (*.PAK;*.WAD)|Half-Life (*.PAK;*.WAD)|Heretic 2 (*.PAK;*.WAD)');
+  addFormat(result,'*.PBO','Operation Flashpoint (*.PBO)');
+  addFormat(result,'*.PCK','Commandos 3 (*.PCK)');
+  addFormat(result,'*.PFF','Comanche 4 (*.PFF)|Delta Force (*.PFF)|Delta Force 2 (*.PFF)|Delta Force: Land Warrior (*.PFF)|F-22 Lightning 3');
+  addFormat(result,'*.PKR','Tony Hawk Pro Skater 2 (*.PKR)');
+  addFormat(result,'*.POD','Terminal Velocity (*.POD)|BloodRayne (*.POD)|Nocturne (*.POD)');
+  addFormat(result,'*.RCF','Prototype (*.RCF)|Scarface (*.RCF)');
+  addFormat(result,'*.RES','Electranoid (*.RES)|Evil Islands (*.RES)|Fuzzy''s World of Miniature Space Golf (*.RES)|Laser Light (*.RES)|Rage of Mages 2 (*.RES)|Xatax (*.RES)');
+  addFormat(result,'*.REZ','Alien vs Predator 2 (*.REZ)|No One Lives Forever (*.REZ)|No One Lives Forever 2 (*.REZ)|Sanity Aiken''s Artifact (*.REZ)|Shogo: Mobile Armor Division (*.REZ)|Purge (*.REZ)|Tron 2.0 (*.REZ)');
+  addFormat(result,'*.RFA','Battlefield 1942 (*.RFA)');
+  addFormat(result,'*.SAD','Black & White (*.SAD)');
+  addFormat(result,'*.SAK','Postal (*.SAK)');
+  addFormat(result,'*.SFL','AGON: The Lost Sword of Toledo (*.SFL)');
+  addFormat(result,'*.SIN','Sin (*.SIN)');
+  addFormat(result,'*.SLF','Jagged Alliance 2 (*.SLF)');
+  addFormat(result,'*.SND','Heroes of Might & Magic 3 (*.SND)');
+  addFormat(result,'*.SNI','MDK (*.SNI)');
+  addFormat(result,'*.SQH','Harbinger (*.SQH)');
+  addFormat(result,'*.SSA','Empires: Dawn of the Modern World (*.SSA)');
+  addFormat(result,'*.STUFF','Eve Online (*.STUFF)');
+  addFormat(result,'*.STUFF;*.LUG','Black & White 2 (*.LUG;*.STUFF)');
+  addFormat(result,'*.SYN','Breakneck (*.SYN)|Excessive Speed (*.SYN)|N.I.C.E.2 (*.SYN)');
+  addFormat(result,'*.TEX;*.PRM','Freedom Fighters (*.TEX;*.PRM)|Hitman 2: Silent Assassin (*.TEX;*.PRM)|Hitman: Contracts (*.TEX;*.PRM)');
+  addFormat(result,'*.VFS','UFO: Aftermath (*.VFS)|UFO: Aftershock (*.VFS)|UFO: Afterlight (*.VFS)');
+  addFormat(result,'*.VOL','Earth Siege 2 (*.VOL)|Starsiege: Tribes (*.VOL)');
+  addFormat(result,'*.VP','Conflict: Freespace (*.VP)|Freespace (*.VP)|Freespace 2 (*.VP)');
+  addFormat(result,'*.WAD','Gunman Chronicle (*.WAD)');
+  addFormat(result,'*.WAD;*.SDT;*.DWFB','Dungeon Keeper 2 (*.WAD;*.SDT;*.DWFB)|Theme Park World (*.WAD;*.SDT)');
+  addFormat(result,'*.X13','Hooligans (*.X13)');
+  addFormat(result,'*.XCR','Warlords Battlecry (*.XCR)|Warlords Battlecry 2 (*.XCR)');
+  addFormat(result,'*.XRS','Dig It! (*.XRS)');
+  addFormat(result,'*.XWC;.XTC','Enclave (*.XTC;*.XWC)|The Chronicles of Riddick: Butcher Bay (*.XTC;*.XWC)|The Chronicles of Riddick: Dark Athena (*.XTC;*.XWC)');
+  addFormat(result,'*.ZFS','Interstate ''76 (*.ZFS)|Interstate ''82 (*.ZFS)');
+
+{IFDEF EXPFORMATS}
+  // Experimental formats (either not working at all or useless in actual form)
+  addFormat(result,'*.FORGE','Assassin''s Creed (*.FORGE)');
+  addFormat(result,'*.PAXX.NRM','Heath: The Unchosen Path (*.PAXX.NRM)');
+  addFormat(result,'*.H4R','Heroes of Might & Magic 4 (*.H4R)');
+{ENDIF}
 
 end;
 
@@ -1659,6 +1574,8 @@ end;
 // Assassin's Creed .FORGE support ================================== PARTIAL //
 // -------------------------------------------------------------------------- //
 
+{IFDEF EXPFORMATS}
+
 type FORGEHeader = packed record
         MagicID: array[0..8] of char; // 'scimitar' + #0
         Unknown1: integer;
@@ -1777,6 +1694,9 @@ begin
 
 end;
 
+{ENDIF}
+
+
 // -------------------------------------------------------------------------- //
 // Battlefield 1942 .RFA support ============================================ //
 // -------------------------------------------------------------------------- //
@@ -1871,6 +1791,101 @@ begin
   end
   else
     Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Battleforge .PAK support ================================================= //
+// -------------------------------------------------------------------------- //
+
+// Format is simple:
+//   Header
+//     ID      = PAK
+//     Version = 1
+//     Offset to directory of entries
+//     Size of directory of entries
+//     Compressed size of directory of entries (aka size in PAK file)
+//   Data ...
+//   Zlib Compressed Directory (at Header.offset)
+//
+//   Directory
+//     Number of Entries
+//     Entries ...
+//
+//   Entries
+//     Size of filename (32 bits)
+//     Filename
+//     Offset start
+//     Offset end
+
+type HDRBattleforgePAK = packed record
+        ID: array[1..3] of Char;
+        Version: byte;
+        DirOffset: cardinal;
+        DirSize: cardinal;
+        DirCompressedSize: cardinal;
+     end;
+
+function ReadBattleforgePAK(): Integer;
+var HDR: HDRBattleforgePAK;
+    totFSize: int64;
+    stmDec : TDecompressionStream;
+    stmSrc : THandleStream;
+    stmMem : TMemoryStream;
+    x, NumE: integer;
+    size, offset: cardinal;
+    disp: string;
+begin
+
+  TotFSize := FileSeek(Fhandle, 0, 2);
+  FileSeek(Fhandle, 0, 0);
+  FileRead(Fhandle, HDR, Sizeof(HDRBattleforgePAK));
+
+  if (HDR.ID <> 'PAK') or (HDR.Version <> 1) or
+     ((HDR.DirOffset + HDR.DirCompressedSize) > (TotFSize)) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'BFPAK';
+    ErrInfo.Games := 'Battleforge';
+  end
+  else
+  begin
+
+    // We retrieve the directory and decompress it
+    stmSrc := THandleStream.Create(FHandle);
+    stmSrc.Seek(HDR.DirOffset,0);
+    stmDec := TDecompressionStream.Create(stmSrc);
+    stmMem := TMemoryStream.Create;
+    try
+      stmMem.CopyFrom(stmDec,HDR.DirSize);
+    finally
+      FreeAndNil(stmDec);
+      FreeAndNil(stmSrc);
+    end;
+
+    // Now we parse the directory
+    stmMem.seek(0,0);
+    stmMem.ReadBuffer(NumE,4);
+
+    for x := 1 to NumE do
+    begin
+      disp := get32(stmMem);
+      stmMem.ReadBuffer(offset,4);
+      stmMem.ReadBuffer(size,4);
+      // Size if Offset end - Offset start
+      FSE_Add(disp,Offset,Size-Offset,0,0);
+    end;
+
+    Result := NumE;
+    
+    DrvInfo.ID := 'BFPAK';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+  end;
 
 end;
 
@@ -3233,6 +3248,84 @@ begin
 end;
 
 // -------------------------------------------------------------------------- //
+// Dragon Age: Origins .ERF support ========================================= //
+// -------------------------------------------------------------------------- //
+
+type HDRDragonAgeOriginsERF = packed record
+       ID: array[0..7] of widechar;
+       NumberOfEntries: cardinal;
+       Unknown1: cardinal;
+       Unknown2: cardinal;
+       Unknown3: cardinal;
+     end;
+     ENTDragonAgeOriginsERF = packed record
+       UnicodeName: array[0..31] of widechar;
+       Offset: cardinal;
+       Size: cardinal;
+     end;
+
+function ReadDragonAgeOriginsERF(filename: string): integer;
+var HDR: HDRDragonAgeOriginsERF;
+    ENT: ENTDragonAgeOriginsERF;
+    x: cardinal;
+    disp: ansistring;
+begin
+
+  Fhandle := FileOpen(filename, fmOpenRead);
+
+  if (FHandle > 0) then
+  begin
+
+    FileSeek(Fhandle, 0, 0);
+    FileRead(Fhandle, HDR, Sizeof(HDRDragonAgeOriginsERF));
+
+    if HDR.ID <> 'ERF V2.0' then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'ERF';
+      ErrInfo.Games := 'Dragon Age: Origins';
+    end
+    else
+    begin
+
+      OldPer := 0;
+      SetPercent(0);
+      for x:= 1 to HDR.NumberOfEntries do
+      begin
+
+        Per := ROund(((x / HDR.NumberOfEntries)*100));
+        if (Per > OldPer) then
+        begin
+          SetPercent(Per);
+          OldPer := Per;
+        end;
+
+        FileRead(Fhandle, ENT, Sizeof(ENTDragonAgeOriginsERF));
+
+        disp := ENT.UnicodeName;
+
+        FSE_Add(strip0(disp),ENT.Offset,ENT.Size,0,0);
+
+      end;
+
+      Result := HDR.NumberOfEntries;
+
+      DrvInfo.ID := 'ERF';
+      DrvInfo.Sch := '/';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end
+  else
+    result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
 // Dreamfall .PAK support =================================================== //
 // -------------------------------------------------------------------------- //
 
@@ -3380,7 +3473,7 @@ begin
     FileRead(FHandle,HDR.Numtiles,4);
     FileRead(FHandle,HDR.LocalTileStart,4);
     FileRead(FHandle,HDR.LocalTileEnd,4);
-    
+
     if HDR.ARTVersion <> 1 then
     begin
       FileClose(Fhandle);
@@ -6034,6 +6127,8 @@ end;
 // Heath .NRM support ======================================================= //
 // -------------------------------------------------------------------------- //
 
+{IFDEF EXPFORMATS}
+
 type NRMHeader = packed record
        ID: array[0..17] of char;
      end;
@@ -6104,6 +6199,8 @@ begin
     Result := -2;
 
 end;
+
+{ENDIF}
 
 // -------------------------------------------------------------------------- //
 // Heroes of Might & Magic 3 .SND support =================================== //
@@ -6195,6 +6292,8 @@ end;
 // Heroes of Might & Magic 4 .H4R support =================================== //
 // -------------------------------------------------------------------------- //
 
+{IFDEF EXPFORMATS}
+
 type H4R_Header = packed record
        ID: array[0..3] of char;
        DirOffset: integer;
@@ -6272,6 +6371,8 @@ begin
     Result := -2;
 
 end;
+
+{ENDIF}
 
 // -------------------------------------------------------------------------- //
 // Hidden and Dangerous .DTA/.CNT support =================================== //
@@ -13040,6 +13141,8 @@ begin
     FileRead(FHandle,mixtest3,4);
     if ID = 'PACK' then
       res := ReadQuakePAK
+    else if ID = 'PAK'+#1 then
+      res := ReadBattleforgePAK
     else if ID12 = 'tlj_pack0001' then
       res := ReadDreamfallTLJPAK(src)
     else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
@@ -13444,11 +13547,6 @@ begin
         Result := ReadBloodRaynePOD
       else if ID8 = ('FILECHNK') then
         Result := ReadGunlokDAT
-{      else if ID23 = NRMID then
-      begin
-        FileCLose(FHandle);
-        Result := ReadHeathNRM(fil);
-      end}
       else if ID4 = ('GABA') then
       begin
         FileClose(FHandle);
@@ -13479,6 +13577,8 @@ begin
         FileClose(FHandle);
         Result := ReadMortyrHAL(fil);
       end
+      else if ID4 = ('PAK'+#1) then
+        Result := ReadBattleforgePAK
       else if ID4 = ('ESPN') then
         Result := ReadAgeOfEmpires3BAR
       else if ID4 = ('VOLN') then
@@ -13500,11 +13600,6 @@ begin
         FileClose(FHandle);
         Result := ReadLeisureSuitLarryMagnaCumLaudeJAM(fil);
       end
- {     else if (ID4[0] = #72) and (ID4[1] = #52) and (ID4[2] = #82) and (ID4[3] = #5) then
-      begin
-        FileClose(FHandle);
-        Result := ReadHeroesOfMightAndMagic4H4R(fil);
-      end}
       else if ID4 = ('DTA_') then
       begin
         FileClose(FHandle);
@@ -13617,6 +13712,14 @@ begin
         FileClose(FHandle);
         Result := ReadCommandos3PCK(fil);
       end
+      // Dragon Age: Origins .ERF
+      else if (ID28[0] = 'E') and (ID28[1] = #0) and (ID28[2] = 'R') and (ID28[3] = #0) and (ID28[4] = 'F') and (ID28[5] = #0)
+        and (ID28[6] = ' ') and (ID28[7] = #0) and (ID28[8] = 'V') and (ID28[9] = #0) and (ID28[10] = '2') and (ID28[11] = #0)
+        and (ID28[12] = '.') and (ID28[13] = #0) and (ID28[14] = '0') and (ID28[15] = #0) then
+      begin
+        FileClose(FHandle);
+        Result := ReadDragonAgeOriginsERF(fil);
+      end
       else if (ID4 = ('&YA1')) then
       begin
         Result := ReadRageOfMages2RES;
@@ -13631,12 +13734,25 @@ begin
         FileClose(FHandle);
         Result := ReadAscaronCPR(fil);
       end
-{      else if (LeftStr(ID8,8) = 'scimitar')
+{IFDEF EXPFORMATS}
+      // Deactivated Assassin's Creed .FORGE support due to incompleteness (usefullness?)
+      else if (LeftStr(ID8,8) = 'scimitar')
           and (ID127[8] = #0) then
       begin
         FileClose(FHandle);
         Result := ReadAssassinsCreedFORGE(fil);
-      end} // Deactivated Assissin's Creed .FORGE support due to incompleteness (usefullness?)
+      end
+      else if ID23 = NRMID then
+      begin
+        FileCLose(FHandle);
+        Result := ReadHeathNRM(fil);
+      end
+      else if (ID4[0] = #72) and (ID4[1] = #52) and (ID4[2] = #82) and (ID4[3] = #5) then
+      begin
+        FileClose(FHandle);
+        Result := ReadHeroesOfMightAndMagic4H4R(fil);
+      end
+{ENDIF}
       // Hitman: Contracts - TEX
       else if (ID127[8] = #3) and (ID127[9] = #0) and (ID127[10] = #0) and (ID127[11] = #0)
           and (ID127[12] = #4) and (ID127[13] = #0) and (ID127[14] = #0) and (ID127[15] = #0) then
@@ -13725,12 +13841,12 @@ begin
       ReadFormat := ReadAoe2DRS(fil)
     else if ext = 'DTA' then
       ReadFormat := ReadHiddenAndDangerousDTA(fil)
+    else if ext = 'ERF' then
+      Result := ReadDragonAgeOriginsERF(fil)
     else if ext = 'FAR' then
       ReadFormat := ReadTheSimsFAR(fil)
     else if ext = 'FFL' then
       ReadFormat := ReadAvPRFFL(fil)
-//    else if ext = 'FORGE' then
-//      ReadFormat := ReadAssassinsCreedFORGE(fil)
     else if ext = 'FPK' then
       Result := ReadCivilization4FPK(fil)
     else if ext = 'GL' then
@@ -13744,8 +13860,6 @@ begin
       ReadFormat := ReadHubGOB(fil)
     else if ext = 'GZP' then
       Result := ReadGiantsGZP(fil)
-//    else if ext = 'H4R' then
-//      ReadFormat := ReadHeroesOfMightAndMagic4H4R(fil)
     else if ext = 'HAL' then
       ReadFormat := ReadMortyrHAL(fil)
     else if (ext = 'HOG') or (ext = 'MN3') then
@@ -13770,8 +13884,14 @@ begin
     end
     else if ext = 'MTF' then
       ReadFormat := ReadDarkstoneMTF(fil)
-{    else if ext = 'NRM' then
-      ReadFormat := ReadHeathNRM(fil)}
+{IFDEF EXPFORMATS}
+    else if ext = 'FORGE' then
+      ReadFormat := ReadAssassinsCreedFORGE(fil)
+    else if ext = 'NRM' then
+      ReadFormat := ReadHeathNRM(fil)
+    else if ext = 'H4R' then
+      ReadFormat := ReadHeroesOfMightAndMagic4H4R(fil)
+{ENDIF}
     // Sinking Island/L'Ile Noyée .OPK
     else if ext = 'OPK' then
       Result := ReadSinkingIslandOPK(fil)
@@ -13920,7 +14040,7 @@ var ID4: array[0..3] of char;
     ID8: array[0..7] of char;
     ID12: array[0..11] of char;
     ID12SLF: array[0..11] of char;
-//    ID18: array[0..17] of char;
+    ID18: array[0..17] of char;
     ID21P4: array[0..20] of char;
     ID23: array[0..22] of char;
     ID28: array[0..27] of char;
@@ -13961,6 +14081,7 @@ begin
       ID4[x] := ID127[x];
       ID8[x] := ID127[x];
       ID12[x] := ID127[x];
+      ID18[x] := ID127[x];
       ID23[x] := ID127[x];
       ID28[x] := ID127[x];
       ID36[x] := ID127[x];
@@ -13970,6 +14091,7 @@ begin
       ID6[x] := ID127[x];
       ID8[x] := ID127[x];
       ID12[x] := ID127[x];
+      ID18[x] := ID127[x];
       ID23[x] := ID127[x];
       ID28[x] := ID127[x];
       ID36[x] := ID127[x];
@@ -13979,6 +14101,7 @@ begin
     begin
       ID8[x] := ID127[x];
       ID12[x] := ID127[x];
+      ID18[x] := ID127[x];
       ID23[x] := ID127[x];
       ID28[x] := ID127[x];
       ID36[x] := ID127[x];
@@ -13987,6 +14110,7 @@ begin
     for x := 8 to 11 do
     begin
       ID12[x] := ID127[x];
+      ID18[x] := ID127[x];
       ID23[x] := ID127[x];
       ID28[x] := ID127[x];
       ID36[x] := ID127[x];
@@ -13994,6 +14118,8 @@ begin
     end;
     for x := 12 to 22 do
     begin
+      if (x < 19) then
+        ID18[x] := ID127[x];
       ID23[x] := ID127[x];
       ID28[x] := ID127[x];
       ID36[x] := ID127[x];
@@ -14073,8 +14199,6 @@ begin
       Result := true
     else if ID28 = 'Refractor2 FlatArchive 1.1  ' then
       Result := true
-//    else if ID18 = NRMID then
-//      Result := true
     else if ID8 = 'LiOnHeAd' then
       Result := true
     else if ID8 = 'FILECHNK' then
@@ -14102,9 +14226,19 @@ begin
       Result := true
     else if ID4 = ('GOB ') then
       Result := true
-// H4R
-//    else if (ID4[0] = #72) and (ID4[1] = #52) and (ID4[2] = #82) and (ID4[3] = #5) then
-//      Result := true
+{IFDEF EXPFORMATS}
+    // Assassin's Creed
+    else if (LeftStr(ID8,8) = 'scimitar')
+          and (ID127[8] = #0) then
+      Result := true
+    else if ID18 = NRMID then
+      Result := true
+    // H4R
+    else if (ID4[0] = #72) and (ID4[1] = #52) and (ID4[2] = #82) and (ID4[3] = #5) then
+      Result := true
+{ENDIF}
+    else if ID4 = ('PAK'+#1) then
+      Result := true
     else if ID4 = ('HAPI') then
       Result := true
     else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
@@ -14178,6 +14312,11 @@ begin
       Result := true
     else if (ID4 = ('DATA')) then
       Result := true
+    // Dragon Age: Origins .ERF
+    else if (ID28[0] = 'E') and (ID28[1] = #0) and (ID28[2] = 'R') and (ID28[3] = #0) and (ID28[4] = 'F') and (ID28[5] = #0)
+        and (ID28[6] = ' ') and (ID28[7] = #0) and (ID28[8] = 'V') and (ID28[9] = #0) and (ID28[10] = '2') and (ID28[11] = #0)
+        and (ID28[12] = '.') and (ID28[13] = #0) and (ID28[14] = '0') and (ID28[15] = #0) then
+      Result := true
     else if (ID4 = ('RIFF')) and (ID12[8] = 'm') and (ID12[9] = 'm') and (ID12[10] = 'R') and (ID12[11] = 'C') then
       Result := true
     else if ID12SLF = SLFID then
@@ -14186,9 +14325,6 @@ begin
       Result := true
     else if (Strip0(ID36)) = 'ASCARON_ARCHIVE V0.9' then
       Result := true
-//    else if (LeftStr(ID8,8) = 'scimitar')
-//          and (ID127[8] = #0) then
-//      Result := true
     // Hitman: Contracts - TEX file
     else if (ID127[8] = #3) and (ID127[9] = #0) and (ID127[10] = #0) and (ID127[11] = #0)
         and (ID127[12] = #4) and (ID127[13] = #0) and (ID127[14] = #0) and (ID127[15] = #0) then
@@ -14266,12 +14402,13 @@ begin
       IsFormat := True
     else if ext = 'DTA' then
       IsFormat := True
+    // Dragon Age: Origins .ERF
+    else if ext = 'ERF' then
+      IsFormat := True
     else if ext = 'FAR' then
       IsFormat := True
     else if ext = 'FFL' then
       IsFormat := True
-//    else if ext = 'FORGE' then
-//      IsFormat := True
     else if ext = 'FPK' then   // Civilization 4
       IsFormat := True
     else if ext = 'GL' then
@@ -14283,8 +14420,6 @@ begin
     // Giants: Citizen Kabuto
     else if ext = 'GZP' then
       IsFormat := True
-//    else if ext = 'H4R' then
-//      IsFormat := True
     else if ext = 'HAL' then
       IsFormat := True
     else if ext = 'HOG' then
@@ -14309,8 +14444,14 @@ begin
       IsFormat := True
     else if ext = 'MTF' then
       IsFormat := True
-//    else if ext = 'NRM' then
-//      IsFormat := True
+{IFDEF EXPFORMATS}
+    else if ext = 'FORGE' then
+      IsFormat := True
+    else if ext = 'NRM' then
+      IsFormat := True
+    else if ext = 'H4R' then
+      IsFormat := True
+{ENDIF}
     // Sinking Island/L'Ile Noyée .OPK
     else if ext = 'OPK' then
       IsFormat := True
@@ -14986,45 +15127,48 @@ begin
 
   FileSeek(FHandle,Offset,0);
 
-  if DrvInfo.ID = 'RFH/RFD' then
-  begin
-    if (DataX = 2) then
-    begin
-      DecompressRFDToStream(outputstream, DataY, Size);
-    end
-    else if (DataX = 1) then
-    begin
-      BinCopyToStream(FHandle,outputstream,offset,DataY,0,BUFFER_SIZE,silent,SetPercent);
-    end
+  if DrvInfo.ID = '007' then
+    if (DataX = 1) then
+      DecompressZlibToStream(outputstream, DataY, Size)
     else
-    begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end;
-  end
-  else if DrvInfo.ID = '007' then
-  begin
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+
+  else if DrvInfo.ID = 'ADF' then
+    DecryptADFToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent)
+
+  else if DrvInfo.ID = 'BSA' then
     if (DataX = 1) then
     begin
+      FileSeek(FHandle,Offset,0);
       DecompressZlibToStream(outputstream, DataY, Size);
     end
     else
-    begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end;
-  end
-  else if DrvInfo.ID = 'DNI' then
-  begin
-    if (DataX > 0) then
-    begin
-      DecompressZlibToStream(outputstream, DataX, Size);
-    end
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+
+  else if DrvInfo.ID = 'CBF0' then
+    if (DataY = 1) then
+      DecompressCBFToStream(FHandle,outputstream,offset,DataX,Size,BUFFER_SIZE,silent,SetPercent)
     else
-    begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end;
-  end
-  else if DrvInfo.ID = 'GZP' then
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+
+  else if DrvInfo.ID = 'CBF1' then
+    if (DataY = 1) then
+      DecompressCBFToStream(FHandle,outputstream,offset,DataX,Size,BUFFER_SIZE,silent,SetPercent)
+    else
+      DecryptCBFToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent,SetPercent)
+
+  else if DrvInfo.ID = 'DNI' then
+    if (DataX > 0) then
+      DecompressZlibToStream(outputstream, DataX, Size)
+    else
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+
+{  else if DrvInfo.ID = 'F22DAT' then
   begin
+    DecompressF22DAT(FHandle,outputstream,offset,size,silent);
+  end}
+
+  else if DrvInfo.ID = 'GZP' then
     if (DataY = 1) then
     begin
       GetMem(Buf,DataX);
@@ -15038,44 +15182,96 @@ begin
       end;
     end
     else
-    begin
-      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent);
-    end;
-  end
-  else if DrvInfo.ID = 'RCF' then
+      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent)
+
+{IFDEF EXPFORMATS}
+  else if DrvInfo.ID = 'H4R' then
   begin
-    if (DataX = 1) then
-    begin
-      DecompressRCFToStream(outputstream,offset,size,BUFFER_SIZE,silent,SetPercent);
-    end
+// TODO //
+//    if (DataX = 3) then
+//    begin
+//      ShowMessage(inttostr(DataX));
+//      DecompressH4R(fil, Size, DataY);
+{    end
     else
     begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end;
+      GetMem(Buf,DataX);
+      FileRead(FHandle,Buf^,DataX);
+      FileWrite(fil,Buf^,DataX);
+      FreeMem(Buf);
+    end;}
   end
-  else if DrvInfo.ID = 'BSA' then
+{ENDIF}
+
+  // Total Annihilation .HPI
+  else if DrvInfo.ID = 'HPI' then
+    if (DataX = 2) or (DataX = 1) then
+      DecompressHPIToStream(outputstream,Offset,Size,DataX,silent)
+    else
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+
+  else if Leftstr(DrvInfo.ID,4) = 'MOSD' then
   begin
-    if (DataX = 1) then
+    if (DataX = 1) or (DataX = 2) then
+      ExtractMOSDTextureToDDS(outputstream,Offset,Size,DataY,BUFFER_SIZE,silent,Rightstr(DrvInfo.ID,1)='r',DataX=2)
+    else
+      BinCopyToStream(FHandle,outputstream,offset,size,0,BUFFER_SIZE,silent,SetPercent);
+  end
+
+  // Darkstone .MTF
+  else if DrvInfo.ID = 'MTF' then
+  begin
+    FileRead(FHandle,ENT,12);
+    if (ENT.ID2 = 190) and ((ENT.ID1 = 174) or (ENT.ID1 = 175)) then
+      DecompressMTFToStream(outputstream, Offset+12,Size)
+    else
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+  end
+
+  else if DrvInfo.ID = 'PCK' then
+  begin
+    if (DataY = 1) then
     begin
-      FileSeek(FHandle,Offset,0);
-      DecompressZlibToStream(outputstream, DataY, Size);
+      FileSeek(FHandle,offset+16,0);
+      FileRead(FHandle,tbyt,1);
+      tbyt := (tbyt xor $2C) - $10;
+      if (tbyt = 0) then
+        tbyt := $E
+      else if (tbyt = 8) then
+        tbyt := 6
+      else
+        dec(tbyt);
+      key := tbyt;
+      FileSeek(FHandle,offset,0);
+      FileRead(FHandle,tbyt,1);
+      tbyt := tbyt xor key;
+      DecryptPCKToStream(FHandle,outputstream,offset,size,tbyt,silent);
+    end
+    else if (DataY = 2) or (DataX <> 0) then
+    begin
+      FileSeek(FHandle,offset+1,0);
+      FileRead(FHandle,ID,3);
+      FileSeek(FHandle,offset,0);
+      if (ID = 'IFF') then
+        DataX := $52
+      else if (ID = 'DMB') then
+        DataX := $4C
+      else if (ID = 'FRL') then
+        DataX := $47
+      else if (ID = 'SMB') then
+        DataX := $42;
+      DecryptPCKToStream(FHandle,outputstream,offset,size,DataX,silent);
     end
     else
-    begin
       BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end;
   end
-  else if DrvInfo.ID = 'VFS' then
-  begin
-    if (DataX > 0) then
-    begin
-      DecompressZlibVFSChunksToStream(outputstream,offset,DataY,Size);
-    end
+
+  else if DrvInfo.ID = 'PKPAK' then
+    if DataX <> Size then
+      DecompressZlibToStream(outputstream, DataX, Size)
     else
-    begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end;
-  end
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+
   // The Movies .PAK decompression handling
   else if DrvInfo.ID = 'TMPAK' then
   begin
@@ -15120,168 +15316,48 @@ begin
     end
     // If something is not as expected we just copy 1:1
     else
-    begin
       BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end;
 
   end
-  else if DrvInfo.ID = 'ADF' then
-  begin
-    DecryptADFToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent);
-  end
-  else if DrvInfo.ID = 'CBF0' then
-  begin
-    if (DataY = 1) then
-    begin
-//      FileSeek(FHandle,Offset+12,0);
-//      DecompressZlib(fil, DataX-12, Size);
-//      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent);
-      DecompressCBFToStream(FHandle,outputstream,offset,DataX,Size,BUFFER_SIZE,silent,SetPercent);
-    end
+
+  else if DrvInfo.ID = 'RCF' then
+    if (DataX = 1) then
+      DecompressRCFToStream(outputstream,offset,size,BUFFER_SIZE,silent,SetPercent)
     else
-    begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end;
-  end
-  else if DrvInfo.ID = 'CBF1' then
-  begin
-    if (DataY = 1) then
-    begin
-      DecompressCBFToStream(FHandle,outputstream,offset,DataX,Size,BUFFER_SIZE,silent,SetPercent);
-//      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent);
-    end
-    else
-    begin
-      DecryptCBFToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent,SetPercent);
-    end;
-  end
-//  else if DrvInfo.ID = 'H4R' then
-//  begin
-//    if (DataX = 3) then
-//    begin
-//      ShowMessage(inttostr(DataX));
-//      DecompressH4R(fil, Size, DataY);
-{    end
-    else
-    begin
-      GetMem(Buf,DataX);
-      FileRead(FHandle,Buf^,DataX);
-      FileWrite(fil,Buf^,DataX);
-      FreeMem(Buf);
-    end;}
-//  end
-  else if DrvInfo.ID = 'MTF' then
-  begin
-    FileRead(FHandle,ENT,12);
-    if (ENT.ID2 = 190) and ((ENT.ID1 = 174) or (ENT.ID1 = 175)) then
-    begin
-      DecompressMTFToStream(outputstream, Offset+12,Size);
-    end
-    else
-    begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end;
-  end
-  else if DrvInfo.ID = 'HPI' then
-  begin
-    if (DataX = 2) or (DataX = 1) then
-    begin
-      DecompressHPIToStream(outputstream,Offset,Size,DataX,silent);
-    end
-    else
-    begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end;
-  end
-  else if DrvInfo.ID = 'PCK' then
-  begin
-    if (DataY = 1) then
-    begin
-      FileSeek(FHandle,offset+16,0);
-      FileRead(FHandle,tbyt,1);
-      tbyt := (tbyt xor $2C) - $10;
-      if (tbyt = 0) then
-        tbyt := $E
-      else if (tbyt = 8) then
-        tbyt := 6
-      else
-        dec(tbyt);
-      key := tbyt;
-      FileSeek(FHandle,offset,0);
-      FileRead(FHandle,tbyt,1);
-      tbyt := tbyt xor key;
-      DecryptPCKToStream(FHandle,outputstream,offset,size,tbyt,silent);
-    end
-    else if (DataY = 2) or (DataX <> 0) then
-    begin
-      FileSeek(FHandle,offset+1,0);
-      FileRead(FHandle,ID,3);
-      FileSeek(FHandle,offset,0);
-      if (ID = 'IFF') then
-        DataX := $52
-      else if (ID = 'DMB') then
-        DataX := $4C
-      else if (ID = 'FRL') then
-        DataX := $47
-      else if (ID = 'SMB') then
-        DataX := $42;
-      DecryptPCKToStream(FHandle,outputstream,offset,size,DataX,silent);
-    end
-    else
-    begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end;
-  end
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+
   else if DrvInfo.ID = 'RFA' then
-  begin
     if (DataX = 0) then
-    begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
     else if (DataX = 1) then
-    begin
-      DecompressRFAToStream(outputstream,Offset,Size,silent);
-    end;
-  end
+      DecompressRFAToStream(outputstream,Offset,Size,silent)
+
+  else if DrvInfo.ID = 'RFH/RFD' then
+    if (DataX = 2) then
+      DecompressRFDToStream(outputstream, DataY, Size)
+    else if (DataX = 1) then
+      BinCopyToStream(FHandle,outputstream,offset,DataY,0,BUFFER_SIZE,silent,SetPercent)
+    else
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+
   else if DrvInfo.ID = 'SSA' then
   begin
     FileSeek(FHandle,offset,0);
     FileRead(FHandle,SSA,SizeOf(SSA));
     if SSA.ID = 'PK01' then
-    begin
-      DecompressZlibToStream(outputstream, Size, SSA.DecompSize);
-    end
+      DecompressZlibToStream(outputstream, Size, SSA.DecompSize)
     else
-    begin
       BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end;
   end
-  else if DrvInfo.ID = 'PKPAK' then
-  begin
-    if DataX <> Size then
-    begin
-      DecompressZlibToStream(outputstream, DataX, Size);
-    end
+
+  else if DrvInfo.ID = 'VFS' then
+    if (DataX > 0) then
+      DecompressZlibVFSChunksToStream(outputstream,offset,DataY,Size)
     else
-    begin
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-    end;
-  end
-  else if Leftstr(DrvInfo.ID,4) = 'MOSD' then
-  begin
-    if (DataX = 1) or (DataX = 2) then
-      ExtractMOSDTextureToDDS(outputstream,Offset,Size,DataY,BUFFER_SIZE,silent,Rightstr(DrvInfo.ID,1)='r',DataX=2)
-    else
-      BinCopyToStream(FHandle,outputstream,offset,size,0,BUFFER_SIZE,silent,SetPercent);
-  end
-{  else if DrvInfo.ID = 'F22DAT' then
-  begin
-    DecompressF22DAT(FHandle,outputstream,offset,size,silent);
-  end}
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+
   else
-  begin
     BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
-  end;
 
   result := true;
 

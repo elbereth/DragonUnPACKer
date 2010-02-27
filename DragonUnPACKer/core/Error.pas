@@ -1,6 +1,6 @@
 unit Error;
 
-// $Id: Error.pas,v 1.7 2009-09-09 20:05:07 elbereth Exp $
+// $Id: Error.pas,v 1.8 2010-02-27 19:23:55 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Error.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -21,7 +21,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, DateUtils, lib_utils, cxCPU40,
-  Main,
+  Main, prg_ver,
   ExtCtrls, lib_language, translation, ShellApi;
 
 type
@@ -69,6 +69,8 @@ implementation
 
 {$R *.dfm}
 
+{$Include datetime.inc}
+
 { TfrmError }
 
 procedure TfrmError.FillTxtError(E: Exception; from, subfrom: String);
@@ -91,14 +93,19 @@ OSInfo := GetAllSystemInfo();
 
 txtError.Lines.Add('____________ Error report ____________');
 txtError.Lines.Add('');
+
+txtError.lines.add('Timestamp: '+DateTimeToStr(now));
 txtError.Lines.Add('From: '+from+' in '+subfrom);
 txtError.lines.add('Exception: '+e.ClassName);
 txtError.Lines.Add('Reporting: '+e.Message);
-txtError.lines.add('['+DateTimeToStr(now)+']');
+if CurEdit = '' then
+  txtError.Lines.Add('Version: ' + CurVersion + ' (Build ' + IntToStr(CurBuild) +') ['+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+']')
+else
+  txtError.Lines.Add('Version: ' + CurVersion + ' ' + CurEdit + ' (Build ' + IntToStr(CurBuild) +') ['+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+']');
 
 txtError.Lines.Add('');
 
-if details <> nil then
+if (details <> nil) and (details.Count > 0) then
 begin
   txtError.Lines.Add('____________ More Details ____________');
   txtError.Lines.Add('');

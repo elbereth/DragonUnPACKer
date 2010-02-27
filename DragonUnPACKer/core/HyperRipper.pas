@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.23 2010-02-26 20:11:59 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.24 2010-02-27 15:56:30 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -486,17 +486,17 @@ type FormatsListElem = record
 
   THyperRipperFormat = class(TObject)
   private
-    function BigToLittle2(src: array of byte): word;
-    function BigToLittle4(src: array of byte): integer;
-    function BMFind(szSubStr: PChar; buf: PByteArray; iBufSize: integer; iOffset: integer = 0): integer;
-    function posBuf(search: byte; buffer: PByteArray; bufSize: integer; startpos: integer = 0): integer;
+//    function BigToLittle2(src: array of byte): word;
+//    function BigToLittle4(src: array of byte): integer;
+//    function BMFind(szSubStr: PChar; buf: PByteArray; iBufSize: integer; iOffset: integer = 0): integer;
+//    function posBuf(search: byte; buffer: PByteArray; bufSize: integer; startpos: integer = 0): integer;
     function getMPEGOptions(): MPEGOptions;
   protected
   public
     function GetFormatsList(): ExtSearchFormatsList;
     procedure showConfigBox(formatid: integer);
-    function findInBuffer(formatid: Integer; buffer: PByteArray; bufSize: integer): TIntList;
-    function verifyInStream(formatid: integer; inStm: TStream; offset: int64): FoundInfo64;
+//    function findInBuffer(formatid: Integer; buffer: PByteArray; bufSize: integer): TIntList;
+//    function verifyInStream(formatid: integer; inStm: TStream; offset: int64): FoundInfo64;
   end;
   TfrmHyperRipper = class(TForm)
     OpenDialog: TOpenDialog;
@@ -667,7 +667,15 @@ type FormatsListElem = record
     function normalizePrefix(prefix: string): string;
     procedure doSearch;
   protected
+    StartTime: integer;
     procedure Execute; override;
+    function findInBuffer(formatid: Integer; buffer: PByteArray; bufSize: integer): TIntList;
+    function verifyInStream(formatid: integer; inStm: TStream; offset: int64): FoundInfo64;
+    function BMFind(szSubStr: PChar; buf: PByteArray; iBufSize: integer; iOffset: integer = 0): integer;
+    function posBuf(search: byte; buffer: PByteArray; bufSize: integer; startpos: integer = 0): integer;
+    function BigToLittle2(src: array of byte): word;
+    function BigToLittle4(src: array of byte): integer;
+    procedure displayInfo(buffer: pbytearray; curPos: int64; displayHexDump: boolean = true);
   public
     procedure setSearch(filnam: String; sl: SearchList; hr: TfrmHyperRipper; nThreads: integer);
     constructor Create(CreateSuspended: Boolean);
@@ -1097,7 +1105,7 @@ var hSRC, x: integer;
     numFound, rollback: integer;
     flisttot: TList;
     fitem: PFoundItem;
-    startTime: Cardinal;
+//    startTime: Cardinal;
     speedcalc: Integer;
     loadTime: integer;
     prgid: byte;
@@ -1244,7 +1252,7 @@ begin
         for x := 1 to slist.num do
         begin
 //          foundOffsets := HPlug.searchBuffer(slist.items[x].DriverNum,slist.items[x].ID,buffer,bufsize);
-          foundoffsets := frmHyperRipper.formats.findInBuffer(slist.items[x].ID,buffer,bufsize);
+          foundoffsets := findInBuffer(slist.items[x].ID,buffer,bufsize);
 
           if (foundOffsets is TIntList) and (foundOffsets.Count > 0) then
           begin
@@ -1283,7 +1291,9 @@ begin
               end;
             end;
 //          Found := HPlug.plugins[slist.items[fitem^.Index].DriverNum].SearchFile(slist.items[fitem^.Index].ID,hSRC,curPos+fitem^.Offset);
-            Found := frmHyperRipper.formats.verifyInStream(slist.items[fitem^.Index].ID,sSRC,fitem^.Offset);
+            Found := verifyInStream(slist.items[fitem^.Index].ID,sSRC,fitem^.Offset);
+            if cancel then
+              break;
             if (Found.GenType <> HR_TYPE_ERROR) and (Found.Size > 0) then
             begin
               if (hrip.chkMakeDirs.Checked) then
@@ -1303,7 +1313,10 @@ begin
                 predir := '';
 
               inc(numFound);
-              hrip.addResult(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%s',DLNGstr('HRLG08'),inttostr(Found.Size)),inttohex(Found.Offset,8)),Found.Ext));
+              if slist.items[fitem^.Index].ID = 1006 then
+                hrip.lastResult(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%s',DLNGstr('HRLG08'),inttostr(Found.Size)),inttohex(Found.Offset,8)),Found.Ext))
+              else
+                hrip.addResult(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%s',DLNGstr('HRLG08'),inttostr(Found.Size)),inttohex(Found.Offset,8)),Found.Ext));
 
               resprefix := ReplaceValue('%o',prefix,IntToStr(Found.Offset));
               resprefix := ReplaceValue('%h',resprefix,IntToHex(Found.Offset,16));
@@ -1338,33 +1351,8 @@ begin
           hrip.Progress.Position := Round(Per);
           hrip.lstResults.Refresh;
           hrip.lblFound.Caption := IntTostr(numFound);
-          hrip.lblHexDump.Caption := '';
-          for x := 0 to 17 do
-            hrip.lblHexDump.Caption := hrip.lblHexDump.Caption + IntToHex(buffer[x],2)+' ';
+          displayInfo(buffer,CurPos);
           OldPer := Per;
-          if (GetTickCount - StartTime) > 0 then
-          begin
-            tmpspeedcalc := (CurPos / ((GetTickCount - StartTime) / 1000));
-            if (tmpspeedcalc > 1048576) then
-            begin
-              SpeedCalc := Round(tmpspeedcalc / 1048576);
-              prespeedcalc := 'M';
-            end
-            else if (tmpspeedcalc > 1024) then
-            begin
-              SpeedCalc := Round(tmpspeedcalc / 1024);
-              prespeedcalc := 'K';
-            end
-            else
-            begin
-              SpeedCalc := Round(tmpspeedcalc);
-              prespeedcalc := '';
-            end
-          end
-          else
-            SpeedCalc := 0;
-          hrip.lblSpeed.Caption := IntToStr(SpeedCalc)+prespeedcalc+'B/s';
-          hrip.Refresh;
           lastTimer := now;
         end;
 
@@ -1442,6 +1430,46 @@ begin
     hrip.LastResult(ReplaceValue('%f',DLNGstr('HRLG03'),ExtractFileName(filename))+' '+DLNGstr('HRLG18'));
     hrip.stopSearch;
   end;
+
+end;
+
+procedure THRipSearch.displayInfo(buffer: PByteArray; curPos: int64; displayHexDump: boolean = true);
+var x, speedcalc: integer;
+    tmpspeedcalc: extended;
+    prespeedcalc: string;
+begin
+
+  if (displayHexDump) then
+  begin
+    hrip.lblHexDump.Caption := '';
+    for x := 0 to 17 do
+      hrip.lblHexDump.Caption := hrip.lblHexDump.Caption + IntToHex(buffer[x],2)+' ';
+  end
+  else
+    hrip.lblHexDump.Caption := '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00';
+  if (GetTickCount - StartTime) > 0 then
+  begin
+    tmpspeedcalc := (CurPos / ((GetTickCount - StartTime) / 1000));
+    if (tmpspeedcalc > 1048576) then
+    begin
+      SpeedCalc := Round(tmpspeedcalc / 1048576);
+      prespeedcalc := 'M';
+    end
+    else if (tmpspeedcalc > 1024) then
+    begin
+      SpeedCalc := Round(tmpspeedcalc / 1024);
+      prespeedcalc := 'K';
+    end
+    else
+    begin
+      SpeedCalc := Round(tmpspeedcalc);
+      prespeedcalc := '';
+    end
+  end
+  else
+    SpeedCalc := 0;
+  hrip.lblSpeed.Caption := IntToStr(SpeedCalc)+prespeedcalc+'B/s';
+  hrip.Refresh;
 
 end;
 
@@ -2171,12 +2199,12 @@ begin
 
 end;}
 
-function THyperRipperFormat.BigToLittle2(src: array of byte): word;
+function THRipSearch.BigToLittle2(src: array of byte): word;
 begin
   result := src[1] + src[0]*$100;
 end;
 
-function THyperRipperFormat.BigToLittle4(src: array of byte): integer;
+function THRipSearch.BigToLittle4(src: array of byte): integer;
 begin
   result := src[3] + src[2]*$100 + src[1]*$10000 + src[0]*$1000000;
 end;
@@ -2286,7 +2314,7 @@ begin
 
 end;
 
-function THyperRipperFormat.posBuf(search: byte; buffer: PByteArray; bufSize: integer; startpos: integer = 0): integer;
+function THRipSearch.posBuf(search: byte; buffer: PByteArray; bufSize: integer; startpos: integer = 0): integer;
 var x: integer;
 begin
 
@@ -2302,7 +2330,7 @@ begin
 
 end;
 
-function THyperRipperFormat.BMFind(szSubStr: PChar; buf: PByteArray; iBufSize: integer; iOffset: integer = 0): integer;
+function THRipSearch.BMFind(szSubStr: PChar; buf: PByteArray; iBufSize: integer; iOffset: integer = 0): integer;
 { Returns -1 if substring not found,
    or zero-based index into buffer if substring found }
 var
@@ -2513,7 +2541,7 @@ begin
 
 end;
 
-function THyperRipperFormat.findInBuffer(formatid: Integer; buffer: PByteArray; bufSize: integer): TIntList;
+function THRipSearch.findInBuffer(formatid: Integer; buffer: PByteArray; bufSize: integer): TIntList;
 var tmpRes,tmpPos1,tmpPos2,tmpPosMax: integer;
 //    memBuf: TMemoryStream;
     szFind: array [0..255] of char;
@@ -2917,7 +2945,7 @@ begin
 //  end;
 end;
 
-function THyperRipperFormat.verifyInStream(formatid: integer; inStm: TStream; offset: int64): FoundInfo64;
+function THRipSearch.verifyInStream(formatid: integer; inStm: TStream; offset: int64): FoundInfo64;
 var buf1, buf2: array[1..4] of char;
     buf3: array[1..3] of char;
     jmark: array[1..2] of char;
@@ -2990,6 +3018,15 @@ var buf1, buf2: array[1..4] of char;
 
     jpeglen: JPEGLength;
     jpeglencnv: int64;
+
+    lastDisplayTime: TDateTime;
+
+    firstDisplay: boolean;
+
+    buffer: PByteArray;
+    curPos: int64;
+
+    curMP3result: string;
 
 begin
 
@@ -3156,7 +3193,7 @@ begin
             end;
           end;
     1006: begin
-            MPEGa := getMPEGOptions;
+            MPEGa := frmHyperRipper.formats.getMPEGOptions;
             totSize := inStm.Size;
             inStm.Seek(offset,0);
             Size := 0;
@@ -3164,7 +3201,20 @@ begin
             MP3Frames := 0;
             MP3Layer := 0;
             lastOffset := Offset;
+            lastDisplayTime := now;
+            firstDisplay := true;
+            curMP3Result := ReplaceValue('%e',ReplaceValue('%a',DLNGstr('HRLG08'),inttohex(Offset,8)),'mp3');
+            hrip.addResult(ReplaceValue('%s',curMP3Result,'0'));
             repeat
+
+              if (SecondsBetween(now,lastDisplayTime) >= 1) then
+              begin
+                hrip.Progress.Position := Round((inStm.Position / inStm.Size)*100);
+                hrip.lastResult(ReplaceValue('%s',curMP3Result,inttostr(inStm.Position-Offset)));
+                lastDisplayTime := now;
+                displayInfo(nil,inStm.Position,false);
+              end;
+
               inStm.ReadBuffer(tBytes4,4);
               if (tBytes4[0] = 255) and ((tBytes4[1] and 224) = 224) then
               begin
@@ -3405,9 +3455,9 @@ begin
               end
               else
                 break;
-            until (false);
+            until cancel;
 
-            if Size > 0 then
+            if not(Cancel) and (Size > 0) then
             begin
               if ((MPEGa.LimitFramesMin and (MP3Frames >= MPEGa.FramesMin))
               or not(MPEGa.LimitFramesMin))
@@ -3417,11 +3467,16 @@ begin
                 if MPEGa.ID3Tag then
                 begin
                   inStm.Seek(offset+size,0);
-                  inStm.ReadBuffer(buf3,3);
-                  if buf3 = 'TAG' then
-                    inc(Size,128);
+                  if ((inStm.Size - inStm.Position) > 3) then
+                  begin
+                    inStm.ReadBuffer(buf3,3);
+                    if buf3 = 'TAG' then
+                      inc(Size,128);
+                  end;
                 end;
                 result.Offset := offset;
+                if Size > (inStm.Size - Offset) then
+                  Size := inStm.Size - Offset;
                 result.Size := Size;
                 result.Ext := 'mp'+inttostr(MP3Layer);
                 result.GenType := HR_TYPE_AUDIO;

@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.27 2010-02-27 16:01:53 elbereth Exp $
+// $Id: Main.pas,v 1.28 2010-02-27 19:22:25 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -570,7 +570,7 @@ begin
   frmAbout.txtMoreinfo.Lines.Add('Delphi for Windows: Windows 7 Component Library');
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
   frmAbout.txtMoreinfo.Lines.Add('http://www.gumpi.com/blog');
-  frmAbout.txtMoreinfo.Lines.Add('Drag and Drop Component Suite');
+  frmAbout.txtMoreinfo.Lines.Add('Drag and Drop Component Suite v'+inttostr(DragDropSuiteVersionMajor)+'.'+inttostr(DragDropSuiteVersionMinor));
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
   frmAbout.txtMoreinfo.Lines.Add('http://melander.dk/');
   frmAbout.txtMoreinfo.Lines.Add('Vampyre Imaging Livrary v'+Imaging.GetVersionStr);
@@ -2807,7 +2807,7 @@ begin
       begin
 
         Randomize;
-        tmpfil := getTemporaryDir+'dup5tmp-'+IntToStr(Random(99999999))+'-'+Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+        tmpfil := getTemporaryDir+'dup5tmp-'+inttostr(GetTickCount)+'-'+IntToStr(Random(99999999))+'-'+Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
         foundCnv := false;
 
         stmSource := TMemoryStream.Create;

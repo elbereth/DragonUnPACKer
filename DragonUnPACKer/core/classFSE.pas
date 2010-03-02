@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.14 2009-07-20 21:57:36 elbereth Exp $
+// $Id: classFSE.pas,v 1.15 2010-03-02 12:35:58 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -469,6 +469,7 @@ procedure TDrivers.LoadDrivers(pth: String);
 var sr: TSearchRec;
     DUDIVer: TDUDIVersion;
     DUDIVerEx: TDUDIVersionEx;
+    DUDIVerVal, DUDIVerExVal: byte;
     Handle: THandle;
     test: TClass;
 begin
@@ -492,13 +493,17 @@ begin
           write('Loaded... ');
           @DUDIVer := GetProcAddress(Handle, 'DUDIVersion');
           @DUDIVerEx := GetProcAddress(Handle, 'DUDIVersionEx');
-        if (@DUDIVer <> Nil) and ((DUDIVer >= 1) and (DUDIVer <= DUDIVersion)) then
+        if (@DUDIVer <> Nil) then
+          DUDIVerVal := DUDIVer;
+        if (@DUDIVerEx <> Nil) then
+          DUDIVerExVal := DUDIVerEx(DUDIVersion);
+        if (@DUDIVer <> Nil) and ((DUDIVerVal >= 1) and (DUDIVerVal <= DUDIVersion)) then
         begin
           Inc(NumDrivers);
-          if (@DUDIVerEx <> Nil) and ((DUDIVerEx(DUDIVersion) >= 5) and (DUDIVerEx(DUDIVersion) <= DUDIVersion)) then
-            Drivers[NumDrivers].DUDIVersion := DUDIVerEx(DUDIVersion)
+          if (@DUDIVerEx <> Nil) and (DUDIVerExVal >= 5) and (DUDIVerExVal <= DUDIVersion) then
+            Drivers[NumDrivers].DUDIVersion := DUDIVerExVal
           else
-            Drivers[NumDrivers].DUDIVersion := DUDIVer;
+            Drivers[NumDrivers].DUDIVersion := DUDIVerVal;
 
           if IsConsole then
             write('IsDUDI... ')

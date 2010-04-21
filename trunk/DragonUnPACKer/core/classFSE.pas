@@ -1,6 +1,6 @@
 unit classFSE;
 
-// $Id: classFSE.pas,v 1.15 2010-03-02 12:35:58 elbereth Exp $
+// $Id: classFSE.pas,v 1.16 2010-04-21 15:47:29 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -531,13 +531,13 @@ begin
             @Drivers[NumDrivers].InitPlugin := GetProcAddress(Handle, 'InitPlugin');
             @Drivers[NumDrivers].OpenFile2 := GetProcAddress(Handle, 'ReadFormat');
           end
-          else if (Drivers[NumDrivers].DUDIVersion = 3) or (Drivers[NumDrivers].DUDIVersion = 4) or (Drivers[NumDrivers].DUDIVersion = 5) then
+          else if (Drivers[NumDrivers].DUDIVersion >= 3) then
           begin
             @Drivers[NumDrivers].ShowAboutBox3 := GetProcAddress(Handle, 'AboutBox');
             @Drivers[NumDrivers].ShowConfigBox3 := GetProcAddress(Handle, 'ConfigBox');
             @Drivers[NumDrivers].OpenFile2 := GetProcAddress(Handle, 'ReadFormat');
             @Drivers[NumDrivers].InitPlugin3 := GetProcAddress(Handle, 'InitPlugin');
-            if (Drivers[NumDrivers].DUDIVersion = 5) then
+            if (Drivers[NumDrivers].DUDIVersion >= 5) then
               @Drivers[NumDrivers].InitPluginEx5 := GetProcAddress(Handle, 'InitPluginEx5');
             if (Drivers[NumDrivers].DUDIVersion = 4) or (Drivers[NumDrivers].DUDIVersion = 5) then
             begin

@@ -1,6 +1,6 @@
 unit classConvert;
 
-// $Id: classConvert.pas,v 1.3 2005-12-16 20:15:47 elbereth Exp $
+// $Id: classConvert.pas,v 1.4 2010-04-21 15:46:31 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classConvert.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -20,13 +20,16 @@ unit classConvert;
 // classConvert unit / This unit manages the convert plugins (loading, use and
 //                   / freeing)
 // ----------------------------------------------------------------------------
-// Current DUCI (Dragon UnPACKer Convert Interface): v3
+// Current DUCI (Dragon UnPACKer Convert Interface): v4
 // ============================================================================
 
 interface
 
 uses
   lib_Language,
+  lib_utils,
+  UBufferedFS,
+  classConvertExport,
   Forms,
   Dialogs,
   Windows,
@@ -63,14 +66,18 @@ type ConvertListElem = record
 type
   TPercentCallback = procedure (p: byte);
   TLanguageCallback = function (lngid: ShortString): ShortString;
+  TMsgBoxCallback = procedure(const title, msg: AnsiString);
   TDUCIVersion = function(): Byte; stdcall;
+  TDUCIVersionEx = function(supported: byte): Byte; stdcall;
   TIsFileCompatible = function(nam: ShortString; Offset, Size: Int64; fmt: ShortString; DataX, DataY: Integer): boolean; stdcall;
   TGetFileConvert = function(nam: ShortString; Offset, Size: Int64; fmt: ShortString; DataX, DataY: Integer): ConvertList; stdcall;
   TConvert = function(src, dst, nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer; stdcall;
   TConvertStream = function (src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer; stdcall;
   TInitPlugin = procedure(percent: TPercentCallback; dlngstr: TLanguageCallback; dup5pth: shortstring); stdcall;
   TInitPlugin2 = procedure(percent: TPercentCallback; dlngstr: TLanguageCallback; dup5pth: shortstring; AppHandle: THandle; AppOwner: TComponent); stdcall;
+  TInitPluginEx4 = procedure(MsgBox: TMsgBoxCallback); stdcall;
   TVersionInfo = function(): ConvertInfo;
+  TVersionInfo2 = function(): ConvertInfo; stdcall;
   TShowBox = procedure(hwnd: integer; lngstr: TLanguageCallback); stdcall;
   TShowBox2 = procedure; stdcall;
 
@@ -84,7 +91,9 @@ type plugin = record
    ConvertStream : TConvertStream;
    Init : TInitPlugin;
    Init2 : TInitPlugin2;
+   InitEx4 : TInitPluginEx4;
    Version : TVersionInfo;
+   Version2 : TVersionInfo2;
    ShowAboutBox : TShowBox;
    ShowAboutBox2 : TShowBox2;
    IsAboutBox : Boolean;
@@ -115,14 +124,114 @@ type plugin = record
     DUP5Path: ShortString;
     CurAOwner: TComponent;
   protected
-  public
-    Plugins: array[1..255] of Plugin;
+    Plugins: array of Plugin;
     NumPlugins: Integer;
+  public
+    function getNumPlugins(): integer;
+    function getPluginInfo(pid: integer): ConvertInfoEx;
+    function convert(pid: integer; src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer;
 end;
+
+type EUndefinedPlugin = class(Exception);
+
+const
+  DUCIVERSION = 4;  // Max supported DUCIVersion
 
 implementation
 
+procedure showMsgBox(const title, msg: AnsiString);
+begin
+
+  dup5Main.messageDlgTitle(title,msg,[mbOk],0);
+
+end;
+
 { TDrivers }
+
+function TPlugins.convert(pid: integer; src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer;
+var stmFile: TBufferedFS;
+    tmpfil, tmpfil2: string;
+begin
+
+  dec(pid);
+
+  if (pid < Low(Plugins)) or (pid > High(Plugins)) then
+    raise EUndefinedPlugin.Create('Min: '+inttostr(Low(Plugins))+' / Max: '+inttostr(High(Plugins))+' / Asked: '+inttostr(pid));
+
+  if Plugins[pid].DUCIVersion < 3 then
+  begin
+    tmpfil := getTemporaryDir+getTemporaryFilename('src');
+    stmFile := TBufferedFS.Create(tmpfil,fmCreate);
+    try
+      stmFile.CopyFrom(src,src.size);
+    finally
+      FreeAndNil(stmFile);
+    end;
+    tmpfil2 := getTemporaryDir+getTemporaryFilename('dst');
+    Plugins[pid].Convert(tmpfil,tmpfil2,nam,fmt,cnv,Offset,DataX,DataY,Silent);
+    stmFile := TBufferedFS.Create(tmpfil2,fmOpenRead);
+    try
+      dst.CopyFrom(stmFile,stmFile.Size);
+    finally
+      FreeAndNil(stmFile);
+    end;
+    try
+      if FileExists(tmpfil) then
+        DeleteFile(tmpfil);
+    except
+      dup5Main.tempFiles.Add(tmpfil);
+    end;
+    try
+      if FileExists(tmpfil2) then
+        DeleteFile(tmpfil2);
+    except
+      dup5Main.tempFiles.Add(tmpfil2);
+    end;
+  end
+  else
+    Plugins[pid].ConvertStream(src,dst,nam,fmt,cnv,Offset,DataX,DataY,Silent);
+
+end;
+
+function TPlugins.getNumPlugins(): integer;
+begin
+
+  result := NumPlugins;
+
+end;
+
+function TPlugins.getPluginInfo(pid: integer): ConvertInfoEx;
+begin
+
+  dec(pid);
+
+  if (pid < Low(Plugins)) or (pid > High(Plugins)) then
+    raise EUndefinedPlugin.Create('Min: '+inttostr(Low(Plugins))+' / Max: '+inttostr(High(Plugins))+' / Asked: '+inttostr(pid));
+
+  result.DUCIVersion := Plugins[pid].DUCIVersion;
+
+  if (Plugins[pid].DUCIVersion <= 3) then
+  begin
+    result.Name := Plugins[pid].Version.Name;
+    result.Version := Plugins[pid].Version.Version;
+    result.Author := Plugins[pid].Version.Author;
+    result.Comment := Plugins[pid].Version.Comment;
+    result.VerID := Plugins[pid].Version.VerID;
+  end
+  else
+  begin
+    result.Name := Plugins[pid].Version2.Name;
+    result.Version := Plugins[pid].Version2.Version;
+    result.Author := Plugins[pid].Version2.Author;
+    result.Comment := Plugins[pid].Version2.Comment;
+    result.VerID := Plugins[pid].Version2.VerID;
+  end;
+
+  result.Filename := Plugins[pid].FileName;
+  result.isAboutBox := Plugins[pid].IsAboutBox;
+  result.isConfigBox := Plugins[pid].IsConfigBox;
+
+end;
 
 procedure TPlugins.FreePlugins;
 var x: integer;
@@ -152,9 +261,9 @@ begin
   while (x <=NumPlugins) do
   begin
 
-    if Plugins[x].TestFile(nam, Offset, Size, fmt, DataX, DataY) then
+    if Plugins[x-1].TestFile(nam, Offset, Size, fmt, DataX, DataY) then
     begin
-      CList := Plugins[x].GetList(nam, Offset, Size, fmt, DataX, DataY);
+      CList := Plugins[x-1].GetList(nam, Offset, Size, fmt, DataX, DataY);
       for z := 1 to CList.NumFormats do
       begin
         Inc(result.NumFormats);
@@ -170,6 +279,8 @@ end;
 procedure TPlugins.LoadPlugins(pth: String);
 var sr: TSearchRec;
     DUCIVer: TDUCIVersion;
+    DUCIVerEx: TDUCIVersionEx;
+    DUCIVerVal, DUCIVerExVal: byte;
     Handle: THandle;
 begin
 
@@ -186,46 +297,66 @@ begin
       if Handle <> 0 then
       begin
         @DUCIVer := GetProcAddress(Handle, 'DUCIVersion');
-        if (@DUCIVer <> Nil) and ((DUCIVer = 1) or (DUCIVer = 2) or (DUCIVer = 3)) then
+        if (@DUCIVer <> Nil) then
+          DUCIVerVal := DUCIVer;
+        @DUCIVerEx := GetProcAddress(Handle, 'DUCIVersionEx');
+        if (@DUCIVerEx <> Nil) then
+          DUCIVerExVal := DUCIVerEx(DUCIVERSION);
+        if (@DUCIVer <> Nil) and (DUCIVerVal >= 1) and (DUCIVerVal <= DUCIVERSION) then
         begin
-          dup5Main.appendLogVerbose(2,'DUCI v'+inttostr(DUCIVer)+' -');
-
           Inc(NumPlugins);
+          SetLength(Plugins,NumPlugins);
+          if (@DUCIVerEx <> Nil) and (DUCIVerExVal >= 4) and (DUCIVerExVal <= DUCIVERSION) then
+            Plugins[NumPlugins-1].DUCIVersion := DUCIVerExVal
+          else
+            Plugins[NumPlugins-1].DUCIVersion := DUCIVerVal;
+          dup5Main.appendLogVerbose(2,'DUCI v'+inttostr(Plugins[NumPlugins-1].DUCIVersion)+' -');
 
-          Plugins[NumPlugins].DUCIVersion := DUCIVer;
-          @Plugins[NumPlugins].TestFile := GetProcAddress(Handle, 'IsFileCompatible');
-          @Plugins[NumPlugins].GetList := GetProcAddress(Handle, 'GetFileConvert');
-          @Plugins[NumPlugins].Convert := GetProcAddress(Handle, 'Convert');
+          @Plugins[NumPlugins-1].TestFile := GetProcAddress(Handle, 'IsFileCompatible');
+          @Plugins[NumPlugins-1].GetList := GetProcAddress(Handle, 'GetFileConvert');
+          @Plugins[NumPlugins-1].Convert := GetProcAddress(Handle, 'Convert');
 
-          if (DUCIVer = 1) then
+          if (Plugins[NumPlugins-1].DUCIVersion = 1) then
           begin
-            @Plugins[NumPlugins].Init := GetProcAddress(Handle, 'InitPlugin');
-            @Plugins[NumPlugins].ShowAboutBox := GetProcAddress(Handle, 'AboutBox');
-            @Plugins[NumPlugins].ShowConfigBox := GetProcAddress(Handle, 'ConfigBox');
+            @Plugins[NumPlugins-1].Init := GetProcAddress(Handle, 'InitPlugin');
+            @Plugins[NumPlugins-1].ShowAboutBox := GetProcAddress(Handle, 'AboutBox');
+            @Plugins[NumPlugins-1].ShowConfigBox := GetProcAddress(Handle, 'ConfigBox');
+            @Plugins[NumPlugins-1].Version := GetProcAddress(Handle, 'VersionInfo');
           end
-          else if (DUCIVer = 2) then
+          else if (Plugins[NumPlugins-1].DUCIVersion = 2) then
           begin
-            @Plugins[NumPlugins].Init2 := GetProcAddress(Handle, 'InitPlugin');
-            @Plugins[NumPlugins].ShowAboutBox2 := GetProcAddress(Handle, 'AboutBox');
-            @Plugins[NumPlugins].ShowConfigBox2 := GetProcAddress(Handle, 'ConfigBox');
+            @Plugins[NumPlugins-1].Init2 := GetProcAddress(Handle, 'InitPlugin');
+            @Plugins[NumPlugins-1].ShowAboutBox2 := GetProcAddress(Handle, 'AboutBox');
+            @Plugins[NumPlugins-1].ShowConfigBox2 := GetProcAddress(Handle, 'ConfigBox');
+            @Plugins[NumPlugins-1].Version := GetProcAddress(Handle, 'VersionInfo');
           end
-          else if (DUCIVer = 3) then
+          else if (Plugins[NumPlugins-1].DUCIVersion = 3) then
           begin
-            @Plugins[NumPlugins].Init2 := GetProcAddress(Handle, 'InitPlugin');
-            @Plugins[NumPlugins].ShowAboutBox2 := GetProcAddress(Handle, 'AboutBox');
-            @Plugins[NumPlugins].ShowConfigBox2 := GetProcAddress(Handle, 'ConfigBox');
-            @Plugins[NumPlugins].ConvertStream := GetProcAddress(Handle, 'ConvertStream');
+            @Plugins[NumPlugins-1].Init2 := GetProcAddress(Handle, 'InitPlugin');
+            @Plugins[NumPlugins-1].ShowAboutBox2 := GetProcAddress(Handle, 'AboutBox');
+            @Plugins[NumPlugins-1].ShowConfigBox2 := GetProcAddress(Handle, 'ConfigBox');
+            @Plugins[NumPlugins-1].ConvertStream := GetProcAddress(Handle, 'ConvertStream');
+            @Plugins[NumPlugins-1].Version := GetProcAddress(Handle, 'VersionInfo');
+          end
+          else if (Plugins[NumPlugins-1].DUCIVersion >= 4) then
+          begin
+            @Plugins[NumPlugins-1].Init2 := GetProcAddress(Handle, 'InitPlugin');
+            @Plugins[NumPlugins-1].ShowAboutBox2 := GetProcAddress(Handle, 'AboutBox');
+            @Plugins[NumPlugins-1].ShowConfigBox2 := GetProcAddress(Handle, 'ConfigBox');
+            @Plugins[NumPlugins-1].ConvertStream := GetProcAddress(Handle, 'ConvertStream');
+            @Plugins[NumPlugins-1].Version2 := GetProcAddress(Handle, 'VersionInfo2');
+            @Plugins[NumPlugins-1].InitEx4 := GetProcAddress(Handle, 'InitPluginEx4');
           end;
 
-          @Plugins[NumPlugins].Version := GetProcAddress(Handle, 'VersionInfo');
 
-          if (@Plugins[NumPlugins].TestFile = Nil)
-          or (@Plugins[NumPlugins].GetList = Nil)
-          or (@Plugins[NumPlugins].Convert = Nil)
-          or ((DUCIVer = 1) and (@Plugins[NumPlugins].Init = Nil))
-          or (((DUCIVer = 2) or (DUCIVer = 3)) and (@Plugins[NumPlugins].Init2 = Nil))
-          or ((DUCIVer = 3) and (@Plugins[NumPlugins].ConvertStream = Nil))
-          or (@Plugins[NumPlugins].Version = Nil)
+          if (@Plugins[NumPlugins-1].TestFile = Nil)
+          or (@Plugins[NumPlugins-1].GetList = Nil)
+          or (@Plugins[NumPlugins-1].Convert = Nil)
+          or ((Plugins[NumPlugins-1].DUCIVersion = 1) and (@Plugins[NumPlugins-1].Init = Nil))
+          or (((Plugins[NumPlugins-1].DUCIVersion = 2) or (Plugins[NumPlugins-1].DUCIVersion = 3)) and (@Plugins[NumPlugins-1].Init2 = Nil))
+          or ((Plugins[NumPlugins-1].DUCIVersion = 3) and (@Plugins[NumPlugins-1].ConvertStream = Nil))
+          or ((Plugins[NumPlugins-1].DUCIVersion >= 1) and (Plugins[NumPlugins-1].DUCIVersion <= 3) and (@Plugins[NumPlugins-1].Version = Nil))
+          or ((Plugins[NumPlugins-1].DUCIVersion >= 4) and (Plugins[NumPlugins-1].DUCIVersion <= DUCIVERSION) and (@Plugins[NumPlugins-1].Version2 = Nil) and (@Plugins[NumPlugins-1].InitEx4 = Nil))
           then
           begin
             if dup5Main.getVerboseLevel = 0 then
@@ -238,21 +369,27 @@ begin
           end
           else
           begin
-            Plugins[NumPlugins].FileName := ExtractFileName(sr.Name);
-            Plugins[NumPlugins].Handle := Handle;
-            if (DUCIVer = 1) then
+            Plugins[NumPlugins-1].FileName := ExtractFileName(sr.Name);
+            Plugins[NumPlugins-1].Handle := Handle;
+            if (Plugins[NumPlugins-1].DUCIVersion = 1) then
             begin
-              Plugins[NumPlugins].Init(Percent,Language,dup5path);
-              Plugins[NumPlugins].IsAboutBox := not(@Plugins[NumPlugins].ShowAboutBox = nil);
-              Plugins[NumPlugins].IsConfigBox := not(@Plugins[NumPlugins].ShowConfigBox = nil);
+              Plugins[NumPlugins-1].Init(Percent,Language,dup5path);
+              Plugins[NumPlugins-1].IsAboutBox := not(@Plugins[NumPlugins-1].ShowAboutBox = nil);
+              Plugins[NumPlugins-1].IsConfigBox := not(@Plugins[NumPlugins-1].ShowConfigBox = nil);
             end
             else
             begin
-              Plugins[NumPlugins].Init2(Percent,Language,dup5path,Application.Handle,curAOwner);
-              Plugins[NumPlugins].IsAboutBox := not(@Plugins[NumPlugins].ShowAboutBox2 = nil);
-              Plugins[NumPlugins].IsConfigBox := not(@Plugins[NumPlugins].ShowConfigBox2 = nil);
+              Plugins[NumPlugins-1].Init2(Percent,Language,dup5path,Application.Handle,curAOwner);
+              Plugins[NumPlugins-1].IsAboutBox := not(@Plugins[NumPlugins-1].ShowAboutBox2 = nil);
+              Plugins[NumPlugins-1].IsConfigBox := not(@Plugins[NumPlugins-1].ShowConfigBox2 = nil);
             end;
-            dup5Main.appendLogVerbose(1,Plugins[NumPlugins].Version.Name +' v'+Plugins[NumPlugins].Version.Version)
+            if (Plugins[NumPlugins-1].DUCIVersion <= 3) then
+              dup5Main.appendLogVerbose(1,Plugins[NumPlugins-1].Version.Name +' v'+Plugins[NumPlugins-1].Version.Version)
+            else
+            begin
+              dup5Main.appendLogVerbose(1,Plugins[NumPlugins-1].Version2.Name +' v'+Plugins[NumPlugins-1].Version2.Version);
+              Plugins[NumPlugins-1].InitEx4(showMsgBox);
+            end;
           end;
         end
         else
@@ -307,13 +444,13 @@ end;
 procedure TPlugins.showAboutBox(hwnd, drvnum: integer);
 begin
 
-  if (Plugins[drvnum].DUCIVersion = 1) then
+  if (Plugins[drvnum-1].DUCIVersion = 1) then
   begin
-    Plugins[drvnum].ShowAboutBox(hwnd,language);
+    Plugins[drvnum-1].ShowAboutBox(hwnd,language);
   end
-  else if (Plugins[drvnum].DUCIVersion = 2) or (Plugins[drvnum].DUCIVersion = 3) then
+  else if (Plugins[drvnum-1].DUCIVersion >= 2) then
   begin
-    Plugins[drvnum].ShowAboutBox2;
+    Plugins[drvnum-1].ShowAboutBox2;
   end;
 
 end;
@@ -321,13 +458,13 @@ end;
 procedure TPlugins.showConfigBox(hwnd, drvnum: integer);
 begin
 
-  if (Plugins[drvnum].DUCIVersion = 1) then
+  if (Plugins[drvnum-1].DUCIVersion = 1) then
   begin
-    Plugins[drvnum].ShowConfigBox(hwnd,language);
+    Plugins[drvnum-1].ShowConfigBox(hwnd,language);
   end
-  else if (Plugins[drvnum].DUCIVersion = 2) or (Plugins[drvnum].DUCIVersion = 3) then
+  else if (Plugins[drvnum-1].DUCIVersion >= 2) then
   begin
-    Plugins[drvnum].ShowConfigBox2;
+    Plugins[drvnum-1].ShowConfigBox2;
   end;
 
 end;
@@ -341,10 +478,12 @@ begin
   result := false;
   while (x <=NumPlugins) do
   begin
-    result := result or Plugins[x].TestFile(nam, offset, Size, fmt, DataX, DataY);
+    result := result or Plugins[x-1].TestFile(nam, offset, Size, fmt, DataX, DataY);
     inc(x);
   end;
 
 end;
+
+
 
 end.

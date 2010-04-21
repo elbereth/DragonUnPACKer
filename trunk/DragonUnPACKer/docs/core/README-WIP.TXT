@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.5.2 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    27/02/2010
+by Alexande "Elbereth" Devilliers                                    21/04/2010
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -38,7 +38,7 @@ by Alexande "Elbereth" Devilliers                                    27/02/2010
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.5.2.233
+Version 5.5.2.236
 Beta [Unreleased]
 
  ! Fixed Preview option main menu & popup menu (ETreeViewError with Invalid
@@ -50,6 +50,11 @@ Beta [Unreleased]
  * Updated Drag and Drop Component to v5.1.
    Now Dragon UnPACKer dynamically indicates the version number (in log and
    About box).
+ * Enhanced the temporary file handling.
+ * Some convertion features are now handled by the core (plugins still exists
+   anyway to expand this functionnality). They use the excellent Vampyre
+   Imaging Library to detect compatible file types and allows for convertion
+   to BMP.
  * HyperRipper v5.6 Beta 3:
    ! Fixed BigToLittle2 which was doing wrong calculation...
    + Added JPEG Exif support (APP1 marker instead of APP0).
@@ -60,6 +65,15 @@ Beta [Unreleased]
    * Enhanced MPEG Audio search to give feedback while determining file size.
      This also allows to click on Cancel while HyperRipper is finding a huge
 	 MPEG Audio file.
+   * Speed-up when searching for MPEG Audio when found entries are lower than
+     the minimum frames/size.
+ * Elbereth's Picture/Textures Convert plugin v2.2.0 Beta:
+   i Now using DUCI v4 compatible with v3.
+     Please note that using this version with old Dragon UnPACKer versions
+	 will result in lost functionnality because of the following removal.
+   - Removed convertion features using Vampyre Imaging Library.
+     This is now done directly in the core Dragon UnPACKer (where the library
+	 is already used for the preview feature).
  * Elbereth's Main Driver plugin v2.0.9:
    + Added support for Battleforge .PAK files.
    + Added support for Dragon Age: Origins .ERF files.

@@ -1,6 +1,6 @@
 library cnv_pictex;
 
-// $Id: cnv_pictex.dpr,v 1.11 2009-06-26 21:05:32 elbereth Exp $
+// $Id: cnv_pictex.dpr,v 1.12 2010-04-21 15:38:35 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/cnv_pictex.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -25,13 +25,6 @@ uses
   Classes,
   Registry,
   Controls,
-  ImagingTypes,
-  Imaging,
-  ImagingClasses,
-  ImagingComponents,
-  ImagingCanvases,
-  ImagingFormats,
-  ImagingUtility,     // Vampyre Imaging Library
   class_Images in 'class_Images.pas',
   Convert in 'Convert.pas' {frmConvert},
   lib_version in '..\..\..\common\lib_version.pas',
@@ -43,6 +36,8 @@ uses
 {$E d5c}
 
 {$R *.res}
+
+{$Include datetime.inc}
 
 type ConvertListElem = record
        Display: ShortString;
@@ -63,16 +58,25 @@ type ConvertListElem = record
      TPercentCallback = procedure (p: byte);
      TLanguageCallback = function (lngid: ShortString): ShortString;
 //     EBadType = class(Exception);
+     // Procedure to display a message box by using host application
+     TMsgBoxCallback = procedure(const title, msg: AnsiString);
 
 var Percent: TPercentCallback;
     DLNGStr: TLanguageCallback;
     CurPath: ShortString;
+    SupportedDUCI: byte = 0;
     palfil: string;
     AHandle: THandle;
     AOwner: TComponent;
+    ShowMsgBox : TMsgBoxCallback;
 
-const DRIVER_VERSION = 21140;
-const DUP_VERSION = 54040;
+const
+  DUCI_VERSION = 4;
+  DUCI_VERSION_COMPATIBLE = 3;
+  DRIVER_VERSION = 22010;
+  DUP_VERSION = 55210;
+  CVS_REVISION = '$Revision: 1.12 $';
+  CVS_DATE = '$Date: 2010-04-21 15:38:35 $';
 
 { * Version History:
   * v1.0.0 Alpha (10000): First version (never distributed)
@@ -94,21 +98,40 @@ const DUP_VERSION = 54040;
   *                       Added DirectX Texture DDS support
   * v2.1.1 Beta  (21110): Added BMP as output for all formats (for previewing ability)
   * v2.1.1       (21140): Removed beta status for 5.4.0 release
+  * v2.2.0 Beta  (22010): Using DUCI v4, backward compatible with v3
+  *                       Removed Imaging Lib (feature to be integrated in Dragon UnPACKer)
   * }
 
+// Identifies the DLL as a Convert plugin (minimum version to load plugin)
+// Exported
 function DUCIVersion: Byte; stdcall;
 begin
-  Result := 3;
+  Result := DUCI_VERSION_COMPATIBLE;
+  SupportedDUCI := DUCI_VERSION_COMPATIBLE;
 end;
 
-function VersionInfo(): ConvertInfo;
+// Indicate current DUCIVersion (should return 4 at minimum)
+// Exported
+function DUCIVersionEx(supported: byte): byte; stdcall;
+begin
+  result := DUCI_VERSION;
+  SupportedDUCI := supported;
+end;
+
+// Returns Driver plugin version
+// Exported
+function VersionInfo2(): ConvertInfo; stdcall;
 begin
 
-  result.Name := 'Picture/Textures Convert Plugin';
-  result.Version := getVersion(DRIVER_VERSION);
-  result.Author := 'Alexandre Devilliers (aka Elbereth)';
-  result.Comment := 'Converting pictures and textures? Yeah!';
-  result.VerID := DRIVER_VERSION;
+  // Information about the plugin
+  with result do
+  begin
+    Name := 'Elbereth''s Picture/Textures Convert Plugin';
+    Version := getVersion(DRIVER_VERSION);
+    Author := 'Alexandre Devilliers (aka Elbereth)';
+    Comment := 'Converting pictures and textures? Yeah!';
+    VerID := DRIVER_VERSION;
+  end;
 
 end;
 
@@ -138,12 +161,6 @@ begin
        or  (uppercase(extractfileext(nam)) = '.DXT3')) then
     result := true
   else if (fmt = 'ART') then
-    result := true
-  else if (uppercase(extractfileext(nam)) = '.DDS') then
-    result := true
-  else if (uppercase(extractfileext(nam)) = '.TGA') then
-    result := true
-  else if (uppercase(extractfileext(nam)) = '.JPG') then
     result := true;
 
 end;
@@ -158,9 +175,6 @@ begin
     case DataX of
       66: begin
             result.NumFormats := 3;
-{            result.List[1].Display := 'PCX - ZSoft Paintbrush (8bpp RLE)';
-            result.List[1].Ext := 'PCX';
-            result.List[1].ID := 'PCX';}
             result.List[1].Display := 'BMP - Windows BitMaP (8bpp)';
             result.List[1].Ext := 'BMP';
             result.List[1].ID := 'BMP';
@@ -173,9 +187,6 @@ begin
           end;
       67: begin
             result.NumFormats := 3;
-{            result.List[1].Display := 'PCX - ZSoft Paintbrush (8bpp RLE)';
-            result.List[1].Ext := 'PCX';
-            result.List[1].ID := 'PCX';}
             result.List[1].Display := 'BMP - Windows BitMaP (8bpp)';
             result.List[1].Ext := 'BMP';
             result.List[1].ID := 'BMP';
@@ -194,9 +205,6 @@ begin
           end;
       68: begin
             result.NumFormats := 3;
-{            result.List[1].Display := 'PCX - ZSoft Paintbrush (8bpp RLE)';
-            result.List[1].Ext := 'PCX';
-            result.List[1].ID := 'PCX';}
             result.List[1].Display := 'BMP - Windows BitMaP (8bpp)';
             result.List[1].Ext := 'BMP';
             result.List[1].ID := 'BMP';
@@ -211,9 +219,6 @@ begin
             if ((Size = 16384) or (Size = 64000)) then
             begin
               result.NumFormats := 3;
-{            result.List[1].Display := 'PCX - ZSoft Paintbrush (8bpp RLE)';
-            result.List[1].Ext := 'PCX';
-            result.List[1].ID := 'PCX';}
               result.List[1].Display := 'BMP - Windows BitMaP (8bpp)';
               result.List[1].Ext := 'BMP';
               result.List[1].ID := 'BMP';
@@ -283,15 +288,7 @@ begin
     result.List[3].Display := 'TGA - Targa (24bpp)';
     result.List[3].Ext := 'TGA';
     result.List[3].ID := 'TGA24';
-  end
-  else
-    if (uppercase(extractfileext(nam)) = '.DDS') or (uppercase(extractfileext(nam)) = '.JPG') or (uppercase(extractfileext(nam)) = '.TGA') then
-    begin
-      inc(result.NumFormats);
-      result.List[result.NumFormats].Display := 'BMP - Windows BitMaP (24bpp)';
-      result.List[result.NumFormats].Ext := 'BMP';
-      result.List[result.NumFormats].ID := 'BMP';
-    end;
+  end;
 
 end;
 
@@ -346,8 +343,6 @@ begin
           img.Pixels[x][y] := Buffer[x*H+y];
       if cnv = 'BMP' then
         img.SaveToBMPStream(dst)
-//      else if cnv = 'PCX' then
-//        img.SaveToPCX(dst)
       else if cnv = 'TGA8' then
         img.SaveToTGA8Stream(dst)
       else if cnv = 'TGA24' then
@@ -386,8 +381,6 @@ begin
     end;
     if cnv = 'BMP' then
       img.SaveToBMPStream(dst)
-//      else if cnv = 'PCX' then
-//        img.SaveToPCX(dst)
     else if cnv = 'TGA8' then
       img.SaveToTGA8Stream(dst)
     else if cnv = 'TGA24' then
@@ -469,8 +462,6 @@ begin
     end;
     if cnv = 'BMP' then
       img.SaveToBMPStream(dst)
-//      else if cnv = 'PCX' then
-//        img.SaveToPCX(dst)
     else if cnv = 'TGA8' then
       img.SaveToTGA8Stream(dst)
     else if cnv = 'TGA24' then
@@ -538,8 +529,6 @@ begin
     end;
     if cnv = 'BMP' then
       img.SaveToBMPStream(dst)
-//      else if cnv = 'PCX' then
-//        img.SaveToPCX(dst)
       else if cnv = 'TGA8' then
         img.SaveToTGA8Stream(dst)
       else if cnv = 'TGA24' then
@@ -587,8 +576,6 @@ begin
     end;
     if cnv = 'BMP' then
       img.SaveToBMPStream(dst)
-//      else if cnv = 'PCX' then
-//        img.SaveToPCX(dst)
     else if cnv = 'TGA8' then
       img.SaveToTGA8Stream(dst)
     else if cnv = 'TGA24' then
@@ -632,8 +619,6 @@ begin
     end;
     if cnv = 'BMP' then
       img.SaveToBMPStream(dst)
-//      else if cnv = 'PCX' then
-//        img.SaveToPCX(dst)
     else if cnv = 'TGA8' then
       img.SaveToTGA8Stream(dst)
     else if cnv = 'TGA24' then
@@ -897,24 +882,6 @@ begin
 
 end;
 
-function ConvertImagingStream(src, dst: TStream; cnv: ShortString): integer;
-var Img: TImageData;
-begin
-
-  // call this before using any TImageData record
-  InitImage(Img);
-
-  // load texture from file
-  LoadImageFromStream(src, Img);
-
-  // save the image to file
-  SaveImageToStream('bmp',dst,Img);
-
-  // memory occupied by the image is freed
-  FreeImage(Img);
-
-end;
-
 function ConvertStream(src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer; stdcall;
 var Size: int64;
 begin
@@ -977,19 +944,13 @@ begin
     if not(Silent) or (palfil = '') then
       palfil := SelectPal;
     result := ConvertARTStream(src,dst,palfil,DataX,DataY,cnv);
-  end
-  else if (uppercase(extractfileext(nam)) = '.DDS') or (uppercase(extractfileext(nam)) = '.JPG') or (uppercase(extractfileext(nam)) = '.TGA') then
-  begin
-    result := ConvertImagingStream(src,dst,cnv);
   end;
 
 end;
 
   // Obsolete Convert, so we wrap it to the ConvertStream version
 function Convert(src, dst, nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer; stdcall;
-var Size: int64;
-    hTMP: integer;
-    src_stm, dst_stm: TFileStream;
+var src_stm, dst_stm: TFileStream;
 begin
 
   src_stm := TFileStream.Create(src,fmOpenRead or fmShareDenyWrite);
@@ -1015,16 +976,42 @@ begin
 
 end;
 
-procedure AboutBox; stdcall;
+procedure InitPluginEx4(MsgBox: TMsgBoxCallback); stdcall;
 begin
 
-  MessageBoxA(AHandle, PChar('Picture/Textures Convert Plugin v'+getVersion(DRIVER_VERSION)+#10+
-                          'Created by Alexandre Devilliers (aka Elbereth)'+#10+
-                          'Uses Vampyre Imaging Library v'+Imaging.GetVersionStr+' by Marek Mauder'+#10+'http://imaginglib.sourceforge.net'+#10+#10+
-                          'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+#10+
-                          DLNGStr('CNV010')
-                          )
-                        , 'About Picture/Textures Convert Plugin...', MB_OK);
+  showMsgBox := MsgBox;
+
+end;
+
+procedure AboutBox; stdcall;
+var aboutText: string;
+begin
+
+  if (SupportedDUCI >= 4) then
+  begin
+
+    aboutText := '{\rtf1\ansi\ansicpg1252\deff0\deflang1036{\fonttbl{\f0\fswiss\fcharset0 Arial;}}'+#10+
+                 '\viewkind4\uc1\pard\qc\ul\b\f0\fs24\par Elbereth''s Picture/Textures Convert plugin v'+getVersion(DRIVER_VERSION)+'\par'+#10+
+                 '\ulnone\b0\i\fs22 Created by \b Alexandre Devilliers (aka Elbereth/Piecito)\par'+#10+
+                 '\par'+#10+
+                 '\b0\i0\fs20 Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+'\par'+#10+
+                 'Driver Interface [DUCI] v'+inttostr(DUCI_VERSION)+' (v'+inttostr(DUCI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUCI)+']\par'+#10+
+                 'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+'\par'+#10+
+                 'Based on CVS rev '+getCVSRevision(CVS_REVISION)+' ('+getCVSDate(CVS_DATE)+')\par'+#10+
+                 '\par'+#10+DLNGStr('CNV010')+'}'+#10;
+
+  end
+  else
+  begin
+    aboutText := 'Elbereth''s Picture/Textures Convert plugin v'+getVersion(DRIVER_VERSION)+#10+
+                 'Created by \b Alexandre Devilliers (aka Elbereth/Piecito)'+#10+#10+
+                 'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
+                 'Driver Interface [DUCI] v'+inttostr(DUCI_VERSION)+' (v'+inttostr(DUCI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUCI)+#10+
+                 'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+
+                 'Based on CVS rev '+getCVSRevision(CVS_REVISION)+' ('+getCVSDate(CVS_DATE)+')'+#10+#10+DLNGStr('CNV010')+#10;
+  end;
+
+  showMsgBox('About Elbereth''s Picture/Textures Convert Plugin...',aboutText);
 
 end;
 
@@ -1106,12 +1093,14 @@ end;
 
 exports
   DUCIVersion,
+  DUCIVersionEx,
   Convert,
   ConvertStream,
   GetFileConvert,
   IsFileCompatible,
-  VersionInfo,
+  VersionInfo2,
   InitPlugin,
+  InitPluginEx4,
   ConfigBox,
   AboutBox;
 

@@ -1,6 +1,6 @@
 program drgunpack5;
 
-// $Id: drgunpack5.dpr,v 1.15 2009-07-10 20:58:31 elbereth Exp $
+// $Id: drgunpack5.dpr,v 1.16 2010-04-21 15:55:11 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/drgunpack5.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -61,7 +61,8 @@ uses
   BrowseForFolderU in '..\common\BrowseForFolderU.pas',
   spec_DDS in '..\common\spec_DDS.pas',
   MpegAudioOptions in 'MpegAudioOptions.pas' {frmOptMPEGa},
-  MsgBox in 'MsgBox.pas' {frmMsgBox};
+  MsgBox in 'MsgBox.pas' {frmMsgBox},
+  classConvertExport in 'classConvertExport.pas';
 
 {$R *.res}
 

@@ -1,6 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.24 2010-02-27 15:56:30 elbereth Exp $
+// $Id: HyperRipper.pas,v 1.25 2010-04-21 13:23:13 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -1333,6 +1333,12 @@ begin
               if Found.Size = 0 then
                 inc(LastOffset);
 //              break;
+            end
+            else if (Found.GenType = HR_TYPE_ERROR) and (Found.Size > 0) and (Found.Offset <> -1) then
+            begin
+              curPos := Found.Offset+Found.Size;
+              SomethingFound := true;
+              LastOffset := curPos;
             end;
           end;
         end;
@@ -3204,13 +3210,18 @@ begin
             lastDisplayTime := now;
             firstDisplay := true;
             curMP3Result := ReplaceValue('%e',ReplaceValue('%a',DLNGstr('HRLG08'),inttohex(Offset,8)),'mp3');
-            hrip.addResult(ReplaceValue('%s',curMP3Result,'0'));
             repeat
 
               if (SecondsBetween(now,lastDisplayTime) >= 1) then
               begin
                 hrip.Progress.Position := Round((inStm.Position / inStm.Size)*100);
-                hrip.lastResult(ReplaceValue('%s',curMP3Result,inttostr(inStm.Position-Offset)));
+                if firstDisplay then
+                begin
+                  hrip.addResult(ReplaceValue('%s',curMP3Result,inttostr(inStm.Position-Offset)));
+                  firstDisplay := false;
+                end
+                else
+                  hrip.lastResult(ReplaceValue('%s',curMP3Result,inttostr(inStm.Position-Offset)));
                 lastDisplayTime := now;
                 displayInfo(nil,inStm.Position,false);
               end;
@@ -3480,6 +3491,15 @@ begin
                 result.Size := Size;
                 result.Ext := 'mp'+inttostr(MP3Layer);
                 result.GenType := HR_TYPE_AUDIO;
+                if firstDisplay then
+                  hrip.addResult(ReplaceValue('%s',curMP3Result,inttostr(inStm.Position-Offset)));
+              end
+              else
+              begin
+                if Size > (inStm.Size - Offset) then
+                  Size := inStm.Size - Offset;
+                result.Size := Size;
+                result.Offset := offset;
               end;
             end;
 

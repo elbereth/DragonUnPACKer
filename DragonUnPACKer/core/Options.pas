@@ -1,6 +1,6 @@
 unit Options;
 
-// $Id: Options.pas,v 1.11 2009-06-26 21:04:05 elbereth Exp $
+// $Id: Options.pas,v 1.12 2010-04-21 15:51:00 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Options.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -21,7 +21,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ComCtrls, ImgList, StdCtrls, ExtCtrls, Registry, declFSE,
-  CheckLst, Main, lib_look, ShellApi, BrowseForFolderU;
+  CheckLst, Main, lib_look, ShellApi, BrowseForFolderU,classConvertExport;
 
 type
   TfrmConfig = class(TForm)
@@ -348,18 +348,20 @@ end;
 procedure CONVList();
 var x : integer;
     itmx : TListItem;
+    info : ConvertInfoEx;
 begin
 
   frmConfig.lstConvert2.Clear;
-  for x := 1 to CPlug.NumPlugins do
+  for x := 1 to CPlug.getNumPlugins() do
   begin
     itmx := frmConfig.lstConvert2.Items.Add;
-    itmx.Caption := CPlug.Plugins[x].Version.Name;
-    itmx.SubItems.Add(CPlug.Plugins[x].Version.Version);
-    itmx.SubItems.Add(ChangeFileExt(CPlug.Plugins[x].FileName,''));
+    info := CPlug.getPluginInfo(x);
+    itmx.Caption := info.Name;
+    itmx.SubItems.Add(info.Version);
+    itmx.SubItems.Add(ChangeFileExt(info.FileName,''));
   end;
 
-  if CPlug.NumPlugins > 0 then
+  if CPlug.getNumPlugins() > 0 then
   begin
     frmConfig.lstConvert2.ItemIndex := 0;
   end;
@@ -926,23 +928,24 @@ end;
 
 procedure TfrmConfig.lstConvert2Change(Sender: TObject; Item: TListItem;
   Change: TItemChange);
+var info: ConvertInfoEx;  
 begin
 
   if (Change = ctState)
   and (lstConvert2.ItemIndex > -1) then
   begin
 
-    lblCnvInfoAuthor.Caption := CPlug.Plugins[lstConvert2.ItemIndex+1].Version.Author;
-    lblCnvInfoVersion.Caption := CPlug.Plugins[lstConvert2.ItemIndex+1].Version.Version;
-    lblCnvInfoComments.Caption := CPlug.Plugins[lstConvert2.ItemIndex+1].Version.Comment;
+    info := CPlug.getPluginInfo(lstConvert2.ItemIndex+1);
+    lblCnvInfoAuthor.Caption := info.Author;
+    lblCnvInfoVersion.Caption := info.Version;
+    lblCnvInfoComments.Caption := info.Comment;
+    txtCIntVer.Caption := inttostr(info.VerID);
 
-    cmdCnvAbout.Enabled := CPlug.Plugins[lstConvert2.ItemIndex+1].IsAboutBox;
-    cmdCnvSetup.Enabled := CPlug.Plugins[lstConvert2.ItemIndex+1].IsConfigBox;
+    cmdCnvAbout.Enabled := info.isAboutBox;
+    cmdCnvSetup.Enabled := info.isConfigBox;
 
-    txtDUCI.Caption := 'v'+inttostr(CPlug.Plugins[lstConvert2.ItemIndex+1].DUCIVersion);
-    txtCIntVer.Caption := inttostr(CPlug.Plugins[lstConvert2.ItemIndex+1].Version.VerID);
+    txtDUCI.Caption := 'v'+inttostr(info.DUCIVersion);
 
-//    trkPriority.Position := FSE.Drivers[lstDrivers2.ItemIndex+1].Priority;
   end;
 
 end;

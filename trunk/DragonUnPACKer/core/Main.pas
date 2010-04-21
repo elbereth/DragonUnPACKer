@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.28 2010-02-27 19:22:25 elbereth Exp $
+// $Id: Main.pas,v 1.29 2010-04-21 15:48:58 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -24,7 +24,7 @@ uses
   lib_language, translation, ShellApi, VirtualTrees, lib_look, ToolWin,
   DropSource, XPMan, DragDrop, DragDropFile, prg_ver, StrUtils,
   classIconsFromExt, DateUtils, cxCpu40, lib_binutils, commonTypes,
-  BrowseForFolderU, dwProgressBar,
+  BrowseForFolderU, dwProgressBar, classConvertExport,
   // Vampyre Imaging Library
   ImagingTypes, Imaging, ImagingClasses, ImagingComponents, ImagingCanvases,
   ImagingFormats, ImagingUtility, dwTaskbarComponents;
@@ -252,6 +252,7 @@ type
     procedure RecentFiles_Add(newfile: string);
     procedure RecentFiles_Decal(oldpos: integer);
   public
+    TempFiles: TStrings;
     isPreviewLimit: boolean;
     previewLimitValue: integer;
     function getVerboseLevel(): integer;
@@ -288,7 +289,6 @@ uses About, Registry, lib_utils, Search,
      HyperRipper, classConvert, classFSE, List, Error, MsgBox;
 
 var
-  TempFiles: TStrings;
   msgBuf: String;
   CListInfo: extConvertList;
 
@@ -1092,11 +1092,9 @@ begin
   if (lstContent.SelectedCount > 0) then
   begin
 
-    Randomize;
-
     Data := lstContent.getNodeData(lstContent.getFirstSelected);
 
-    tmpfil := getTemporaryDir+'dup5tmp-'+IntToStr(Random(99999999))+'-'+Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+    tmpfil := getTemporaryDir+getTemporaryFilename(Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos));
 
 {    rep := GetNodePath2(lstIndex2.FocusedNode);
     if length(rep) > 0 then
@@ -1221,9 +1219,7 @@ begin
   if SaveDialog.Execute then
   begin
 
-    Randomize;
-
-    tmpfil := getTemporaryDir+'dup5tmp-'+IntToStr(Random(99999999))+'-'+filename;
+    tmpfil := getTemporaryDir+getTemporaryFilename(filename);
 
     dstfil := SaveDialog.Filename;
 
@@ -1234,29 +1230,18 @@ begin
 
     silentExtract := getVerboseLevel = 0;
 
-    if CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].DUCIVersion < 3 then
-    begin
-      appendLog(DLNGStr('LOGC12'));
-      FSE.ExtractFile(Data.data,tmpfil,silentExtract);
+    appendLog(DLNGStr('LOGC11'));
+    tmpStm := TMemoryStream.Create;
+    outStm := TFileStream.Create(dstfil,fmCreate or fmShareDenyWrite);
+    try
+      FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,silentExtract);
+      tmpStm.Seek(0,soFromBeginning);
       writeLogVerbose(1,ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[CurrentMenu.Tag].Info.Display));
-      CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].Convert(tmpfil,dstfil,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
+      CPlug.convert(CListInfo.List[CurrentMenu.Tag].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
       appendLog(DLNGStr('LOG510'));
-    end
-    else
-    begin
-      appendLog(DLNGStr('LOGC11'));
-      tmpStm := TMemoryStream.Create;
-      outStm := TFileStream.Create(dstfil,fmCreate or fmShareDenyWrite);
-      try
-        FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,silentExtract);
-        tmpStm.Seek(0,soFromBeginning);
-        writeLogVerbose(1,ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[CurrentMenu.Tag].Info.Display));
-        CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].ConvertStream(tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
-        appendLog(DLNGStr('LOG510'));
-      finally
-        FreeAndNil(tmpStm);
-        FreeAndNil(outStm);
-      end;
+    finally
+      FreeAndNil(tmpStm);
+      FreeAndNil(outStm);
     end;
 
     try
@@ -1342,8 +1327,6 @@ begin
     if length(rep) > 0 then
       rep := rep + FSE.SlashMode;
 
-    Randomize;
-
     Oldperc := 0;
     PercentCB(0);
 
@@ -1351,49 +1334,34 @@ begin
 
     writeLog(ReplaceValue('%b',DLNGStr('LOGC14'),CListInfo.List[CurrentMenu.Tag].Info.Display));
 
-    useOldMethod := CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].DUCIVersion < 3;
-
-    if useOldMethod then
-      appendLogVerbose(2,DLNGStr('LOGC12'))
-    else
-      appendLogVerbose(2,DLNGStr('LOGC11'));
+    appendLogVerbose(2,DLNGStr('LOGC11'));
 
     while (Node <> Nil) do
     begin
       Data := lstContent.GetNodeData(Node);
       filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
       dstfil := outputdir + ChangeFileExt(fileName,'.'+CListInfo.List[CurrentMenu.Tag].Info.Ext);
-      tmpfil := getTemporaryDir+'dup5tmp-'+IntToStr(Random(99999999))+'-'+fileName;
+      tmpfil := getTemporaryDir+getTemporaryFilename(fileName);
 
-      if useOldMethod then
-      begin
-        FSE.ExtractFile(Data.data,tmpfil,false);
-        appendLogVerbose(2,DLNGStr('LOGC15'));
-        CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].Convert(tmpfil,dstfil,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
+      tmpStm := TMemoryStream.Create;
+      outStm := TFileStream.Create(dstfil,fmCreate or fmShareDenyWrite);
+      try
+        FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,false);
+        tmpStm.Seek(0,soFromBeginning);
+        appendLog(DLNGStr('LOGC15'));
+        CPlug.convert(CListInfo.List[CurrentMenu.Tag].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
         appendLog(DLNGStr('LOG510'));
-      end
-      else
-      begin
-        tmpStm := TMemoryStream.Create;
-        outStm := TFileStream.Create(dstfil,fmCreate or fmShareDenyWrite);
-        try
-          FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,false);
-          tmpStm.Seek(0,soFromBeginning);
-          appendLog(DLNGStr('LOGC15'));
-          CPlug.Plugins[CListInfo.List[CurrentMenu.Tag].Plugin].ConvertStream(tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
-          appendLog(DLNGStr('LOG510'));
-        except
-          on E: Exception do
-          begin
-            appendLog(DLNGStr('LOG513'));
-            writeLog(DLNGStr('ERR200')+' '+E.ClassName+' - '+E.Message);
-            colorLog(clRed);
-            styleLog([fsBold]);
-          end;
+      except
+        on E: Exception do
+        begin
+          appendLog(DLNGStr('LOG513'));
+          writeLog(DLNGStr('ERR200')+' '+E.ClassName+' - '+E.Message);
+          colorLog(clRed);
+          styleLog([fsBold]);
         end;
-        FreeAndNil(tmpStm);
-        FreeAndNil(outStm);
       end;
+      FreeAndNil(tmpStm);
+      FreeAndNil(outStm);
 
       if not(Silent) then
         Silent := True;
@@ -1758,7 +1726,7 @@ begin
   CPlug.SetOwner(self);
   CPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\convert\');
 
-  dup5Main.writeLog(' = '+ReplaceValue('%p',DLNGStr('LOG009'),inttostr(CPlug.NumPlugins)));
+  dup5Main.writeLog(' = '+ReplaceValue('%p',DLNGStr('LOG009'),inttostr(CPlug.getNumPlugins)));
 
   Icons := TIconsFromExt.Create;
   Icons.init(imgContents);
@@ -2643,7 +2611,7 @@ end;
 procedure Tdup5Main.writeLog(text: string);
 begin
 
-  if richLog.Lines.Count = 32760 then
+  if richLog.Lines.Count >= 32760 then
     richLog.Lines.Delete(0);
 
   richLog.Lines.Add(DateTimeToStr(now)+' : '+text);
@@ -2768,6 +2736,7 @@ var Data: pvirtualTreeData;
     stmSource, stmBitmap: TMemoryStream;
     foundCnv: boolean;
     StartTime: TDateTime;
+    cnvInfo: ConvertInfoEx;
 begin
 
   if panPreview.Visible then
@@ -2806,8 +2775,7 @@ begin
       if not(isPreviewLimit) or (Data.Data^.Size <= getPreviewLimitInBytes(previewLimitValue)) then
       begin
 
-        Randomize;
-        tmpfil := getTemporaryDir+'dup5tmp-'+inttostr(GetTickCount)+'-'+IntToStr(Random(99999999))+'-'+Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+        tmpfil := getTemporaryDir+getTemporaryFilename(Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos));
         foundCnv := false;
 
         stmSource := TMemoryStream.Create;
@@ -2865,9 +2833,10 @@ begin
               foundCnv := (uppercase(CList.List[i].Info.ID) = 'BMP') or (uppercase(CList.List[i].Info.ID) = 'TGA32') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT1') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT3');
               if foundCnv then
               begin
-                dup5Main.appendLogVerbose(2,CPlug.Plugins[CList.List[i].Plugin].Version.Name+' v'+CPlug.Plugins[CList.List[i].Plugin].Version.Version);
+                cnvInfo := CPlug.getPluginInfo(i);
+                dup5Main.appendLogVerbose(2,cnvInfo.Name+' v'+cnvInfo.Version);
                 stmSource.Seek(0,soFromBeginning);
-                CPlug.Plugins[CList.List[i].Plugin].ConvertStream(stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true);
+                CPlug.Convert(i,stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true);
                 stmBitmap.Seek(0,soFromBeginning);
 
                 try

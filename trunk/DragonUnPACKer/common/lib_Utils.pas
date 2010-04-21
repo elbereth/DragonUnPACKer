@@ -1,6 +1,6 @@
 unit lib_Utils;
 
-// $Id: lib_Utils.pas,v 1.11 2009-09-12 05:54:06 elbereth Exp $
+// $Id: lib_Utils.pas,v 1.12 2010-04-21 15:53:25 elbereth Exp $
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_Utils.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -78,6 +78,7 @@ procedure SetRegistryHR(prefix: string; ID: integer; value: boolean);
 function GetAllSystemInfo(): TOSInfo;
 function getPlugVersion(version: integer): string;
 function getTemporaryDir(): string;
+function getTemporaryFilename(suffix: string = ''; prefix: string = 'dup5tmp'; separator: string = '-'): string;
 
 implementation
 
@@ -783,6 +784,16 @@ begin
   Finally
     FreeAndNil(Reg);
   end;
+
+end;
+
+function getTemporaryFilename(suffix: string = ''; prefix: string = 'dup5tmp'; separator: string = '-'): string;
+begin
+
+  randomize;
+  result := prefix+inttostr(GetTickCount)+separator+IntToStr(Random(99999999));
+  if (suffix <> '') then
+    result := result + separator + suffix;
 
 end;
 

@@ -1,6 +1,6 @@
 object dup5Main: Tdup5Main
-  Left = 513
-  Top = 765
+  Left = 452
+  Top = 213
   HelpContext = 1
   AlphaBlendValue = 128
   AutoScroll = False
@@ -196,7 +196,6 @@ object dup5Main: Tdup5Main
     OnContextPopup = lstContentContextPopup
     OnGetText = lstContentGetText
     OnGetImageIndex = lstContentGetImageIndex
-    OnHeaderClick = lstContentHeaderClick
     OnInitNode = lstContentInitNode
     OnKeyUp = lstContentKeyUp
     OnMouseDown = lstContentMouseDown

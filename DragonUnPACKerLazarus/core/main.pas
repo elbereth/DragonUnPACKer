@@ -25,7 +25,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, Menus,
-  ComCtrls, ExtCtrls, VirtualTrees, logtreeview, SharedLogger;
+  ComCtrls, ExtCtrls, VirtualTrees, logtreeview, SharedLogger, SharedPlugins;
 
 type
 
@@ -249,6 +249,9 @@ begin
 
   // Loading the theme (images, icons, etc..)
   loadTheme();
+
+  // Refreshing the drivers
+  DPlugins.refreshDrivers(getBaseDir());
 
 end;
 

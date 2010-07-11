@@ -1,7 +1,5 @@
 <?php
 
-// $Id: dus.php,v 1.10 2009-07-11 13:55:28 elbereth Exp $
-// $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dus/dus.php,v $
 //
 // The contents of this file are subject to the Mozilla Public License
 // Version 1.1 (the "License"); you may not use this file except in compliance
@@ -17,17 +15,15 @@
 // (elbereth@users.sourceforge.net, http://www.elberethzone.net).
 //
 
-  // CVS variables
-  $CVS_REVISION = '$Revision: 1.10 $';
-  $CVS_REVISION_DISPLAY = substr($CVS_REVISION,11,strlen($CVS_REVISION)-13);
-  $CVS_DATE = '$Date: 2009-07-11 13:55:28 $';
-  $CVS_DATE_DISPLAY = substr($CVS_DATE,7,strlen($CVS_DATE)-9);
-
+  // Program version
+  define(DUS_VERSION,'3.2.0');
+  define(DUS_DATE,'13:06 11/07/2010');
+  
   // Sending the header
   header('Content-type: text/plain');
   echo "[ID]\n";
   echo "DUS=3\n";
-  echo "Description=Dragon UnPACKer 5 Update Server v3.$CVS_REVISION_DISPLAY ($CVS_DATE_DISPLAY)\n";
+  echo "Description=Dragon UnPACKer 5 Update Server v".DUS_VERSION." (".DUS_DATE.")\n";
 
   // Connect to MYSQL Database
   $link = mysql_connect("mysql4-d", "d108923ro", "rofordus3");
@@ -131,7 +127,7 @@
         }
       }
     }
-    $dusbody .= "FileDL=".$line[4]."\nSize=".$line[5]."\n\n";
+    $dusbody .= "FileDL=".$line[4]."\nSize=".$line[5]."\nRealSize=".$line[6]."\nHash=".$line[7]."\n\n";
 
   }
 
@@ -175,7 +171,7 @@
           }
         }
       }
-      $duscoreupd .= "PackageSize=".$line2[4]."\nPackageFileDL=".$line2[3]."\n";
+      $duscoreupd .= "PackageSize=".$line2[4]."\nPackageFileDL=".$line2[3]."\nRealSize=".$line2[5]."\nHash=".$line2[6]."\n";
     }
 
     mysql_free_result($queryresult2);
@@ -227,7 +223,7 @@
           }
         }
       }
-      $duscoreupd .= "PackageSize=".$line2[4]."\nPackageFileDL=".$line2[3]."\n";
+      $duscoreupd .= "PackageSize=".$line2[4]."\nPackageFileDL=".$line2[3]."\nRealSize=".$line2[5]."\nHash=".$line2[6]."\n";
     }
 
     mysql_free_result($queryresult2);
@@ -313,7 +309,7 @@
   mysql_free_result($queryresult);
 
   // Retrieving available stable drivers plugins
-  $query = "SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR, DATE(date) FROM dus_driver WHERE dudi = ".$userdudi." AND versiontype='stable' ORDER BY name, version DESC";
+  $query = "SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR, DATE(date), realsize, hash FROM dus_driver WHERE dudi = ".$userdudi." AND versiontype='stable' ORDER BY name, version DESC";
   $queryresult = mysql_query ($query);
   if (mysql_errno() != 0) {
   	echo "Result=M31\n";
@@ -349,7 +345,7 @@
           }
         }
       }
-      $dusbody .= "Size=".$line[7]."\nFile=".$line[5]."\nFileDL=".$line[6]."\nDate=".$line[10]."\n\n";
+      $dusbody .= "Size=".$line[7]."\nFile=".$line[5]."\nFileDL=".$line[6]."\nDate=".$line[10]."\nRealSize=".$line[11]."\nHash=".$line[12]."\n\n";
     }
  	
   }
@@ -489,7 +485,7 @@
           $numadd++;
         }
       }
-      $dusbody .= "Size=".$line['size']."\nFile=".$line['file']."\nFileDL=".$line['fileDL']."\nDate=".$line['date']."\n\n";
+      $dusbody .= "Size=".$line['size']."\nFile=".$line['file']."\nFileDL=".$line['fileDL']."\nDate=".$line['date']."\nRealSize=".$line['realsize']."\nHash=".$line['hash']."\n\n";
     }
  	
   }

@@ -135,6 +135,7 @@ type
     procedure lstUpdatesUnstableClick(Sender: TObject);
     procedure AutoCheckTimerTimer(Sender: TObject);
   private
+    sha1Engine: TDCP_Hash;
     curlObj: TCurl;
     DUS: TIniFile;
     Dup5Path: string;
@@ -193,7 +194,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 32140;
+  VERSION: Integer = 33040;
 
 implementation
 
@@ -1558,6 +1559,8 @@ begin
   curlObj:=tCurl.Create(self);
   curlObj.UserAgent:='Duppi/'+getVersionFromInt(VERSION);
 
+  sha1Engine := TDCP_sha1.Create(Self);
+
   lstUpd := TStringList.Create;
 
 end;
@@ -1566,10 +1569,12 @@ procedure TfrmInstaller.butRefreshClick(Sender: TObject);
 Var updList,updUnstableList: TStringList;
     lngList: TStringList;
     itm: TListItem;
-    x, tmpVer: integer;
+    x, tmpVer, servid: integer;
     butDl, butDlUnstable, coreUpdate, duppiUpdate, delFile: boolean;
-    coreMessage, url, tmpFileName, tmpIniFile: string;
+    coreMessage, url, tmpFileName, tmpIniFile, testSHA: string;
     errCode: string;
+    Hash: array[0..19] of byte;
+    stmTemp: TFileStream;
 begin
 
   butRefresh.Enabled := false;
@@ -1586,6 +1591,7 @@ begin
   curlObj.NoProgress := false;
   curlObj.Verbose:=True;
   curlObj.FollowLocation:=True;
+
   curDL := 'dus.ini';
   writeLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
 
@@ -1595,6 +1601,11 @@ begin
     if not(curlObj.Perform) then
     begin
       writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
+      colorLog(Internet,clRed);
+    end
+    else if curlObj.ContentType <> 'text/plain' then
+    begin
+      writeLog(Internet,'Invalid ContentType: '+curlObj.ContentType);
       colorLog(Internet,clRed);
     end
     else if fileexists(tmpIniFile) then
@@ -1773,34 +1784,79 @@ begin
                 coreMessage := ReplaceValue('%s',ReplaceValue('%b',ReplaceValue('%a',DLNGStr('PI0047'),getVersionFromInt(VERSION)),dus.ReadString('Duppi','VersionDisp',GetVersionFromInt(dus.ReadInteger('Duppi','Version',0)))),dus.ReadString('Duppi','Size','???'));
                 if (MessageDlg(coreMessage,mtInformation,[mbYes, mbNo],0) = mrYes) then
                 begin
-                  url := dus.ReadString('Duppi','URL','');
-                  if url = '' then
-                    raise Exception.Create(DLNGstr('PI0049'));
                   tmpFile := dup5Path+'Download';
                   if not(DirectoryExists(tmpFile)) then
                     mkdir(tmpfile);
-                  tmpFileName := dus.ReadString('Duppi','FileDL',getTempFile(extractfileext(url)));
-                  tmpFile := dup5Path+'Download\'+tmpFileName;
-                  curlObj.URL:=url;
-                  curlObj.OutputFile := tmpFile;
-                  CurDL := tmpFileName;
-                  CurDLSize := dus.ReadInteger('Duppi','Size',1)*1024;
-                  inc(curDLSize);
-                  progressDL.Position := 0;
-                  progressDL.Max := 100;
-                  delFile := false;
-                  WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
-                  if curlObj.Perform then
-                    lstUpd.Add(tmpFile)
-                  else
+                  for servid := 1 to dus.ReadInteger('ID','NumServers',1) do
                   begin
-                    writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
-                    colorLog(Internet,clRed);
-                    DelFile := true;
-                  end;
+                    writeLog(Internet,ReplaceValue('%i',ReplaceValue('%d',DLNGStr('PI3001'),dus.ReadString('ID','Server'+inttostr(servid-1),'???')),inttostr(servid)));
+                    if servid = 1 then
+                      url := dus.ReadString('Duppi','URL','')
+                    else
+                      url := dus.ReadString('Duppi','URL'+inttostr(servid-1),'');
+                    if url = '' then
+                      raise Exception.Create(DLNGstr('PI0049'));
+                    tmpFileName := dus.ReadString('Duppi','FileDL',extractfilename(getTempFile(extractfileext(url))));
+                    tmpFile := dup5Path+'Download\'+tmpFileName;
+                    curlObj.URL:=url;
+                    curlObj.OutputFile := tmpFile;
+                    CurDL := tmpFileName;
+                    CurDLSize := dus.ReadInteger('Duppi','RealSize',1);
+                    progressDL.Position := 0;
+                    progressDL.Max := 100;
+                    delFile := false;
+                    WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
+                    if not(curlObj.Perform) then
+                    begin
+                      writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
+                      colorLog(Internet,clRed);
+                      DelFile := true;
+                    end
+                    else if dus.ValueExists('Duppi','Realsize') and (GetFileSize(tmpFile) <> CurDLSize) then
+                    begin
+                      writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3002'),IntToStr(GetFileSize(tmpFile))),IntTostr(CurDLSize)));
+                      colorLog(Internet,clRed);
+                      DelFile := true;
+                    end
+                    else
+                    begin
+                      try
+                        if dus.ValueExists('Duppi','Hash') then
+                        begin
+                          writeLog(Internet,DLNGStr('PI3003'));
+                          stmTemp := TFileStream.Create(tmpFile,fmOpenRead);
+                          sha1Engine.Init;
+                          stmTemp.Seek(0,0);
+                          sha1Engine.UpdateStream(stmTemp,curDLSize);
+                          stmTemp.Free;
+                          sha1Engine.Final(Hash);
+                          testSHA := '';
+                          for x := 0 to 19 do
+                            testSHA := testSHA + LowerCase(inttohex(Hash[x],2));
+                        end;
+                        if dus.ValueExists('Duppi','Hash') and (testSHA <> dus.ReadString('Duppi','Hash','')) then
+                        begin
+                          writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3004'),testSHA),dus.ReadString('Duppi','Hash','')));
+                          colorLog(Internet,clRed);
+                          DelFile := true;
+                        end
+                        else
+                        begin
+                          lstUpd.Add(tmpFile);
+                          butDownload.Click;
+                          exit;
+                        end;
+                      except
+                        on e: Exception do
+                        begin
+                          writeLog(Internet,ReplaceValue('%b',ReplaceValue('%a',DLNGstr('PI3004'),e.ClassName),e.Message));
+                          colorLog(Internet,clRed);
+                          DelFile := true;
+                        end;
+                      end;
+                    end;
 
-                  butDownload.Click;
-                  exit;
+                  end;
                 end;
               end;
 
@@ -1815,7 +1871,7 @@ begin
                   tmpFile := dup5Path+'Download';
                   if not(DirectoryExists(tmpFile)) then
                     mkdir(tmpfile);
-                  tmpFileName := dus.ReadString('core','PackageFileDL',getTempFile(extractfileext(url)));
+                  tmpFileName := dus.ReadString('core','PackageFileDL',extractfilename(getTempFile(extractfileext(url))));
                   tmpFile := dup5Path+'Download\'+tmpFileName;
                   curlObj.URL:=url;
                   curlObj.OutputFile := tmpFile;
@@ -1885,6 +1941,8 @@ begin
 
   curlObj.Free;
 
+  sha1Engine.Free;
+
   if FileExists(tmpFile) then
     DeleteFile(tmpFile);
 
@@ -1950,7 +2008,7 @@ begin
           if dus.ValueExists(lstUpdates.Items.Item[x].SubItems[4],'URL') then
           begin
             url := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'URL','');
-            tmpFileName := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'FileDL',getTempFile(extractfileext(url)));
+            tmpFileName := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'FileDL',extractFilename(getTempFile(extractfileext(url))));
             tmpFile := dup5Path+'Download\'+tmpFileName;
             curlObj.URL := url;
             curlObj.OutputFile := tmpFile;
@@ -1987,7 +2045,7 @@ begin
           if dus.ValueExists(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL') then
           begin
             url := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL','');
-            tmpFileName := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'FileDL',getTempFile(extractfileext(url)));
+            tmpFileName := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'FileDL',getTempFile(getTempFile(extractfileext(url))));
             tmpFile := dup5Path+'Download\'+tmpFileName;
             curlObj.URL := url;
             curlObj.OutputFile := tmpFile;
@@ -2024,7 +2082,7 @@ begin
         if dus.ValueExists(lstTranslations.Items.Item[x].SubItems[3],'URL') then
         begin
           url := dus.ReadString(lstTranslations.Items.Item[x].SubItems[3],'URL','');
-          tmpFileName := dus.ReadString(lstTranslations.Items.Item[x].SubItems[3],'FileDL',getTempFile(extractfileext(url)));
+          tmpFileName := dus.ReadString(lstTranslations.Items.Item[x].SubItems[3],'FileDL',getTempFile(getTempFile(extractfileext(url))));
           tmpFile := dup5Path+'Download\'+tmpFileName;
           curlObj.URL := url;
           curlObj.OutputFile := tmpFile;

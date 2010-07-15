@@ -55,7 +55,7 @@ const DLNG_PRGID : string = 'UP';
       DLNG_PRGVER : byte = 13;
 {$ELSE}
 const DLNG_PRGID : string = 'PI';
-      DLNG_PRGVER : byte = 3;
+      DLNG_PRGVER : byte = 4;
 {$ENDIF}
 
 type

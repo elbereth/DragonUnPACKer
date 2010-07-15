@@ -151,6 +151,16 @@ begin
     result := 'Continuer et effacer le fichier (recommandé)?'
   else if sch = 'PI0068' then
     result := 'Effacé!'
+  else if sch = 'PI3001' then
+    result := 'Serveur %i: %d'
+  else if sch = 'PI3002' then
+    result := 'La taille du fichier est incorrecte! (%a <> %b)'
+  else if sch = 'PI3003' then
+    result := 'Vérification de l''intégrité du fichier...'
+  else if sch = 'PI3004' then
+    result := 'Erreur d''intégritée du fichier! (%a <> %b)'
+  else if sch = 'PI3005' then
+    result := 'Erreur %a: %b'
   else if sch = 'PIE401' then
     result := 'Fonction de hachage inconnue: %h'
   else if sch = 'PIE402' then

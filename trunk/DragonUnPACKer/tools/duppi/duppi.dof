@@ -109,9 +109,9 @@ DebugCWD=
 IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=3
-MinorVer=2
+MinorVer=3
 Release=0
-Build=103
+Build=104
 Debug=0
 PreRelease=0
 Special=0
@@ -122,20 +122,11 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone
 FileDescription=Duppi - The DUP5 Package Installer.
-FileVersion=3.2.0.103
+FileVersion=3.3.0.104
 InternalName=Duppi
 LegalCopyright=Mozilla Public License 1.1
 LegalTrademarks=Mozilla Public License 1.1
 OriginalFilename=duppi.exe
 ProductName=Duppi
-ProductVersion=5.4.0a
+ProductVersion=3.3.0
 Comments=Duppi - The DUP5 Package Installer.
-[HistoryLists\hlUnitAliases]
-Count=1
-Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlUnitOutputDirectory]
-Count=1
-Item0=E:\Developpement\dup-dev-5.1-dcu
-[HistoryLists\hlOutputDirectorry]
-Count=1
-Item0=E:\Developpement\dup-dev-5.1-compiled\utils

@@ -1137,6 +1137,8 @@ object frmInstaller: TfrmInstaller
     Font.Name = 'MS Sans Serif'
     Font.Style = [fsBold]
     ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
   end
   object lineBas: TBevel
     Left = 0

@@ -133,12 +133,3 @@ Comments=
 [Excluded Packages]
 C:\Program Files\RemObjects Software\Everwood\Bin\RemObjects_Everwood_D7.bpl=RemObjects Everwood for Delphi
 P:\Program Files\Pascal Script for Delphi\Dcu\D7\PascalScript_Core_D7.bpl=RemObjects Pascal Script - Core Package
-[HistoryLists\hlUnitAliases]
-Count=1
-Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlUnitOutputDirectory]
-Count=1
-Item0=E:\Developpement\dup-dev-5.1-dcu
-[HistoryLists\hlOutputDirectorry]
-Count=1
-Item0=E:\Developpement\dup-dev-5.1-compiled\utils

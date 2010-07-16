@@ -1107,6 +1107,7 @@ begin
       if Reg.ValueExists('Version') then
       begin
         lblLastExec.Caption := Reg.ReadString('Version');
+        lblLastExec.Hint := dup5Path;
         if Reg.ValueExists('Build') then
         begin
           coreBuild := Reg.ReadInteger('Build');
@@ -1593,7 +1594,7 @@ begin
   curlObj.FollowLocation:=True;
 
   curDL := 'dus.ini';
-  writeLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
+  writeLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curlObj.URL));
 
     ButRefresh.Enabled := true;
     butDl := false;
@@ -1855,7 +1856,6 @@ begin
                         end;
                       end;
                     end;
-
                   end;
                 end;
               end;
@@ -1865,12 +1865,84 @@ begin
                 coreMessage := ReplaceValue('%s',ReplaceValue('%v',ReplaceValue('%c',DLNGStr('PI0050'),'-'),dus.ReadString('core','VersionDisp',GetVersionFromInt(dus.ReadInteger('core','Version',0)))),dus.ReadString('core','PackageSize','???'));
                 if (MessageDlg(coreMessage,mtInformation,[mbYes, mbNo],0) = mrYes) then
                 begin
-                  url := dus.ReadString('core','PackageURL','');
-                  if url = '' then
-                    raise Exception.Create(DLNGstr('PI0051'));
                   tmpFile := dup5Path+'Download';
                   if not(DirectoryExists(tmpFile)) then
                     mkdir(tmpfile);
+                  for servid := 1 to dus.ReadInteger('ID','NumServers',1) do
+                  begin
+                    writeLog(Internet,ReplaceValue('%i',ReplaceValue('%d',DLNGStr('PI3001'),dus.ReadString('ID','Server'+inttostr(servid-1),'???')),inttostr(servid)));
+                    if servid = 1 then
+                      url := dus.ReadString('core','PackageURL','')
+                    else
+                      url := dus.ReadString('core','PackageURL'+inttostr(servid-1),'');
+                    if url = '' then
+                      raise Exception.Create(DLNGstr('PI0051'));
+                    tmpFileName := dus.ReadString('core','PackageFileDL',extractfilename(getTempFile(extractfileext(url))));
+                    tmpFile := dup5Path+'Download\'+tmpFileName;
+                    curlObj.URL:=url;
+                    curlObj.OutputFile := tmpFile;
+                    CurDL := tmpFileName;
+                    CurDLSize := dus.ReadInteger('core','RealSize',1);
+                    progressDL.Position := 0;
+                    progressDL.Max := 100;
+                    delFile := false;
+                    WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
+                    if not(curlObj.Perform) then
+                    begin
+                      writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
+                      colorLog(Internet,clRed);
+                      DelFile := true;
+                    end
+                    else if dus.ValueExists('core','Realsize') and (GetFileSize(tmpFile) <> CurDLSize) then
+                    begin
+                      writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3002'),IntToStr(GetFileSize(tmpFile))),IntTostr(CurDLSize)));
+                      colorLog(Internet,clRed);
+                      DelFile := true;
+                    end
+                    else
+                    begin
+                      try
+                        if dus.ValueExists('core','Hash') then
+                        begin
+                          writeLog(Internet,DLNGStr('PI3003'));
+                          stmTemp := TFileStream.Create(tmpFile,fmOpenRead);
+                          sha1Engine.Init;
+                          stmTemp.Seek(0,0);
+                          sha1Engine.UpdateStream(stmTemp,curDLSize);
+                          stmTemp.Free;
+                          sha1Engine.Final(Hash);
+                          testSHA := '';
+                          for x := 0 to 19 do
+                            testSHA := testSHA + LowerCase(inttohex(Hash[x],2));
+                        end;
+                        if dus.ValueExists('core','Hash') and (testSHA <> dus.ReadString('core','Hash','')) then
+                        begin
+                          writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3004'),testSHA),dus.ReadString('core','Hash','')));
+                          colorLog(Internet,clRed);
+                          DelFile := true;
+                        end
+                        else
+                        begin
+                          lstUpd.Add(tmpFile);
+                          butDownload.Click;
+                          exit;
+                        end;
+                      except
+                        on e: Exception do
+                        begin
+                          writeLog(Internet,ReplaceValue('%b',ReplaceValue('%a',DLNGstr('PI3004'),e.ClassName),e.Message));
+                          colorLog(Internet,clRed);
+                          DelFile := true;
+                        end;
+                      end;
+                    end;
+
+                  end;
+
+{
+                  url := dus.ReadString('core','PackageURL','');
+                  if url = '' then
+                    raise Exception.Create(DLNGstr('PI0051'));
                   tmpFileName := dus.ReadString('core','PackageFileDL',extractfilename(getTempFile(extractfileext(url))));
                   tmpFile := dup5Path+'Download\'+tmpFileName;
                   curlObj.URL:=url;
@@ -1892,7 +1964,7 @@ begin
                   end;
 
                   butDownload.Click;
-                  exit;
+                  exit;}
                 end
                 else
                 begin
@@ -1982,9 +2054,11 @@ begin
 end;
 
 procedure TfrmInstaller.butDownloadClick(Sender: TObject);
-var x : integer;
-    url, tmpfile, tmpFileName : string;
+var x, y, servid : integer;
+    url, tmpfile, tmpFileName, testSHA : string;
     delFile : boolean;
+    stmTemp : TFileStream;
+    hash: array[0..19] of byte;
 begin
 
   tmpFile := dup5Path+'Download';
@@ -2005,34 +2079,80 @@ begin
       begin
         if lstUpdates.Items.Item[x].Checked then
         begin
-          if dus.ValueExists(lstUpdates.Items.Item[x].SubItems[4],'URL') then
+
+          for servid := 1 to dus.ReadInteger('ID','NumServers',1) do
           begin
-            url := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'URL','');
-            tmpFileName := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'FileDL',extractFilename(getTempFile(extractfileext(url))));
-            tmpFile := dup5Path+'Download\'+tmpFileName;
-            curlObj.URL := url;
-            curlObj.OutputFile := tmpFile;
-            CurDL := tmpFileName;
-            CurDLSize := strtoint(lstUpdates.Items.Item[x].SubItems[2]);
-            inc(curDLSize);
-            progressDL.Position := 0;
-            progressDL.Max := 100;
-            delFile := false;
-            WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
-            if curlObj.Perform then
+            if ((servid = 1) and dus.ValueExists(lstUpdates.Items.Item[x].SubItems[4],'URL'))
+            or ((servid <> 1) and dus.ValueExists(lstUpdates.Items.Item[x].SubItems[4],'URL'+inttostr(servid-1))) then
             begin
-              lstUpd.Add(tmpFile);
-            end
-            else
-            begin
-              writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
-              colorLog(Internet,clRed);
-              DelFile := true;
+              writeLog(Internet,ReplaceValue('%i',ReplaceValue('%d',DLNGStr('PI3001'),dus.ReadString('ID','Server'+inttostr(servid-1),'???')),inttostr(servid)));
+              if servid = 1 then
+                url := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'URL','')
+              else
+                url := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'URL'+inttostr(servid-1),'');
+              tmpFileName := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'FileDL',getTempFile(getTempFile(extractfileext(url))));
+              tmpFile := dup5Path+'Download\'+tmpFileName;
+              curlObj.URL := url;
+              curlObj.OutputFile := tmpFile;
+              CurDL := tmpFileName;
+              CurDLSize := dus.ReadInteger(lstUpdates.Items.Item[x].SubItems[4],'RealSize',1);
+              progressDL.Position := 0;
+              progressDL.Max := 100;
+              delFile := false;
+              WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
+              if not(curlObj.Perform) then
+              begin
+                writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
+                colorLog(Internet,clRed);
+                DelFile := true;
+              end
+              else if dus.ValueExists(lstUpdates.Items.Item[x].SubItems[4],'Realsize') and (GetFileSize(tmpFile) <> CurDLSize) then
+              begin
+                writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3002'),IntToStr(GetFileSize(tmpFile))),IntTostr(CurDLSize)));
+                colorLog(Internet,clRed);
+                DelFile := true;
+              end
+              else
+              begin
+                try
+                  if dus.ValueExists(lstUpdates.Items.Item[x].SubItems[4],'Hash') then
+                  begin
+                    writeLog(Internet,DLNGStr('PI3003'));
+                    stmTemp := TFileStream.Create(tmpFile,fmOpenRead);
+                    sha1Engine.Init;
+                    stmTemp.Seek(0,0);
+                    sha1Engine.UpdateStream(stmTemp,curDLSize);
+                    stmTemp.Free;
+                    sha1Engine.Final(Hash);
+                    testSHA := '';
+                    for y := 0 to 19 do
+                      testSHA := testSHA + LowerCase(inttohex(Hash[y],2));
+                  end;
+                  if dus.ValueExists(lstUpdates.Items.Item[x].SubItems[4],'Hash') and (testSHA <> dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'Hash','')) then
+                  begin
+                    writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3004'),testSHA),dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'Hash','')));
+                    colorLog(Internet,clRed);
+                    DelFile := true;
+                  end
+                  else
+                  begin
+                    lstUpd.Add(tmpFile);
+                    break;
+                  end;
+                except
+                  on e: Exception do
+                  begin
+                    writeLog(Internet,ReplaceValue('%b',ReplaceValue('%a',DLNGstr('PI3004'),e.ClassName),e.Message));
+                    colorLog(Internet,clRed);
+                    DelFile := true;
+                  end;
+                end;
+              end;
+              if DelFile and FileExists(tmpFile) then
+                DeleteFile(tmpFile);
             end;
-            ButDownload.Visible := true;
-            if DelFile and FileExists(tmpFile) then
-              DeleteFile(tmpFile);
           end;
+          ButDownload.Visible := true;
         end;
       end;
     end
@@ -2042,35 +2162,79 @@ begin
       begin
         if lstUpdatesUnstable.Items.Item[x].Checked then
         begin
-          if dus.ValueExists(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL') then
+          for servid := 1 to dus.ReadInteger('ID','NumServers',1) do
           begin
-            url := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL','');
-            tmpFileName := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'FileDL',getTempFile(getTempFile(extractfileext(url))));
-            tmpFile := dup5Path+'Download\'+tmpFileName;
-            curlObj.URL := url;
-            curlObj.OutputFile := tmpFile;
-            CurDL := tmpFileName;
-            CurDLSize := strtoint(lstUpdatesUnstable.Items.Item[x].SubItems[2]);
-            inc(curDLSize);
-            progressDL.Position := 0;
-            progressDL.Max := 100;
-            delFile := false;
-            WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
-            if curlObj.Perform then
+            if ((servid = 1) and dus.ValueExists(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL'))
+            or ((servid <> 1) and dus.ValueExists(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL'+inttostr(servid-1))) then
             begin
-              lstUpd.Add(tmpFile);
-            end
-            else
-            begin
-              writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
-              colorLog(Internet,clRed);
-              DelFile := true;
+              writeLog(Internet,ReplaceValue('%i',ReplaceValue('%d',DLNGStr('PI3001'),dus.ReadString('ID','Server'+inttostr(servid-1),'???')),inttostr(servid)));
+              if servid = 1 then
+                url := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL','')
+              else
+                url := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL'+inttostr(servid-1),'');
+              tmpFileName := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'FileDL',getTempFile(getTempFile(extractfileext(url))));
+              tmpFile := dup5Path+'Download\'+tmpFileName;
+              curlObj.URL := url;
+              curlObj.OutputFile := tmpFile;
+              CurDL := tmpFileName;
+              CurDLSize := dus.ReadInteger(lstUpdatesUnstable.Items.Item[x].SubItems[4],'RealSize',1);
+              progressDL.Position := 0;
+              progressDL.Max := 100;
+              delFile := false;
+              WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
+              if not(curlObj.Perform) then
+              begin
+                writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
+                colorLog(Internet,clRed);
+                DelFile := true;
+              end
+              else if dus.ValueExists(lstUpdatesUnstable.Items.Item[x].SubItems[4],'Realsize') and (GetFileSize(tmpFile) <> CurDLSize) then
+              begin
+                writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3002'),IntToStr(GetFileSize(tmpFile))),IntTostr(CurDLSize)));
+                colorLog(Internet,clRed);
+                DelFile := true;
+              end
+              else
+              begin
+                try
+                  if dus.ValueExists(lstUpdatesUnstable.Items.Item[x].SubItems[4],'Hash') then
+                  begin
+                    writeLog(Internet,DLNGStr('PI3003'));
+                    stmTemp := TFileStream.Create(tmpFile,fmOpenRead);
+                    sha1Engine.Init;
+                    stmTemp.Seek(0,0);
+                    sha1Engine.UpdateStream(stmTemp,curDLSize);
+                    stmTemp.Free;
+                    sha1Engine.Final(Hash);
+                    testSHA := '';
+                    for y := 0 to 19 do
+                      testSHA := testSHA + LowerCase(inttohex(Hash[y],2));
+                  end;
+                  if dus.ValueExists(lstUpdatesUnstable.Items.Item[x].SubItems[4],'Hash') and (testSHA <> dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'Hash','')) then
+                  begin
+                    writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3004'),testSHA),dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'Hash','')));
+                    colorLog(Internet,clRed);
+                    DelFile := true;
+                  end
+                  else
+                  begin
+                    lstUpd.Add(tmpFile);
+                    break;
+                  end;
+                except
+                  on e: Exception do
+                  begin
+                    writeLog(Internet,ReplaceValue('%b',ReplaceValue('%a',DLNGstr('PI3004'),e.ClassName),e.Message));
+                    colorLog(Internet,clRed);
+                    DelFile := true;
+                  end;
+                end;
+              end;
+              if DelFile and FileExists(tmpFile) then
+                DeleteFile(tmpFile);
             end;
-
-            ButDownload.Visible := true;
-            if DelFile and FileExists(tmpFile) then
-              DeleteFile(tmpFile);
           end;
+          ButDownload.Visible := true;
         end;
       end;
     end;

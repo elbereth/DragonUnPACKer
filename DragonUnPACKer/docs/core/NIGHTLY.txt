@@ -3,11 +3,11 @@ by Alexande "Elbereth" Devilliers
 ===============================================================================
 
 This nightly binary comes with no guarantee. It is automatically compiled
-every night when a change in the CVS repository was commited since last
+every night when a change in the SVN repository was commited since last
 compilation. It might (will) not work.
 
 In any case, only binary/compiled files are provided in the archive. The
-process of compilation is a CVS checkout of HEAD from module DragonUnPACKer
+process of compilation is a SVN checkout of HEAD from module DragonUnPACKer
 then the source is compiled using DCC32.EXE from Delphi 7 Personnal.
 
 All files should be extracted in an existing installation of the last working
@@ -15,5 +15,13 @@ Dragon UnPACKer (stable or unstable whichever is newer) preserving directories
 in the archive.
 
 Contact me at: elbereth (at) users (dot) sourceforge (dot) net
+
+-------------------------------------------------------------------------------
+
+Build process history:
+Revision r2 (2010/07/17)
+Fixed the wrong language in Duppi. Conditional define was not set...
+
+Revision r1 (Initial)
 
 ===============================================================================

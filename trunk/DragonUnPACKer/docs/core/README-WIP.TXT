@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.5.2 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    21/04/2010
+by Alexande "Elbereth" Devilliers                                    17/07/2010
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -79,6 +79,10 @@ Beta [Unreleased]
    + Added support for Dragon Age: Origins .ERF files.
    i Internal changes to the source make it easier to add new formats.
      Also added compile time parameter to enable experimental file formats.
+ * Duppi v3.3.0:
+   + Added multi-server support (when one server fails to download an update
+     Duppi will automatically try the next available one).
+   + Added download verification by checking file size and hash.
 
 
 Version 5.5.1.226

@@ -29,6 +29,8 @@ interface
 uses StrUtils, SysUtils;
 
 function getVersion(version: integer): string;
+function getSVNRevision(SVNRevisionTag: string): string;
+function getSVNDate(SVNDateTag: string): string;
 function getCVSRevision(CVSRevisionTag: string): string;
 function getCVSBuild(CVSRevisionTag: string): cardinal;
 function getCVSDate(CVSDateTag: string): string;
@@ -57,6 +59,19 @@ begin
 
 end;
 
+function getSVNDate(SVNDateTag: string): string;
+begin
+
+  If (length(SVNDateTag) > 7) and (Copy(SVNDateTag,1,7) = '$Date: ') then
+  begin
+    result := Copy(SVNDateTag,8,Length(SVNDateTag)-9);
+    result := Trim(Copy(result,1,pos('(',result)-1));
+  end
+  else
+    result := SVNDateTag;
+
+end;
+
 function getCVSRevision(CVSRevisionTag: string): string;
 begin
 
@@ -66,6 +81,18 @@ begin
   end
   else
     result := CVSRevisionTag;
+
+end;
+
+function getSVNRevision(SVNRevisionTag: string): string;
+begin
+
+  If (length(SVNRevisionTag) > 8) and (Copy(SVNRevisionTag,1,5) = '$Rev:') then
+  begin
+    result := Trim(Copy(SVNRevisionTag,6,Length(SVNRevisionTag)-7));
+  end
+  else
+    result := SVNRevisionTag;
 
 end;
 

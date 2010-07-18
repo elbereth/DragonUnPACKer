@@ -1459,7 +1459,10 @@ procedure Tdup5Main.FormCreate(Sender: TObject);
 var Reg: TRegistry;
     tmpi: integer;
     clng,clook: string;
+    DoSetRegistryDUP5: boolean;
 begin
+
+  DoSetRegistryDUP5 := false;  
 
   // Initializing preview engine
   FPreviewImage := TMultiImage.Create;
@@ -1483,9 +1486,6 @@ begin
   // Edit and Tools menus are hidden (visible only when a file is loaded)
   menuEdit.Visible := false;
   menuTools.Visible := false;
-
-  // Set Duppi registry associations with D5P
-  setRegistryDuppi;
 
   Top := ((Screen.Height - Height) div 2) ;
   Left := ((Screen.Width - Width) div 2) ;
@@ -1672,8 +1672,7 @@ begin
     end;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
     begin
-      if Reg.ValueExists('CheckStartup') and Reg.ReadBool('CheckStartup') then
-        SetRegistryDUP5;
+      DoSetRegistryDUP5 := Reg.ValueExists('CheckStartup') and Reg.ReadBool('CheckStartup');
       Reg.CloseKey;
     end;
   Finally
@@ -1686,6 +1685,21 @@ begin
     LoadLook(clook);
 
   application.Title := dup5Main.Caption;
+
+  // This require admin privileges on Vista/7...
+  try
+    // Set Duppi registry associations with D5P
+    setRegistryDuppi;
+
+    // Set Dragon UnPACKer registry association
+    if DoSetRegistryDUP5 then
+      SetRegistryDUP5;
+  except
+    on e: exception do
+    begin
+      writeLog(e.ClassName+' '+e.Message);
+    end;
+  end;
 
 end;
 

@@ -408,8 +408,13 @@ begin
     frmConfig.lstTypes.Items.Add(str);
 
   for x := 0 to frmConfig.lstTypes.Count - 1 do
-    if CheckRegistryType(frmConfig.lstTypes.Items.Strings[x]) then
-      frmConfig.lstTypes.Checked[x] := true;
+    try
+      if CheckRegistryType(frmConfig.lstTypes.Items.Strings[x]) then
+        frmConfig.lstTypes.Checked[x] := true;
+    except
+      on e: exception do
+        dup5Main.writeLog(e.ClassName+' '+e.Message); 
+    end;
 
 end;
 
@@ -703,11 +708,16 @@ procedure TfrmConfig.cmdTypesAllClick(Sender: TObject);
 var x : integer;
 begin
 
-  SetRegistryDUP5;
-  for x := 0 to lstTypes.Count - 1 do
-  begin
-    lstTypes.Checked[x] := True;
-    SetRegistryType(lstTypes.Items.Strings[x]);
+  try
+    SetRegistryDUP5;
+    for x := 0 to lstTypes.Count - 1 do
+    begin
+      lstTypes.Checked[x] := True;
+      SetRegistryType(lstTypes.Items.Strings[x]);
+    end;
+  except
+    on e: exception do
+      dup5Main.writeLog(e.ClassName+' '+e.Message);
   end;
 
 end;
@@ -716,10 +726,15 @@ procedure TfrmConfig.cmdTypesNoneClick(Sender: TObject);
 var x : integer;
 begin
 
-  for x := 0 to lstTypes.Count - 1 do
-  begin
-    lstTypes.Checked[x] := False;
-    UnSetRegistryType(lstTypes.Items.Strings[x]);
+  try
+    for x := 0 to lstTypes.Count - 1 do
+    begin
+      lstTypes.Checked[x] := False;
+      UnSetRegistryType(lstTypes.Items.Strings[x]);
+    end;
+  except
+    on e: exception do
+      dup5Main.writeLog(e.ClassName+' '+e.Message);
   end;
 
 end;
@@ -727,11 +742,16 @@ end;
 procedure TfrmConfig.lstTypesClickCheck(Sender: TObject);
 begin
 
-  SetRegistryDUP5;
-  if lstTypes.Checked[lstTypes.ItemIndex] then
-    SetRegistryType(lstTypes.Items.Strings[lstTypes.ItemIndex])
-  else
-    UnSetRegistryType(lstTypes.Items.Strings[lstTypes.ItemIndex]);
+  try
+    SetRegistryDUP5;
+    if lstTypes.Checked[lstTypes.ItemIndex] then
+      SetRegistryType(lstTypes.Items.Strings[lstTypes.ItemIndex])
+    else
+      UnSetRegistryType(lstTypes.Items.Strings[lstTypes.ItemIndex]);
+  except
+    on e: exception do
+      dup5Main.writeLog(e.ClassName+' '+e.Message);
+  end;
 
 end;
 
@@ -1040,8 +1060,13 @@ begin
 
   txtAssocExtIcon.Enabled := chkAssocExtIcon.Checked;
   butAssocExtIconBrowse.Enabled := chkAssocExtIcon.Checked;
-  updateAssocIcon;
-  SetRegistryDUP5;
+  try
+    updateAssocIcon;
+    SetRegistryDUP5;
+  except
+    on e: exception do
+      dup5Main.writeLog(e.ClassName+' '+e.Message);
+  end;
 
 end;
 
@@ -1104,7 +1129,12 @@ begin
   end;
 
   txtAssocText.Enabled := chkAssocText.Checked;
-  SetRegistryDUP5;
+  try
+    SetRegistryDUP5;
+  except
+    on e: exception do
+      dup5Main.writeLog(e.ClassName+' '+e.Message);
+  end;
 
 end;
 
@@ -1127,7 +1157,12 @@ begin
       FreeAndNil(Reg);
     end;
 
-    SetRegistryDUP5;
+    try
+      SetRegistryDUP5;
+    except
+      on e: exception do
+        dup5Main.writeLog(e.ClassName+' '+e.Message);
+    end;
 
   end;
   
@@ -1149,7 +1184,12 @@ begin
     FreeAndNil(Reg);
   end;
 
-  SetRegistryDUP5;
+  try
+    SetRegistryDUP5;
+  except
+    on e: exception do
+      dup5Main.writeLog(e.ClassName+' '+e.Message);
+  end;
 
 end;
 
@@ -1410,11 +1450,16 @@ end;
 procedure TfrmConfig.lstTypesClick(Sender: TObject);
 begin
 
-  SetRegistryDUP5;
-  if lstTypes.Checked[lstTypes.ItemIndex] then
-    SetRegistryType(lstTypes.Items.Strings[lstTypes.ItemIndex])
-  else
-    UnSetRegistryType(lstTypes.Items.Strings[lstTypes.ItemIndex]);
+  try
+    SetRegistryDUP5;
+    if lstTypes.Checked[lstTypes.ItemIndex] then
+      SetRegistryType(lstTypes.Items.Strings[lstTypes.ItemIndex])
+    else
+      UnSetRegistryType(lstTypes.Items.Strings[lstTypes.ItemIndex]);
+  except
+    on e: exception do
+      dup5Main.writeLog(e.ClassName+' '+e.Message);
+  end;
 
 end;
 

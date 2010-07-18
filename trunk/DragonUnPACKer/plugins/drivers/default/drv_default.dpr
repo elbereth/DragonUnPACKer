@@ -183,6 +183,8 @@ type FSE = ^element;
                  Fixed realMyst 3D .DNI support (implemented zlib decompression of entries)
     20940  55210 Added Dragon Age: Origins .ERF files support
                  Added Battleforge .PAK files support
+    21010  55210 Test for SVN Keywords
+                 Test for Avatar THE GAME .PAK support
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -331,7 +333,7 @@ begin
   addFormat(result,'*.MRC','The Fifth Element (*.MRC)');
   addFormat(result,'*.MTF','Darkstone (*.MTF)');
   addFormat(result,'*.OPK','Sinking Island (*.OPK)|L''Ile Noyée (*.OPK)');
-  addFormat(result,'*.PAK','Battleforge (*.PAK)|Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)');
+  addFormat(result,'*.PAK','Avatar: The Game (*.PAK)|Battleforge (*.PAK)|Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)');
   addFormat(result,'*.PAK;*.TLK','Hands of Fate (*.PAK;*.TLK)|Lands of Lore (*.PAK;*.TLK)');
   addFormat(result,'*.PAK;*.WAD','Quake (*.PAK;*.WAD)|Quake 2 (*.PAK;*.WAD)|Half-Life (*.PAK;*.WAD)|Heretic 2 (*.PAK;*.WAD)');
   addFormat(result,'*.PBO','Operation Flashpoint (*.PBO)');
@@ -1696,6 +1698,89 @@ end;
 
 {ENDIF}
 
+// -------------------------------------------------------------------------- //
+// Avatar .PAK support ====================================================== //
+// -------------------------------------------------------------------------- //
+
+type AvatarPAKHeader = packed record
+       ID: array[0..3] of char;     // Should be 'PAK!'
+       Version: cardinal;           // Should be 4
+       DirOffset: cardinal;
+       Unknown: cardinal;
+     end;
+     AvatarPAKBlockEntry = packed record
+       DecOffset: cardinal;
+       ComOffset: cardinal;         // Higher byte seems to always be $80
+     end;
+
+function ReadAvatarPAK(): Integer;
+var HDR: AvatarPAKHeader;
+    disp: string;
+    NumE, x: integer;
+    rest: longword;
+    inFile: THandleStream;
+    decStm: TDecompressionStream;
+    bufStm, dirStm: TMemoryStream;
+    outFile: TFileStream;
+    CDirSize, UDirSize, NumBlocks: Cardinal;
+    BlockSizes: array of AvatarPAKBlockEntry;
+begin
+
+  inFile := THandleStream.Create(Fhandle);
+  inFile.Seek(0,0);
+  inFile.ReadBuffer(HDR,SizeOf(AvatarPAKHeader));
+
+  if (HDR.ID <> 'PAK!') or (HDR.Version <> 4) or (HDR.DirOffset > inFile.Size) then
+  begin
+    inFile.Free;
+    FileClose(Fhandle);
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'PAK!';
+    ErrInfo.Games := 'Avatar: The Game, ..';
+  end
+  else
+  begin
+
+    inFile.Seek(HDR.DirOffset,0);
+    inFile.ReadBuffer(CDirSize,4);
+    inFile.Seek(HDR.DirOffset,0);
+
+    bufStm := TMemoryStream.Create;
+    bufStm.CopyFrom(inFile,CDirsize);
+
+    inFile.ReadBuffer(NumBlocks,4);
+    SetLength(BlockSizes,NumBlocks);
+
+    for x := 0 to NumBlocks-1 do
+    begin
+      inFile.ReadBuffer(BlockSizes[x],SizeOf(AvatarPAKBlockEntry));
+      BlockSizes[x].ComOffset := BlockSizes[x].ComOffset and $FFFFFF;
+    end;
+
+    outFile := TFileStream.Create('E:\test.bin',fmCreate);
+    for x := 0 to NumBlocks-2 do
+    begin
+      bufStm.Seek(BlockSizes[x].ComOffset,0);
+      decStm := TDecompressionStream.Create(bufStm);
+      outFile.CopyFrom(decStm,BlockSizes[x+1].DecOffset-BlockSizes[x].DecOffset);
+      decStm.Free;
+    end;
+
+    Result := 0;
+
+    DrvInfo.ID := 'PAK!';
+    DrvInfo.Sch := '\';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+    inFile.Free;
+    outFile.Free;
+    bufStm.Free;
+
+  end;
+
+end;
 
 // -------------------------------------------------------------------------- //
 // Battlefield 1942 .RFA support ============================================ //
@@ -13143,6 +13228,8 @@ begin
       res := ReadQuakePAK
     else if ID = 'PAK'+#1 then
       res := ReadBattleforgePAK
+    else if ID = 'PAK!' then
+      res := ReadAvatarPAK
     else if ID12 = 'tlj_pack0001' then
       res := ReadDreamfallTLJPAK(src)
     else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
@@ -13541,6 +13628,8 @@ begin
       end
       else if ID4 = ('PACK') then
         Result := ReadQuakePAK
+      else if ID4 = ('PAK!') then
+        Result := ReadAvatarPAK
       else if ID4 = ('POD2') then
         Result := ReadNocturnePOD
       else if ID4 = ('POD3') then
@@ -14247,6 +14336,9 @@ begin
     else if ID4 = ('PAK ') then
       Result := true
     else if ID4 = ('PACK') then
+      Result := true
+    // Avatar: The Game .PAK
+    else if ID4 = ('PAK!') then
       Result := true
     else if ID4 = ('edat') then
       Result := true

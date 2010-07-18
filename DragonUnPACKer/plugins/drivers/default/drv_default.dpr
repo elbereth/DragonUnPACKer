@@ -204,10 +204,10 @@ type FSE = ^element;
 const
   DUDI_VERSION = 5;
   DUDI_VERSION_COMPATIBLE = 4;
-  DRIVER_VERSION = 20940;
+  DRIVER_VERSION = 21010;
   DUP_VERSION = 55210;
-  CVS_REVISION = '$Revision: 1.62 $';
-  CVS_DATE = '$Date: 2010-02-27 15:59:54 $';
+  SVN_REVISION = '$Rev$';
+  SVN_DATE = '$Date$';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -15050,7 +15050,7 @@ begin
                  '\b0\i0\fs20 Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+'\par'+#10+
                  'Driver Interface [DUDI] v'+inttostr(DUDI_VERSION)+' (v'+inttostr(DUDI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUDI)+']\par'+#10+
                  'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+'\par'+#10+
-                 'Based on CVS rev '+getCVSRevision(CVS_REVISION)+' ('+getCVSDate(CVS_DATE)+')\par'+#10+
+                 'Based on SVN rev '+getCVSRevision(SVN_REVISION)+' ('+getCVSDate(SVN_DATE)+')\par'+#10+
                  '\par'+#10+
                  '\ul Limitations:\par'+#10+
                  '\ulnone Breakneck .SYN files are not decrypted (useless support?)\par'+#10+
@@ -15083,7 +15083,7 @@ begin
                           'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
                           'Driver Interface [DUDI] v'+inttostr(DUDI_VERSION)+' (v'+inttostr(DUDI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUDI)+']'+#10+
                           'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+
-                          'Based on CVS rev '+getCVSRevision(CVS_REVISION)+' ('+getCVSDate(CVS_DATE)+')'+#10+#10+
+                          'Based on SVN rev '+getSVNRevision(SVN_REVISION)+' ('+getCVSDate(SVN_DATE)+')'+#10+#10+
                           'Limitations:'+#10+
                           'Breakneck .SYN files are not decrypted (useless support?)'+#10+
                           'Commandos 3 .PCK decryption is experimental.'+#10+

@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.4.0a "Degei"                             MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    23/04/2009
+Dragon UnPACKer v5.6.0 "Exedra"                             MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    21/07/2010
 ===============================================================================
 
   ** English Readme (voir lisezmoi.txt pour la version française)
@@ -34,9 +34,8 @@ media for distribution (ex: CD-Rom, FTP, HTTP, etc..). But all text files must
 stay intact, and no files can be added to the zip file.
 
  This program have 2 differents types of releases (same content):
-    SETUP - ~2.5MB - dup540adegei-setup.exe - With Install/Uninstall
-       7Z - ~2.4MB - dup540adegei.7z        - Plain 7-Zip (v4.65) archive
-
+    SETUP - ~2.5MB - dup560exedra-setup.exe - With Install/Uninstall
+       7Z - ~2.4MB - dup560exedra.7z        - Plain 7-Zip (v9.15 beta) archive
 
 ===============================================================================
  2. PROGRAM DESCRIPTION
@@ -95,10 +94,7 @@ DrgUnPack5.exe and voila it is installed..
  
  data\drivers\
  drv_11th.d5d                412 KB  11th Hour driver plugin (v1.0.0)
- drv_default.d5d             239 KB  Elbereth's Main driver plugin (v2.0.5)
- drv_giants.d5d               96 KB  Giants GZP driver plugin (v1.0.2)
- drv_mix.d5d                  64 KB  WestWood MIX driver plugin (v1.1.4 Beta)
-                                     By Felix Riemann
+ drv_default.d5d             239 KB  Elbereth's Main driver plugin (v2.1.0)
  drv_ut.d5d                  669 KB  UT Packages driver plugin (v2.3.0)
  drv_zip.d5d                 103 KB  ZIP driver plugin (v1.1.2)
  unzip32.dll                 100 KB  Info-Zip's UnZip32.Dll v5.5.2
@@ -107,8 +103,10 @@ DrgUnPack5.exe and voila it is installed..
  hr_default.d5h              626 KB  Elbereth's HyperRipper Plugin (v5.1.0)
                                  
  utils\                          
-+duppi.exe                  1102 KB  DUP5 Package installer (v3.0.0)
-+DuppiInstall.exe             50 KB  Duppi Auto-Update Installer
++duppi.exe                   798 KB  DUP5 Package installer (v3.3.3)
++DuppiInstall.exe             42 KB  Duppi Auto-Update Installer
++libcurl-3.dll               268 KB  Curl Library (no SSL) (v7.21.0)
++zlib1.dll                    80 KB  Zlib Library (v1.2.5)
  hrf_30_spec.txt               7 KB  HyperRipper file 3.0 specification
 
  utils\data\
@@ -157,7 +155,9 @@ DrgUnPack5.exe and voila it is installed..
 
   * Windows 98/ME/NT/2000/XP/2003/Vista/2008/Seven.
     Tested under:
-      Windows Vista Ultimate x64 SP1
+      Windows Seven Ultimate x64       (Hardware see below / UAC=Off)
+	  Windows Seven Ultimate x86       (VM with 2x CPU and 2GB RAM / UAC=On)
+	  Windows XP Professional x86 SP3  (VM with 2x CPU and 1GB RAM)
     Does not work under Windows 95.
   * The programs runs under Linux OS but by the mean of Wine and the display is
     slow as hell...
@@ -174,8 +174,11 @@ DrgUnPack5.exe and voila it is installed..
   * Intel Quad Core Core i7 920 2.4Ghz (Nehalem) [166Mhz x 20 = 3.3Ghz]
     Noctua C12P
   * 6144MB (3x2048MB) of DDR3-1333 OCZ Platinum Cas 7 (7-7-7-20)
-  * 2xWestern Digital Raptor 37GB+74GB + 2xSamsung T166 500GB
-  * Gainward GeForce 8800 GT 1024MB Golden Sample (650Mhz/900Mhz) graphic card
+  * Intel SSD X25-M G2 (Postville)      160GB (System)
+    Samsung Spinpoint F1 (HD103UJ)        1TB
+	Western Digital Green (WD10EADS)      1TB (2x in RAID-1)
+	Western VelociRaptor (WD3000HlFS)   300GB (Games)
+  * nVidia GeForce GTX 285 1024MB (648Mhz/1242Mhz/1476Mhz) graphic card
     
   (when i say something is fast you should test it before by yourself!! :) )
 
@@ -410,7 +413,7 @@ detail you wish in the options or just disable (hide) the log.
   XM         - Fast Tracker 2 Module
 
   * = Not sure (file size may often be wrong).
-  - = Many wrong positives (many "found" files are not true 669 files)
+  - = Many wrong positives (many "found" files are not true 669/FLIC files)
 
 
  How to use it:
@@ -799,7 +802,7 @@ see the webpage at: http://www.elberethzone.net/dup-supportedgames.html
  Freelancer                                             .FLMOD drv_zip 
  Freespace 2                                               .VP drv_default 
  Fuzzy's World of Miniature Space Golf                    .RES drv_default 
- Giants: Citizen Kabuto                                   .GZP drv_giants 
+ Giants: Citizen Kabuto                                   .GZP drv_default
  Grand Theft Auto 3                                  .IMG/.DIR drv_default 
  Grand Theft Auto: Vice City                              .ADF drv_default 
  Gunlok                                                   .DAT drv_default 
@@ -903,7 +906,7 @@ see the webpage at: http://www.elberethzone.net/dup-supportedgames.html
  Thief 2                                                  .CRF drv_zip 
  Tony Hawk Pro Skater 2                                   .PAK drv_default 
  Total Annihilation                                  .HPI;.UFO drv_default 
- Total Annihilation: Counter-Strike                       .CCX drv_default 
+ Total Annihilation: The Core Contingency                 .CCX drv_default 
  Tribes                                                   .VOL drv_default 
  Tribes 2                                                 .VL2 drv_zip 
  Trickstyle                                               .PAK drv_default 
@@ -1018,7 +1021,7 @@ contact me (see Contacts chapter).
  Send bug reports, comments, suggestions, etc...
  Write me only in french, english or spanish.
  
-  E-Mail: dup540 (at) dragonunpacker (DOT) com
+  E-Mail: dup560 (at) dragonunpacker (DOT) com
      ICQ: 1535372 (Elbereth)
      
  WARNING: You will NEVER receive any email from me having the above email as

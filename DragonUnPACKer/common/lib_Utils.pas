@@ -1,7 +1,6 @@
 unit lib_Utils;
 
-// $Id: lib_Utils.pas,v 1.12 2010-04-21 15:53:25 elbereth Exp $
-// $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_Utils.pas,v $
+// $Id$
 //
 // The contents of this file are subject to the Mozilla Public License
 // Version 1.1 (the "License"); you may not use this file except in compliance
@@ -311,37 +310,37 @@ begin
   Reg := TRegistry.Create;
   readReg := TRegistry.Create;
   Try
-    Reg.RootKey := HKEY_CLASSES_ROOT;
+    Reg.RootKey := HKEY_CURRENT_USER;
     readReg.RootKey := HKEY_CURRENT_USER;
     // Retrieve options in registry (use open with extension)
     if readReg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Association',True) then
     begin
       if readReg.ValueExists('UseOpenWith') and readReg.ReadBool('UseOpenWith') then
       begin
-        if Reg.OpenKey('*\shell\DrgUnPack5',True) then
+        if Reg.OpenKey('Software\Classes\*\shell\DrgUnPack5',True) then
         begin
           Reg.WriteString('',DLNGStr('OPT451'));
           Reg.CloseKey;
         end;
-        if Reg.OpenKey('*\shell\DrgUnPack5\command',True) then
+        if Reg.OpenKey('Software\Classes\*\shell\DrgUnPack5\command',True) then
         begin
           Reg.WriteString('','"'+Application.ExeName+'" "%1"');
           Reg.CloseKey;
         end;
       end
-      else if Reg.KeyExists('*\shell\DrgUnPack5\command') then
+      else if Reg.KeyExists('Software\Classes\*\shell\DrgUnPack5\command') then
       begin
-        Reg.DeleteKey('*\shell\DrgUnPack5\command');
-        Reg.DeleteKey('*\shell\DrgUnPack5');
+        Reg.DeleteKey('Software\Classes\*\shell\DrgUnPack5\command');
+        Reg.DeleteKey('Software\Classes\*\shell\DrgUnPack5');
       end;
       readReg.CloseKey;
     end;
 
-    if Not(Reg.KeyExists('DUP5.Files\DefaultIcon')) then
-      Reg.CreateKey('DUP5.Files\DefaultIcon');
-    if Not(Reg.KeyExists('DUP5.Files\shell\open\command')) then
-      Reg.CreateKey('DUP5.Files\shell\open\command');
-    if Reg.OpenKey('DUP5.Files\DefaultIcon',True) then
+    if Not(Reg.KeyExists('Software\Classes\DUP5.Files\DefaultIcon')) then
+      Reg.CreateKey('Software\Classes\DUP5.Files\DefaultIcon');
+    if Not(Reg.KeyExists('Software\Classes\DUP5.Files\shell\open\command')) then
+      Reg.CreateKey('Software\Classes\DUP5.Files\shell\open\command');
+    if Reg.OpenKey('Software\Classes\DUP5.Files\DefaultIcon',True) then
     begin
 
       // By default to external icon
@@ -369,7 +368,7 @@ begin
       end;
       Reg.CloseKey;
     end;
-    if Reg.OpenKey('DUP5.Files',True) then
+    if Reg.OpenKey('Software\Classes\DUP5.Files',True) then
     begin
 
       UseAltText := false;
@@ -397,12 +396,12 @@ begin
 
       Reg.CloseKey;
     end;
-    if Reg.OpenKey('DUP5.Files\shell',True) then
+    if Reg.OpenKey('Software\Classes\DUP5.Files\shell',True) then
     begin
       Reg.WriteString('','open');
       Reg.CloseKey;
     end;
-    if Reg.OpenKey('DUP5.Files\shell\open\command',True) then
+    if Reg.OpenKey('Software\Classes\DUP5.Files\shell\open\command',True) then
     begin
       Reg.WriteString('','"'+Application.ExeName+'" "%1"');
       Reg.CloseKey;
@@ -420,34 +419,34 @@ begin
 
   Reg := TRegistry.Create;
   Try
-    Reg.RootKey := HKEY_CLASSES_ROOT;
-    if Not(Reg.KeyExists('DUP5.Packages\DefaultIcon')) then
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Not(Reg.KeyExists('Software\Classes\DUP5.Packages\DefaultIcon')) then
       Reg.CreateKey('DUP5.Packages\DefaultIcon');
-    if Not(Reg.KeyExists('DUP5.Packages\shell\open\command')) then
-      Reg.CreateKey('DUP5.Packages\shell\open\command');
-    if Reg.OpenKey('DUP5.Packages\DefaultIcon',True) then
+    if Not(Reg.KeyExists('Software\Classes\DUP5.Packages\shell\open\command')) then
+      Reg.CreateKey('Software\Classes\DUP5.Packages\shell\open\command');
+    if Reg.OpenKey('Software\Classes\DUP5.Packages\DefaultIcon',True) then
     begin
       Reg.WriteString('',chr(34)+ExtractFilePath(Application.ExeName)+'utils\duppi.exe'+chr(34)+',0');
       Reg.CloseKey;
     end;
-    if Reg.OpenKey('DUP5.Packages',True) then
+    if Reg.OpenKey('Software\Classes\DUP5.Packages',True) then
     begin
       Reg.WriteString('','Dragon UnPACKer 5 Package');
       Reg.CloseKey;
     end;
-    if Reg.OpenKey('DUP5.Packages\shell',True) then
+    if Reg.OpenKey('Software\Classes\DUP5.Packages\shell',True) then
     begin
       Reg.WriteString('','open');
       Reg.CloseKey;
     end;
-    if Reg.OpenKey('DUP5.Packages\shell\open\command',True) then
+    if Reg.OpenKey('Software\Classes\DUP5.Packages\shell\open\command',True) then
     begin
       Reg.WriteString('','"'+ExtractFilePath(Application.ExeName)+'utils\duppi.exe" "%1"');
       Reg.CloseKey;
     end;
-    if Not(Reg.KeyExists('.d5p')) then
-      Reg.CreateKey('.d5p');
-    if Reg.OpenKey('.d5p',True) then
+    if Not(Reg.KeyExists('Software\Classes\.d5p')) then
+      Reg.CreateKey('Software\Classes\.d5p');
+    if Reg.OpenKey('Software\Classes\.d5p',True) then
     begin
       if Reg.ValueExists('') then
         if (Reg.ReadString('') <> 'DUP5.Packages') then
@@ -455,7 +454,7 @@ begin
       Reg.WriteString('','DUP5.Packages');
       Reg.CloseKey;
     end;
-  Finally
+  finally
     FreeAndNil(Reg);
   end;
 
@@ -469,10 +468,10 @@ begin
 
   Reg := TRegistry.Create;
   Try
-    Reg.RootKey := HKEY_CLASSES_ROOT;
-    if Not(Reg.KeyExists('.'+ext)) then
-      Reg.CreateKey('.'+ext);
-    if Reg.OpenKey('.'+ext,True) then
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Not(Reg.KeyExists('Software\Classes\.'+ext)) then
+      Reg.CreateKey('Software\Classes\.'+ext);
+    if Reg.OpenKey('Software\Classes\.'+ext,True) then
     begin
       if Reg.ValueExists('') then
         if (Reg.ReadString('') <> 'DUP5.Files') then
@@ -494,10 +493,10 @@ begin
 
   Reg := TRegistry.Create;
   Try
-    Reg.RootKey := HKEY_CLASSES_ROOT;
-    if Not(Reg.KeyExists('.'+ext)) then
-      Reg.CreateKey('.'+ext);
-    if Reg.OpenKey('.'+ext,True) then
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Not(Reg.KeyExists('Software\Classes\.'+ext)) then
+      Reg.CreateKey('Software\Classes\.'+ext);
+    if Reg.OpenKey('Software\Classes\.'+ext,True) then
     begin
       if Reg.ValueExists('DUP5.Backup') then
       begin
@@ -524,10 +523,10 @@ begin
 
   Reg := TRegistry.Create;
   Try
-    Reg.RootKey := HKEY_CLASSES_ROOT;
+    Reg.RootKey := HKEY_CURRENT_USER;
     if Not(Reg.KeyExists('.'+ext)) then
-      Reg.CreateKey('.'+ext);
-    if Reg.OpenKey('.'+ext,True) then
+      Reg.CreateKey('Software\Classes\.'+ext);
+    if Reg.OpenKey('Software\Classes\.'+ext,True) then
     begin
       if Reg.ValueExists('') then
         res := (Reg.ReadString('') = 'DUP5.Files')

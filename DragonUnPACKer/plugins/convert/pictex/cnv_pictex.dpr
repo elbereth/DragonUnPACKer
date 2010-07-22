@@ -997,7 +997,7 @@ begin
                  '\b0\i0\fs20 Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+'\par'+#10+
                  'Driver Interface [DUCI] v'+inttostr(DUCI_VERSION)+' (v'+inttostr(DUCI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUCI)+']\par'+#10+
                  'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+'\par'+#10+
-                 'Based on SVN rev '+getCVSRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')\par'+#10+
+                 'Based on SVN rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')\par'+#10+
                  '\par'+#10+StringReplace(DLNGStr('CNV010'),#10,'\par'+#10,[rfReplaceAll])+'}'+#10;
 
   end

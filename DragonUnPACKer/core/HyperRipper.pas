@@ -1,7 +1,6 @@
 unit HyperRipper;
 
-// $Id: HyperRipper.pas,v 1.25 2010-04-21 13:23:13 elbereth Exp $
-// $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/HyperRipper.pas,v $
+// $Id$
 //
 // The contents of this file are subject to the Mozilla Public License
 // Version 1.1 (the "License"); you may not use this file except in compliance
@@ -50,6 +49,7 @@ unit HyperRipper;
   *       Speed-up (on par or slightly faster than plugin version)
   * 56013 Fixed BigToLittle2
   *       Added support for Exif JPEG files (APP1 marker instead of APP0)
+  * 56040 Removed unstable status for Dragon UnPACKer v5.6.0 release
   * }
 
 interface
@@ -66,7 +66,7 @@ const MP_FRAMES_FLAG = 1;
       MP_TOC_FLAG = 4;
       MP_VBR_SCALE_FLAG = 8;
 
-      HR_VERSION = 56013;	// HyperRipper version
+      HR_VERSION = 56040;	// HyperRipper version
 
 type FormatsListElem = record
        GenType: Integer;

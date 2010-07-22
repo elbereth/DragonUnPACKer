@@ -1,5 +1,4 @@
-; $Id: setup.iss,v 1.15 2009-09-12 06:41:06 elbereth Exp $
-; $Source: /home/elbzone/backup/cvs/DragonUnPACKer/install/setup.iss,v $
+; $Id$
 ;
 ; The contents of this file are subject to the Mozilla Public License
 ; Version 1.1 (the "License"); you may not use this file except in compliance
@@ -18,7 +17,7 @@
 Compression=lzma/ultra64
 SolidCompression=true
 AppName=Dragon UnPACKer 5
-AppVerName=Dragon UnPACKer v5.5.1 Beta (build 226/unstable)
+AppVerName=Dragon UnPACKer v5.6.0 Exedra (build 238/stable)
 AppPublisher=Alexandre Devilliers (aka Elbereth)
 AppPublisherURL=http://www.elberethzone.net
 AppSupportURL=http://www.elberethzone.net/dup-support.html
@@ -26,7 +25,7 @@ AppUpdatesURL=http://www.dragonunpacker.com
 AppCopyright=Mozilla Public License 1.1
 DefaultDirName={pf}\Dragon UnPACKer 5
 DefaultGroupName=Dragon UnPACKer 5
-OutputBaseFilename=dup551beta-setup
+OutputBaseFilename=dup560exedra-setup
 AppMutex=DragonUnPACKer5
 AppId=DragonUnPACKer5
 DisableStartupPrompt=true
@@ -35,17 +34,17 @@ UninstallDisplayIcon={app}\drgunpack5.exe
 WizardImageBackColor=$ffffff
 WizardImageFile=dup5-instimage.bmp
 WizardSmallImageFile=dup5-inst55x55.bmp
-VersionInfoVersion=5.5.1.226
+VersionInfoVersion=5.6.0.238
 ; uncomment the following line if you want your installation to run on NT 3.51 too.
 MinVersion=4.10,4.0sp6
 LicenseFile=..\docs\core\source\LICENCE.txt
 InternalCompressLevel=ultra64
 VersionInfoDescription=Dragon UnPACKer 5 Setup
-VersionInfoTextVersion=5.5.1 Beta (Build 226)
+VersionInfoTextVersion=5.6.0 Exedra (Build 238)
 VersionInfoCopyright=Elbereth / MPL 1.1
 VersionInfoProductName=Dragon UnPACKer
-VersionInfoProductVersion=5.5.1.226
-AppVersion=5.5.1 Beta
+VersionInfoProductVersion=5.6.0.238
+AppVersion=5.6.0 Exedra
 SetupIconFile=E:\Developpement\dup-HEAD-2008\DragonUnPACKer\tools\duppi\duppi.ico
 AppReadmeFile={app}\readme.txt
 

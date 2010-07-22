@@ -1,7 +1,6 @@
 library cnv_pictex;
 
-// $Id: cnv_pictex.dpr,v 1.12 2010-04-21 15:38:35 elbereth Exp $
-// $Source: /home/elbzone/backup/cvs/DragonUnPACKer/plugins/convert/pictex/cnv_pictex.dpr,v $
+// $Id$
 //
 // The contents of this file are subject to the Mozilla Public License
 // Version 1.1 (the "License"); you may not use this file except in compliance
@@ -73,10 +72,10 @@ var Percent: TPercentCallback;
 const
   DUCI_VERSION = 4;
   DUCI_VERSION_COMPATIBLE = 3;
-  DRIVER_VERSION = 22010;
-  DUP_VERSION = 55210;
-  CVS_REVISION = '$Revision: 1.12 $';
-  CVS_DATE = '$Date: 2010-04-21 15:38:35 $';
+  DRIVER_VERSION = 22040;
+  DUP_VERSION = 56040;
+  SVN_REVISION = '$Rev$';
+  SVN_DATE = '$Date$';
 
 { * Version History:
   * v1.0.0 Alpha (10000): First version (never distributed)
@@ -100,6 +99,7 @@ const
   * v2.1.1       (21140): Removed beta status for 5.4.0 release
   * v2.2.0 Beta  (22010): Using DUCI v4, backward compatible with v3
   *                       Removed Imaging Lib (feature to be integrated in Dragon UnPACKer)
+  * v2.2.0       (22040): Removed beta status for 5.6.0 release
   * }
 
 // Identifies the DLL as a Convert plugin (minimum version to load plugin)
@@ -997,8 +997,8 @@ begin
                  '\b0\i0\fs20 Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+'\par'+#10+
                  'Driver Interface [DUCI] v'+inttostr(DUCI_VERSION)+' (v'+inttostr(DUCI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUCI)+']\par'+#10+
                  'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+'\par'+#10+
-                 'Based on CVS rev '+getCVSRevision(CVS_REVISION)+' ('+getCVSDate(CVS_DATE)+')\par'+#10+
-                 '\par'+#10+DLNGStr('CNV010')+'}'+#10;
+                 'Based on SVN rev '+getCVSRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')\par'+#10+
+                 '\par'+#10+StringReplace(DLNGStr('CNV010'),#10,'\par'+#10,[rfReplaceAll])+'}'+#10;
 
   end
   else
@@ -1008,7 +1008,7 @@ begin
                  'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
                  'Driver Interface [DUCI] v'+inttostr(DUCI_VERSION)+' (v'+inttostr(DUCI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUCI)+#10+
                  'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+
-                 'Based on CVS rev '+getCVSRevision(CVS_REVISION)+' ('+getCVSDate(CVS_DATE)+')'+#10+#10+DLNGStr('CNV010')+#10;
+                 'Based on CVS rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')'+#10+#10+DLNGStr('CNV010')+#10;
   end;
 
   showMsgBox('About Elbereth''s Picture/Textures Convert Plugin...',aboutText);

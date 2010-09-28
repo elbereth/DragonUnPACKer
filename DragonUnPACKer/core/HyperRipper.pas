@@ -1096,7 +1096,7 @@ procedure THRipSearch.doSearch;
 var hSRC, x: integer;
     totsize,curpos,curposbuf: int64;
     buffer: PByteArray;
-    bufsize: integer;
+    bufsize: int64;
     testsize: integer;
     per, oldper: real;
     SomethingFound: Boolean;

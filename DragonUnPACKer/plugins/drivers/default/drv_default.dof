@@ -109,9 +109,9 @@ DebugCWD=
 IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=2
-MinorVer=0
-Release=9
-Build=931
+MinorVer=1
+Release=0
+Build=935
 Debug=0
 PreRelease=1
 Special=0
@@ -122,10 +122,19 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=Elbereth's Main Driver plugin for Dragon UnPACKer 5
-FileVersion=2.0.9.931
+FileVersion=2.1.0.935
 InternalName=drv_default
 LegalCopyright=Created by Alexandre Devilliers (aka Elbereth/Piecito)
 LegalTrademarks=Mozilla Public License 1.1
 OriginalFilename=drv_default.d5d
 ProductName=Dragon UnPACKer 5
-ProductVersion=5.5.2
+ProductVersion=5.6.0
+[HistoryLists\hlUnitAliases]
+Count=1
+Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlUnitOutputDirectory]
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-dcu
+[HistoryLists\hlOutputDirectorry]
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-compiled\data\drivers

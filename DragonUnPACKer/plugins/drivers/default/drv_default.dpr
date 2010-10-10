@@ -184,6 +184,9 @@ type FSE = ^element;
                  Added Battleforge .PAK files support
     21010  55210 Test for SVN Keywords
                  Test for Avatar THE GAME .PAK support
+    21012  56040 Added Sony Playstation 3 .PSARC files support
+                 Modified support for Civilization 4 .FPK files:
+                   Now supports Civilization V .FPK files too (which fixes bug #3084576)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -205,10 +208,10 @@ type FSE = ^element;
 const
   DUDI_VERSION = 5;
   DUDI_VERSION_COMPATIBLE = 4;
-  DRIVER_VERSION = 21010;
+  DRIVER_VERSION = 21012;
   DUP_VERSION = 55210;
   SVN_REVISION = '$Rev$';
-  SVN_DATE = '$Date: 2010-07-18 15:11:07 +0200 (dim., 18 juil. 2010) $';
+  SVN_DATE = '$Date$';
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -287,7 +290,7 @@ begin
     Name := 'Elbereth''s Main Driver';
     Author := 'Alexandre Devilliers (aka Elbereth)';
     Version := getVersion(DRIVER_VERSION);
-    Comment := 'This driver support 84 different file formats. This is the official main driver.'+#10+'Check about box for more info.';
+    Comment := 'This driver support 85 different file formats. This is the official main driver.'+#10+'Check about box for more info.';
   end;
 
   // Supported file formats
@@ -314,7 +317,7 @@ begin
   addFormat(result,'*.ERF','Dragon Age: Origins (*.ERF)');
   addFormat(result,'*.FAR','The Sims (*.FAR)');
   addFormat(result,'*.FFL','Alien vs Predator (*.FFL)');
-  addFormat(result,'*.FPK','Civilization 4 (*.FPK)');
+  addFormat(result,'*.FPK','Sid Meier''s Civilization 4 (*.FPK)|Sid Meier''s Civilization V (*.FPK)');
   addFormat(result,'*.GOB','Dark Forces (*.GOB)|Indiana Jones 3D (*.GOB)|Jedi Knight: Dark Forces 2 (*.GOB)');
   addFormat(result,'*.GRP;*.ART','Duke Nukem 3D (*.GRP;*.ART)|Shadow Warrior (*.GRP;*.ART)');
   addFormat(result,'*.GZP','Giants: Citizen Kabuto (*.GZP)');
@@ -340,6 +343,7 @@ begin
   addFormat(result,'*.PFF','Comanche 4 (*.PFF)|Delta Force (*.PFF)|Delta Force 2 (*.PFF)|Delta Force: Land Warrior (*.PFF)|F-22 Lightning 3');
   addFormat(result,'*.PKR','Tony Hawk Pro Skater 2 (*.PKR)');
   addFormat(result,'*.POD','Terminal Velocity (*.POD)|BloodRayne (*.POD)|Nocturne (*.POD)');
+  addFormat(result,'*.PSARC','Sony Playstation 3 Games (*.PSARC)');
   addFormat(result,'*.RCF','Prototype (*.RCF)|Scarface (*.RCF)');
   addFormat(result,'*.RES','Electranoid (*.RES)|Evil Islands (*.RES)|Fuzzy''s World of Miniature Space Golf (*.RES)|Laser Light (*.RES)|Rage of Mages 2 (*.RES)|Xatax (*.RES)');
   addFormat(result,'*.REZ','Alien vs Predator 2 (*.REZ)|No One Lives Forever (*.REZ)|No One Lives Forever 2 (*.REZ)|Sanity Aiken''s Artifact (*.REZ)|Shogo: Mobile Armor Division (*.REZ)|Purge (*.REZ)|Tron 2.0 (*.REZ)');
@@ -2399,15 +2403,19 @@ begin
 end;
 
 // -------------------------------------------------------------------------- //
-// Civilization IV .FPK support ============================================= //
+// Civilization IV & V .FPK support ========================================= //
 // -------------------------------------------------------------------------- //
 
 type FPKHeader = packed record
-       Unknown1: Integer;
+       Version: Integer;          // 4 = Civilisation IV
+                                  // 6 = Civilisation V
        ID: array[0..3] of char;
-       Unknown2: Byte;
-       NumEntries: integer;
+       Scrambling: Byte;          // 1 = Filename scrambling used
+                                  // 0 = Normal Filename
      end;
+     // Unknown3: Byte;           // If Version = 6
+     // NumEntries: integer;
+
      FPKEntry = packed record
        FileTime: Integer;
        Unknown: Integer;
@@ -2424,7 +2432,7 @@ begin
   FileRead(src,tint,4);
   if tint > 255 then
   begin
-    raise Exception.Create(inttostr(tint)+' octets! t''es fou ?!'+#10+inttostr(fileseek(FHandle,0,1))+#10+inttohex(fileseek(FHandle,0,1),8));
+    raise Exception.Create('Get32_FPK / Sanity Check Failure / tint='+inttostr(tint)+' / offset='+inttostr(fileseek(FHandle,0,1)));
   end;
   GetMem(tchar,tint);
   FillChar(tchar^,tint,0);
@@ -2463,20 +2471,24 @@ begin
     // We read the header
     FileRead(FHandle,HDR,SizeOf(HDR));
 
-    // If the ID is "FPK_"
-    if (HDR.ID <> 'FPK_') then
+    // ID must be "FPK_" and the only supported version is 4
+    if (HDR.ID <> 'FPK_') or ((HDR.Version <> 4) and (HDR.Version <> 6)) then
     begin
       FileClose(Fhandle);
       FHandle := 0;
       Result := -3;
       ErrInfo.Format := 'FPK';
-      ErrInfo.Games := 'Cibilization 4';
+      ErrInfo.Games := 'Sid Meier''s Civilization 4, Sid Meier''s Civilization V';
     end
     else
     begin
 
-      // We store number of entries
-      NumE := HDR.NumEntries;
+      // If this is version 6 we need to skip 1 unknown byte
+      if HDR.Version = 6 then
+        FileSeek(FHandle,1,1);
+
+      // We read the number of entries in the file
+      FileRead(Fhandle,NumE,4);
 
       OldPer := 0;
 
@@ -2496,7 +2508,10 @@ begin
 
         // We retrieve the filename, which is a Get32 format (32bit for size then the string)
         // But with an encryption (they added 1 to each char), so Get32_FPK is decrypting "on-the-fly" (lol)
-        disp := Strip0(Get32_FPK(FHandle));
+        if HDR.Scrambling = 1 then
+          disp := Strip0(Get32_FPK(FHandle))
+        else
+          disp := Strip0(Get32(FHandle));
 
         // We store current offset in directoy
         CurP := FileSeek(FHandle,0,1);
@@ -2528,11 +2543,13 @@ begin
 
           // We read how many dummy bytes we need to skip
           FileRead(FHandle,NumDummy,1);
+
           // We skip them (minus one because the dummy number is included in it)
           FileSeek(FHandle,NumDummy-1,1);
 
           // We read the entry info again
           FileRead(FHandle,ENT,SizeOf(ENT));
+
         end;
 
         // We store the entry
@@ -2544,7 +2561,7 @@ begin
       Result := NumE;
 
       // ID is FPK
-      DrvInfo.ID := 'FPK';
+      DrvInfo.ID := 'FPK'+inttostr(HDR.Version);
       // Directory separator is '\'
       DrvInfo.Sch := '\';
       // Extraction will be handled by Dragon UnPACKer core
@@ -9970,6 +9987,34 @@ begin
 end;
 
 // -------------------------------------------------------------------------- //
+// Sony Playstation 3 Games .PSARC support ================================== //
+// -------------------------------------------------------------------------- //
+
+type PSARC_Header = packed record
+   ID: array[0..3] of char;         // PSAR
+   MajorVersion: Word;           // 1
+   MinorVersion: Word;           // 3
+   CompLib: array[0..3] of char;    // zlib
+   Unknown1: cardinal;
+   Unknown2: cardinal;
+   NumEntries: cardinal;
+end;
+
+function EndianLong(L : cardinal) : cardinal;
+begin
+
+  result := swap(L shr 16) or
+           (longint(swap(L and $ffff)) shl 16);
+
+end;
+
+function ReadSonyPlaystation3PSARC(src: string): integer;
+begin
+
+
+end;
+
+// -------------------------------------------------------------------------- //
 // Starsiege: Tribes .VOL support =========================================== //
 // -------------------------------------------------------------------------- //
 
@@ -13749,6 +13794,12 @@ begin
         FileClose(FHandle);
         Result := ReadTheSimsFAR(fil)
       end
+      // Sony Playstation 3 Game .PSARC
+      else if ID4 = ('PSAR') then
+      begin
+        FileClose(FHandle);
+        Result := ReadSonyPlaystation3PSARC(fil)
+      end
       else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
         Result := ReadSpellforcePAK
       else if ID4 = ('edat') then
@@ -13995,6 +14046,9 @@ begin
       ReadFormat := ReadHubPOD(fil)
     else if ext = 'PRM' then
       Result := ReadHitmanContractsPRM(fil)
+    // Sony Playstation 3 Game .PSARC
+    else if ext = 'PSARC' then
+      Result := ReadSonyPlaystation3PSARC(fil)
     // Scarface & Prototype .RCF
     else if ext = 'RCF' then
       Result := ReadPrototypeRCF(fil)
@@ -14345,6 +14399,8 @@ begin
       Result := true
     else if ID4 = ('POD2') then
       Result := true
+    else if ID4 = ('PSAR') then
+      Result := true
     else if ID4 = ('LB83') then
       Result := true
     else if (ID8[4] = #80) and (ID8[5] = #70) and (ID8[6] = #70) and (ID8[7] = #51) then
@@ -14558,6 +14614,9 @@ begin
       IsFormat := True
     // Hitman: Contracts .PRM
     else if ext = 'PRM' then
+      IsFormat := True
+    // Sony Playstation 3 Games .PSARC
+    else if ext = 'PSARC' then
       IsFormat := True
     // Scarface & Prototype .RCF
     else if ext = 'RCF' then

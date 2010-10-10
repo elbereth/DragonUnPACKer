@@ -184,9 +184,9 @@ type FSE = ^element;
                  Added Battleforge .PAK files support
     21010  55210 Test for SVN Keywords
                  Test for Avatar THE GAME .PAK support
-    21012  56040 Added Sony Playstation 3 .PSARC files support
-                 Modified support for Civilization 4 .FPK files:
-                   Now supports Civilization V .FPK files too (which fixes bug #3084576)
+    21040  56040 Modified support for Civilization 4 .FPK files:
+                  Now supports Civilization V .FPK files too (which fixes bug #3084576)
+                 Removed Avatar preliminary/experimental support (quite complex format actually)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -208,8 +208,8 @@ type FSE = ^element;
 const
   DUDI_VERSION = 5;
   DUDI_VERSION_COMPATIBLE = 4;
-  DRIVER_VERSION = 21012;
-  DUP_VERSION = 55210;
+  DRIVER_VERSION = 21040;
+  DUP_VERSION = 56040;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
   BUFFER_SIZE = 8192;
@@ -335,7 +335,8 @@ begin
   addFormat(result,'*.MRC','The Fifth Element (*.MRC)');
   addFormat(result,'*.MTF','Darkstone (*.MTF)');
   addFormat(result,'*.OPK','Sinking Island (*.OPK)|L''Ile Noyée (*.OPK)');
-  addFormat(result,'*.PAK','Avatar: The Game (*.PAK)|Battleforge (*.PAK)|Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)');
+  // Avatar: The Game (*.PAK)
+  addFormat(result,'*.PAK','Battleforge (*.PAK)|Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)');
   addFormat(result,'*.PAK;*.TLK','Hands of Fate (*.PAK;*.TLK)|Lands of Lore (*.PAK;*.TLK)');
   addFormat(result,'*.PAK;*.WAD','Quake (*.PAK;*.WAD)|Quake 2 (*.PAK;*.WAD)|Half-Life (*.PAK;*.WAD)|Heretic 2 (*.PAK;*.WAD)');
   addFormat(result,'*.PBO','Operation Flashpoint (*.PBO)');
@@ -343,7 +344,6 @@ begin
   addFormat(result,'*.PFF','Comanche 4 (*.PFF)|Delta Force (*.PFF)|Delta Force 2 (*.PFF)|Delta Force: Land Warrior (*.PFF)|F-22 Lightning 3');
   addFormat(result,'*.PKR','Tony Hawk Pro Skater 2 (*.PKR)');
   addFormat(result,'*.POD','Terminal Velocity (*.POD)|BloodRayne (*.POD)|Nocturne (*.POD)');
-  addFormat(result,'*.PSARC','Sony Playstation 3 Games (*.PSARC)');
   addFormat(result,'*.RCF','Prototype (*.RCF)|Scarface (*.RCF)');
   addFormat(result,'*.RES','Electranoid (*.RES)|Evil Islands (*.RES)|Fuzzy''s World of Miniature Space Golf (*.RES)|Laser Light (*.RES)|Rage of Mages 2 (*.RES)|Xatax (*.RES)');
   addFormat(result,'*.REZ','Alien vs Predator 2 (*.REZ)|No One Lives Forever (*.REZ)|No One Lives Forever 2 (*.REZ)|Sanity Aiken''s Artifact (*.REZ)|Shogo: Mobile Armor Division (*.REZ)|Purge (*.REZ)|Tron 2.0 (*.REZ)');
@@ -1706,7 +1706,7 @@ end;
 // -------------------------------------------------------------------------- //
 
 type AvatarPAKHeader = packed record
-       ID: array[0..3] of char;     // Should be 'PAK!'
+       ID: array[0..3] of char;     // Should be 'PAK!
        Version: cardinal;           // Should be 4
        DirOffset: cardinal;
        Unknown: cardinal;
@@ -9987,34 +9987,6 @@ begin
 end;
 
 // -------------------------------------------------------------------------- //
-// Sony Playstation 3 Games .PSARC support ================================== //
-// -------------------------------------------------------------------------- //
-
-type PSARC_Header = packed record
-   ID: array[0..3] of char;         // PSAR
-   MajorVersion: Word;           // 1
-   MinorVersion: Word;           // 3
-   CompLib: array[0..3] of char;    // zlib
-   Unknown1: cardinal;
-   Unknown2: cardinal;
-   NumEntries: cardinal;
-end;
-
-function EndianLong(L : cardinal) : cardinal;
-begin
-
-  result := swap(L shr 16) or
-           (longint(swap(L and $ffff)) shl 16);
-
-end;
-
-function ReadSonyPlaystation3PSARC(src: string): integer;
-begin
-
-
-end;
-
-// -------------------------------------------------------------------------- //
 // Starsiege: Tribes .VOL support =========================================== //
 // -------------------------------------------------------------------------- //
 
@@ -13272,8 +13244,8 @@ begin
       res := ReadQuakePAK
     else if ID = 'PAK'+#1 then
       res := ReadBattleforgePAK
-    else if ID = 'PAK!' then
-      res := ReadAvatarPAK
+//    else if ID = 'PAK!' then
+//      res := ReadAvatarPAK
     else if ID12 = 'tlj_pack0001' then
       res := ReadDreamfallTLJPAK(src)
     else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
@@ -13672,8 +13644,8 @@ begin
       end
       else if ID4 = ('PACK') then
         Result := ReadQuakePAK
-      else if ID4 = ('PAK!') then
-        Result := ReadAvatarPAK
+//      else if ID4 = ('PAK!') then
+//        Result := ReadAvatarPAK
       else if ID4 = ('POD2') then
         Result := ReadNocturnePOD
       else if ID4 = ('POD3') then
@@ -13793,12 +13765,6 @@ begin
       begin
         FileClose(FHandle);
         Result := ReadTheSimsFAR(fil)
-      end
-      // Sony Playstation 3 Game .PSARC
-      else if ID4 = ('PSAR') then
-      begin
-        FileClose(FHandle);
-        Result := ReadSonyPlaystation3PSARC(fil)
       end
       else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
         Result := ReadSpellforcePAK
@@ -14046,9 +14012,6 @@ begin
       ReadFormat := ReadHubPOD(fil)
     else if ext = 'PRM' then
       Result := ReadHitmanContractsPRM(fil)
-    // Sony Playstation 3 Game .PSARC
-    else if ext = 'PSARC' then
-      Result := ReadSonyPlaystation3PSARC(fil)
     // Scarface & Prototype .RCF
     else if ext = 'RCF' then
       Result := ReadPrototypeRCF(fil)
@@ -14391,8 +14354,8 @@ begin
     else if ID4 = ('PACK') then
       Result := true
     // Avatar: The Game .PAK
-    else if ID4 = ('PAK!') then
-      Result := true
+//    else if ID4 = ('PAK!') then
+//      Result := true
     else if ID4 = ('edat') then
       Result := true
     else if ID4 = ('POD3') then
@@ -14614,9 +14577,6 @@ begin
       IsFormat := True
     // Hitman: Contracts .PRM
     else if ext = 'PRM' then
-      IsFormat := True
-    // Sony Playstation 3 Games .PSARC
-    else if ext = 'PSARC' then
       IsFormat := True
     // Scarface & Prototype .RCF
     else if ext = 'RCF' then

@@ -14,10 +14,10 @@
 ; (elbereth@users.sourceforge.net, http://www.elberethzone.net).
 
 [Setup]
-Compression=lzma/ultra64
+Compression=lzma/max
 SolidCompression=true
 AppName=Dragon UnPACKer 5
-AppVerName=Dragon UnPACKer v5.6.0 Exedra (build 238/stable)
+AppVerName=Dragon UnPACKer v5.6.0 Exedra (stable)
 AppPublisher=Alexandre Devilliers (aka Elbereth)
 AppPublisherURL=http://www.elberethzone.net
 AppSupportURL=http://www.elberethzone.net/dup-support.html
@@ -34,18 +34,17 @@ UninstallDisplayIcon={app}\drgunpack5.exe
 WizardImageBackColor=$ffffff
 WizardImageFile=dup5-instimage.bmp
 WizardSmallImageFile=dup5-inst55x55.bmp
-VersionInfoVersion=5.6.0.238
-; uncomment the following line if you want your installation to run on NT 3.51 too.
+VersionInfoVersion=5.6.0
 MinVersion=4.10,4.0sp6
 LicenseFile=..\docs\core\source\LICENCE.txt
 InternalCompressLevel=ultra64
 VersionInfoDescription=Dragon UnPACKer 5 Setup
-VersionInfoTextVersion=5.6.0 Exedra (Build 238)
+VersionInfoTextVersion=5.6.0 Exedra
 VersionInfoCopyright=Elbereth / MPL 1.1
 VersionInfoProductName=Dragon UnPACKer
-VersionInfoProductVersion=5.6.0.238
+VersionInfoProductVersion=5.6.0
 AppVersion=5.6.0 Exedra
-SetupIconFile=E:\Developpement\dup-HEAD-2008\DragonUnPACKer\tools\duppi\duppi.ico
+SetupIconFile=..\tools\duppi\duppi.ico
 AppReadmeFile={app}\readme.txt
 
 [Languages]
@@ -61,24 +60,24 @@ Name: quicklaunchicon; Languages: fr; Description: Placer une icone sur la barre
 Name: desktopicon; Languages: sp; Description: Poner un icono sobre el desktop; GroupDescription: Iconos adicionales:; MinVersion: 4,4
 Name: quicklaunchicon; Languages: sp; Description: Poner un icono en la bara de lanzamiento rapido; GroupDescription: Iconos adicionales:; MinVersion: 4,4; Flags: unchecked
 Name: deleteoldhrplugins; Description: Remove old useless plugins; GroupDescription: Update from previous versions; Flags: checkedonce; Languages: en
-Name: deleteoldhrplugins; Description: Supprimer les anciennes extensiosn; GroupDescription: Mise à jour depuis une ancienne version; Flags: checkedonce; Languages: fr
+Name: deleteoldhrplugins; Description: Supprimer les anciennes extensions inutiles; GroupDescription: Mise à jour depuis une ancienne version; Flags: checkedonce; Languages: fr
 Name: deleteoldhrplugins; Description: Borrar las antiguas versiones de las extenciones; GroupDescription: Antiguas versiones; Flags: checkedonce; Languages: sp
 
 [Files]
-Source: E:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe; DestDir: {app}; Flags: ignoreversion
-Source: E:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe.sig; DestDir: {app}; Flags: ignoreversion
-Source: E:\Developpement\dup-dev-5.1-compiled\data\*.*; DestDir: {app}\data; Flags: ignoreversion
-Source: E:\Developpement\dup-dev-5.1-compiled\data\drivers\*.*; DestDir: {app}\data\drivers; Flags: ignoreversion
-Source: E:\Developpement\dup-dev-5.1-compiled\data\convert\*.*; DestDir: {app}\data\convert; Flags: ignoreversion
-Source: E:\Developpement\dup-dev-5.1-compiled\utils\*.*; DestDir: {app}\utils; Flags: ignoreversion
-Source: E:\Developpement\dup-dev-5.1-compiled\utils\data\*.*; DestDir: {app}\utils\data; Flags: ignoreversion
-Source: E:\Developpement\dup-dev-5.1-compiled\utils\templates\*.*; DestDir: {app}\utils\templates\; Flags: ignoreversion
-Source: E:\Developpement\dup-dev-5.1-compiled\utils\translation\*.*; DestDir: {app}\utils\translation\; Flags: ignoreversion
-Source: E:\Developpement\dup-dev-5.1-compiled\file_id.diz; DestDir: {app}; Flags: ignoreversion
-Source: E:\Developpement\dup-dev-5.1-compiled\historique.txt; DestDir: {app}; Flags: ignoreversion
-Source: E:\Developpement\dup-dev-5.1-compiled\lisezmoi.txt; DestDir: {app}; Flags: ignoreversion
-Source: E:\Developpement\dup-dev-5.1-compiled\readme.txt; DestDir: {app}; Flags: ignoreversion
-Source: E:\Developpement\dup-dev-5.1-compiled\whatsnew.txt; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\drgunpack5.exe; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\drgunpack5.exe.sig; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\data\*.*; DestDir: {app}\data; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\data\drivers\*.*; DestDir: {app}\data\drivers; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\data\convert\*.*; DestDir: {app}\data\convert; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\utils\*.*; DestDir: {app}\utils; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\utils\data\*.*; DestDir: {app}\utils\data; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\utils\templates\*.*; DestDir: {app}\utils\templates\; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\utils\translation\*.*; DestDir: {app}\utils\translation\; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\file_id.diz; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\historique.txt; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\lisezmoi.txt; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\readme.txt; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\..\dup-dev-5.1-compiled\whatsnew.txt; DestDir: {app}; Flags: ignoreversion
 ; For WIP versions
 ;Source: "E:\Developpement\dup-dev-5.1-compiled\readme-WIP.txt"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -119,3 +118,9 @@ Name: {app}\data\drivers\drv_mix.d5d; Type: files; Tasks:
 Name: {app}\data\drivers\drv_giants.d5d; Type: files; Tasks: 
 Name: {app}\data\HyperRipper\*.d5h; Type: files; Tasks: 
 Name: {app}\data\HyperRipper; Type: dirifempty; Tasks: 
+
+[Registry]
+Root: HKCR; SubKey: DUP5.Files; ValueData: ""; Flags: UninsDeleteKey DeleteKey;
+Root: HKCR; SubKey: DUP5.Packages; ValueData: ""; Flags: UninsDeleteKey DeleteKey;
+Root: HKCU; SubKey: Software\Dragon Software\Dragon UnPACKer 5; ValueData: ""; Flags: UninsDeleteValue;
+Root: HKCU; SubKey: Software\Dragon Software; ValueData: ""; Flags: UninsDeleteKeyIfEmpty; 

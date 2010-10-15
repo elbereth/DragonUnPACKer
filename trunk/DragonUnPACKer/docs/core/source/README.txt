@@ -1,5 +1,5 @@
-Dragon UnPACKer 5.5.1 Beta Source Code                          MPL open source
-by Alexande "Elbereth" Devilliers                                    12/09/2009
+Dragon UnPACKer 5.6.0 "Exedra" Source Code                      MPL open source
+by Alexande "Elbereth" Devilliers                                    15/10/2010
 ===============================================================================
 
 This source code can be used and modified if following the Mozilla Public
@@ -21,8 +21,8 @@ Lazarus/FPC compilation can be tried, some plugins can be compiled for ex.
 
 Needed libraries:
 - cxCPU v4.x                    http://www.carbonsoft.com/cxcpu/
-- Drag&Drop Component Suite 4.2 http://melander.dk/
-- Vampyre Imaging Library v0.26.2 http://imaginglib.sourceforge.net/
+- Drag&Drop Component Suite 5.1 http://melander.dk/
+- Vampyre Imaging Library v0.26.4 http://imaginglib.sourceforge.net/
 - VirtualTreeView v4.8.5        http://www.soft-gems.net/VirtualTreeview/
 - Windows 7 Component Library   http://www.gumpi.com/blog
   (This can be avoided by changing TdwProgresBar to TProgressBar in Core
@@ -32,17 +32,17 @@ Needed libraries:
 For Compile Time (in about box) :
 - Compile Time Expert v1.12	    http://www.fi.muni.cz/~xkovalc/
 
-For setup compilation you need Inno Setup v5.3.4 from:
+For setup compilation you need Inno Setup v5.3.11 from:
 http://www.jrsoftware.org/isinfo.php
 
 
-CVS access:
+SVN access:
 -----------
 
-Anonymous CVS access is available (if you want to have absolute latest source
+Anonymous SVN access is available (if you want to have absolute latest source
 code) at Dragon UnPACKer's SourceForge page:
 
-http://www.elberethzone.net/dup-cvs-source.html
+http://www.elberethzone.net/dup-svn-source.html
 
 
 Willing to help ?

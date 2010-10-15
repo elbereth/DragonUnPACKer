@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.6.0 "Exedra"                             MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    21/07/2010
+by Alexande "Elbereth" Devilliers                                    15/10/2010
 ===============================================================================
 
   ** English Readme (voir lisezmoi.txt pour la version française)
@@ -31,11 +31,11 @@ LICENCE.txt for details).
 
  Any public version (beta, release candidate or final) can be placed on any
 media for distribution (ex: CD-Rom, FTP, HTTP, etc..). But all text files must
-stay intact, and no files can be added to the zip file.
+stay intact, and no files can be added to the archive file (7Z/SETUP).
 
  This program have 2 differents types of releases (same content):
-    SETUP - ~2.5MB - dup560exedra-setup.exe - With Install/Uninstall
-       7Z - ~2.4MB - dup560exedra.7z        - Plain 7-Zip (v9.15 beta) archive
+  SETUP - ~2.5MB - dup560exedra-setup.exe With Install/Uninstall (recommended)
+     7Z - ~2.4MB - dup560exedra.7z        Plain 7-Zip (v9.17 beta) archive
 
 ===============================================================================
  2. PROGRAM DESCRIPTION
@@ -67,7 +67,7 @@ DrgUnPack5.exe and voila it is installed..
  Here is a list of files you must find in the Dragon UnPACKer distribution:
  (if not go to homepage and download it from there)
 
-*drgunpack5.exe    	        3669 KB
+*drgunpack5.exe    	        3477 KB
  drgunpack5.exe.sig            1 KB  GPG Signature of drgunpack5.exe file
  file_id.diz       	           1 KB
  historique.txt    	          42 KB
@@ -85,7 +85,7 @@ DrgUnPack5.exe and voila it is installed..
 
  data\convert\
  Blood.dpal                    1 KB  Blood color palette
- cnv_pictex.d5c              779 KB  Textures convert plugin (v2.1.1)
+ cnv_pictex.d5c              457 KB  Textures convert plugin (v2.2.0)
  Doom.dpal                     1 KB  Doom color palette
  Duke3D.dpal                   1 KB  Duke Nukem 3D color palette
  Quake 1.dpal                  1 KB  Quake color palette
@@ -94,20 +94,18 @@ DrgUnPack5.exe and voila it is installed..
  
  data\drivers\
  drv_11th.d5d                412 KB  11th Hour driver plugin (v1.0.0)
- drv_default.d5d             239 KB  Elbereth's Main driver plugin (v2.1.0)
+ drv_default.d5d             273 KB  Elbereth's Main driver plugin (v2.1.0)
+ drv_default_mix.lst         266 KB  Filename list for .MIX support
  drv_ut.d5d                  669 KB  UT Packages driver plugin (v2.3.0)
  drv_zip.d5d                 103 KB  ZIP driver plugin (v1.1.2)
  unzip32.dll                 100 KB  Info-Zip's UnZip32.Dll v5.5.2
                                  
- data\hyperripper\               
- hr_default.d5h              626 KB  Elbereth's HyperRipper Plugin (v5.1.0)
-                                 
  utils\                          
 +duppi.exe                   798 KB  DUP5 Package installer (v3.3.3)
 +DuppiInstall.exe             42 KB  Duppi Auto-Update Installer
+ hrf_30_spec.txt               7 KB  HyperRipper file 3.0 specification
 +libcurl-3.dll               268 KB  Curl Library (no SSL) (v7.21.0)
 +zlib1.dll                    80 KB  Zlib Library (v1.2.5)
- hrf_30_spec.txt               7 KB  HyperRipper file 3.0 specification
 
  utils\data\
 +english.lng                   4 KB  Duppi English translation
@@ -123,8 +121,10 @@ DrgUnPack5.exe and voila it is installed..
  utils\translation\
  dlngc.exe                   124 KB  LNG file compiler
  dlngc.txt                     4 KB  LNG file compiler documentation
- english.ls                   19 KB  English translation sources (Core)
+ english.ls                   18 KB  English translation sources (Core)
  english_duppi.ls              9 KB  English translation sources (Duppi)
+ english-duppi-320-changes.txt 2 KB  Changes in duppi 3.0.0 -> 3.2.0
+ english-duppi-330-changes.txt 1 KB  Changes in duppi 3.2.0 -> 3.3.0
  english-beta2-changes.txt     4 KB  Changes in english.ls 5.0.0 Beta 1 -> 2
  english-beta3-changes.txt     4 KB  Changes in english.ls 5.0.0 Beta 2 -> 3
  english-rc1-changes.txt       2 KB  Changes in english.ls 5.0.0 Beta 3 -> RC1
@@ -134,6 +134,7 @@ DrgUnPack5.exe and voila it is installed..
  english-532-changes.txt       3 KB  Changes in english.ls 5.2.0 -> 5.3.2 WIP
  english-533-changes.txt       2 KB  Changes in english.ls 5.3.2 -> 5.3.3 Beta
  english-540-changes.txt       7 KB  Changes in english.ls 5.3.3 Beta -> 5.4.0
+ english-551-changes.txt       1 KB  Changes in english.ls 5.4.0 -> 5.5.1 Beta
  flag_fr.bmp                   1 KB  France flag icon
  flag_sp.bmp                   1 KB  Spain flag icon
  flag_us.bmp                   1 KB  USA flag icon
@@ -170,13 +171,13 @@ DrgUnPack5.exe and voila it is installed..
 
   * Antec Solo case
   * Seasonic S12-500 power supply
-  * Gigabyte GA-EX58-UD5 (BIOS F3)
+  * Gigabyte GA-EX58-UD5 (BIOS F12)
   * Intel Quad Core Core i7 920 2.4Ghz (Nehalem) [166Mhz x 20 = 3.3Ghz]
     Noctua C12P
   * 6144MB (3x2048MB) of DDR3-1333 OCZ Platinum Cas 7 (7-7-7-20)
   * Intel SSD X25-M G2 (Postville)      160GB (System)
     Samsung Spinpoint F1 (HD103UJ)        1TB
-	Western Digital Green (WD10EADS)      1TB (2x in RAID-1)
+	Western Digital Green (WD10EADS)      1TB (2x)
 	Western VelociRaptor (WD3000HlFS)   300GB (Games)
   * nVidia GeForce GTX 285 1024MB (648Mhz/1242Mhz/1476Mhz) graphic card
     
@@ -738,13 +739,15 @@ see the webpage at: http://www.elberethzone.net/dup-supportedgames.html
  Ascendancy                                               .COB drv_default 
  Battlefield 1942                                         .RFA drv_default 
  Battlefield 2                                            .ZIP drv_zip 
+ Battleforge                                              .PAK drv_default
  Black & White                                            .SAD drv_default 
  Black & White 2                                   .LUG;.STUFF drv_default 
+ Blade Runner                                             .MIX drv_default
  Blitzkrieg                                               .PAK drv_zip 
  Blitzkrieg Burning Horizon                               .PAK drv_zip 
  Blitzkrieg Rolling Thunder                               .PAK drv_zip 
  Blood                                                    .ART drv_default 
- Blood 2                                                  .REZ ??? 
+ Blood 2                                                  .REZ drv_default 
  Bloodrayne                                               .POD drv_default 
  Brothers Pilots 4                                        .PAK drv_zip 
  Call of Duty                                             .PK3 drv_zip 
@@ -756,7 +759,9 @@ see the webpage at: http://www.elberethzone.net/dup-supportedgames.html
  Call to Power                                            .CTP drv_zip 
  Cellblock Squadrons                                      .BOX drv_zip 
  Civilization 4                                           .FPK drv_default 
+ Command & Conquer                                        .MIX drv_default
  Command & Conquer: Generals                              .BIG drv_default 
+ Command & Conquer: Red Alert                             .MIX drv_default
  Conflict: Freespace                                       .VP drv_default 
  Cyberbykes                                               .BIN drv_default 
  Dark Forces                                              .GOB drv_default 
@@ -769,11 +774,13 @@ see the webpage at: http://www.elberethzone.net/dup-supportedgames.html
  Descent 3                                           .HOG/.MN3 drv_default 
  Desperados: Wanted Dead of Alive                         .PAC drv_zip 
  Dethkarz                                                 .ZIP drv_zip 
+ Dragon Age: Origins                                      .ERF drv_default
  Dreamfall: The Longest Journey                           .PAK drv_default 
  Dinosaur Digs                                            .ZTD drv_zip 
  Dirty Little Helper 98                                   .DLU drv_zip 
  Doom 3                                                   .PK4 drv_zip 
  Doom 3: Resurrection of Evil                             .PK4 drv_zip 
+ Dragon Age: Origins                                      .ERF drv_default
  Duke Nukem 3D                                            .ART drv_default 
  Duke Nukem: Manhattan Project                          .ZIPFS drv_zip 
  Dune 2                                                   .PAK drv_default 
@@ -813,6 +820,7 @@ see the webpage at: http://www.elberethzone.net/dup-supportedgames.html
  Hellhog XP                                                 .A drv_zip 
  Heretic 2                                           .PAK;.WAD drv_default 
  Hexen 2                                             .PAK;.WAD ??? 
+ Heroes of Might & Magic 5                                .PAK drv_zip 
  Hidden & Dangerous                                  .DTA/.CNT drv_default 
  Hitman: Bloodmoney                                       .ZIP drv_zip 
  Hitman: Bloodmoney                                  .TEX;.PRM drv_default 

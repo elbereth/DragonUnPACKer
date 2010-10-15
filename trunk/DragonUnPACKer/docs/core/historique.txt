@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.4.0a "Degei"                             MPL 1.1 open source
-par Alexande "Elbereth" Devilliers                                   23/04/2009
+Dragon UnPACKer v5.6.0 "Exedra"                             MPL 1.1 open source
+par Alexande "Elbereth" Devilliers                                   15/10/2010
 ===============================================================================
 
   ** Français ** (see Whatsnew.txt for english version)
@@ -23,21 +23,166 @@ Version des extensions incluses:
 
 Extensions de Drivers:				                          Version:
 Elbereth's 11th Hour Driver (drv_11th.d5d)              1.0.0.9
-Main Driver (drv_default.d5d)                           2.0.5.867
-Nullpointer's Giants GZP Driver (drv_giants.d5d)        1.0.2.33
+Main Driver (drv_default.d5d)                           2.1.0.937
 A.Cordero's UT Packages Driver (drv_ut.d5d)             2.3.0.125
-Info-ZIP's ZIP Driver (DLL wrapper) (drv_zip.d5d)       1.1.2.136
+Info-ZIP's ZIP Driver (DLL wrapper) (drv_zip.d5d)       1.1.3.139
   Info-ZIP's UnZip DLL for Win32 (unzip32.dll)          5.5.2
-WestWood MIX Driver [by Felix Riemann] (drv_mix.d5d)    1.1.4 Beta
 
 Extensions de convertion:
-Picture/Textures convert Plugin (cnv_pictex.d5c)        2.1.1.117
-
-Extensions HyperRipper:
-Elbereth's HyperRipper 5 Plugin (hr_default.d5h)        5.1.0.103
+Picture/Textures convert Plugin (cnv_pictex.d5c)        2.2.0.122
 
 -------------------------------------------------------------------------------
 Version du programme principal et historique:
+
+Version 5.6.0.239
+Release [15/10/2010]
+ 
+ ! Correction de l'option Prévisualisation dans le menu principal et dans
+   le menu popup (ETreeViewError with Invalid Index message).
+ ! Correction de l'option Look et Association de fichier qui n'amenais pas
+   au bon endroit.
+ + Ajout du numero de version dans la boite de dialogue des erreurs.
+ ! Correction de la partie "Plus de details" dans la boite de dialogue des
+   erreurs lorsqu'il n'y avais aucune ligne à afficher.
+ * Mise à jour du composant Drag and Drop en v5.1.
+   Affichage de la version dynamiquement dans la boite de dialogue A Propos de
+   et dans le journal d'execution.
+ * Améliorations dans l'utilisation des fichiers temporaires.
+ * Certaines options de conversion sont désormais faites directement dans le
+   programme princiapl (et non plus dans l'extension de conversion).
+   Utilisation de l'excellente librairie Vampyre Imaging pour détecter les
+   formats d'image compatibles et les convertir vers un BMP.
+ ! Correction du bug qui empechait l'utilisation du programme sous Windows
+   Vista/7 quand l'UAC était actif et que le programme n'avais pas de droits
+   d'administration. Les symptomes étaient que le programme se lançait en
+   Français même en choisissant une autre langue au démarrage. Désolé!
+ ! Correction du message d'ouverture dans le journal d'execution (%f).
+ ! Correction d'un petit bug dans le journal d'execution (inversion de
+   variables lors d'une ouverture avec succès d'un fichier).
+ ! Correction de la quantité de mémoire du système lorsqu'il y a plus de 2Go
+   de RAM dans la boite de dialogue des erreurs.
+ * Le titre de l'application change désormais pour inclure la version et le
+   fichier actuellement ouvert.
+ + Ajout l'indication du progrès dans la barre des taches de Windows Vista/7
+   lorsque Aero est activé.
+ - Extension désormais obsolette: Giants: Citizen Kabuto drv_giant .GZP.
+   Le support de ce format de fichier est désormais dans l'extension
+   Pilote Principale.
+ - Extension désormais obsolette: Felix Riemann drv_mix .MIX (les sources
+   n'étaient pas disponibles).
+   Le support de ce format de fichier est désormais dans l'extension
+   Pilote Principale.
+ - N'utilise plus du tout JCL & JVCL. Remplacé par:
+    Des fonctions personnelles équivalentes
+    Appels de l'API directe
+	VCL de Delphi
+ * Le remplacement pour JvBrowseDialog de JVCL, utilise ShellApi (par Brian
+   Cryer avec l'aide de Martin Birk)
+ * HyperRipper v5.6:
+   - Suppression du support des extensions, ceci a comme buts:
+	   Facilité la compilation sous Lazarus\FreePascal
+	   Possibilité de multi-threading dans le future
+   * La dernière version de l'extension fait désormais partie du programme
+     principal et fourni les mêmes fonctionnalités.
+   * Amélioration de la vitesse.
+   + Ajout l'indication du progrès dans la barre des taches de Windows Vista/7
+     lorsque Aero est activé.
+   + Ajout de l'option Exclusion des faux positifs (selectionnée par défaut).
+     Ceci permet d'eviter la selection de formats qui ont de fortes possibilité
+	 de détection de faux positifs [fichiers trouvés qui n'en sont pas vraiment]
+	 (669, IT & FLIC qui sont de très vieux formats qui ont très peu de chances
+	 d'être utilisés de nos jours).
+   + Ajout de l'option de démarrage automatique du Scan dans les options
+     avancées. Si vous activez cette option conjointement avec l'option de
+	 Dragon UnPACKer qui lance l'HyperRipper lorsque le format de fichier est
+	 inconnu, la recherche commencera automatiquement.
+   + Ajout de l'option de fermeture automatique si des entrées ont été trouvées
+     après une recherche (dans les options avancées).
+     L'HyperRipper se fermera automatiquement lorsque la recherche est terminée
+	 si des elements ont été trouvés.
+   + Ajout d'une option pour Forcer la taille du cache (options Avancées).
+     Ceci peut être utiliser pour forcer la taille du cache (standard = 128k).
+	 Ce n'est pas recommandé de changer cette valeur (plus gros ou plus petit
+	 peut faire que la recherche soit plus lente) mais si vous voulez tenter,
+     allez-y...
+	 La seule façon de le faire est d'indiquer la valeur directement dans la
+	 base de registre:
+	 HKEY_CURRENT_USER\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper
+	 DWORD clé BufferSize
+	 Minimum 32, maximum 32Mo.
+	 Le rollback ne peut pas être changé (fixé à 16 octets).
+   ! Correction de la fonction BigToLittle2 qui n'était pas correcte...
+   + Ajout du support des JPEG Exif support (marqueur APP1 au lieu de APP0).
+   * Amélioration du support des fichiers JPEG pour utiliser les marqueurs le
+     plus possible avant de lancer une recherche du marqueur EOI.
+   ! Correction d'une vérification qui empechais de trouver certains fichiers
+     s'ils étaient juste les uns derrière les autres.
+   * Amélioration de la recherche d'audio MPEG afin de donner des informations
+     pendant la détermination de la taille du fichier trouvé.
+     Ceci permet d'appuyer sur annuler pendant cette procédure qui peut être
+	 fort longue pour un gros fichier audio MPEG.
+   * Améliroation de la vitesse de rechercher du format audio MPEG lorsque les
+     entrées trouvés sont plus petites que la taille minimum (en frames et en
+	 octets) n'est pas atteinte.
+ * Extension Pilote principale d'Elbereth v2.1.0:
+   + Ajout du support des formats suivants:
+     Blade Runner .MIX
+	 Command & Conquer .MIX
+	 Command & Conquer: Red Alert
+	 Seul les fichiers non-cryptés sont supportés.
+     Devrais fonctionner aussi bien que l'ancienne extension pilote de Felix
+	 Riemann (drv_mix), mais avec une détection des noms de fichiers basés sur
+	 la base de données de XCC-Util.
+	 Les nouveaux noms de fichier peuvent être ajoutés en éditant le fichier
+	 text drv_default_mix.lst, avec un nom de fichier par ligne.
+	 Lisez l'entête du fichier pour plus d'info (en anglais).
+   + Ajout du support des fichiers .GZP de Giant: Citizen Kabuto.
+     Précédément dans l'extension pilote drv_giant.
+   ! Correction de l'extraction du fichier sho.dni de realMyst 3D (certaines
+     entrées sont compressés en zlib mais n'étaient pas décompressés).
+   + Ajout du support des fichiers .PAK de Battleforge.
+   + Ajout du support des fichiers .ERF de Dragon Age: Origins.
+   i Changements internes pour faciliter l'ajout de nouveaux formats.
+     Ajout d'une option de compilation pour permettre l'activation de formats
+	 de fichiers expérimentaux.
+ * Extension de Convertion d'Elbereth v2.2.1 [cnv_pictex]:
+   i Utilise désormais l'interface DUCI v4 compatible avec la version 3.
+     L'utilisation de cette version de l'extension avec d'anciennes versions de
+	 Dragon UnPACKer peu résulter en une fonctionnalité réduite, principalement
+	 en raison de la suppression suivante.
+   - Suppression des options de conversion utilisant la librairie Vampyre
+     Imaging. Redondant avec l'inclusion directe dans Dragon UnPACKer.
+ * Extension Pilote InfoZip's ZIP v1.1.3:
+   + Ajout de l'extension de fichier .PAK de Heroes of Might & Magic 5 .PAK.
+   * Nettoyage de la liste des types de fichiers supportés (doubles, etc..).
+   i Changements internes pour faciliter l'ajout de nouveaux formats.
+ * Duppi v3.3.3:
+   + Ajout de la nouvelle fonctionnalité de DUPP v4: Fichiers obsolettes.
+   + Ajout du support de serveurs de téléchargements multiples (lorsqu'un
+     serveur échoue le prochain est essayé, ainsi de suite jusqu'à la réussite).
+   + Ajout de la vérification du fichier téléchargé (taille et hachage SHA-1).
+   + Ajout d'un journal lors de l'installation pour savoir ce qu'il se passe.
+   + Ajout de la mise à jour automatique de Dragon UnPACKer.
+   * Amélioration des informations fournis à l'utilisateur lors de
+     l'installation des fichiers DUPP v4.
+   * Code optimizé pour supprimé les unités inutiles suivantes:
+       JVCL & JCL
+	   VirtualTree
+	 Ceci a permis de réduire la taille de l'exécutable de 300kB...
+   i Utilisation de curl au lieu de la librairie ICS de Overbyte.
+     Ceci afin d'être le plus indépendant de la plateforme possible.
+	 Versions actuelles: libcurl v7.21.0 et zlib v1.2.5.
+   ! Traduction de tous les textes introduits par le support du format DUPP v4.
+     Désolé pour ceux d'entre vous qui ne comprennent pas l'anglais...
+   ! Correction d'un petit bug dans le journal.
+   ! Correction d'un bug sous Vista/7 avec Aero qui laissait la bannière
+     apparaitre sous le texte.
+   ! Correction du popup qui affichait pour la mise à jour automatique de
+     Dragon UnPACKer même lorsqu'aucun package n'était disponible (par ex:
+	 5.2.0b --> 5.4.0a).
+   ! Correction de l'URL utilisée lorsque l'utilisateur veut télécharger 
+     manuellement une nouvelle version de Dragon UnPACKer.
+
 
 Version 5.4.0.192
 Release A [23/04/2009]

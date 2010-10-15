@@ -1,0 +1,929 @@
+Dragon UnPACKer v5.6.0 "Exedra"                             MPL 1.1 open source
+par Alexande "Elbereth" Devilliers                                   15/10/2010
+===============================================================================
+
+  ** Français ** (see Whatsnew.txt for english version)
+
+  -----------------------
+  Historique des versions
+  -----------------------
+
+  Legende:
+
+    * = Amelioration
+    + = Nouveauté
+    - = Suppression
+    ! = Correction de bug
+    # = Bug connu
+    i = Information
+
+-------------------------------------------------------------------------------
+Version des extensions incluses:
+
+
+Extensions de Drivers:				                          Version:
+Elbereth's 11th Hour Driver (drv_11th.d5d)              1.0.0.9
+Main Driver (drv_default.d5d)                           2.1.0.937
+A.Cordero's UT Packages Driver (drv_ut.d5d)             2.3.0.125
+Info-ZIP's ZIP Driver (DLL wrapper) (drv_zip.d5d)       1.1.3.139
+  Info-ZIP's UnZip DLL for Win32 (unzip32.dll)          5.5.2
+
+Extensions de convertion:
+Picture/Textures convert Plugin (cnv_pictex.d5c)        2.2.0.122
+
+-------------------------------------------------------------------------------
+Version du programme principal et historique:
+
+Version 5.6.0.239
+Release [15/10/2010]
+ 
+ ! Correction de l'option Prévisualisation dans le menu principal et dans
+   le menu popup (ETreeViewError with Invalid Index message).
+ ! Correction de l'option Look et Association de fichier qui n'amenais pas
+   au bon endroit.
+ + Ajout du numero de version dans la boite de dialogue des erreurs.
+ ! Correction de la partie "Plus de details" dans la boite de dialogue des
+   erreurs lorsqu'il n'y avais aucune ligne à afficher.
+ * Mise à jour du composant Drag and Drop en v5.1.
+   Affichage de la version dynamiquement dans la boite de dialogue A Propos de
+   et dans le journal d'execution.
+ * Améliorations dans l'utilisation des fichiers temporaires.
+ * Certaines options de conversion sont désormais faites directement dans le
+   programme princiapl (et non plus dans l'extension de conversion).
+   Utilisation de l'excellente librairie Vampyre Imaging pour détecter les
+   formats d'image compatibles et les convertir vers un BMP.
+ ! Correction du bug qui empechait l'utilisation du programme sous Windows
+   Vista/7 quand l'UAC était actif et que le programme n'avais pas de droits
+   d'administration. Les symptomes étaient que le programme se lançait en
+   Français même en choisissant une autre langue au démarrage. Désolé!
+ ! Correction du message d'ouverture dans le journal d'execution (%f).
+ ! Correction d'un petit bug dans le journal d'execution (inversion de
+   variables lors d'une ouverture avec succès d'un fichier).
+ ! Correction de la quantité de mémoire du système lorsqu'il y a plus de 2Go
+   de RAM dans la boite de dialogue des erreurs.
+ * Le titre de l'application change désormais pour inclure la version et le
+   fichier actuellement ouvert.
+ + Ajout l'indication du progrès dans la barre des taches de Windows Vista/7
+   lorsque Aero est activé.
+ - Extension désormais obsolette: Giants: Citizen Kabuto drv_giant .GZP.
+   Le support de ce format de fichier est désormais dans l'extension
+   Pilote Principale.
+ - Extension désormais obsolette: Felix Riemann drv_mix .MIX (les sources
+   n'étaient pas disponibles).
+   Le support de ce format de fichier est désormais dans l'extension
+   Pilote Principale.
+ - N'utilise plus du tout JCL & JVCL. Remplacé par:
+    Des fonctions personnelles équivalentes
+    Appels de l'API directe
+	VCL de Delphi
+ * Le remplacement pour JvBrowseDialog de JVCL, utilise ShellApi (par Brian
+   Cryer avec l'aide de Martin Birk)
+ * HyperRipper v5.6:
+   - Suppression du support des extensions, ceci a comme buts:
+	   Facilité la compilation sous Lazarus\FreePascal
+	   Possibilité de multi-threading dans le future
+   * La dernière version de l'extension fait désormais partie du programme
+     principal et fourni les mêmes fonctionnalités.
+   * Amélioration de la vitesse.
+   + Ajout l'indication du progrès dans la barre des taches de Windows Vista/7
+     lorsque Aero est activé.
+   + Ajout de l'option Exclusion des faux positifs (selectionnée par défaut).
+     Ceci permet d'eviter la selection de formats qui ont de fortes possibilité
+	 de détection de faux positifs [fichiers trouvés qui n'en sont pas vraiment]
+	 (669, IT & FLIC qui sont de très vieux formats qui ont très peu de chances
+	 d'être utilisés de nos jours).
+   + Ajout de l'option de démarrage automatique du Scan dans les options
+     avancées. Si vous activez cette option conjointement avec l'option de
+	 Dragon UnPACKer qui lance l'HyperRipper lorsque le format de fichier est
+	 inconnu, la recherche commencera automatiquement.
+   + Ajout de l'option de fermeture automatique si des entrées ont été trouvées
+     après une recherche (dans les options avancées).
+     L'HyperRipper se fermera automatiquement lorsque la recherche est terminée
+	 si des elements ont été trouvés.
+   + Ajout d'une option pour Forcer la taille du cache (options Avancées).
+     Ceci peut être utiliser pour forcer la taille du cache (standard = 128k).
+	 Ce n'est pas recommandé de changer cette valeur (plus gros ou plus petit
+	 peut faire que la recherche soit plus lente) mais si vous voulez tenter,
+     allez-y...
+	 La seule façon de le faire est d'indiquer la valeur directement dans la
+	 base de registre:
+	 HKEY_CURRENT_USER\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper
+	 DWORD clé BufferSize
+	 Minimum 32, maximum 32Mo.
+	 Le rollback ne peut pas être changé (fixé à 16 octets).
+   ! Correction de la fonction BigToLittle2 qui n'était pas correcte...
+   + Ajout du support des JPEG Exif support (marqueur APP1 au lieu de APP0).
+   * Amélioration du support des fichiers JPEG pour utiliser les marqueurs le
+     plus possible avant de lancer une recherche du marqueur EOI.
+   ! Correction d'une vérification qui empechais de trouver certains fichiers
+     s'ils étaient juste les uns derrière les autres.
+   * Amélioration de la recherche d'audio MPEG afin de donner des informations
+     pendant la détermination de la taille du fichier trouvé.
+     Ceci permet d'appuyer sur annuler pendant cette procédure qui peut être
+	 fort longue pour un gros fichier audio MPEG.
+   * Améliroation de la vitesse de rechercher du format audio MPEG lorsque les
+     entrées trouvés sont plus petites que la taille minimum (en frames et en
+	 octets) n'est pas atteinte.
+ * Extension Pilote principale d'Elbereth v2.1.0:
+   + Ajout du support des formats suivants:
+     Blade Runner .MIX
+	 Command & Conquer .MIX
+	 Command & Conquer: Red Alert
+	 Seul les fichiers non-cryptés sont supportés.
+     Devrais fonctionner aussi bien que l'ancienne extension pilote de Felix
+	 Riemann (drv_mix), mais avec une détection des noms de fichiers basés sur
+	 la base de données de XCC-Util.
+	 Les nouveaux noms de fichier peuvent être ajoutés en éditant le fichier
+	 text drv_default_mix.lst, avec un nom de fichier par ligne.
+	 Lisez l'entête du fichier pour plus d'info (en anglais).
+   + Ajout du support des fichiers .GZP de Giant: Citizen Kabuto.
+     Précédément dans l'extension pilote drv_giant.
+   ! Correction de l'extraction du fichier sho.dni de realMyst 3D (certaines
+     entrées sont compressés en zlib mais n'étaient pas décompressés).
+   + Ajout du support des fichiers .PAK de Battleforge.
+   + Ajout du support des fichiers .ERF de Dragon Age: Origins.
+   i Changements internes pour faciliter l'ajout de nouveaux formats.
+     Ajout d'une option de compilation pour permettre l'activation de formats
+	 de fichiers expérimentaux.
+ * Extension de Convertion d'Elbereth v2.2.1 [cnv_pictex]:
+   i Utilise désormais l'interface DUCI v4 compatible avec la version 3.
+     L'utilisation de cette version de l'extension avec d'anciennes versions de
+	 Dragon UnPACKer peu résulter en une fonctionnalité réduite, principalement
+	 en raison de la suppression suivante.
+   - Suppression des options de conversion utilisant la librairie Vampyre
+     Imaging. Redondant avec l'inclusion directe dans Dragon UnPACKer.
+ * Extension Pilote InfoZip's ZIP v1.1.3:
+   + Ajout de l'extension de fichier .PAK de Heroes of Might & Magic 5 .PAK.
+   * Nettoyage de la liste des types de fichiers supportés (doubles, etc..).
+   i Changements internes pour faciliter l'ajout de nouveaux formats.
+ * Duppi v3.3.3:
+   + Ajout de la nouvelle fonctionnalité de DUPP v4: Fichiers obsolettes.
+   + Ajout du support de serveurs de téléchargements multiples (lorsqu'un
+     serveur échoue le prochain est essayé, ainsi de suite jusqu'à la réussite).
+   + Ajout de la vérification du fichier téléchargé (taille et hachage SHA-1).
+   + Ajout d'un journal lors de l'installation pour savoir ce qu'il se passe.
+   + Ajout de la mise à jour automatique de Dragon UnPACKer.
+   * Amélioration des informations fournis à l'utilisateur lors de
+     l'installation des fichiers DUPP v4.
+   * Code optimizé pour supprimé les unités inutiles suivantes:
+       JVCL & JCL
+	   VirtualTree
+	 Ceci a permis de réduire la taille de l'exécutable de 300kB...
+   i Utilisation de curl au lieu de la librairie ICS de Overbyte.
+     Ceci afin d'être le plus indépendant de la plateforme possible.
+	 Versions actuelles: libcurl v7.21.0 et zlib v1.2.5.
+   ! Traduction de tous les textes introduits par le support du format DUPP v4.
+     Désolé pour ceux d'entre vous qui ne comprennent pas l'anglais...
+   ! Correction d'un petit bug dans le journal.
+   ! Correction d'un bug sous Vista/7 avec Aero qui laissait la bannière
+     apparaitre sous le texte.
+   ! Correction du popup qui affichait pour la mise à jour automatique de
+     Dragon UnPACKer même lorsqu'aucun package n'était disponible (par ex:
+	 5.2.0b --> 5.4.0a).
+   ! Correction de l'URL utilisée lorsque l'utilisateur veut télécharger 
+     manuellement une nouvelle version de Dragon UnPACKer.
+
+
+Version 5.4.0.192
+Release A [23/04/2009]
+
+ i Version très mineure, mais qui corrige quelques bugs bien embettants. :p
+ i Mise à jour des infos de Ken Taylor (auteur de dniExtract) dans la doc.
+ * Ajout d'une erreur lorsque LoadLibrary n'arrive pas a charger un plugin.
+ ! Correction de l'écran de démarrage qui n'utilisais pas l'alpha blending sous
+   Windows Vista et Seven.
+ ! Correction du menu Outils qui n'apparaissait pas en utilisant l'HyperRipper.
+ ! Correction du status de maximisation perdu après avoir quitté l'application.
+ 
+
+Version 5.4.0.191
+Release [20/11/2008]
+
+ i Et voilà! 2 ans pour cette nouvelle version! Mais je pense que ça en valais
+   la peine! Profitez-en! :)
+ * Mise à jour de tous les composants tiers vers les dernières versions:
+     Drag and Drop Component Suite Version v4.2
+     JEDI Code Library [JCL] v1.102.1 Build 3072
+     JEDI Visual Component Library [JVCL] v3.34
+     Overbyte ICS v6 Beta 2007/11/14
+     Virtual Treeview v4.7.0
+ * L'écran des options a été amélioré: Maintenant il y a des icônes et des
+   options avancées, les options du Journal d'exécution sont désormais sous
+   les options Générales.
+ + Ajout de 4 nouvelles options d'association:
+   + Vérification des associations au démarrage (toujours re-associer).
+   + Utiliser une icône externe (au lieu de celle par défaut)
+   + Utiliser une description alternative (au lieu de celle par défaut)
+   + Ajout de "Ouvrir avec Dragon UnPACKer 5" dans l'explorateur Windows.
+ + Ajout de nouvelles options avancées:
+   + Répertoire temporaire (possibilité d'utiliser un répertoire alternatif)
+   + Extraction de fichiers par défaut (au lieu d'Ouvrir)
+   + Taille de la mémoire cache (utilisée pour l'extraction)
+     Ceci n'impacte pas toutes les extensions, certaines extensions utilisent
+     le propre taille de mémoire cache.
+ * Amélioration du fonctionnement de la langue interne (le Français).
+   Désormais basé directement sur un fichier LSF (comme les traductions). Le
+   code Delphi est généré automatiquement par Dragon LNG Compiler (option /li).
+   Aucun changement pour vous les utilisateurs mais bien plus simple pour moi!
+ ! Correction de l'écran de l'HyperRipper qui n'était pas affiché de façon
+   modale. 
+ * Amélioration du temps de chargement en affichant d'abord l'écran principal
+   puis l'activation les extensions.
+ + Ajout de l'affichage des librairies et composants utilisés (avec leurs
+   numéros de versions) lorsque le journal d'exécution est au niveau moyen ou
+   haut.
+ + Ajout de l'info JEDI Code Library dans la fenêtre A Propos...
+ + Augmentation a 10 du nombre d'historique d'ouverture.
+ * Le champs répertoire lors de la sélection d'un répertoire pour "l'Extraction
+   vers" est désormais éditable.
+ ! Correction du glisser/déposer (le répertoire est créé automatiquement).
+ + Ajout d'un élément de menu pour Rechercher de nouvelles version (lance
+   Duppi).
+ + Ajout d'un lien a coté de la sélection de la langue pour Trouver d'autres
+   traductions (lance Duppi).
+ + Ajout de la prévisualisation des images/textures!
+   Fonctionne grâce à Vampyre Imaging Library v0.26.0 de Marek Mauder.
+   La vitesse est bonne (l'affichage est rapide, l'extraction peut être lente).
+   C'est pour celà qu'il y a une limite de taille (en octets) qui permet
+   d'activer ou non la prévisualisation (par défaut ~1Mo). Cette limite est
+   configurable dans les options et peut être désactivée.
+   L'affichage peut être complet (taille réelle) ou réduite/augmentée pour
+   tenir dans l'espace d'affichage.
+ * Extension de Convertion d'Elbereth v2.1.1 [cnv_pictex]:
+   i Utilise Vampyre Imaging Library v0.26.0 de Marek Mauder.
+   + Ajout des .BMP comme format de convertion pour tous les formats connus.
+ * Extension Pilote principale d'Elbereth v2.0.5:
+   i Gros nettoyage du code source! J'espère que tout fonctionne encore! ;)
+   + Ajout du support des fichiers .COB de Ascendency.
+   + Ajout du support des fichiers .DAT de Act of War.
+     Grâce à http://wiki.xentax.com/index.php?title=GRAF:Act_Of_War_DAT
+   + Ajout du support des fichiers .SFL de AGON
+     Grâce à http://wiki.xentax.com/index.php?title=GRAF:AGON_SFL
+     Il manque encore l'information sur les dossiers, mais je ne comprend pas
+     comment ça marche... Mais bon ça marche sans, donc...
+   + Ajout du support (très basique) des fichiers .PAK de Dreamfall: The
+     Longest Journey.
+     En fait en essayant de comprendre le format de fichier STFU4, j'ai trouvé
+     un outils BIEN plus complet pour ce format, n'hésitez pas pour un support
+     complet a utiliser cet outils:
+     DFTOOLBOX sur http://clanlib.org/~grumbel/
+   + Ajout du support des fichiers .XTC et .XWC de Enclave et The Chronicles of
+     Riddick: Escape from Butcher Bay. FR#1094221.
+   + Ajout du support des fichiers .BNT de Entropia Universe.
+   + Ajout du support partiel des fichiers .DAT de F-22 Air Dominance Fighter.
+     Partiel car le nom du répertoire, du fichier et l'extension ne sont pas
+     récupérés et seul une clé de hashage est affichée (sous forme hexa-
+     décimale). C'est le mieux que j'ai pu faire. D'après ce que j'ai compris
+     des mails envoyés par Jolly Anger, les noms de fichiers se trouvent dans
+     l'EXE du jeu. Mais je ne sais pas comment les obtenir...
+     Les fichiers .DAT de Super EF2000 sont aussi supportés (même format).
+   + Ajout du support des fichiers .PAK de Florensia.
+   + Ajout du support des fichiers .OPK de Sinking Island/L'Ile Noyée.
+   + Ajout du support des fichiers .BSA de The Elder Scrolls 4: Oblivion.
+     Grâce à http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format
+     Allez voir sur cette page si vous désirez créer des archives de ce type,
+     il y a des outils gratuit pour ça!
+   + Ajout du support des fichiers .VFS de UFO: Aftermath, UFO: Aftershock et
+     UFO: Afterlight (le même format pour les 3).
+     J'ai commencé le support grâce aux informations du Wiki de XentaX:
+     http://wiki.xentax.com/index.php?title=UFO_Aftershock
+     Mais il m'a fallu un weekend entier pour comprendre les parties manquantes
+     En tout cas, ça marche! ;) Regardez les sources pour les détails sur ce
+     format. Je n'ai pas le courage de mettre à jour le Wiki...
+   * Amélioration du support des .REZ de LithTech.
+     Au lieu de tout lire jusqu'à la fin du fichier (comme un bourrin), il
+     utilise un peu de logique ce qui améliore la lecture ENORMEMENT!
+   * Amélioration du support des .PAK de Spellforce grâce aux informations
+     envoyé par Anonimeitor. Maintenant le nom des répertoires est affiché! :)
+   ! Correction de l'ouverture du fichier sound.rez de No One Lives For Ever 2.
+ * HyperRipper v5.5d:
+   * Fiabilité améliorée grâce au nouveau format DUDI v4 pour les extensions
+     HyperRipper. La recherche est particulièrement améliorée (la recherche
+     ne s'arrete plus lorsqu'une entrée est trouvée dans la mémoire, elle se
+     poursuit jusqu'à la fin). Sous toute logique, plus aucune entrée devrais
+     nous échaper désormais! ;)
+   - Suppression des options de réglage de la taille de mémoire tampon et du
+     repositionnement. Les valeurs sont désormais fixées à 128 Ko et 32 octets
+     respectivement. Ceci sont les valeurs optimales pour le nouveau plugin
+     avec recherche Boyer-Moore.
+   + Si un fichier est ouvert sous Dragon UnPACKer il est automatiquement fermé
+     lorsque l'utilisateur appuis sur le bouton Rechercher. Ceci permet
+     d'éviter l'"erreur lors de la lecture du fichier" lors de la recherche
+     dans le même fichier 2 fois d'affilé).
+   ! Correction du bogue (1686603), une fois pour toutes!
+     Ceci était causé par une programmation par thread désastreuse de ma part:
+     J'attribuais des méthodes et des propriétés dans le thread principal
+     depuis la procedure Execute d'un thread).
+   ! Correction du temps de réponse, il est désormais possible d'arreter la
+     recherche.
+   ! Correction d'un bogue de tri grâce au patch de Psych0phobiA. Certains
+     fichiers n'étaient pas trouvé.
+   * La dernière page utilisée est désormais sauvegardée en fermant la
+     fenetre (plus besoin de cliquer sur la page Rechercher a chaque fois).
+ * Extension HyperRipper 5.5 d'Elbereth v5.1.0:
+   * Vitesse grandement améliorée grâce a une recherche via algorithme
+     Boyer-Moore. 450Mo scannés pour trouver des Ogg en moins de 16 secondes!
+     Seul la recherche de MPEG audio reste lente (n'utilise pas Boyer-Moore).
+   + Ajout du support des fichiers .DDS (FR#1639688)
+   ! Correction du bogue #1428079 (manque d'octets en fin de fichiers WAV)
+   ! Correction du bogue #1729410 (l'extraction de sous fichiers mp3 créé des
+     fichiers incomplets)
+     Veuillez noter tout de même que la recherche de flux MPEG Audio est très
+     STRICTE. Cela signifie que si le fichier MP3 trouvé contient des erreurs
+     de flux il sera peut être découpé par HyperRipper en plusieurs fichiers
+     indépendant. C'est normal et il n'est pas possible d'éviter se problème.
+     Si vous voyez que les différents fichiers font partie d'un même fichier
+     recollez les morceaux... (copy /b 1+2+3) ;)
+   * Amélioration de la recherche de flux MPEG Audio (deux fois plus rapide
+     la plupart du temps). Cela reste très lent sur mon PC mais c'est mieux que
+     rien. ;)
+   ! Ajout d'un test simple qui devrais permettre quelques faux positifs.
+     (Bogue #1914923 sanity checks in hyperripper)
+   + A cadeau (patch) de Psych0phobiA apporte le support des Truevision Targa
+     TGA (format RGB "seulement").
+ * Duppi v3.0.0:
+   i Mis à jour pour fonctionner avec le nouveau nom de composants dans la
+     librairie Overbyte ICS v6 HTTP Client.
+   + Ajout du support des paquets au format DUPP v3 qui étaient supposer
+     corriger le mauvais calcul de CRC qui existait dans les versions
+     précédentes. Les anciens fichiers au format DUPP v2 sont toujours
+     supportés.
+     Remarque: Les formats v2 et v3 sont désapprouvés et ne doivent plus être
+     utilisés (le format n'est pas fiable).
+   + Ajout du support des paquets au format DUPP v4. Très puissant et sûr!
+     Devrais permettre des évolutions en douceur si nécessaire. Il utilise un
+     hachage puissant et sûr (SHA256 et SHA512) et permet une compression LZMA
+     et Zlib avec possibilité de compression solide.
+     A partir de cette version, tous les fichiers D5P seront au format v4.
+   + Possibilité d'auto mise à jour.
+   + Duppi possède maintenant ses propres fichiers de traduction (ce qui
+     permet une mise à jour indépendante par rapport à Dragon UnPACKer). En
+     fait cette version pourrais être utilisé avec n'importe quel ancienne
+     version de Dragon UnPACKer.
+
+
+Version 5.2.0.169
+Release B [30/01/2006]
+
+ ! Correction bug: En ajoutant la requete 1216790: taille du fichier nécessaire
+   j'avais malheureusement cassé 2 anciens mots clés.
+ ! Correction des traductions espagnoles et anglaise (mot clés OPT203 manquant)
+   Ces fichiers de langue sont compatibles avec les autres version 5.2.0.
+
+
+Version 5.2.0.168
+Release A [29/12/2005]
+
+ + Requete d'ajout 1216790: taille du fichier nécessaire.
+ * Main driver v2.0.0 Release A (DUDI v4):
+   ! Correction de l'extraction des fichiers .PAK de The Movies (certains
+     fichiers avaient une seconde entete de compression... allez savoir
+     pourquoi...).
+     Merci au Wiki de XentaX pour l'info.
+
+
+Version 5.2.0.167
+Release [23/12/2005]
+
+ i Depuis la dernière version 5.1.2 WIP (il y a 9 mois!), j'ai été trés inactif
+   concernant le developpement de Dragon UnPACKer. Mais ces derniers jours je
+   me suis rattrapé! :) Voila le résultat: Une nouvelle version pour 2005
+   (juste à temps).
+ + Possibilité d'appliquer une notion de priorité aux différents plugins de
+   Driver. Quel en est l'utilité ?
+   Cela permet aux utilisateurs chevronnés de preférer un driver plutôt qu'un
+   autre lors de l'ouverture d'un fichier.
+   Prenons un exemple:
+   Si vous voulez que drv_mix essaye d'ouvrir un fichier avant drv_default vous
+   donnerez a drv_mix une priorité plus élevée que celle de drv_default.
+   Priorité maximum: 200
+   Priorité minimum:   0
+ + Nouvelle boite de dialogue lors d'une erreur. J'espère que cela permettra un
+   rapport d'erreurs plus efficace. (Pas utilisé partout, mais suffisament).
+ + Ajout d'un journal d'exécution à l'interface.
+   Il est possible de le cacher (astuce: click droit ou dans les options).
+ + Ajout d'un nouvel onglet pour le journal d'exécution dans les options.
+ + Nouveau système de plugin pour les drivers et les conversions
+   (respectivement DUCI v3 et DUDI v4).
+   Ceci permet une conversion directe (en mémoire, sans fichier remporaire) et
+   donc supposement plus rapide. Ce système a été fait en vu de l'option de
+   prévisualisation.
+ * Amélioration de l'HyperRipper et de son plugin pour supporter les fichiers
+   trés gros (plus de 2Go).
+ ! Correction bug #1118661: Echec sur les fichiers trés gros
+ ! Correction bug #1066079: Le texte "Drivers" ne pouvait pas être traduit
+ * Plugin de conversion est désormais en v2.0.1 (DUCI v3):
+   + Nouvelle fonctions de conversion utilisant les flux en entrée/sortie.
+   ! Correction de quelques bugs (je ne suis pas sûr que c'était une régression
+     de l'implémentation des flux).
+ * Main driver v2.0.0 (DUDI v4):
+   + Nouvelle fonction d'extraction qui utilise un flux en sortie.
+   + Ajout de l'affichage de la progression pour pas mal de formats.
+   + Ajout du support des fichiers .BAR de Age of Empires 3
+   + Ajout du support des fichiers .STUFF & .LUG de Black & White 2
+   + Ajout du support des fichiers .FPK de Civilization 4
+   + Ajout du support des fichiers .LUG de Fable: The Lost Chapters
+   + Ajout du support des fichiers .ARCH00 de F.E.A.R.
+   + Ajout du support des fichiers .DAT de LEGO Star Wars
+   + Ajout du support des fichiers .BIG de The Lord of the Rings: Battle for
+     Middle Earth
+   + Ajout du support des fichiers .BIG & .LUG de The Movies
+ * UT Packages driver v2.3.0 (DUDI v4):
+   * Utilise TUTPackages v2.3-cvs (09/05/2004)
+     Ceci est certainement la dernière version de cette librairie par Antonio
+     Cordero.
+     Je l'ai modifiée un petit peu pour permettre l'extraction vers un flux.
+   + Ajout de la structure de Game Hint (astuce sur le jeu). Ceci permet à la
+     librairie d'avoir une idée du jeu duquel le fichier ouvert est tiré. Pour
+     chaque fichier ouvert une popup vous demandera de quel jeu il sagit à
+     choisir dans une liste. Si le jeu n'est pas dans la liste il ne sera
+     vraissemblablement pas supporté.
+ * ZIP driver v1.1.0 (DUDI v4):
+   i Utilise désormais UnZip.pas de Gerke Preussner <j3rky@gerke-preussner.de>
+     InfoZIP UnZip for Delphi Wrapper (http://www.gerke-preussner.de)
+   * Mise à jour de la DLL: UnZip32.Dll (InfoZip) v5.5.2.
+   i Cette version du plugin extrait les entrées directement entierement en
+     mémoire puis l'écrit dans un fichier. Ceci pourrait poser des problèmes de
+     performances (pas chez moi). Si nécessaire une option pour passer par le
+     disque dur directement pour les gros fichiers sera rajoutée.
+ * Duppi v2.1.0:
+   + Utilise désormais le nouveau serveur de mise à jours Dragon UnPACKer [DUS]
+     version 3 (programmé en PHP, sources incluses).
+     Cela signifie que Duppi n'affichera désormais que les mises à jours et
+     traductions correspondantes à votre version de Dragon UnPACKer.
+   + Il est désormais possible de récuperer de nouvelles traductions
+     directement depuis Internet depuis Duppi!
+   + Ajout du support de la récupération des versions pour les 3 nouvelles
+     interfaces de plugins (DUCI v3, DUDI v4 et DUHI v3)
+   ! Correction du bug #1066080: Texte "InfoLab" lors de la connection serveur
+   i Compilé avec le support des fichiers de langues en version 9.
+
+
+Version 5.0.0.134
+Release [17/07/2004]
+
+ i Je pense qu'il était temps d'avoir une version stable. Pendant les 2
+   derniers mois j'ai reçu 6 rapports de bugs (3 ont été corrigé, 2 ne pouvais
+   pas être corrigé et 1 n'a pas pu être reproduit).
+   J'aurais aimer pouvoir inclure le manuel d'utilisation et l'aide avant la
+   version stable (david_s_tr travail encore dessus). Mais j'ai quelques plans
+   qui nécessite des changements important dans le noyau de Dragon UnPACKer,
+   c'est pour cela que je vais créer une branche de developpement (5.1) juste
+   après la sortie de la 5.0.
+ ! Correction bug #958620 : Probleme de traduction lors du lancement d'un
+   fichier au format inconnu.
+ ! Correction bug #958622 : Probleme dans le dialogue de creation de liste (la
+   liste combo n'affichait que "v").
+ * Main Driver v1.3.4 Release A:
+   i Ancien nom "Elbereth's Main Driver".
+   + Ajout du support des fichiers .PAK de Painkiller. [En partie grace aux
+     informations de MrMouse]
+   + Ajout du support des fichiers .TEX de Hitman: Contracts.
+   + Ajout du support des fichiers .PRM de Hitman: Contracts.
+     Il n'y a pas de nom d'entrées dans ces fichiers, donc le plugin en genere
+     automatiquement. Ne vous basez donc pas sur le nom des fichiers.
+   + Ajout du support des fichiers .BIN de Cyberbykes [Requete #968745].
+ * Picture/Textures Convert v1.0.7:
+   ! Correction de quelques bugs dans le createur de palettes (auteur et nom).
+   + Ajout du suppot des textures des jeux utilisant le Glacier Engine
+     (Hitman 2: Silent Assassin, Hitman: Contracts, Freedom Fighters, etc..) :
+      - DXT1 vers DDS (compressé DXT1)
+      - DXT3 vers DDS (compressé DXT3)
+      - PALN vers TGA 32bpp avec canal alpha
+      - RGBA vers TGA 32bpp avec canal alpha
+ * Duppi v2.0.3:
+   * L'URL où les informations sont récupérées a été mise à jour (devrait être
+     plus rapide que l'ancienne). Les anciennes versions de Duppi (avec
+     l'ancienne URL) continueront de fonctionner.
+   ! Correction bug #958619 : Titre du dialogue de configuration du proxy.
+
+
+Version 5.0.0.129
+Release Candidate 4 [08/05/2004]
+
+ i Le changement majeur que cette version introduit est le passage en open
+   source sous la licence Mozilla Public Licence 1.1.
+   Le code source est disponible sur Sourceforge. Si vous voulez m'aider à
+   continuer le développement de Dragon UnPACKer et que vous connaissez le
+   Delphi n'hésitez pas et inscrivez vous comme développeur sur Sourceforge.
+   J'ai beaucoup moins de temps depuis octobre 2003 pour travailler sur Dragon
+   UnPACKer alors si je reste le seul à travailler dessus n'esperez pas une
+   fréquence importante de versions.
+ + Nouveau format des fichiers de traduction (DLNG v4).
+   J'espère que cela corrigera les problèmes de fontes pour certaines
+   traductions.
+ * Elbereth's Main Driver v1.3.1 RC:
+   + Ajout du support des fichiers .RES et XRS des jeux Pixel Painters.
+   + Ajout du support des fichiers .BIG de Command & Conquer: Generals.
+   + Ajout du support (préliminaire) des fichiers .PCK de Commandos 3 .PCK.
+     Les fichiers sont partiellement cryptés et la méthode de décryptage est
+     (bien que trés fiable) assez hasardeuse...
+ ! Correction de deux bugs dans l'HyperRipper trouvés par Voodoo.
+   
+
+Version 5.0.0.127
+Release Candidate 3 [26/09/2003]
+
+ i Ceci est la premiere version qui a été testée par l'equipe de beta testeurs.
+   En conclusion elle devrait etre tres stable.
+ ! Correction du bug où les icones n'étaient pas lu depuis le registre Windows
+   (si l'option était choisie) mais à partir du fichier LOOK lors du resultat
+   d'une recherche.
+ ! Correction d'un bug cosmetique dans la fenetre des options.
+ * Nouvelle fenetre "A Propos de". Désormais toute la liste des pseudos des
+   Beta testeurs apparait. Il y a aussi la liste des personnes ayant fait une
+   traduction pour Dragon UnPACKer 5.
+ * Une ENORME optimisation de la navigation dans les répertoires contenant des
+   milliers d'entrées. C'est désormais instantané!
+   Ceci à été obtenu grâce à une meilleure utilisation de VirtualTree et dans
+   une moindre mesure en utilisant un cache répertoire.
+     Méthode v5.0.0 RC2             5000ms
+     Sans mise en cache répertoire    50ms
+     Avec mise en cache répertoire     0ms
+ ! Correction de deux bugs cosmetiques dans le menu options (Association et
+   Look n'emmenaient pas sur la bonne page des options).
+ ! Correction d'un bug dans la fenetre des options qui causait une erreur de
+   type "Violation d'accés" quand aucun plugin n'était trouvé de type Driver,
+   Convert et/ou HyperRipper.
+ ! Correction de messages manquants pour deux erreurs pour les plugins de type
+   HyperRipper.
+ ! Correction d'un bug dans la fenetre des options où la liste de plugins
+   HyperRipper utilisait l'index du plugin de convertion actuellement
+   sélectionné (au lieu d'utiliser son propre index).
+ i Mise à jour de l'email et de l'URL des 3 modèles "Creation de liste".
+ * Implémentation DUHI (Dragon UnPACKer HyperRipper plugin Interface) v2.
+   Ceci permet aux fenetres crées par le plugin d'être considerée comme faisant
+   partie de l'application principale.
+   Cette version reste compatible avec DUHI v1 et v2.
+ * Implémentation DUHI (Dragon UnPACKer Convert plugin Interface) v2.
+   Ceci permet aux fenetres crées par le plugin d'être considerée comme faisant
+   partie de l'application principale.
+   Cette version reste compatible avec DUCI v1 et v2.
+ * Implémentation DUHI (Dragon UnPACKer Driver plugin Interface) v3.
+   Ceci permet aux fenetres crées par le plugin d'être considerée comme faisant
+   partie de l'application principale.
+   Cette version reste compatible avec DUDI v1, v2 et v3.
+ * Elbereth's Main Driver v1.2.8 RC:
+   + Ajout du support des fichiers .RFA de Battlefield 1942 version complete
+     (pas demo uniquement comme précedement). Traduction du code C de
+     décompression à partir de RAT v0.5.0, Refractor2 Archive Tool vers Delphi
+     Pascal. Code C original de:
+       Tonto Rostenfaunt <tonto@linuxmail.org>
+       Blackjap McGee    <blackjap@hawaii.rr.com>
+     Vous trouverez RAT sur: http://r2at.sourceforge.net/
+     Le parsing des RFA à été codé à partir de rien du tout.
+     Je peux envoyer le code de decompression (Delphi Pascal) sur simple
+     demande.
+   + Ajout du support des fichiers .ADF de GTA: Vice City.
+     Les fichiers ADF sont de simple MP3 cryptés donc en ouvrant un ADF vous ne
+     verrez qu'un MP3 à l'"intérieur".
+ + Elbereth's Picture/Textures Convert v1.0.4 Beta:
+   i Le plugin utilise désormais DUCI v2.
+   ! Correction de la fenetre de convertion qui n'étaient pas considerée comme
+     faisant partie de l'application principale.
+     (alt+TAB fonctionne correctement maintenant)
+   + Ajout d'une boite de dialogue de configuration permettant de gérer les
+     palettes.
+ i Elbereth's Main HyperRipper plugin v5.0.1 Release C:
+   i Le plugin utilise désormais DUHI v2.
+   ! Correction de la fenetre de configuration MPEG Audio qui n'étaient pas
+     considerée comme faisant partie de l'application principale.
+     (alt+TAB fonctionne correctement maintenant)
+
+
+Version 5.0.0.119
+Release Candidate 2 [08/09/2003]
+
+ i Comme vous avez pu le remarqué je me suis débarassé du nom et de l'URL d
+   "Dragon Software". Le résultat est que toutes les URL dans drgunpack.exe et
+   Duppi sont devenues:
+   http://www.dragonunpacker.com ou http://www.elberethzone.net
+ ! Correction de deux petits bugs cosmetiques indiqués par Andrew Bondar. :)
+   Pour information:
+     "Aucun" affiché en bas a droite au demarrage.
+     PnlComment affiché dans les informations de drivers.
+ ! Correction d'un bug dans l'application principale quand une exception
+   inconnue était levée par un plugin (désormais affiche le message au lieu de
+   "%e").
+ * Ajout d'un indicateur de chargement lors du changement de répertoire.
+   Ainsi vous saurez que Dragon UnPACKer n'a pas planté.
+ + Ajout du support de la nouvelle génération de plugins drivers (utilisant
+   DUDI v2). Si vous etes développeur ceci corrige quelque lacune dans DUDI v1.
+   Pour information les plugins suivant (en développement) utilise DUDI v2:
+   drv_multiex               MultiEx.dll Wrapper
+   drv_11th (final version)  Support des fichiers 11th Hour & 7th Guest
+ ! Correction d'un bug où la racine du fichier était chargée deux fois lors de
+   l'ouverture initiale du fichier.
+ - Désactivation de la sécurité qui obligeait à avoir le fichier
+   drv_default.d5d. Cela signifie que cette version peut fonctionner sans le
+   driver drv_default.d5d. 
+ ! Correction de quelques microscopiques bugs cosmétiques (b au lieu de o dans
+   la mesure de vitesse/mémoire dans l'HyperRipper).
+ * Optimisation de la gestion des données (utilisation de pointeurs au lieu de
+   copier les valeurs quand cela était possible).
+ * Maintenant les répertoires dans l'arbre d'index sont triés.
+ ! Correction de la position du panneau de status.
+ * Elbereth's Main Driver v1.2.7 RC:
+   + Ajout du support des .PAK et .GL de Star Crusader.
+     (Je ne connais pas le format des images dans les fichiers .GL. J'ai
+      uniquement vérifié que ce n'était pas des images PCX. Si vous connaissez
+      le format contactez moi pour que je puisse ajouter la bonne extension)
+   ! Correction du support des .BUN de Monkey Island 3.
+   + Ajout des .REZ de Tron 2.0 à la liste des jeux supportés.
+ * Duppi v2.0.2:
+   * Amélioré pour qu'il affiche les informations sur les plugins de type
+     Convert et HyperRipper.
+   * Implémentation de plusieurs possibilités du format de fichier D5P:
+     + Ajout du support du "nouveau" format D5P version 2.
+     + Détection de la version de Duppi nécessaire depuis le fichier D5P.
+     + Applique l'information de version de Dragon UnPACKer 5 nécessaire.
+     + Banière personnalisé à partir du fichier D5P est désormais affichée (si
+       disponible).
+   ! Correction d'un petit (mais important) bug dans Duppi. Il était impossible
+     d'installer les fichiers dans le sous-répertoire indiqué dans le D5P.
+     Le programme de confection de fichiers D5P (bientot disponible)
+     n'utilisait cette option. Du coup tous les D5P disponibles fonctionnais
+     avec les anciennes versions de Duppi.
+   + Ajout du support pour les plugins HyperRipper.
+ + Elbereth's Picture/Textures Convert v1.0.3 Beta:
+   + Ajout du support des textures .TEX de Bloodrayne (PC).
+     Convertion vers BMP (8bpp) et TGA (8bpp et 24bpp).
+     Utilisation des informations sur les textures TEX données dans les forums
+     de Bloodrayne.co.uk.
+ i Elbereth's Main HyperRipper plugin v5.0.1 Release B:
+   + Ajout du support du trés demandé Ogg Stream (Ogg Vorbis par ex).
+
+
+Version 5.0.0.109
+Release Candidate 1 [29-06-2003]
+
+ ! Correction du bug ou les couleurs du menu de l'application changeaient toute
+   seules...
+   (Utilisation du composant TJvMainMenu du projet JEDI)
+ * Mise à jour du composant VirtualTreeView en v3.8.3.
+ ! Correction d'un bug dans l'application principale.
+   Access violation lors d'un double click droit sur la liste de droite.
+ ! Correction d'un petit bug de couleur dans le menu popup de la liste de
+   droite.
+ ! Correction d'une erreur de message non traduit (quand un fichier ne pouvais
+   etre ouvert). Il était toujours en français.
+ ! Correction d'un bug ou tous les fichiers etaient extrait dans le répertoire
+   de DUP5 (extraction multiple et par sous-répertoire).
+ * Nouvelle interface de sélection d'un répertoire (lors de l'extraction
+   multiple ou par sous-répertoires). Il est désormais possible de créer un
+   répertoire.
+ ! Correction d'un petit bug de couleur dans le menu popup de la liste de
+   gauche.
+ * Desormais DUP5 vérifie que le fichier qu'il tente d'ouvrir existe avant de
+   contacter les plugins.
+ * Mise à jour du HyperRipper en version 5.0a:
+   * Changement des valeurs par défaut de mémoire tampon depuis les valeurs
+     beaucoup trop grandes (32Ko, 64Ko et 128Ko) vers des valeurs offrant une
+     bien meilleure performance (256 octets, 512 octets et 1Ko).
+     Remarque: Si vous avez déjà utilisé le HyperRipper v5.0 vous devrez aller
+               dans les options avancées pour changer la taille du tampon de
+               mémoire.
+   + Ajout d'une nouvelle méthode de nommage des fichiers trouvé, aller voir
+     dans les options avancées.
+ * Le composant de la liste de gauche est désormais un TVirtualTreeView.
+   Concretement a part l'icone sélectionnée semi transparente vous ne verrez
+   aucune différence. En fait cela devrait être plus rapide et moins gourmand
+   en mémoire. Enfin en pratique chez moi ca ne change rien. :)
+   De toutes façons cela devrait permettre d'amélioré l'aspet visuel dans le
+   future si nécessaire.
+ + Ajout de toutes les routines d'appel de panneau de configuration et de
+   boite de A Propos pour les plugins dans Dragon UnPACKer.
+   (J'ai du coup rajouté des boites de A Propos dans tous mes plugins)
+ * Elbereth's Main Driver v1.2.5 RC (anciennement Default Driver):
+   + Ajout du support des RES de Rage of Mages et Rage of Mages 2.
+ * Elbereth's HyperRipper 5 Default plugin (v5.0.0 Release B):
+   ! Correction d'un minuscule bug cosmetique ("ave" au lieu de "Wave").
+ * Elbereth's Picture/Textures Convert plugin (v1.0.2 Beta):
+   + Ajout de la création de palettes.
+     Pour cela cliquez sur le bouton Ajouter a coté de la liste des palettes
+     (lors de la sélection d'une palette). Puis ouvrez le fichier contenant la
+     palette (cela peut être une BMP 8Bpp, une PCX, une palette Microsoft, une
+     palette Jasc PSP ou une palette brute).
+     
+
+Version 5.0.0.95
+Beta 4 [26-04-2003]
+
+ ! La Beta 3 ne fonctionnais pas sous Windows 98. Corrigé.
+ - Suppression des menus style XP (totalement). Plusieurs raisons:
+   1) Ils empechaient les langues codé sur plusieurs caracteres de s'afficher
+      dans les menus (ex: Russe, Japonais, Perse, etc..)
+   2) L'option de desactivation ne fonctionnais pas du tout.
+   3) L'aspect du menu est tres bien comme ca :)
+ * Gros nettoyage du code, l'executable fait 500ko de moins.
+ ! Correction des images de l'ecran Splash et About.
+ * Default Driver v1.2.3 Beta:
+   + Ajout du support des fichiers .CPR de Port Royale.
+   + Ajout du support des fichiers .SQH de Harbinger.
+     Ce format possede des milliers de répertoires (environ 5000) et cela
+     ralenti enormement Dragon UnPACKer 5. J'espere remedier a ce probleme
+     pour la prochaine version.
+   + Ajout des fichiers .REZ de Purge a la liste des jeux supportés.
+   + Ajout des fichiers .CPR de Patrician II a la liste des jeux supportés.
+     (Merci a Felix Riemann)
+ * UT Package Driver v2.1.0:
+   + Ajout du support de Unreal 2.
+   i Support "non-officiel" de Splinter Cell (non testé).
+
+
+Version 5.0.0.86
+Beta 3 [08-04-2003]
+
+ ! Correction de quelques bugs cosmetiques sous WinXP. (Dans la fenetre des
+   options)
+ * Mise a jour de VirtualTreeView de la v3.6.2 a la v3.7.4.
+ * Quelques changements dans la fenetre A Propos de Dragon UnPACKer pour
+   indiquer la date et l'heure de la compilation.
+ * Ajout de l'outils de création d'une liste d'entrée avec toutes les options:
+   Liste de toutes les entrées, seulement les entrées du répertoire actuel
+   (avec ou sans les sous-répertoires) ou uniquement les entrées selectionnées.
+   Tri des entrées (par nom, taille ou position).
+   Modèles inclus:
+     Dragon UnPACKer 4 HTML Style v1.1b
+     Text Database v1.0
+     XML Database v1.0
+ * Desormais les icones pour les types de fichiers affiché dans Dragon UnPACKer
+   sont prises dans le registre Windows. Cela signifie que vous aures les memes
+   icones dans Dragon UnPACKer que dans l'explorateur Windows. :)
+   J'ai tout de meme laissé une option pour pouvoir desactiver cette fonction
+   et utiliser les icones internes.
+ * Nouvelle fenetre de gestion des Erreurs, mais elle n'est pas utilisée... :P
+ * Duppi v2.0.0:
+   + Mise a jour via Internet:
+     Vous permet de rechercher sur Internet d'eventuelles mises a jour des
+     drivers. Permet ensuite de les telecharger et de les installer.
+     Tous les telechargements sont placés dans le sous-répertoire Download de
+     Dragon UnPACKer.
+   + Desormais en lancant Duppi vous avez le choix entre faire une mise a jour
+     via Internet et installer un package que vous avez sur le disque dur.
+ * HyperRipper Default v5.0.0 Release A:
+   ! Le bouton Configurer etait cliquable pour les formats IT et S3M (il ne
+     devais pas l'être).
+ * Picture/Textures Convert v1.0.1 Beta:
+   + Desormais le plugin ce souvient de la derniere palette utilisée.
+   i Mise a jour de la palette Shadow Warrior avec de bien meilleures couleurs.
+ * Default Driver v1.2.2 Beta:
+   + Ajout du support des fichiers .BAR de Age of Mythology.
+   + Ajout du support des fichiers .POD de BloodRayne.
+     Testés uniquement sur la demo PC.
+   + Ajout du support des fichiers .007 de James Bond: NightFire.
+   + Ajout de No One Lives for Ever 2 a la liste des jeux supportés.
+   + Ajout du support des fichiers .SAK de Postal.
+     Testé uniquement sur la Demo Postal Plus.
+   ! Correction du support des fichiers .SLF de Jagged Alliance 2.
+   ! Correction de l'extraction de données non-compressées depuis les fichiers
+     RFH/RFD de Emperor: Battle for Dune (fichiers extraits ayant une taille de
+     0 octets). [Rapporté par Andrei Zharnasek]
+   * Utilisation de la meme methode d'extraction que dans le programme
+     principal. Permet d'afficher le pourcentage de completion.
+ * UT Package Driver v2.0.0 Rel.A:
+   i Utilise la librairie TUTPackage v2.0 de Antonio Cordero Balcazar avec
+     support du jeu UT2003 et support (partiel) de Army Operation.
+   * Bien meilleur support de UT2003. :)
+   i Desormais le numero de version du driver indique le numero de version de
+     la librairie TUTPackage utilisée (v2.0.x = TUTPackage v2.0).
+     Ainsi si le numero de version majeure et mineure ne change pas vous
+     saurez que les changements sont vraiment mineurs. :)
+   ! Correction d'un enorme bug. Lorsque vous vouliez extraire des sons depuis
+     un fichier UAX le driver tentais d'ecrire des données brutes sur le disque
+     H:\ (deboguage..). Si ce disque n'existait pas vous aviez une erreur qui
+     vous empechais d'extraire des sons. Désolé...
+   i Veuillez noter que Unreal 2 N'est PAS encore supporté!
+ * ZIP Driver v1.0.2:
+   * Mise a jour de UnZip32.Dll en v5.5.0.
+     (Ajoutant le support de la methode de compression PkZip's Deflate64(tm) et
+      corrigeant quelques bugs de sécurité).
+   + Ajout de Line of Sight: Vietnam .ZA a la liste des extensions supportées.
+   + Ajout de Master of Orion 3 .MOB a la liste des extensions supportées.
+
+
+Version 5.0.0.77
+Beta 2 [18-10-2002]
+
+ + Ajout du HyperRipper v5.0!
+   i Meme formats supportés que dans DUP4.
+   i Beaucoup plus fiable et efficace que le HyperRipper v4.2 (DUP4)!
+   i Quelques options permettant d'avoir un plus grand controle. :)
+   i Ecriture du nouveau format de fichier HyperRipper (HRF) version 3.0, mais
+     aussi des anciennes version 1 et 2 (version 0 non supportée).
+   i Pour afficher le panneau de configuration du MPEG Audio cliquez sur MPEG
+     Audio dans l'onglet Formats puis sur le bouton Configurer.
+ + Ajout de l'extraction sans convertion de fichiers par glicer/deplacer.
+   (De Dragon UnPACKer vers l'explorateur par exemple)
+ + Désormais en double-clickant sur un fichier il sera extrait et ouvert par
+   l'éditeur par défaut de Windows pour se type de fichiers.
+ * Les menus sont désormais au style XP (comme dans Office XP).
+   Si vous préferrez l'ancien style classique allez dans les options puis
+   Look/Icônes et décochez la case Style XP pour les menus.
+ + Ajout de l'affichage style Windows XP (uniquement sous Windows XP).
+ + BarfHappy a fait de superbes icones pour les menus, popups et barre d'outil.
+ ! Correction de l'exception "EAccessViolation" quand on cliquait sur un
+   fichier sans extension. (bug trouvé par Felix Riemann)
+ ! Correction d'un bug quand plusieurs drivers voulaient ouvrir le même format
+   de fichier. (bug trouvé par Felix Riemann)
+ ! Ajout de 2 traductions manquantes dans les options. (bug trouvé par Fabrizio
+   Degni)
+ + Ajout d'un message d'erreur si un plugin ouvre un fichier vide (avec 0
+   entrées). (Demandé par Nullpointer)
+ ! Correction d'un bug quand on essayais d'ouvrir un fichier vide plusieurs
+   fois.
+ + Ajout de la navigation via le clavier dans les options. (demandé par
+   Nullpointer)
+ + Ajout de la possibilité de quitter les options en appuyant sur Echap.
+   (Demandé par Nullpointer)
+ * Duppi v1.0.1:
+   + Affichage de la version du package.
+   * Affichage style Windows XP (uniquement sous Windows XP).
+ * Default Driver v1.1.4 Beta:
+   + Ajout du support des fichiers .RFA de la Demo de Battlefield 1942.
+     PAS DE LA VERSION FINALE.
+   + Ajout du support des fichiers IMG/DIR de GTA3.
+   + Ajout du support des fichiers HyperRipper .HRF version 3.0.
+     Affichage désormais de la version du fichier HRF ouvert (ex: HRF1 pour des
+     fichiers de version 1)
+   + Ajout du support des fichiers .SIN de Sin.
+   + Ajout du support des fichiers .PAK de Zanzarah.
+     Testé uniquement sur la démo.
+   + Ajout de F22 Lightning 3 .PFF dans la liste des jeux supportés.
+   + Ajout du support des fichiers .VOL de Earth Siege 2 et de Tribes.
+   ! Correction du support des fichiers PFF3 de Novalogic (.PFF) quand l'option
+     "Détection intelligente des formats" était cochée.
+ * UT Packages Drivers v1.0.4 Beta:
+   + Extraction des sons de UT2003 et de Undying devrais fonctionner désormais.
+   + Ajout de Undying dans la liste des jeux supportés.
+
+
+Version 5.0.0.60
+Beta 1 [28-07-2002]
+
+ i Recodage complet sous Borland Delphi 6. Plus rapide, meilleure gestion de la
+   mémoire, support des fichiers gigantesques (9223372 Tb!!!), aucune limite
+   fixée dans le nombre de fichiers dans la liste (limité par la mémoire).
+ * Systeme de plugins pour la gestion des formats de fichiers et pour la
+   convertion de fichiers.
+ i Pleins de formats inédits (Unreal Tournament par ex), des formats améliorés
+   (support total des fichiers de Giants et de Emperor: Battle for Dune), ..
+ - Cette version n'inclus pas (en comparaison avec la derniere version 4):
+    Le HyperRipper qui n'a pas encore été completement codé
+    La faculté de créé des listes de fichiers (texte et html)
+    La création et l'edition de fichiers PAK de Quake/Half-Life
+    Certains formats de fichiers (ex: Doom, Baldur's Gate, etc..)
+
+
+ i Retrouvez les historiques des versions 4 dans des fichiers a part sur le site
+   officiel:  http://www.elberethzone.net/index.php?page=dup4
+   
+   De la        A la     
+   Version      Version       Fichier             Description
+   4.00.42      4.22.87       historique-v4.txt   Historique des versions 4
+
+
+Recapitulatif anciennes versions:
+---------------------------------
+
+J'ai perdu les sources de toutes les versions avant la 5.
+
+Version 5 (Octobre 2001)
+Redeveloppement complet de Dragon UnPACKer sous Delphi 6/7.
+Utilisation de plugins pour la lecture des formats.
+Conception modulaire.
+
+Version 4 (mi-1999)
+Redeveloppement complet de Dragon UnPACKer sous Visual Basic 5.
+La derniere version distribuée fut la v4.22.87 Release A.
+
+Version 3 (1998)
+Essai d'interface style explorateur pour la v2..
+Aucune version 3 ne fut distribuée.
+Je developpais les version 2 et 3 a la fois quand un crash disk m'a fait
+perdre toutes les sources.
+
+Version 2 (Juin 1998)
+Version sous Windows de Quake UnPACKer supportant beaucoup plus de formats..
+Interface tres moche...
+La derniere version distribuée fut la v2.00.9 Alpha.
+
+Version 1 (Avril 1997)
+Programme sous DOS permettant de lire les .PAK de Quake 1 et quelques fichiers
+.PAK de Quake 2. Le programme s'appelais alors Quake UnPACKer.
+La derniere version distribuée fut la v1.10 Finale.
+
+Version 0 (1997)
+Programme sous DOS. Versions Alpha/Beta de Quake UnPACKer.
+
+
+Page de Developpement Beta (Kezako?):
+-------------------------------------
+
+Cette page permet de voir un journal des derniers developpement sur Dragon
+UnPACKer 5. Vous pourrez aussi y trouver d'autres informations sur le
+developpement comme des nouvelles versions des plugins, etc..
+     
+http://www.elberethzone.net/index.php?page=dup5dev
+
+===============================================================================

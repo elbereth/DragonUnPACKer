@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.4.0a "Degei"                             MPL 1.1 open source
-par Alexande "Elbereth" Devilliers                                   23/04/2009
+Dragon UnPACKer v5.6.0 "Exedra"                             MPL 1.1 open source
+par Alexande "Elbereth" Devilliers                                   15/10/2010
 ===============================================================================
 
   ** Français ** (see Readme.txt for english)
@@ -36,8 +36,8 @@ les fichiers textes doivent rester intact dans le fichier zip, et aucun autre
 fichier ne doit etre rajouté.
 
  Le programme est distribuée sous deux formes (meme contenu):
-    SETUP - ~2.5Mo - dup540adegei-setup.exe - Avec Installation/Désinstallation
-       7Z - ~2.4Mo - dup540adegei.7z        - Archive 7-Zip (v4.65)
+    SETUP - ~2.5Mo - dup560exedra-setup.exe - Avec Installation/Désinstallation
+       7Z - ~2.4Mo - dup560exedra.7z        - Archive 7-Zip (v9.17 beta)
 
 ===============================================================================
  2. DESCRIPTION DU PROGRAMME
@@ -74,7 +74,7 @@ associations de fichiers dans les options.
  (si vous n'avez pas ses fichiers allez telecharger Dragon UnPACKer sur la
   page officielle, voir fin du fichier)
 
- drgunpack5.exe             3669 Ko
+*drgunpack5.exe             3477 Ko
  drgunpack5.exe.sig            1 Ko  Signature GnuPG du fichier drgunpack5.exe
  file_id.diz                   1 Ko
  historique.txt               42 Ko
@@ -84,15 +84,15 @@ associations de fichiers dans les options.
  
  data\
  default.dulk                 40 Ko  Look par défaut
-+english.lng                  10 Ko  Traduction	 anglaise de DUP5
+*english.lng                  10 Ko  Traduction	 anglaise de DUP5
  homepage.uht                 22 Ko  Modele de creation de liste "DUP4 Style"
-+spanish.lng                  11 Ko  Traduction espagnole de DUP5
+*spanish.lng                  11 Ko  Traduction espagnole de DUP5
  text-db.uht                   6 Ko  Modele de creation de liste "Text DB"
  xml-db.uht                    6 Ko  Modele de creation de liste "XML DB"
 
  data\convert\
  Blood.dpal                    1 Ko  Palette de couleurs de Blood
- cnv_pictex.d5c              779 Ko  Plugin convertion textures (v2.1.1)
+ cnv_pictex.d5c              457 Ko  Plugin convertion textures (v2.2.0)
  Doom.dpal                     1 Ko  Palette de couleurs de Doom
  Duke3D.dpal                   1 Ko  Palette de couleurs de Duke Nukem 3D
  Quake 1.dpal                  1 Ko  Palette de couleurs de Quake
@@ -101,25 +101,22 @@ associations de fichiers dans les options.
  
  data\drivers\
  drv_11th.d5d                412 Ko  Extension Pilote 11th Hour (v1.0.0)
- drv_default.d5d             239 Ko  Extension Pilote principale (v2.0.5)
- drv_giants.d5d               96 Ko  Extension Pilote Giants GZP (v1.0.2)
- drv_mix.d5d                  64 Ko  Extension Pilote WestWood MIX (v1.1.4
-                                     Beta) par Felix Riemann
+ drv_default.d5d             273 Ko  Extension Pilote principale (v2.1.0)
+ drv_default_mix.lst         266 Ko  Liste de nom de fichiers pour .MIX
  drv_ut.d5d                  669 Ko  Extension Pilote UT Packages (v2.3.0)
- drv_zip.d5d                 103 Ko  Extension Pilote ZIP (v1.1.2)
+ drv_zip.d5d                 103 Ko  Extension Pilote ZIP (v1.1.3)
  unzip32.dll                 100 Ko  Info-Zip's UnZip32.Dll v5.5.2
 
- data\hyperripper\
- hr_default.d5h              626 Ko  Extension HyperRipper par défaut (v5.1.0)
-
  utils\
- duppi.exe                  1102 Ko  Instalateur de packages de DUP5 (v3.0.0)
- DuppiInstall.exe             50 Ko  Auto mise à jour de Duppi
++duppi.exe                  1102 Ko  Instalateur de packages de DUP5 (v3.0.0)
++DuppiInstall.exe             50 Ko  Auto mise à jour de Duppi
  hrf_30_spec.txt               7 Ko  Specification des fichiers HyperRipper 3.0
++libcurl-3.dll               268 Ko  Librairie Curl (sans SSL) (v7.21.0)
++zlib1.dll                    80 Ko  Librairie Zlib (v1.2.5)
 
  utils\data\
-*english.lng                   4 KB  Traduction Anglaise de Duppi
-*spanish.lng                   4 KB  Traduction Españole de Duppi
++english.lng                   4 KB  Traduction Anglaise de Duppi
++spanish.lng                   4 KB  Traduction Españole de Duppi
 
  utils\templates\
  duhtcomp.exe                116 Ko  Compilateur de fichier .UHT
@@ -133,15 +130,18 @@ associations de fichiers dans les options.
  dlngc.txt                     4 Ko  Documentation du compilateur LNG
  english.ls                   19 Ko  Source de la traduction anglaise (DUP5)
  english_duppi.ls              9 Ko  Source de la traduction anglaise (Duppi)
+ english-duppi-320-changes.txt 2 Ko  Changements duppi 3.0.0 -> 3.2.0
+ english-duppi-330-changes.txt 1 Ko  Changements duppi 3.2.0 -> 3.3.0
  english-beta2-changes.txt     4 Ko  Changements english.ls 5.0.0 Beta 1 -> 2
  english-beta3-changes.txt     4 Ko  Changements english.ls 5.0.0 Beta 2 -> 3
  english-rc1-changes.txt       2 Ko  Changements english.ls 5.0.0 Beta 3 -> RC1
  english-rc2-changes.txt       2 Ko  Changements english.ls 5.0.0 RC1 -> RC2
  english-rc3-changes.txt       3 Ko  Changements english.ls 5.0.0 RC2 -> RC3
  english-520-changes.txt       4 Ko  Changements english.ls 5.0.0 -> 5.2.0
- english-532-changes.txt       4 Ko  Changements english.ls 5.2.0 -> 5.3.2 WIP
- english-533-changes.txt       4 Ko  Changements english.ls 5.3.2 -> 5.3.3 Beta
- english-540-changes.txt       4 Ko  Changements english.ls 5.3.3 Beta -> 5.4.0
+ english-532-changes.txt       3 Ko  Changements english.ls 5.2.0 -> 5.3.2 WIP
+ english-533-changes.txt       2 Ko  Changements english.ls 5.3.2 -> 5.3.3 Beta
+ english-540-changes.txt       7 Ko  Changements english.ls 5.3.3 Beta -> 5.4.0
+ english-551-changes.txt       1 Ko  Changements english.ls 5.4.0 -> 5.5.1 Beta
  flag_fr.bmp                   1 Ko  Icone du drapeau de la France
  flag_sp.bmp                   1 Ko  Icone du drapeau de l'Espagne
  flag_us.bmp                   1 Ko  Icone du drapeau des Etats-Unis d'Amerique
@@ -151,8 +151,8 @@ associations de fichiers dans les options.
  spanish_duppi.ls              7 Ko  Source de la traduction espagnole (Duppi)
  translation.txt               2 Ko  Informations sur la traduction de DUP5
 
-  + Necessaire au fonctionnement multi-langue de DRGUNPACK5.EXE.
-  * Necessaire au fonctionnement multi-langue de DUPPI.EXE
+  * Necessaire au fonctionnement multi-langue de DRGUNPACK5.EXE.
+  + Necessaire au fonctionnement multi-langue de DUPPI.EXE
 
 
 ===============================================================================
@@ -163,7 +163,9 @@ associations de fichiers dans les options.
 
   * Windows 98/ME ou Windows NT/2000/XP/2003/Vista/2008/Seven.
     Testé sous:
-      Windows Vista Ultimate x64 SP1
+      Windows Seven Ultimate x64       (Voir le hardware ci-dessous / UAC=Off)
+	  Windows Seven Ultimate x86       (VM avec 2x CPU et 2Go RAM / UAC=On)
+	  Windows XP Professional x86 SP3  (VM avec 2x CPU et 1Go RAM)
     Ne fonctionne pas sous Windows 95.
   * The programme tourne sous Linux grâce à Wine mais malheureusement
     l'affichage est extrêmement lent...
@@ -180,9 +182,11 @@ associations de fichiers dans les options.
   * Intel Quad Core Core i7 920 2.4Ghz (Nehalem) [166Mhz x 20 = 3.3Ghz]
     Noctua C12P
   * 6144MB (3x2048MB) de DDR3-1333 OCZ Platinum Cas 7 (7-7-7-20)
-  * 2xWestern Digital Raptor 37GB+74GB + 2xSamsung T166 500GB
-  * Carte graphique Gainward GeForce 8800 GT 1024MB Golden Sample
-                                                    (650Mhz/900Mhz)
+  * Intel SSD X25-M G2 (Postville)      160Go (OS)
+    Samsung Spinpoint F1 (HD103UJ)        1To
+	Western Digital Green (WD10EADS)      1To (2x)
+	Western VelociRaptor (WD3000HlFS)   300Go (Jeux)
+  * Carte graphique nVidia GeForce GTX 285 1024Mo (648Mhz/1242Mhz/1476Mhz)
 
   (si je dit que quelque chose est rapide testez par vous même dabord!! :)
 
@@ -798,13 +802,15 @@ http://www.elberethzone.net/lang-fr/dup-supportedgames.html
  Ascendancy                                               .COB drv_default 
  Battlefield 1942                                         .RFA drv_default 
  Battlefield 2                                            .ZIP drv_zip 
+ Battleforge                                              .PAK drv_default
  Black & White                                            .SAD drv_default 
  Black & White 2                                   .LUG;.STUFF drv_default 
+ Blade Runner                                             .MIX drv_default
  Blitzkrieg                                               .PAK drv_zip 
  Blitzkrieg Burning Horizon                               .PAK drv_zip 
  Blitzkrieg Rolling Thunder                               .PAK drv_zip 
  Blood                                                    .ART drv_default 
- Blood 2                                                  .REZ ??? 
+ Blood 2                                                  .REZ drv_default 
  Bloodrayne                                               .POD drv_default 
  Brothers Pilots 4                                        .PAK drv_zip 
  Call of Duty                                             .PK3 drv_zip 
@@ -816,7 +822,9 @@ http://www.elberethzone.net/lang-fr/dup-supportedgames.html
  Call to Power                                            .CTP drv_zip 
  Cellblock Squadrons                                      .BOX drv_zip 
  Civilization 4                                           .FPK drv_default 
+ Command & Conquer                                        .MIX drv_default
  Command & Conquer: Generals                              .BIG drv_default 
+ Command & Conquer: Red Alert                             .MIX drv_default
  Conflict: Freespace                                       .VP drv_default 
  Cyberbykes                                               .BIN drv_default 
  Dark Forces                                              .GOB drv_default 
@@ -834,6 +842,7 @@ http://www.elberethzone.net/lang-fr/dup-supportedgames.html
  Dirty Little Helper 98                                   .DLU drv_zip 
  Doom 3                                                   .PK4 drv_zip 
  Doom 3: Resurrection of Evil                             .PK4 drv_zip 
+ Dragon Age: Origins                                      .ERF drv_default
  Duke Nukem 3D                                            .ART drv_default 
  Duke Nukem: Manhattan Project                          .ZIPFS drv_zip 
  Dune 2                                                   .PAK drv_default 
@@ -872,6 +881,7 @@ http://www.elberethzone.net/lang-fr/dup-supportedgames.html
  Heavy Metal F.A.K.K.2                                    .PK3 drv_zip 
  Hellhog XP                                                 .A drv_zip 
  Heretic 2                                           .PAK;.WAD drv_default 
+ Heroes of Might & Magic 5                                .PAK drv_zip 
  Hexen 2                                             .PAK;.WAD ??? 
  Hidden & Dangerous                                  .DTA/.CNT drv_default 
  Hitman: Bloodmoney                                       .ZIP drv_zip 
@@ -1078,7 +1088,7 @@ format n'hesitez pas, contactez moi (voir section 9. CONTACTEZ MOI).
  En français, anglais ou espagnol UNIQUEMENT!!
  Vous pouvez contacter l'auteur (Alex Devilliers) par:
  
-  E-Mail: dup540 (arobase) dragonunpacker (point) com
+  E-Mail: dup560 (arobase) dragonunpacker (point) com
      ICQ: 1535372 (elbereth)
      
  ATTENTION: Vous ne recevrez JAMAIS d'email de ma part avec comme adresse

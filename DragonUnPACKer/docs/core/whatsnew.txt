@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.4.0a "Degei"                             MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    23/04/2009
+Dragon UnPACKer v5.6.0 "Exedra"                             MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    15/10/2010
 ===============================================================================
 
   ** English ** (voir Historique.txt pour la version française)
@@ -20,52 +20,150 @@ by Alexande "Elbereth" Devilliers                                    23/04/2009
 -------------------------------------------------------------------------------
 Plugins versions:
 
-Drivers plugins:					                              Version:
+Drivers plugins:					                    Version:
 Elbereth's 11th Hour Driver (drv_11th.d5d)              1.0.0.9
-Main Driver (drv_default.d5d)                           2.0.5.867
-Nullpointer's Giants GZP Driver (drv_giants.d5d)        1.0.2.33
+Main Driver (drv_default.d5d)                           2.1.0.937
 A.Cordero's UT Packages Driver (drv_ut.d5d)             2.3.0.125
-Info-ZIP's ZIP Driver (DLL wrapper) (drv_zip.d5d)       1.1.2.136
+Info-ZIP's ZIP Driver (DLL wrapper) (drv_zip.d5d)       1.1.3.139
   Info-ZIP's UnZip DLL for Win32 (unzip32.dll)          5.5.2
-WestWood MIX Driver [by Felix Riemann] (drv_mix.d5d)    1.1.4 Beta
 
 Convert plugins:
-Picture/Textures convert Plugin (cnv_pictex.d5c)        2.1.1.117
-
-HyperRipper Plugins:
-Elbereth's HyperRipper 5 Plugin (hr_default.d5h)        5.1.0.103
+Picture/Textures convert Plugin (cnv_pictex.d5c)        2.2.0.122
 
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Updates to last stable version:
-
- * Duppi v3.1.2:
-  ! Fixed HUGE bug introduced in v3.1.0 that prevented Duppi from downloading
-    any update from internet (fail with an Exception).
-  ! Fixed bug introduced in v3.1.0 that prevented Duppi to update itself when
-    libcurl-3.dll was in the package...
-
- * Duppi v3.1.1:
-  ! Fixed small bug in information log
-
- * Duppi v3.1.0:
+Version 5.6.0.239
+Release [15/10/2010]
+ 
+ ! Fixed Preview option main menu & popup menu (ETreeViewError with Invalid
+   Index message).
+ ! Fixed Look & File types option menu leading to the wrong Option tab.
+ + Added version number to Error box for unhandled exceptions.
+ ! Fixed empty "More details" sections in Error box when there was no lines
+   to display.
+ * Updated Drag and Drop Component to v5.1.
+   Now Dragon UnPACKer dynamically indicates the version number (in log and
+   About box).
+ * Enhanced the temporary file handling.
+ * Some convertion features are now handled by the core (plugins still exists
+   anyway to expand this functionnality). They use the excellent Vampyre
+   Imaging Library to detect compatible file types and allows for convertion
+   to BMP.
+ ! Fixed program not working correctly under Windows Vista/7 with UAC on.
+   Symptoms were program running in French even after selecting English or
+   Spanish. Sorry!
+ ! Fixed opening message bug in logs (%f).
+ ! Fixed small log bug (invertion of variable texts when logging a successful
+   opening).
+ ! Fixed memory amount retrieval in Error box when more than 2GB of RAM in the
+   system.
+ * Changed application title to include version and currently open file.
+ + Added Windows Vista/7 taskbar progress indicator when Aero is enabled.
+ - Giants: Citizen Kabuto drv_giant .GZP plugin.
+   Support is now in Elbereth's Main Driver.
+ - Felix Riemann drv_mix .MIX plugin (no source was available).
+   Support is now in Elbereth's Main Driver.
+ - Removed all use of JCL & JVCL. Replaced by:
+    Personnal equivalent functions
+    API calls
+	Delphi VCL
+ * Replacement for JVCL JvBrowseDialog, uses ShellApi (by Brian Cryer code with
+   help of Martin Birk)
+ * HyperRipper v5.6:
+   - HyperRipper plugin support was removed, this was done with multiple goals
+     in mind:
+	   Easier to compile with Lazarus\FreePascal
+	   Ability to do multi-threading in the future
+   * The latest plugin version was merged with Dragon UnPACKer core to provide
+     same functionnality as last HyperRipper + last HyperRipper plugin.
+   * Speed-up (same or slightly faster than plugin version).
+   + Added Windows Vista/7 Taskbar Progress support.
+   + Added Exclude False positive option (checked by default).
+     This prevent selecting file formats that will most probably retrieve tons
+	 of False positives (669, IT & FLIC which are very old file formats which
+	 are never used nowadays).
+   + Added Auto-Start scanning option (in advanced options).
+     If you use this with the option to auto use HyperRipper when file format
+	 is unknown, scanning will start automatically in those cases.
+   + Added Auto-Close when entries found (in advanced options).
+     HyperRipper will auto close when scanning is finished and entries where
+	 found.
+   + Added Force buffer size option (in advanced options).
+     This can be used to force the size of the buffer from the standard 128k.
+	 Although this is NOT recommended (big/low values can be/are slower) if
+	 you want to try, feel free.
+	 The only way to change the value is by directly editing the registry:
+	 HKEY_CURRENT_USER\Software\Dragon Software\Dragon UnPACKer 5\HyperRipper
+	 DWORD key BufferSize
+	 Smallest possible value is 32, largest is 32MB.
+	 Rollback is fixed to 16 bytes.
+   ! Fixed BigToLittle2 which was doing wrong calculation...
+   + Added JPEG Exif support (APP1 marker instead of APP0).
+   * Enhanced JPEG support to use markers as much as posible before BMFind to
+     EOI marker.
+   ! Fixed check which was preventing finding some files if they were just
+     behind each other.
+   * Enhanced MPEG Audio search to give feedback while determining file size.
+     This also allows to click on Cancel while HyperRipper is finding a huge
+	 MPEG Audio file.
+   * Speed-up when searching for MPEG Audio when found entries are lower than
+     the minimum frames/size.
+ * Elbereth's Main Driver plugin v2.1.0:
+   + Added Blade Runner .MIX support.
+	 Added Command & Conquer .MIX support.
+	 Added Command & Conquer: Red Alert .MIX support.
+	 Only non-crypted files are supported, decryption code it still a no-go.
+     Should work as Felix Riemann driver, but with detection of filenames based
+	 on XCC-Util database.
+	 New filenames can be added by editing the drv_default_mix.lst text file,
+	 one entry per file. Check file header for more info.
+   + Added Giant: Citizen Kabuto .GZP support.
+     Merged from the now removed stand alone plugin.
+   ! Fixed extraction from realMyst 3D sho.dni files (some entries were zlib
+     compressed but were not decompressed).
+   + Added support for Battleforge .PAK files.
+   + Added support for Dragon Age: Origins .ERF files.
+   i Internal changes to the source make it easier to add new formats.
+     Also added compile time parameter to enable experimental file formats.
+ * Elbereth's Picture/Textures Convert plugin v2.2.0:
+   i Now using DUCI v4 compatible with v3.
+     Please note that using this version with old Dragon UnPACKer versions
+	 will result in lost functionnality because of the following removal.
+   - Removed convertion features using Vampyre Imaging Library.
+     This is now done directly in the core Dragon UnPACKer (where the library
+	 is already used for the preview feature).
+ * InfoZip's ZIP Driver plugin v1.1.3:
+   + Added Heroes of Might & Magic 5 .PAK to the supported file types.
+   * Cleaned the list of supported files types (some doubles removed, etc..).
+   i Internal source changes: Using addFormat now.
+ * Duppi v3.3.3:
+   + Added new DUPP v4 feature: Obsolete Files
+   + Added multi-server support (when one server fails to download an update
+     Duppi will automatically try the next available one).
+   + Added download verification by checking file size and hash.
+   + Added log while installing to know what's going on.
+   + Implemented auto-update of Dragon UnPACKer.
+   * Improved feedback to the user while installing DUPP v4 files.
    * Optimized code to remove all useless units:
        JVCL & JCL are no more used
 	   VirtualTree are no more used
 	 This alone reduced size by 300kB...
    i Updated to work with curl instead of Overbyte's ICS.
      This was done in order to be more platform independant (FPC/Lazarus).
-	 Tested successfully with v7.18.0 & 7.19.4. Will be packed with v7.18.0 in
-	 order to reduce size (it is the latest version without SSL support).
-   * Improved feedback to the user while installing DUPP v4 files.
-   + Added log while installing to know what's going on.
-   + Implemented auto-update of Dragon UnPACKer.
+	 Current version bundled with libcurl v7.21.0 and zlib v1.2.5.
    ! Translated all text introduced with DUPP v4 support. Sorry to non-english
      speakers it was alwars showing in english...
 	 This required bump in language version number (PI v2).
+   ! Fixed small bug in information log
+   ! Fixed banner bug showing beneath the text under Vista/7 when Aero was
+     activated.
+   ! Fixed the popup asking for update to newer version of Dragon UnPACKer even
+     when no update package was available (ex: 5.2.0b --> 5.4.0a).
+   ! Fixed the URL used when the user want to download manually a new version
+     of Dragon UnPACKer.
 
-
+	 
 Version 5.4.0.192
 Release A [23/04/2009]
 

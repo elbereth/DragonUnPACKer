@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.9 2009-07-11 14:08:28 elbereth Exp $
+// $Id$
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/dpackc/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -306,7 +306,7 @@ implementation
 uses Compile, Config;
 
 const DPSVERSION = 5;
-      VERSION: integer = 36040;
+      VERSION: integer = 36140;
 
 {$R *.dfm}
 
@@ -679,9 +679,9 @@ begin
     writeLog('+-----+ OK (Size: '+inttostr(TmpZlib.Size)+' bytes - '+floattostrF(((TmpZlib.size/tmpNone.Size)*100),ffFixed,1,1)+'%)');
   end;
 
-  if chkCompressNone.Checked and ((chkCompressZlib.Checked and chkCompressLzma.Checked and (tmpNone.Size < tmpZlib.Size) and (tmpNone.Size < tmpLZMA.Size))
-                               or (chkCompressZlib.Checked and not(chkCompressLzma.Checked) and (tmpNone.Size < tmpZlib.Size))
-                               or (not(chkCompressZlib.Checked) and chkCompressLzma.Checked and (tmpNone.Size < tmpLzma.Size))
+  if chkCompressNone.Checked and ((chkCompressZlib.Checked and chkCompressLzma.Checked and (tmpNone.Size <= tmpZlib.Size) and (tmpNone.Size <= tmpLZMA.Size))
+                               or (chkCompressZlib.Checked and not(chkCompressLzma.Checked) and (tmpNone.Size <= tmpZlib.Size))
+                               or (not(chkCompressZlib.Checked) and chkCompressLzma.Checked and (tmpNone.Size <= tmpLzma.Size))
                                or (not(chkCompressZlib.Checked) and not(chkCompressLzma.Checked))) then
   begin
     writeLog('+---+ Best: No compression');
@@ -2049,6 +2049,9 @@ begin
       182: lblDUPVersion.Caption := 'v5.3.3 Beta';
       191: lblDUPVersion.Caption := 'v5.4.0';
       193: lblDUPVersion.Caption := 'v5.4.0a';
+      218: lblDUPVersion.Caption := 'v5.5.0 Beta';
+      226: lblDUPVersion.Caption := 'v5.5.1 Beta';
+      239: lblDUPVersion.Caption := 'v5.6.0';
     else
       lblDUPVersion.Caption := '???';
     end;
@@ -2112,6 +2115,9 @@ begin
       182: txtDUP5Version.Text := '178';
       191: txtDUP5Version.Text := '182';
       193: txtDUP5Version.Text := '191';
+      218: txtDUP5Version.Text := '193';
+      226: txtDUP5Version.Text := '218';
+      239: txtDUP5Version.Text := '226';
     else
       txtDUP5Version.Text := inttostr(oldValue-1);
     end;
@@ -2176,12 +2182,15 @@ begin
       178: txtDUP5Version.Text := '182';
       182: txtDUP5Version.Text := '191';
       191: txtDUP5Version.Text := '193';
+      193: txtDUP5Version.Text := '218';
+      218: txtDUP5Version.Text := '226';
+      226: txtDUP5Version.Text := '239';
     else
       txtDUP5Version.Text := inttostr(oldValue+1);
     end;
   except
     on EConvertError do
-      txtDUP5Version.Text := '193';
+      txtDUP5Version.Text := '239';
   end;
 
 end;

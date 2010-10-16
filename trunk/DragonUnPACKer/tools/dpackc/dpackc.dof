@@ -110,8 +110,8 @@ IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=3
 MinorVer=6
-Release=0
-Build=106
+Release=1
+Build=107
 Debug=0
 PreRelease=0
 Special=0
@@ -122,7 +122,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone
 FileDescription=Dragon UnPACKer 5 Package (D5P) Maker
-FileVersion=3.6.0.106
+FileVersion=3.6.1.107
 InternalName=dpackc
 LegalCopyright=Created by Alexandre "Elbereth" Devilliers
 LegalTrademarks=Mozilla Public Licence 1.1
@@ -130,14 +130,3 @@ OriginalFilename=dpackc
 ProductName=D5P Maker
 ProductVersion=3.6.0
 Comments=Allows you to create .D5P files that are installable packages by Duppi of Dragon UnPACKer 5
-[HistoryLists\hlUnitAliases]
-Count=1
-Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlUnitOutputDirectory]
-Count=1
-Item0=E:\Developpement\dup-dev-5.1-dcu
-[HistoryLists\hlOutputDirectorry]
-Count=3
-Item0=E:\Developpement\dup-dev-5.1-compiled\utils
-Item1=E:\Developpement
-Item2=E:\Developpement\dup-dev-5.1-compiled\data\drivers

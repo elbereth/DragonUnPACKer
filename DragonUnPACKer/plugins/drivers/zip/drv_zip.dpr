@@ -50,10 +50,12 @@ type
   11140  52040  Added a lot of supported file types thanks to Z0oMiK
   11240  54040  Added Call of Duty 5: World at War .IWD to the supported file types
   11340  55240  Added Heroes of Might & Magic 5 .PAK to the supported file types
+  11341  56040  This is the same version as the original 11340 without the
+                bad modifications released with 5.6.0 Exedra
 
   /////////////////////////////////////////////////////////////////////////////}
-const DRIVER_VERSION = 11340;
-      DUP_VERSION = 55210;
+const DRIVER_VERSION = 11341;
+      DUP_VERSION = 56040;
       COMPANY_NAME = 'Info-ZIP';
 
 var CurFormat: Integer = 0;

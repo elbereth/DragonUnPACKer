@@ -1,5 +1,5 @@
-Dragon UnPACKer 5 Package (D5P) Maker (DPACKC) v3.6.0       MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    11/07/2009
+Dragon UnPACKer 5 Package (D5P) Maker (DPACKC) v3.6.1       MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    15/10/2010
 ===============================================================================
 
   What is DPACKC ?
@@ -187,7 +187,7 @@ The compile log can help you to know if something went wrong.
   Compatibility list
   ------------------
 
-DPACKC v3.6.0 is compiling:
+DPACKC v3.6.1 is compiling:
   DUPP files version 2 (Duppi v2.0.2+)
   DUPP files version 3 (Duppi v2.2.0+)
   DUPP files version 4 (Duppi v3.0.0+)
@@ -225,6 +225,13 @@ You can reach Alex Devilliers:
   What's new?
   -----------
 
+Version 3.6.1:
+
+ ! Fixed bug when non-compressed and compressed block had same size. It would
+   refuse compilation with "No compression found" error.
+   Now it will default to no compression.
+   
+  
 Version 3.6.0:
 
  + Added feature to DUPP v4 to delete obsolete files in Dragon UnPACKer

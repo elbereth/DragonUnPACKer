@@ -151,6 +151,8 @@ begin
     result := 'Continuer et effacer le fichier (recommandé)?'
   else if sch = 'PI0068' then
     result := 'Effacé!'
+  else if sch = 'PI0069' then
+    result := 'La version de Dragon UnPACKer détectée (%a) diffère de la dernière version lancée (%b).%nVous devez lancer Dragon UnPACKer 5 au moins une fois après une mise à jour.%n%nVoulez-vous le lancer maintenant (recommandé)?'
   else if sch = 'PI3001' then
     result := 'Serveur %i: %d'
   else if sch = 'PI3002' then

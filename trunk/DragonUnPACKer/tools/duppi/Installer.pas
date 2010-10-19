@@ -22,7 +22,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, lib_binutils, spec_DUPP, zlib, lib_crc, lib_zlib, Registry,
-  ExtCtrls, ShellAPI, lib_language, XPMan,
+  ExtCtrls, ShellAPI, lib_language, XPMan, StrUtils,
   IniFiles, lib_utils,
   // LZMA
   ULZMADecoder,UBufferedFS,ULZMADec,
@@ -194,7 +194,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 33340;
+  VERSION: Integer = 33440;
 
 implementation
 
@@ -651,10 +651,10 @@ begin
      begin
        FileClose(hDupp);
        hDupp := 0;
-       writeLog(Install,DLNGStr('PIE411'));
+       writeLog(Install,ReplaceValue('%a',DLNGStr('PIE411'),'HDR')+' Sanity check failed');
        colorLog(Install,clRed);
        // ToTRANSLATE //
-       MessageDlg(DLNGStr('PIE411'),mtError,[mbOk],0);
+       MessageDlg(ReplaceValue('%a',DLNGStr('PIE411'),'HDR')+' Sanity check failed',mtError,[mbOk],0);
        result := false;
      end
      else
@@ -1093,7 +1093,12 @@ end;
 
 procedure TfrmInstaller.FormShow(Sender: TObject);
 var Reg: TRegistry;
-    clng: string;
+    clng, lv, S: string;
+    Taille  : DWord;
+    Buffer  : PChar;
+    VersionPC : PChar;
+    VersionL    : DWord;
+    VerifBuild: integer;
 begin
 
   Reg := TRegistry.Create;
@@ -1161,6 +1166,41 @@ begin
   if Not(FileExists(Dup5Path+'drgunpack5.exe')) then
   begin
     MessageDlg(DLNGstr('PI0026'),mtError,[mbOk],0);
+    Close;
+  end;
+
+  {--- on demande la taille des informations sur l'application ---}
+  S := Dup5Path+'drgunpack5.exe';
+  Taille := GetFileVersionInfoSize(PChar(S), Taille);
+  lv := '';
+  if Taille>0
+  then
+  begin
+    {--- Réservation en mémoire d'une zone de la taille voulue ---}
+    Buffer := AllocMem(Taille);
+    try
+      {--- Copie dans le buffer des informations ---}
+      GetFileVersionInfo(PChar(S), 0, Taille, Buffer);
+      {--- Recherche de l'information de version ---}
+      if VerQueryValue(Buffer, PChar('\StringFileInfo\040C04E4\FileVersion'), Pointer(VersionPC), VersionL)
+          then lv:=VersionPC;
+    finally
+      FreeMem(Buffer, Taille);
+    end;
+  end;
+  VerifBuild := strtoint(rightstr(lv, length(lv) - posrev('.',lv)));
+
+  if VerifBuild <> coreBuild then
+  begin
+    if MessageDlg(ReplaceValue('%b',ReplaceValue('%a',DLNGstr('PI0069'),inttostr(VerifBuild)),inttostr(coreBuild)),mtError,[mbYes, mbNo],0) = mrYes then
+    begin
+      ShellExecute(Application.Handle,
+                        'OPEN',
+                        PChar(Dup5Path+'drgunpack5.exe'),
+                        nil,
+                        nil,
+                        SW_SHOW);
+    end;
     Close;
   end;
 

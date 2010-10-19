@@ -1,6 +1,6 @@
 program duppi;
 
-// $Id: duppi.dpr,v 1.4 2008-11-11 15:51:19 elbereth Exp $
+// $Id$
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/tools/duppi/duppi.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -33,6 +33,7 @@ uses
   spec_DUPP in '..\..\common\spec_DUPP.pas',
   lib_BinUtils in '..\..\common\lib_BinUtils.pas';
 
+{$R duppi.rec}
 {$R *.res}
 
 begin

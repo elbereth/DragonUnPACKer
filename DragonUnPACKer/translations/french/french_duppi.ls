@@ -1,9 +1,9 @@
 # ============================================================================
 # Language Source File (pour DLNGC v4.0)
 # ============================================================================
-#  Programme: Duppi v3.3.0 (Dragon UnPACKer)
+#  Programme: Duppi v3.3.4 (Dragon UnPACKer)
 #     Langue: Français
-#    Version: 4
+#    Version: 5
 #     Auteur: Alexandre Devilliers
 # ============================================================================
 #
@@ -89,10 +89,11 @@ URL = http://www.dragonunpacker.com
 # Duppi v3.0.0                   PI       1
 # Duppi v3.1.0 - 3.1.3           PI       2
 # Duppi v3.2.0 - 3.2.1           PI       3
-# Duppi v3.3.0                   PI       4
+# Duppi v3.3.0 - 3.3.3           PI       4
+# Duppi v3.3.4                   PI       5
 #
 ProgramID = PI
-ProgramVer = 4
+ProgramVer = 5
 #
 # + IconFile +
 # Chemin & nom du fichier de l'icône affichée avec le nom de langue.
@@ -214,6 +215,7 @@ PI0065=Le fichier suivant est obsolète et va donc être éffacé:%n%n%f%n%n
 PI0066=Version du fichier: %1%nVersions obsolètes: <= %2%n%n
 PI0067=Continuer et effacer le fichier (recommandé)?
 PI0068=Effacé!
+PI0069=La version de Dragon UnPACKer détectée (%a) diffère de la dernière version lancée (%b).%nVous devez lancer Dragon UnPACKer 5 au moins une fois après une mise à jour.%n%nVoulez-vous le lancer maintenant (recommandé)?
 
 PI3001=Serveur %i: %d
 PI3002=La taille du fichier est incorrecte! (%a <> %b)

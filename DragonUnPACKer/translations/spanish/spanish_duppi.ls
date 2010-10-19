@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-# Programa: Duppi v3.2.0 (Dragon UnPACKer)
+# Programa: Duppi v3.3.4 (Dragon UnPACKer)
 # Lenguaje: Español
-#  Version: 3
+#  Version: 5
 #    Autor: Alexandre Devilliers (con la ayuda de Cinthia)
 # ============================================================================
 {LSF}
@@ -12,7 +12,7 @@ Author = Alexandre Devilliers
 Email = translation@dragonunpacker.com
 URL = http://www.dragonunpacker.com
 ProgramID = PI
-ProgramVer = 3
+ProgramVer = 5
 IconFile = flag_sp.bmp
 Compression=99
 OutFile = spanish.lng
@@ -88,6 +88,13 @@ PI0065=El fichero siguiente esta obsoleto y va a ser borrado:%n%n%f%n%n
 PI0066=Versión del fichero: %1%nVersiones obsoletas: <= %2%n%n
 PI0067=Continuar y borrar el fichero (recomendado)?
 PI0068=Borrado!
+PI0069=La version de Dragon UnPACKer detectada (%a) no corresponde a la ultima utilizada (%b).%nDespues de haber actualizado Dragon UnPACKer 5 se debe lanzar de nuevo.%n%nQuiere lanzar Dragon UnPACKer ahora (recomendado)?
+
+PI3001=Servidor %i: %d
+PI3002=El tamaño del fichero es incorecto! (%a <> %b)
+PI3003=Verificando la integridad del fichero...
+PI3004=Error de integridad del fichero! (%a <> %b)
+PI3005=Error %a: %b
 
 PIE401=Tipo de hash desconocido: %h
 PIE402=Fallo al intentar cambiar a la posición del fichero (%a <> %b)

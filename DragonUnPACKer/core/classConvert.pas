@@ -1,6 +1,6 @@
 unit classConvert;
 
-// $Id: classConvert.pas,v 1.4 2010-04-21 15:46:31 elbereth Exp $
+// $Id$
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/classConvert.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -237,16 +237,11 @@ procedure TPlugins.FreePlugins;
 var x: integer;
 begin
 
-  dup5Main.writeLogVerbose(1,replaceValue('%p',DLNGStr('LOGC01')+' ',inttostr(NumPlugins)));
-
   for x := 1 to NumPlugins do
-  begin
-    dup5Main.writeLogVerbose(2,' - '+Plugins[x].FileName+'...');
     FreeLibrary(Plugins[x].Handle);
-    dup5Main.appendLogVerbose(2,' '+DLNGStr('LOG510'));
-  end;
 
-  dup5Main.appendLogVerbose(1,DLNGStr('LOG510'));
+  SetLength(Plugins,0);
+  NumPlugins := 0;
 
 end;
 

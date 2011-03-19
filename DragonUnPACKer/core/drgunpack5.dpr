@@ -1,6 +1,6 @@
 program drgunpack5;
 
-// $Id: drgunpack5.dpr,v 1.16 2010-04-21 15:55:11 elbereth Exp $
+// $Id$
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/drgunpack5.dpr,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -19,6 +19,7 @@ program drgunpack5;
 {$DEFINE DRGUNPACK}
 
 uses
+  FastMM4,
   About in 'About.pas' {frmAbout},
   DrvInfo in 'DrvInfo.pas' {frmDrvInfo},
   Error in 'Error.pas' {frmError},
@@ -62,7 +63,8 @@ uses
   spec_DDS in '..\common\spec_DDS.pas',
   MpegAudioOptions in 'MpegAudioOptions.pas' {frmOptMPEGa},
   MsgBox in 'MsgBox.pas' {frmMsgBox},
-  classConvertExport in 'classConvertExport.pas';
+  classConvertExport in 'classConvertExport.pas',
+  classLog in 'classLog.pas';
 
 {$R *.res}
 

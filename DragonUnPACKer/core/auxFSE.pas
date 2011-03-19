@@ -1,6 +1,6 @@
 unit auxFSE;
 
-// $Id: auxFSE.pas,v 1.6 2009-09-11 20:11:20 elbereth Exp $
+// $Id$
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/auxFSE.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -39,6 +39,7 @@ end;
 
 type TDirCache = class
     constructor Create(dirSep: string);
+    destructor Free();
     procedure addItem(itm: FSE);
     function getItem(idx: integer): FSE;
     function getNumItems: integer;
@@ -183,7 +184,7 @@ begin
             ht.Add(parse+'\',Pointer(Nod2));
           end
           else
-            Nod2 := Pointer(Data);
+            Nod2 := Pointer(Data);          
           before := parse+'\';
         end
         else
@@ -526,11 +527,40 @@ begin
 
 end;
 
+destructor TDirCache.Free();
+var x: integer;
+begin
+
+  setLength(data,0);
+  
+end;
+
 function TDirCache.getTDirPos: integer;
 begin
 
   result := TDirPos;
 
 end;
+
+initialization
+
+finalization
+
+  try
+    if (ht <> nil) then
+    begin
+      ht.AutoFreeObjects := true;
+      FreeAndNil(ht);
+    end;
+  finally
+    try
+      if (dirCache <> nil) then
+      begin
+        dirCache.AutoFreeObjects := true;
+        FreeAndNil(dirCache);
+      end;
+    finally
+    end;
+  end;
 
 end.

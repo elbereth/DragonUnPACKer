@@ -1,6 +1,6 @@
 unit Main;
 
-// $Id: Main.pas,v 1.29 2010-04-21 15:48:58 elbereth Exp $
+// $Id$
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -232,6 +232,10 @@ type
     procedure menuPreview_Display_FullClick(Sender: TObject);
     procedure menuRecentClick(Sender: TObject);
     procedure menuAbout_NewVersionsClick(Sender: TObject);
+    procedure lstIndex2FreeNode(Sender: TBaseVirtualTree;
+      Node: PVirtualNode);
+    procedure lstContentFreeNode(Sender: TBaseVirtualTree;
+      Node: PVirtualNode);
   private
     FPreviewBitmap: TImagingBitmap;
     FPreviewImage: TMultiImage;
@@ -977,17 +981,23 @@ begin
     FreeAndNil(Reg);
   end;
 
+  FSE.CloseFile;
   FSE.FreeDrivers;
   FreeAndNil(FSE);
 
+  CPlug.FreePlugins;
+  FreeAndNil(CPlug);
+  
   Icons.close;
   FreeAndNil(Icons);
-  
+
   for x := 0 to TempFiles.Count-1 do
     if FileExists(TempFiles.Strings[x]) and Not(DeleteFile(TempFiles.Strings[x])) then
       MessageDlg(ReplaceValue('%f',DLNGStr('ERRTMP'),TempFiles.Strings[x]),mtWarning,[mbOk],0);
 
   FreeAndNil(TempFiles);
+
+  cxCpu.Destroy;
 
   Application.Terminate;
 
@@ -3115,6 +3125,26 @@ begin
      Free;
   end;}
 
+end;
+
+procedure Tdup5Main.lstIndex2FreeNode(Sender: TBaseVirtualTree;
+  Node: PVirtualNode);
+var NodeData: pvirtualIndexData;
+begin
+
+  NodeData := lstIndex2.GetNodeData(Node);
+  setLength(NodeData.dirname,0);
+
+end;
+
+procedure Tdup5Main.lstContentFreeNode(Sender: TBaseVirtualTree;
+  Node: PVirtualNode);
+var Data: pvirtualTreeData;
+begin
+
+  Data := lstContent.GetNodeData(Node);
+  setLength(Data.desc,0);
+            
 end;
 
 end.

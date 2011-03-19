@@ -1,6 +1,6 @@
 unit Error;
 
-// $Id: Error.pas,v 1.8 2010-02-27 19:23:55 elbereth Exp $
+// $Id$
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Error.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -251,9 +251,6 @@ begin
 end;
 
 procedure TfrmError.OnAppliException(Sender: TObject; E: Exception);
-var
- ErrorText : String;
- lpMemoryStatus : _MEMORYSTATUS;
 begin
  Try
    prepareError;

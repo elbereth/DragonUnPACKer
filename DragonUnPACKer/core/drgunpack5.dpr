@@ -63,8 +63,7 @@ uses
   spec_DDS in '..\common\spec_DDS.pas',
   MpegAudioOptions in 'MpegAudioOptions.pas' {frmOptMPEGa},
   MsgBox in 'MsgBox.pas' {frmMsgBox},
-  classConvertExport in 'classConvertExport.pas',
-  classLog in 'classLog.pas';
+  classConvertExport in 'classConvertExport.pas';
 
 {$R *.res}
 

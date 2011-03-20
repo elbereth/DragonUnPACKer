@@ -6,6 +6,7 @@ uses classes, SysUtils, StrUtils;
 
 function Get0(src: integer): string; overload;
 function Get0(stm: TStream): string; overload;
+function GetStm0(stm: TStream): TMemoryStream;
 function Get0A(src: integer): string;
 function Get16(src: integer): string;
 function Get16v(src: integer; size: word): string;
@@ -52,6 +53,20 @@ begin
   until tchar = chr(0);
 
   result := res;
+
+end;
+
+function GetStm0(stm: TStream): TMemoryStream;
+var tchar: Char;
+    res: string;
+begin
+
+  result := TMemoryStream.Create;
+  repeat
+    stm.Read(tchar,1);
+    if tchar <> chr(0) then
+      result.Write(tchar,1);
+  until tchar = chr(0);
 
 end;
 

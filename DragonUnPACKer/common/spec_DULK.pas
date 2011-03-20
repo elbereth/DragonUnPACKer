@@ -1,6 +1,6 @@
 unit spec_DULK;
 
-// $Id: spec_DULK.pas,v 1.3 2008-08-23 17:45:46 elbereth Exp $
+// $Id$
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/spec_DULK.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License

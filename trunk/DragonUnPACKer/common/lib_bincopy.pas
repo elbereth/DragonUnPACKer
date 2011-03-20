@@ -1,6 +1,6 @@
 unit lib_bincopy;
 
-// $Id: lib_bincopy.pas,v 1.4 2009-06-26 21:05:31 elbereth Exp $
+// $Id$
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_bincopy.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License

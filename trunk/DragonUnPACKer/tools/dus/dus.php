@@ -16,8 +16,8 @@
 //
 
   // Program version
-  define(DUS_VERSION,'3.2.0');
-  define(DUS_DATE,'13:06 11/07/2010');
+  define(DUS_VERSION,'3.2.1');
+  define(DUS_DATE,'13:03 19/03/2011');
   
   // Sending the header
   header('Content-type: text/plain');
@@ -26,7 +26,7 @@
   echo "Description=Dragon UnPACKer 5 Update Server v".DUS_VERSION." (".DUS_DATE.")\n";
 
   // Connect to MYSQL Database
-  $link = mysql_connect("mysql4-d", "d108923ro", "rofordus3");
+  $link = mysql_connect("mysql-d", "d108923ro", "rofordus3");
   if (mysql_errno() != 0) {
     echo "Result=M01\n";
     echo "ResultDescription=".mysql_error()."\n";

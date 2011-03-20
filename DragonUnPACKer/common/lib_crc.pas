@@ -1,6 +1,6 @@
 unit lib_crc;
 
-// $Id: lib_crc.pas,v 1.3 2008-09-25 20:54:11 elbereth Exp $
+// $Id$
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_crc.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License

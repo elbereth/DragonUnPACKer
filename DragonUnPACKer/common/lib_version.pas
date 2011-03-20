@@ -1,6 +1,6 @@
 unit lib_version;
 
-// $Id: lib_version.pas,v 1.3 2009-07-20 21:34:51 elbereth Exp $
+// $Id$
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/lib_version.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License

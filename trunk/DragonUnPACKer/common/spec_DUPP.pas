@@ -1,6 +1,6 @@
 unit spec_DUPP;
 
-// $Id: spec_DUPP.pas,v 1.5 2009-07-11 14:20:09 elbereth Exp $
+// $Id$
 // $Source: /home/elbzone/backup/cvs/DragonUnPACKer/common/spec_DUPP.pas,v $
 //
 // The contents of this file are subject to the Mozilla Public License
@@ -57,6 +57,7 @@ type
                              //         If embedding a custom banner
                              // 22040 = If using "good" CRC calculation
                              // 30040 = For v4
+                             // 35040 = For v4+bsdiff
                              // NOTE: Duppi check this field only since 20240.
                              // Please note that all Duppi version will be able
                              // to read and install v1 DUPP files but they won't
@@ -138,6 +139,7 @@ type
                              //   2 = Entries directory block
                              //  20 = Name block (companion of ID 2)
                              //  21 = Data block (companion of ID 2)
+							 //  22 = Source info block (companion of ID 2)
     OptionsFlags: byte;      // $01 Compressed entry (OptionsParams[1])
                              // $20 Companion block
                              // $40 Block entry (BlockEntries will contain the number of entries in the block
@@ -183,6 +185,7 @@ type
                                //              Version will contain the max version
                                //              for which entry should be deleted
                                //              HashType & Hash are irrelevant
+                               // 1        $80 BSDiff patch
     CompressionType: byte;     // 0 = No compression
                                // 1 = Zlib compression
                                // 2 = LZMA compression <-- Default
@@ -211,6 +214,18 @@ type
   // Name block
   //   get8 filename
 
+  DUP5PACK_PatchInfo_v4 = packed record
+    SourceSize: int64;
+    ResultSize: int64;
+    HashType: byte;            // 0 = MD5
+                               // 1 = SHA-1
+                               // 2 = SHA-256
+                               // 3 = SHA-512    <-- Default
+                               // 4 = RIPEMD160
+    SourceHash: array[0..63] of byte;
+    ResultHash: array[0..63] of byte;
+  end;  
+  
   DUP5PACK_Footer_v4 = packed record
     HashHeaderOffsets: array[0..31] of byte;  // SHA-256 of Header block (Header+Offsets)
     SignatureVersion: smallint;       // Program version that made the D5P file
@@ -232,6 +247,7 @@ const D5PFILE_REGSVR32 = $1;
       D5PFILE_COMPRESSED = $10;
       D5PFILE_X64 = $20;
       D5PFILE_DELETE = $40;
+      D5PFILE_BSDIFF = $80;
 
       D5PID_INFORMATION = 1;
       D5PID_BANNER = 10;

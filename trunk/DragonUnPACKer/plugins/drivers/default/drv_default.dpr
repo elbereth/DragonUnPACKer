@@ -17,6 +17,7 @@ library drv_default;
 //
 
 uses
+  FastMM4,
   Zlib,
   Classes,
   StrUtils,
@@ -187,6 +188,7 @@ type FSE = ^element;
     21040  56040 Modified support for Civilization 4 .FPK files:
                   Now supports Civilization V .FPK files too (which fixes bug #3084576)
                  Removed Avatar preliminary/experimental support (quite complex format actually)
+    21140  56140 Added Ghostbusters: The Video Game .POD files support (slightly modified BloodRayne .POD format)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -208,8 +210,8 @@ type FSE = ^element;
 const
   DUDI_VERSION = 5;
   DUDI_VERSION_COMPATIBLE = 4;
-  DRIVER_VERSION = 21040;
-  DUP_VERSION = 56040;
+  DRIVER_VERSION = 21140;
+  DUP_VERSION = 56140;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
   BUFFER_SIZE = 8192;
@@ -269,7 +271,6 @@ end;
 // Returns Driver plugin version
 // Exported
 function GetNumVersion: Integer; stdcall;
-var buildStr: string;
 begin
 
   GetNumVersion := DRIVER_VERSION;
@@ -343,7 +344,7 @@ begin
   addFormat(result,'*.PCK','Commandos 3 (*.PCK)');
   addFormat(result,'*.PFF','Comanche 4 (*.PFF)|Delta Force (*.PFF)|Delta Force 2 (*.PFF)|Delta Force: Land Warrior (*.PFF)|F-22 Lightning 3');
   addFormat(result,'*.PKR','Tony Hawk Pro Skater 2 (*.PKR)');
-  addFormat(result,'*.POD','Terminal Velocity (*.POD)|BloodRayne (*.POD)|Nocturne (*.POD)');
+  addFormat(result,'*.POD','Terminal Velocity (*.POD)|BloodRayne (*.POD)|Nocturne (*.POD)|Ghostbusters: The Video Game (*.POD)');
   addFormat(result,'*.RCF','Prototype (*.RCF)|Scarface (*.RCF)');
   addFormat(result,'*.RES','Electranoid (*.RES)|Evil Islands (*.RES)|Fuzzy''s World of Miniature Space Golf (*.RES)|Laser Light (*.RES)|Rage of Mages 2 (*.RES)|Xatax (*.RES)');
   addFormat(result,'*.REZ','Alien vs Predator 2 (*.REZ)|No One Lives Forever (*.REZ)|No One Lives Forever 2 (*.REZ)|Sanity Aiken''s Artifact (*.REZ)|Shogo: Mobile Armor Division (*.REZ)|Purge (*.REZ)|Tron 2.0 (*.REZ)');
@@ -1718,14 +1719,12 @@ type AvatarPAKHeader = packed record
 
 function ReadAvatarPAK(): Integer;
 var HDR: AvatarPAKHeader;
-    disp: string;
-    NumE, x: integer;
-    rest: longword;
+    x: integer;
     inFile: THandleStream;
     decStm: TDecompressionStream;
-    bufStm, dirStm: TMemoryStream;
+    bufStm: TMemoryStream;
     outFile: TFileStream;
-    CDirSize, UDirSize, NumBlocks: Cardinal;
+    CDirSize, NumBlocks: Cardinal;
     BlockSizes: array of AvatarPAKBlockEntry;
 begin
 
@@ -2299,7 +2298,7 @@ begin
     ErrInfo.Games := 'Black & White 2';
   end
   else
-  begin
+  begin 
 
     NumE := (TotFSize - DirOffset - 4) div 268;
     FileSeek(FHandle,DirOffset,0);
@@ -2349,53 +2348,71 @@ type POD3Header = packed record
        Unknown1: integer;
        Unknown2: integer;
      end;
+     // For POD5, entries have 2 extras integers (probably a 64bits checksum?)
 
 function ReadBloodRaynePOD(): Integer;
 var HDR: POD3Header;
     ENT: POD3Entry;
     disp: string;
-    NumE, x: integer;
-    buf: PByteArray;
-    NameStream: TMemoryStream;
+    x, EntrySize: integer;
+    InputStream: THandleStream;
+    NameStream, DirStream: TMemoryStream;
 begin
 
-  FileSeek(Fhandle, 0, 0);
-  FileRead(Fhandle, HDR, SizeOf(POD3Header));
-
-  GetMem(buf,HDR.NamesSize);
+  // Allocate the streams (Directory / Names / Input)
   NameStream := TMemoryStream.Create;
+  DirStream := TMemoryStream.Create;
+  InputStream := THandleStream.Create(Fhandle);
+
   try
-    FileSeek(FHandle,HDR.DirOffset+HDR.NumEntries*SizeOf(POD3Entry),0);
-    FileRead(FHandle,Buf^,HDR.NamesSize);
-    NameStream.Write(buf^,HDR.NamesSize);
+    // Read the header of the file
+    InputStream.Seek(0,0);
+    InputStream.ReadBuffer(HDR, SizeOf(POD3Header));
+
+    // Go to directory offset (usually near the end of the file, but could be anywhere)
+    InputStream.Seek(HDR.DirOffset,0);
+
+    // Setting the size of the directory
+    // If POD3 then using POD3Entry (5 integers)
+    // If POD5 then using POD5Entry (7 integers)
+    if (HDR.ID[3] = #51) then // POD3
+      EntrySize := SizeOf(POD3Entry)
+    else // if (HDR.ID[3] = #53) then // POD5
+      EntrySize := SizeOf(POD3Entry) + 8;
+
+    // Retrieve the full directory to memory
+    DirStream.CopyFrom(InputStream,HDR.NumEntries * EntrySize);
+    DirStream.Seek(0,0);
+
+    // Retrieve the names to memory
+    InputStream.Seek(HDR.DirOffset+(EntrySize*HDR.NumEntries),0);
+    NameStream.CopyFrom(InputStream,HDR.NamesSize);
     NameStream.Seek(0,0);
+
+    for x := 1 to HDR.NumEntries do
+    begin
+
+      Per := ROund(((x / HDR.NumEntries)*100));
+      SetPercent(Per);
+
+      DirStream.Seek((x-1)*EntrySize,0);
+      DirStream.ReadBuffer(ENT,SizeOf(POD3Entry));
+      NameStream.Seek(ENT.NameOffset,0);
+      disp := Get0(NameStream);
+
+      FSE_Add(Strip0(disp),ENT.Offset,ENT.Size,0,0);
+
+    end;
+
   finally
-    FreeMem(buf);
+    FreeAndNil(NameStream);
+    FreeAndNil(DirStream);
+    FreeAndNil(InputStream);
   end;
 
-  NumE := HDR.NumEntries;
+  Result := HDR.NumEntries;
 
-  FileSeek(Fhandle, HDR.DirOffset, 0);
-
-  for x := 1 to NumE do
-  begin
-
-    Per := ROund(((x / NumE)*100));
-    SetPercent(Per);
-
-    FileRead(Fhandle, ENT, SizeOf(POD3Entry));
-    NameStream.Seek(ENT.NameOffset,0);
-    disp := Get0(NameStream);
-
-    FSE_Add(Strip0(disp),ENT.Offset,ENT.Size,0,0);
-
-  end;
-
-  FreeAndNil(NameStream);
-
-  Result := NumE;
-
-  DrvInfo.ID := 'POD3';
+  DrvInfo.ID := HDR.ID;
   DrvInfo.Sch := '\';
   DrvInfo.FileHandle := FHandle;
   DrvInfo.ExtractInternal := False;
@@ -13301,7 +13318,7 @@ begin
   if FHandle > 0 then
   begin
     FileRead(FHandle,ID,4);
-    if ID = 'POD3' then
+    if (ID = 'POD3') or (ID = 'POD5') then
       res := ReadBloodRaynePOD
     else if ID = 'POD2' then
       res := ReadNocturnePOD
@@ -13648,7 +13665,7 @@ begin
 //        Result := ReadAvatarPAK
       else if ID4 = ('POD2') then
         Result := ReadNocturnePOD
-      else if ID4 = ('POD3') then
+      else if (ID4 = ('POD3')) or (ID4 = ('POD5')) then
         Result := ReadBloodRaynePOD
       else if ID8 = ('FILECHNK') then
         Result := ReadGunlokDAT
@@ -14357,6 +14374,8 @@ begin
 //    else if ID4 = ('PAK!') then
 //      Result := true
     else if ID4 = ('edat') then
+      Result := true
+    else if ID4 = ('POD5') then
       Result := true
     else if ID4 = ('POD3') then
       Result := true

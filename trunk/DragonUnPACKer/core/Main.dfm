@@ -196,6 +196,7 @@ object dup5Main: Tdup5Main
     OnContextPopup = lstContentContextPopup
     OnGetText = lstContentGetText
     OnGetImageIndex = lstContentGetImageIndex
+    OnHeaderClick = lstContentHeaderClick
     OnInitNode = lstContentInitNode
     OnKeyUp = lstContentKeyUp
     OnMouseDown = lstContentMouseDown

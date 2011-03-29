@@ -23,7 +23,7 @@ function curBuild:integer;
 
 const
   CurVersion: String = '5.6.1';
-  CurEdit: String = 'Exedra';
+  CurEdit: String = 'Exedra-Benton';
   CurURL: String = 'http://www.dragonunpacker.com';
 
 implementation

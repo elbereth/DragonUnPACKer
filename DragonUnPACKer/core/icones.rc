@@ -6,5 +6,5 @@
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-XICON01               ICON    DISCARDABLE     "Icone Coffre (16x16).ico"
-
+XICON01               ICON    DISCARDABLE     "icon-treasure-chest-256x256.ico"
+XICON02               ICON    DISCARDABLE     "icon-treasure-chest-open-256x256.ico"

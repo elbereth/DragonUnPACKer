@@ -1936,7 +1936,13 @@ begin
          if ConvertOK then
          begin
            Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
-           FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
+           // SLOW LIKE HELL: Going through all entries until finding the good one
+           //FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
+           // Instead we use the date directly as we already have it!!!
+           Size := Data.data^.Size;
+           Offset := Data.data^.Offset;
+           DataX := Data.data^.DataX;
+           DataY := Data.data^.DataY;
            ConvertOK := CPlug.TestFileConvert(fileName,offset,size,FSE.DriverID,DataX,DataY);
          end;
          Node := lstContent.GetNextSelected(Node);
@@ -1946,7 +1952,13 @@ begin
 
      if ConvertOK then
      begin
-       FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
+       // SLOW LIKE HELL: Going through all entries until finding the good one
+       //FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
+       // Instead we use the date directly as we already have it!!!
+       Size := Data.data^.Size;
+       Offset := Data.data^.Offset;
+       DataX := Data.data^.DataX;
+       DataY := Data.data^.DataY;
        CList := CPlug.GetFileConvert(fileName,offset,size,FSE.DriverID,DataX, DataY);
 
        CListInfo.NumFormats := CList.NumFormats;
@@ -2001,7 +2013,13 @@ begin
      Data := lstContent.GetNodeData(Node);
      Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
 
-     FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
+     // SLOW LIKE HELL: Going through all entries until finding the good one
+     //FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
+     // Instead we use the date directly as we already have it!!!
+     Size := Data.data^.Size;
+     Offset := Data.data^.Offset;
+     DataX := Data.data^.DataX;
+     DataY := Data.data^.DataY;
 
      ext := ExtractFileExt(fileName);
      if ext <> '' then
@@ -2782,9 +2800,17 @@ begin
 
       Node := lstContent.GetFirstSelected;
       Data := lstContent.GetNodeData(Node);
+
       Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
 
-      FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
+      // SLOW LIKE HELL: Going through all entries until finding the good one
+      //FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
+
+      // Instead we use the date directly as we already have it!!!
+      Size := Data.data^.Size;
+      Offset := Data.data^.Offset;
+      DataX := Data.data^.DataX;
+      DataY := Data.data^.DataY;
 
       ext := ExtractFileExt(fileName);
       if ext <> '' then

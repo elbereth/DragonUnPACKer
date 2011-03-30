@@ -23,7 +23,7 @@ uses
   Dialogs, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, Menus, ImgList,
   lib_language, translation, ShellApi, VirtualTrees, lib_look, ToolWin,
   DropSource, XPMan, DragDrop, DragDropFile, prg_ver, StrUtils,
-  classIconsFromExt, DateUtils, cxCpu40, lib_binutils, commonTypes,
+  classIconsFromExt, DateUtils, lib_binutils, commonTypes,
   BrowseForFolderU, dwProgressBar, classConvertExport,
   // Vampyre Imaging Library
   ImagingTypes, Imaging, ImagingClasses, ImagingComponents, ImagingCanvases,
@@ -568,9 +568,6 @@ begin
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsItalic]);
   frmAbout.txtMoreinfo.Lines.Add('');
   frmAbout.txtMoreinfo.Lines.Add(DLNGstr('ABT004'));
-  frmAbout.txtMoreinfo.Lines.Add('cxCpu v'+cxCpu.Version.FormatVersion);
-  setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
-  frmAbout.txtMoreinfo.Lines.Add('http://www.carbonsoft.com/cxcpu/');
   frmAbout.txtMoreinfo.Lines.Add('Delphi for Windows: Windows 7 Component Library');
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
   frmAbout.txtMoreinfo.Lines.Add('http://www.gumpi.com/blog');
@@ -830,31 +827,6 @@ begin
 
 end;
 
-procedure CreateDirs(Nod: TTreeNode; Pth: String);
-var NodC: TTreeNode;
-    NewDir: string;
-begin
-
-//  MessageDlg(Nod.Text, mtInformation,[mbok],0);
-
-  if Nod.HasChildren then
-  begin
-
-    NodC := Nod.getFirstChild;
-
-    while NodC <> Nil do
-    begin
-      NewDir := Pth + NodC.text;
-//      MessageDlg(NewDir,mtInformation,[mbok],0);
-      CreateDir(NewDir);
-      CreateDirs(NodC,NewDir+'\');
-      NodC := Nod.GetNextChild(NodC)
-    end;
-
-  end;
-
-end;
-
 procedure CreateDirs2(Nod: PVirtualNode; Pth: String);
 var NodC: PVirtualNode;
     NodeData: pvirtualIndexData;
@@ -874,7 +846,7 @@ begin
       NodeData := dup5main.lstIndex2.GetNodeData(NodC); 
       NewDir := Pth + NodeData.dirname;
 //      MessageDlg(NewDir,mtInformation,[mbok],0);
-      CreateDir(NewDir);
+      //CreateDir(NewDir);
       CreateDirs2(NodC,NewDir+'\');
       NodC := NodC.NextSibling;
     end;
@@ -996,8 +968,6 @@ begin
       MessageDlg(ReplaceValue('%f',DLNGStr('ERRTMP'),TempFiles.Strings[x]),mtWarning,[mbOk],0);
 
   FreeAndNil(TempFiles);
-
-  cxCpu.Destroy;
 
   Application.Terminate;
 
@@ -1720,7 +1690,6 @@ begin
 
   dup5Main.writeLogVerbose(1,DLNGstr('LOG005'));
 
-  dup5Main.writeLogVerbose(1,' + cxCpu v'+cxCpu.Version.FormatVersion);
   dup5Main.writeLogVerbose(1,' + Drag and Drop Component Suite v'+inttostr(DragDropSuiteVersionMajor)+'.'+inttostr(DragDropSuiteVersionMinor));
   dup5Main.writeLogVerbose(1,' + Delphi for Windows: Windows 7 Component Library');
 //  dup5Main.writeLogVerbose(1,' + JEDI Code Library [JCL] v'+inttostr(JclVersionMajor)+'.'+inttostr(JclVersionMinor)+'.'+inttostr(JclVersionRelease)+' Build '+inttostr(JclVersionBuild));
@@ -2075,6 +2044,7 @@ begin
   FSE.CloseFile;
   dup5Main.lstContent.clear;
 //  dup5Main.lstIndex.Items.Clear;
+
   dup5Main.lstIndex2.Clear;
 
   isPreviewImage := false;

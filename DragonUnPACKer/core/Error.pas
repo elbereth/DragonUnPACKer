@@ -20,7 +20,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, DateUtils, lib_utils, cxCPU40,
+  Dialogs, StdCtrls, DateUtils, lib_utils,
   Main, prg_ver,
   ExtCtrls, lib_language, translation, ShellApi;
 
@@ -74,8 +74,8 @@ implementation
 { TfrmError }
 
 procedure TfrmError.FillTxtError(E: Exception; from, subfrom: String);
-var x: byte;
-    OSInfo: TOSInfo;
+var OSInfo: TOSInfo;
+    SysInfo: TSystemInfo;
 begin
 
 frmError.Height := 153;
@@ -90,6 +90,7 @@ lblExMessage.Caption := e.Message;
 frmError.Refresh;
 
 OSInfo := GetAllSystemInfo();
+GetSystemInfo(SysInfo);
 
 txtError.Lines.Add('____________ Error report ____________');
 txtError.Lines.Add('');
@@ -118,9 +119,7 @@ end;
 txtError.Lines.Add('__________ Computer status: __________');
 txtError.Lines.Add('');
 txtError.Lines.Add(OSInfo.WinVersion);
-txtError.Lines.Add('CPU count: '+inttostr(CpuGetProcessorCount));
-for x := 1 to CpuGetProcessorCount do
-  txtError.Lines.Add('CPU '+inttostr(x)+': '+CpuGetFullName(x-1));
+txtError.Lines.Add('CPU Count='+inttostr(SysInfo.dwNumberOfProcessors)+' OEMID='+inttostr(SysInfo.dwOemId)+' Arch='+inttostr(SysInfo.wProcessorArchitecture)+' Level='+inttostr(SysInfo.wProcessorLevel)+' Rev='+inttostr(SysInfo.wProcessorRevision));
 
 txtError.Lines.Add('Memory: Free='+inttostr(OSInfo.MemAvailable div 1048576)+'MB / Total='+inttostr(OSInfo.MemTotal div 1048576)+'MB');
 txtError.Lines.Add('');

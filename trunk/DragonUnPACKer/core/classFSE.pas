@@ -239,6 +239,7 @@ type TDrivers = class
     function GetFileTypes: string;
     function GetAllFileTypes(Partitionned: boolean): ExtensionsResult;
     procedure BrowseDir(cdir: string);
+    procedure FreeDir(cdir: string);
     function BrowseDirToList(cdir: string; SubDirs: Boolean): TList;
     procedure FreeList;
     procedure GetListElem(Name: string; out Offset, Size: Int64; out DataX, DataY: integer);
@@ -1169,6 +1170,14 @@ begin
 
   dup5Main.Status.Panels.Items[1].Text := IntToStr(TotSize) + ' ' + DLNGStr('STAT20');
   dup5Main.Status.Panels.Items[0].Text := IntToStr(TotFiles) + ' ' + DLNGStr('STAT10');
+
+end;
+
+procedure TDrivers.FreeDir(cdir: string);
+begin
+
+  CDir := UpperCase(CDir);
+  FreeDirCache(CDir);
 
 end;
 

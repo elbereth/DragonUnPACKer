@@ -65,6 +65,7 @@ procedure SetTitleDefault();
 procedure SetPanelEx(st: string);
 procedure DisplayPercent(value: integer);
 function GetDirCache(CurDir: string): TDirCache;
+procedure FreeDirCache(CurDir: string);
 
 implementation
 
@@ -114,6 +115,21 @@ begin
 
 end;
 
+procedure FreeDirCache(CurDir: string);
+var Data: TObject;
+begin
+
+  if (length(curDir) > 0) then
+  begin
+    data := nil;
+    dirCache.Find(curDir,data);
+    if data <> nil then
+      FreeAndNil(Pointer(data));
+    dirCache.Delete(curDir);
+  end;
+
+end;
+
 procedure ParseDirs(Sch: string; Databloc: FSE; Fname: String);
 var a: FSE;
     pslash: integer;
@@ -138,7 +154,7 @@ begin
   NodeData.imageIndex := 2;
   NodeData.selectedImageIndex := 2;
 
-  ht:=TStringHashTrie.Create;
+  ht := TStringHashTrie.Create;
   dirCache := TStringHashTrie.Create;
 
   a := DataBloc;
@@ -159,6 +175,7 @@ begin
         cache := TDirCache.Create(sch);
         cache.addItem(a);
         dirCache.Add(curDirCache,Pointer(cache));
+        curDirCache := '';
         //showmessage(curDirCache);
       end
       else

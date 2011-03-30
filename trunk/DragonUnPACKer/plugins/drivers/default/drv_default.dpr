@@ -23,6 +23,7 @@ uses
   StrUtils,
   Windows,
   SysUtils,
+  UBufferedHS, ULZMADecoder, ULZMACommon,
   U_IntList in '..\..\..\common\U_IntList.pas',
   spec_DDS in '..\..\..\common\spec_DDS.pas',
   spec_HRF in '..\..\..\common\spec_HRF.pas',
@@ -41,6 +42,7 @@ uses
 {$Include datetime.inc}
 
 type EBadFormat = class(Exception);
+     EDecompLZMAError = class(Exception);
 
 type FSE = ^element;
      element = record
@@ -189,6 +191,7 @@ type FSE = ^element;
                   Now supports Civilization V .FPK files too (which fixes bug #3084576)
                  Removed Avatar preliminary/experimental support (quite complex format actually)
     21140  56140 Added Ghostbusters: The Video Game .POD files support (slightly modified BloodRayne .POD format)
+                 Added Ghostbusters: Sanctum of Slime .PAK files support (with LZMA decompression)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -291,7 +294,7 @@ begin
     Name := 'Elbereth''s Main Driver';
     Author := 'Alexandre Devilliers (aka Elbereth)';
     Version := getVersion(DRIVER_VERSION);
-    Comment := 'This driver support 85 different file formats. This is the official main driver.'+#10+'Check about box for more info.';
+    Comment := 'This driver support 87 different file formats. This is the official main driver.'+#10+'Check about box for more info.';
   end;
 
   // Supported file formats
@@ -337,7 +340,7 @@ begin
   addFormat(result,'*.MTF','Darkstone (*.MTF)');
   addFormat(result,'*.OPK','Sinking Island (*.OPK)|L''Ile Noyée (*.OPK)');
   // Avatar: The Game (*.PAK)
-  addFormat(result,'*.PAK','Battleforge (*.PAK)|Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)');
+  addFormat(result,'*.PAK','Battleforge (*.PAK)|Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)|Ghostbusters: Sanctum of Slime (*.PAK)');
   addFormat(result,'*.PAK;*.TLK','Hands of Fate (*.PAK;*.TLK)|Lands of Lore (*.PAK;*.TLK)');
   addFormat(result,'*.PAK;*.WAD','Quake (*.PAK;*.WAD)|Quake 2 (*.PAK;*.WAD)|Half-Life (*.PAK;*.WAD)|Heretic 2 (*.PAK;*.WAD)');
   addFormat(result,'*.PBO','Operation Flashpoint (*.PBO)');
@@ -5834,6 +5837,86 @@ begin
   finally
     FreeMem(Buffer);
   end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Ghostbusters: Sanctum of Slime .PAK support ============================== //
+// -------------------------------------------------------------------------- //
+
+type TongasPAKHeader = packed record
+    ID: array[0..17] of char;
+    NumberOfEntries: integer;
+    HeaderSize: integer;
+  end;
+  TongasPAKEntry = packed record
+    Offset: integer;
+    Size: integer;
+    Compressed: integer;
+  end;
+  // Get32 filename
+
+function ReadGhostbustersSoSPAK(): Integer;
+var HDR: TongasPAKHeader;
+    ENT: TongasPAKEntry;
+    DirStream: TMemoryStream;
+    InputStream: THandleStream;
+    Name: string;
+    x, Per, PerOld, OSize: integer;
+begin
+
+  // Instantiate the needed streams
+  DirStream := TMemoryStream.Create;
+  InputStream := THandleStream.Create(FHandle);
+
+  try
+    // Seek to start of input and read the header
+    InputStream.Seek(0,0);
+    InputStream.ReadBuffer(HDR,SizeOf(TongasPAKHeader));
+
+    // Buffer the full directory into memory
+    DirStream.CopyFrom(InputStream,HDR.HeaderSize);
+    DirStream.Seek(0,0);
+
+    // Start at 0 percent (for progress bar)
+    PerOld := 0;
+    SetPercent(PerOld);
+
+    // Parse directory
+    for x := 1 to HDR.NumberOfEntries do
+    begin
+
+      // Get entry data
+      DirStream.ReadBuffer(ENT,SizeOf(TongasPAKEntry));
+
+      // Get entry filename
+      Name := Get32(DirStream);
+
+      // We are displaying the compressed size but going throught the whole
+      // file to retrieve sizes takes forever
+      FSE_Add(Name,ENT.Offset,ENT.Size,ENT.Compressed,0);
+
+      Per := Round((x / HDR.NumberOfEntries)*100);
+      if Per >= PerOld + 5 then
+      begin
+        SetPercent(Per);
+        PerOld := Per;
+      end;
+
+    end;
+
+  finally
+    // We don't need the streams anymore, so we free them
+    FreeAndNil(InputStream);
+    FreeAndNil(DirStream);
+  end;
+
+  Result := HDR.NumberOfEntries;
+
+  DrvInfo.ID := 'tonga';
+  DrvInfo.Sch := '/';
+  DrvInfo.FileHandle := FHandle;
+  DrvInfo.ExtractInternal := True;
 
 end;
 
@@ -13225,6 +13308,7 @@ end;
 function ReadHubPAK(src: String): Integer;
 var ID: array[0..3] of char;
     ID12: array[0..11] of char;
+    ID18: array[0..17] of char;
     ID21P4: array[0..20] of char;
     res,Test1,Test3,testpko,FSize: integer;
     Test2: Word;
@@ -13244,6 +13328,8 @@ begin
     // Check if Dreamfall: TLJ .PAK
     FileSeek(Fhandle,0,0);
     FileRead(FHandle,ID12,12);
+    FileSeek(Fhandle,0,0);
+    FileRead(FHandle,ID18,18);
     FileSeek(FHandle,0,0);
     FileRead(Fhandle,testpk,1);
     FileRead(Fhandle,testpko,4);
@@ -13267,6 +13353,8 @@ begin
       res := ReadDreamfallTLJPAK(src)
     else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
       res := ReadSpellforcePAK
+    else if (ID18 = 'tongas_pack_v30000') then
+      res := ReadGhostbustersSoSPAK
     else if ((mixtest1 = 0) and ((mixtest3 = $20000) or (mixtest3 = $30000)))
          or ((mixtest1 > 0) and ((mixtest2 + mixtest1*12 + 6) = FSize)) then
     begin
@@ -13461,6 +13549,7 @@ var ext: string;
     ID8: array[0..7] of char;
     ID12: array[0..11] of char;
     ID12SLF: array[0..11] of char;
+    ID18: array[0..17] of char;
     ID21P4: array[0..20] of char;
     ID23: array[0..22] of char;
     ID28: array[0..27] of char;
@@ -13503,58 +13592,16 @@ begin
       FileRead(FHandle,ID12SLF,12);
       FileSeek(FHandle,-4,2);
       FileRead(FHandle,ID4Last,4);
-      for x := 0 to 3 do
-      begin
-        ID4[x] := ID127[x];
-        ID8[x] := ID127[x];
-        ID12[x] := ID127[x];
-        ID23[x] := ID127[x];
-        ID28[x] := ID127[x];
-        ID36[x] := ID127[x];
-      end;
-      for x := 4 to 5 do
-      begin
-        ID6[x] := ID127[x];
-        ID8[x] := ID127[x];
-        ID12[x] := ID127[x];
-        ID23[x] := ID127[x];
-        ID28[x] := ID127[x];
-        ID36[x] := ID127[x];
-        ID21P4[x-4] := ID127[x];
-      end;
-      for x := 6 to 7 do
-      begin
-        ID8[x] := ID127[x];
-        ID12[x] := ID127[x];
-        ID23[x] := ID127[x];
-        ID28[x] := ID127[x];
-        ID36[x] := ID127[x];
-        ID21P4[x-4] := ID127[x];
-      end;
-      for x := 8 to 11 do
-      begin
-        ID12[x] := ID127[x];
-        ID23[x] := ID127[x];
-        ID28[x] := ID127[x];
-        ID36[x] := ID127[x];
-        ID21P4[x-4] := ID127[x];
-      end;
-      for x := 12 to 22 do
-      begin
-        ID23[x] := ID127[x];
-        ID28[x] := ID127[x];
-        ID36[x] := ID127[x];
-        ID21P4[x-4] := ID127[x];
-      end;
-      for x := 23 to 27 do
-      begin
-        ID28[x] := ID127[x];
-        ID36[x] := ID127[x];
-        if x < 27 then
-          ID21P4[x-4] := ID127[x];
-      end;
-      for x := 28 to 35 do
-        ID36[x] := ID127[x];
+
+      // Copy values to the different magic IDs lengths
+      Move(ID127[0],ID4,4);
+      Move(ID127[0],ID8,8);
+      Move(ID127[0],ID12,12);
+      Move(ID127[0],ID18,18);
+      Move(ID127[0],ID23,23);
+      Move(ID127[0],ID28,28);
+      Move(ID127[0],ID36,36);
+      Move(ID127[4],ID21P4,21);
 
       if ID4 = ('GOB'+#10) then
         Result := ReadDarkForcesGOB
@@ -13625,10 +13672,7 @@ begin
       end
       // Dreamfall: The Longest Journey
       else if ID12 = 'tlj_pack0001' then
-      begin
-        Fileclose(Fhandle);
-        Result := ReadDreamfallTLJPAK(fil);
-      end
+        Result := ReadDreamfallTLJPAK(fil)
       // AGON .SFL file
       else if (ID4 = 'SFL1') and (ID6[4] = '0') then
       begin
@@ -15005,6 +15049,53 @@ endfunc:
 
 end;
 
+// Decompression of LZMA file at Offset and Size bytes
+//
+// This is almost a cut & paste of the ULZMAAlone.pas in LZMA SDK.
+//
+// NOTE: The full LZMA file is buffered in memory, shouldn't be a problem
+//       as it is only used for Ghostbusters: Sanctum of Slime .PAK files
+//       and the biggest file is 220MB but still... Could be a problem so
+//       should implement a fallback to temporary file if it is too big.
+procedure DecompressLZMAToStream(outStream: TStream; Offset, Size: int64; silent: boolean);
+var properties:array[0..4] of byte;
+    inStreamFull:THandleStream;
+    inStream:TMemoryStream;
+    decoder:TLZMADecoder;
+    outSize:int64;
+    v,i:byte;
+begin
+
+  inStreamFull := THandleStream.Create(FHandle);
+  inStream := TMemoryStream.Create;
+  decoder := TLZMADecoder.Create;
+
+  try
+    inStreamFull.Seek(Offset,0);
+    inStream.CopyFrom(inStreamFull,Size);
+    inStream.Seek(0,0);
+    if inStream.read(properties, 5) <> 5 then
+      raise EDecompLZMAError.Create('input LZMA is too short');
+    if not decoder.SetDecoderProperties(properties) then
+      raise EDecompLZMAError.Create('Incorrect stream properties');
+    outSize := 0;
+    for i := 0 to 7 do
+    begin
+      v := {shortint}(ReadByte(inStream));
+      if v < 0 then
+        raise EDecompLZMAError.Create('Can''t read stream size');
+      outSize := outSize or v shl (8 * i);
+    end;
+    if not decoder.Code(inStream, outStream, outSize) then
+      raise EDecompLZMAError.Create('Error in data stream');
+  finally
+    FreeAndNil(decoder);
+    FreeAndNil(inStream);
+    FreeAndNil(inStreamFull);
+  end;
+
+end;
+
 procedure DecompressRFAToStream(outputstream: TStream; Offset, Size: int64; silent: boolean);
 var
   SBuff: PByteArray;
@@ -15398,6 +15489,13 @@ begin
   else if DrvInfo.ID = 'PKPAK' then
     if DataX <> Size then
       DecompressZlibToStream(outputstream, DataX, Size)
+    else
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+
+  // Ghostbusters: Sanctum of Slime .PAK decompression handling
+  else if DrvInfo.ID = 'tonga' then
+    if DataX = 1 then
+      DecompressLZMAToStream(outputstream,offset,Size,silent)
     else
       BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
 

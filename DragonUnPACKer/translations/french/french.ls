@@ -1,8 +1,8 @@
 # Language Source File (pour DLNGC v4.0)
 # ============================================================================
-#  Programme: Dragon UnPACKer v5.5.1 Beta
+#  Programme: Dragon UnPACKer v5.6.1 Exedra-Benton
 #     Langue: English
-#    Version: 13
+#    Version: 14
 #     Auteur: Alex Devilliers
 # ============================================================================
 #
@@ -28,6 +28,9 @@
 # ============================================================================
 # Informations sur cette traduction
 # ============================================================================
+#
+# version 14:
+# Ajout de LOG505, LOG506, LOG507, OPT127, OPT128 et OPT812
 #
 # version 13:
 # Ajout de HR2031, HR4061, HR4062 et HR4063
@@ -94,9 +97,10 @@ URL = http://www.dragonunpacker.com
 # Dragon UnPACKer v5.3.3 Beta    UP      11
 # Dragon UnPACKer v5.4.0         UP      12
 # Dragon UnPACKer v5.5.1 Beta    UP      13
+# Dragon UnPACKer v5.6.1         UP      14
 #
 ProgramID = UP
-ProgramVer = 13
+ProgramVer = 14
 #
 # + IconFile +
 # Chemin & nom du fichier de l'icône affichée avec le nom de langue.
@@ -254,6 +258,8 @@ OPT123=Détection intelligente des formats de fichiers
 OPT124=Prendre les icones dans le registre Windows (plus lent)
 OPT125=Utiliser l'HyperRipper si aucune extension n'arrive à ouvrir le fichier
 OPT126=Afficher le journal d'exécution
+OPT127=Développer automatiquement les répertoires à l'ouverture
+OPT128=Garder en mémoire le type de fichier sélectionné sur l'écran d'ouverture
 OPT191=Ces extensions gèrent la convertion des formats de fichiers lors de l'extraction et de la prévisualisation. Exemple: Conversion des textures .ART vers .BMP
 OPT192=Ces extensions gèrent l'ouverture des formats de fichiers pour que Dragon UnPACKer puisse les explorer. Si un fichier n'est pas supporté cela signifie qu'aucune extension ne peut le lire (voir HyperRipper dans ce cas ci-dessous).
 OPT193=Ces extensions gèrent les formats qu'il est possible de rechercher dans le HyperRipper (ex: MPEG Audio, BMP, etc..)
@@ -290,6 +296,7 @@ OPT710=Informations
 OPT800=Journal d'exécution 
 OPT810=Options du journal d'exécution 
 OPT811=Afficher le journal d'exécution dans la fenêtre principale 
+OPT812=Effacer le journal à l'ouverture d'un fichier 
 OPT840=Niveau de détail
 OPT841=Sélectionnez le niveau de détail pour le journal d'exécution: 
 OPT850=Bas - Aucune information supplémentaire
@@ -538,6 +545,9 @@ LOG501=Ouverture du fichier en utilisant l'extension "%d"...
 LOG502=Récupération de %x entrée(s)...
 LOG503=Récupération des répertoires...
 LOG504=Fichier ouvert grâce à l'extension "%p" (format détecté: "%f")
+LOG505=Entrée sautée: %f (%r)...
+LOG506=Taille égale à 0
+LOG507=Position inférieur à 0
 LOG510=Fait!
 LOG511=Succès!
 LOG512=Echec!

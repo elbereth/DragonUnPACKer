@@ -217,6 +217,10 @@ begin
     result := 'Utiliser l''HyperRipper si aucune extension n''arrive à ouvrir le fichier'
   else if sch = 'OPT126' then
     result := 'Afficher le journal d''exécution'
+  else if sch = 'OPT127' then
+    result := 'Développer automatiquement les répertoires à l''ouverture'
+  else if sch = 'OPT128' then
+    result := 'Garder en mémoire le type de fichier sélectionné sur l''écran d''ouverture'
   else if sch = 'OPT191' then
     result := 'Ces extensions gèrent la convertion des formats de fichiers lors de l''extraction et de la prévisualisation. Exemple: Conversion des textures .ART vers .BMP'
   else if sch = 'OPT192' then
@@ -289,6 +293,8 @@ begin
     result := 'Options du journal d''exécution '
   else if sch = 'OPT811' then
     result := 'Afficher le journal d''exécution dans la fenêtre principale '
+  else if sch = 'OPT812' then
+    result := 'Effacer le journal à l''ouverture d''un fichier '
   else if sch = 'OPT840' then
     result := 'Niveau de détail'
   else if sch = 'OPT841' then
@@ -430,7 +436,7 @@ begin
   else if sch = 'HR1003' then
     result := 'Annuler / Arreter'
   else if sch = 'HR1011' then
-    result := 'Taille du buffer:'
+    result := 'Taille du cache:'
   else if sch = 'HR1012' then
     result := 'Taille du rollback:'
   else if sch = 'HR1013' then
@@ -769,6 +775,12 @@ begin
     result := 'Récupération des répertoires...'
   else if sch = 'LOG504' then
     result := 'Fichier ouvert grâce à l''extension "%p" (format détecté: "%f")'
+  else if sch = 'LOG505' then
+    result := 'Entrée sautée: %f (%r)...'
+  else if sch = 'LOG506' then
+    result := 'Taille égale à 0'
+  else if sch = 'LOG507' then
+    result := 'Position inférieur à 0'
   else if sch = 'LOG510' then
     result := 'Fait!'
   else if sch = 'LOG511' then

@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-#  Program: Dragon UnPACKer v5.5.1 Beta
+#  Program: Dragon UnPACKer v5.6.1
 # Language: English
-#  Version: 13
+#  Version: 14
 #   Author: Alex Devilliers
 # ============================================================================
 #
@@ -27,6 +27,9 @@
 # ============================================================================
 # Informations about this translation
 # ============================================================================
+#
+# version 14:
+# Added LOG505, LOG506, LOG507, OPT127, OPT128 and OPT812
 #
 # version 13:
 # Added HR2031, HR4061, HR4062 and HR4063
@@ -148,9 +151,10 @@ URL = http://www.dragonunpacker.com
 # Dragon UnPACKer v5.3.3 Beta    UP      11
 # Dragon UnPACKer v5.4.0         UP      12
 # Dragon UnPACKer v5.5.1 Beta    UP      13
+# Dragon UnPACKer v5.6.1         UP      14
 #
 ProgramID = UP
-ProgramVer = 13
+ProgramVer = 14
 #
 # + IconFile +
 # Path & FileName of the "icon" displayed with language name (ex: c:\test.bmp)
@@ -307,6 +311,8 @@ OPT123=Smart file format detection (at opening)
 OPT124=Get icons from Windows registry (may be slower)
 OPT125=Use HyperRipper if no plugin could open the file
 OPT126=Show runtime log
+OPT127=Auto-expand the folders at opening
+OPT128=Keep the selected file type in open dialog
 OPT191=Those plugins will handle the convertion of file formats when extracting or previewing files. Example: Convert textures from .ART file format to .BMP
 OPT192=Those plugins handle opening file formats so Dragon UnPACKer can browse into them. If a file is not supported that means no driver plugin could load it. HyperRipper handle files with another type of plugins (see below).
 OPT193=Those plugins handle the file format to scan in HyperRipper (ex: MPEG Audio, BMP, etc..)
@@ -342,7 +348,8 @@ OPT701=HyperRipper plugins:
 OPT710=Plugin information
 OPT800=Execution log
 OPT810=Execution log options
-OPT811=Show the execution log in main window.
+OPT811=Show the execution log in main window
+OPT812=Clear when opening a new file
 OPT840=Verbose Level
 OPT841=Select the amount of informations to display :
 OPT850=Low - Scarce information
@@ -591,6 +598,9 @@ LOG501=Opening the file using "%d" plugin...
 LOG502=Retrieving %x entries...
 LOG503=Parsing entries for directories...
 LOG504=File successfully opened using "%p" plugin (detected format: "%f")
+LOG505=Skipped entry: %f (%r)...
+LOG506=Size equal to 0
+LOG507=Offset lower than 0
 LOG510=Done!
 LOG511=Success!
 LOG512=Failed!

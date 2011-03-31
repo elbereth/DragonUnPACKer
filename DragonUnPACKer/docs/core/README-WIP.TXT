@@ -10,8 +10,8 @@ by Alexande "Elbereth" Devilliers                                    31/03/2011
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.6.1.254
-Release [Unreleased]
+Version 5.6.1.255
+SVN Release 591 [Unreleased]
 
  i Now using FastMM v4.97 as memory manager. Only core for the moment.
  ! Fixed a lot of memory leaks (more to come). Thanks to FastMM debuging mode.
@@ -30,9 +30,14 @@ Release [Unreleased]
  - Removed use of CxCpu (which was only used in Error handling popup).
    Unmaintained and not really useful anyway.
  * Auto-expand the folder list when loading a file.
+   This can be turned off in the Basic Options.
  + The program now remembers which file type you had selected in the open dialog
    and will reselect it automatically unless the format list changed (ex: when
    updating the driver plugins).
+   This can also be turned off in the Basic Options.
+ + Added option to automatically clear the log everytime a file is opened.
+ * The create file list now automatically adds the extension to the filename
+   if it is missing.
  * Elbereth's Main Driver plugin v2.1.1:
    * Enhanced Bloodrayne .POD support by using buffered directory reading.
    + Added Ghostbusters: The Video Game .POD support (POD5).

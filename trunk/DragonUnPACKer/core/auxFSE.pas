@@ -545,7 +545,6 @@ begin
 end;
 
 destructor TDirCache.Free();
-var x: integer;
 begin
 
   setLength(data,0);

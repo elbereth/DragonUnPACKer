@@ -130,7 +130,6 @@ type
     procedure menuFichier_QuitterClick(Sender: TObject);
     procedure menuAbout_AboutClick(Sender: TObject);
     procedure menuFichier_OuvrirClick(Sender: TObject);
-    procedure lstIndexChange(Sender: TObject; Node: TTreeNode);
     procedure menuFichier_FermerClick(Sender: TObject);
     procedure menuEdit_SearchClick(Sender: TObject);
     procedure menuIndex_InfosClick(Sender: TObject);
@@ -196,7 +195,6 @@ type
     procedure TDup5FileOpenExecute(Sender: TObject);
     procedure TDup5FileCloseExecute(Sender: TObject);
     procedure TDup5ToolsListExecute(Sender: TObject);
-    function GetNodePath(Nod: TTreeNode): string;
     function GetNodePath2(Nod: PVirtualNode): string;
     procedure lstIndex2GetText(Sender: TBaseVirtualTree;
       Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType;
@@ -693,31 +691,6 @@ begin
   RecentFiles_Add(src);
   Open_HUB(src);
 end
-
-end;
-
-function Tdup5Main.GetNodePath(Nod: TTreeNode): string;
-var res: string;
-begin
-  if Not(Nod.IsFirstNode) then
-  begin
-    res := GetNodePath(Nod.Parent);
-    if length(res)>0 then
-      res := res + FSE.SlashMode;
-    res := res + Nod.text;
-  end
-  else
-    res := '';
-  GetNodePath := res;
-end;
-
-procedure Tdup5Main.lstIndexChange(Sender: TObject; Node: TTreeNode);
-var disp: string;
-begin
-
-  disp := GetNodePath(Node);
-  FSE.BrowseDir(disp);
-  CurrentDir := disp;
 
 end;
 
@@ -1288,7 +1261,6 @@ var outputdir: string;
     Silent: boolean;
     Node: PVirtualNode;
     Data: pvirtualTreeData;
-    useOldMethod: Boolean;
     tmpStm: TMemoryStream;
     outStm: TFileStream;
 begin
@@ -3108,31 +3080,33 @@ begin
   frmMsgBox.richText.Lines.LoadFromStream(tmpStm);
   FreeAndNil(tmpStm);
   frmMsgBox.Caption := Title;
-  frmMsgBox.ShowModal;
-
-{  with CreateMessageDialog(Msg, mtCustom, Buttons) do
-  try
-     Caption:=Title;
-     HelpContext:=HelpCtx;
-     HelpFile:='';
-     Position:=poScreenCenter;
-     result:=ShowModal;
-  finally
-     Free;
-  end;}
+  result := frmMsgBox.ShowModal;
 
 end;
 
+//
+// Free the memory associated with a node of lstIndex2
+//
 procedure Tdup5Main.lstIndex2FreeNode(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 var NodeData: pvirtualIndexData;
+    disp: string;
 begin
 
+  // Free the cache structure for the directory in FSE
+  // We need the full directory path and not only the current directory name
+  disp := GetNodePath2(Node);
+  FSE.FreeDir(NodeData.dirname);
+
+  // We free the directory name (string)
   NodeData := lstIndex2.GetNodeData(Node);
   setLength(NodeData.dirname,0);
 
 end;
 
+//
+// Free the memory associated with a node of lstContent
+//
 procedure Tdup5Main.lstContentFreeNode(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 var Data: pvirtualTreeData;

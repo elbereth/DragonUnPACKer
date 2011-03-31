@@ -472,7 +472,6 @@ var sr: TSearchRec;
     DUDIVerEx: TDUDIVersionEx;
     DUDIVerVal, DUDIVerExVal: byte;
     Handle: THandle;
-    test: TClass;
 begin
 
   NumDrivers := 0;
@@ -495,9 +494,13 @@ begin
           @DUDIVer := GetProcAddress(Handle, 'DUDIVersion');
           @DUDIVerEx := GetProcAddress(Handle, 'DUDIVersionEx');
         if (@DUDIVer <> Nil) then
-          DUDIVerVal := DUDIVer;
+          DUDIVerVal := DUDIVer
+        else
+          DUDIVerVal := 0;
         if (@DUDIVerEx <> Nil) then
-          DUDIVerExVal := DUDIVerEx(DUDIVersion);
+          DUDIVerExVal := DUDIVerEx(DUDIVersion)
+        else
+          DUDIVerExVal := 0;
         if (@DUDIVer <> Nil) and ((DUDIVerVal >= 1) and (DUDIVerVal <= DUDIVersion)) then
         begin
           Inc(NumDrivers);

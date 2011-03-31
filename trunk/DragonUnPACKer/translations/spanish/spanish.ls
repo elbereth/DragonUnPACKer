@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-# Programa: Dragon UnPACKer v5.5.1 Beta
+# Programa: Dragon UnPACKer v5.6.1
 # Lenguaje: Español
-#  Version: 13
+#  Version: 14
 #    Autor: Alexandre Devilliers (con la ayuda de Cinthia)
 # ============================================================================
 {LSF}
@@ -12,7 +12,7 @@ Author = Alexandre Devilliers
 Email = translation@dragonunpacker.com
 URL = http://www.dragonunpacker.com
 ProgramID = UP
-ProgramVer = 13
+ProgramVer = 14
 IconFile = flag_sp.bmp
 Compression=99
 OutFile = spanish.lng
@@ -123,6 +123,8 @@ OPT123=Detección inteligente del formato al abrir un fichero
 OPT124=Utilizar iconos de Windows (puede ser más lento)
 OPT125=Utilizar el HyperRipper si ninguna extensión piloto a podido cargar el fichero
 OPT126=Ver al diario de ejecución
+OPT127=Mostrar todo automaticamente al abrir un fichero
+OPT128=Guardar en memoria el tipo de fichero seleccionado
 OPT191=Estas extensiónes se encargan de convertir los formatos de ficheros a la extracción o al pre visualizar. Ejemplo: Convertir las texturas desde .ART hasta .BMP
 OPT192=Estas extensiónes se encargan de abrir los formatos de ficheros soportados por Dragon UnPACKer. Si un fichero no es suportado significa que ninguna extensión piloto puede cargarlo. El HyperRipper se ocupa de los ficheros con otras extensiónes (ver abajo).
 OPT193=Estas extensiónes se encargan de escanear formatos de ficheros en el HyperRipper (ej.: MPEG Audio, BMP, etc.)
@@ -158,7 +160,8 @@ OPT701=Extensiónes HyperRipper:
 OPT710=Informaciones de la extensión
 OPT800=Diario de ejecución
 OPT810=Opciones del diario de ejecución
-OPT811=Ver al diario de ejecución en la ventana principal.
+OPT811=Ver al diario de ejecución en la ventana principal
+OPT812=Borrar el diario de ejecución al abrir un nuevo fichero
 OPT840=Nivel de detalle
 OPT841=Selecciona el nivel de información que quiere ver :
 OPT850=Bajo - Pocas informaciones
@@ -407,6 +410,9 @@ LOG501=Abriendo el fichero utilizando la extensión "%d"...
 LOG502=Recuperando %x entradas...
 LOG503=Analizando las entradas para encontrar carpetas...
 LOG504=Fichero abierto con éxito utilizando la extensión "%p" (formato: "%f")
+LOG505=Entrada saltada: %f (%r)...
+LOG506=Tamaño es 0
+LOG507=Posición inferior a 0
 LOG510=Echo!
 LOG511=Éxito!
 LOG512=Fallado!

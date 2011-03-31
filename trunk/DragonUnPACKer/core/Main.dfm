@@ -249,6 +249,7 @@ object dup5Main: Tdup5Main
     OnCompareNodes = lstIndex2CompareNodes
     OnContextPopup = lstIndex2ContextPopup
     OnFocusChanged = lstIndex2FocusChanged
+    OnFreeNode = lstIndex2FreeNode
     OnGetText = lstIndex2GetText
     OnGetImageIndex = lstIndex2GetImageIndex
     Columns = <>

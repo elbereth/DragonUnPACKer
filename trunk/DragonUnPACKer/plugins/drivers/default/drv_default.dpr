@@ -14242,63 +14242,17 @@ begin
     FileRead(TestFile,ID12SLF,12);
     FileSeek(TestFile,-4,2);
     FileRead(TestFile,ID4Last,4);
-    for x := 0 to 3 do
-    begin
-      ID4[x] := ID127[x];
-      ID8[x] := ID127[x];
-      ID12[x] := ID127[x];
-      ID18[x] := ID127[x];
-      ID23[x] := ID127[x];
-      ID28[x] := ID127[x];
-      ID36[x] := ID127[x];
-    end;
-    for x := 4 to 5 do
-    begin
-      ID6[x] := ID127[x];
-      ID8[x] := ID127[x];
-      ID12[x] := ID127[x];
-      ID18[x] := ID127[x];
-      ID23[x] := ID127[x];
-      ID28[x] := ID127[x];
-      ID36[x] := ID127[x];
-      ID21P4[x-4] := ID127[x];
-    end;
-    for x := 6 to 7 do
-    begin
-      ID8[x] := ID127[x];
-      ID12[x] := ID127[x];
-      ID18[x] := ID127[x];
-      ID23[x] := ID127[x];
-      ID28[x] := ID127[x];
-      ID36[x] := ID127[x];
-      ID21P4[x-4] := ID127[x];
-    end;
-    for x := 8 to 11 do
-    begin
-      ID12[x] := ID127[x];
-      ID18[x] := ID127[x];
-      ID23[x] := ID127[x];
-      ID28[x] := ID127[x];
-      ID36[x] := ID127[x];
-      ID21P4[x-4] := ID127[x];
-    end;
-    for x := 12 to 22 do
-    begin
-      if (x < 19) then
-        ID18[x] := ID127[x];
-      ID23[x] := ID127[x];
-      ID28[x] := ID127[x];
-      ID36[x] := ID127[x];
-      if (x < 22) then
-        ID21P4[x-4] := ID127[x];
-    end;
-    for x := 23 to 27 do
-    begin
-      ID28[x] := ID127[x];
-      ID36[x] := ID127[x];
-    end;
-    for x := 28 to 35 do
-      ID36[x] := ID127[x];
+
+    // Copy values to the different magic IDs lengths
+    Move(ID127[0],ID4,4);
+    Move(ID127[0],ID8,8);
+    Move(ID127[0],ID12,12);
+    Move(ID127[0],ID18,18);
+    Move(ID127[0],ID23,23);
+    Move(ID127[0],ID28,28);
+    Move(ID127[0],ID36,36);
+    Move(ID127[4],ID21P4,21);
+
     FileClose(TestFile);
 
     if ID4 = ('GOB'+#10) then
@@ -14352,6 +14306,9 @@ begin
       Result := true
     // Dreamfall: The Longest Journey
     else if ID12 = 'tlj_pack0001' then
+      Result := true
+    // Ghostbusters: Sanctum of Slime .PAK file
+    else if (ID18 = 'tongas_pack_v30000') then
       Result := true
     // Giants: Citizen Kabuto
     else if (ID4[3] = #$66) and (ID4[2] = #$08) and (ID4[1] = #$F1) and (ID4[0] = #$01) then

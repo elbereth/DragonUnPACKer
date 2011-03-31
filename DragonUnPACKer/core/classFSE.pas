@@ -841,7 +841,11 @@ begin
               begin
                 Inc(DispNumElems);
                 DataBlocAdd(Test.FileName,Test.Offset,Test.Size,Test.DataX,Test.DataY);
-              end;
+              end
+              else if (Test.Offset < 0) then
+                dup5Main.writeLogVerbose(2,'Skipped '+Test.FileName+' (Offset < 0)...')
+              else if (Test.Size = 0) then
+                dup5Main.writeLogVerbose(2,'Skipped '+Test.FileName+' (Empty file / Size = 0 bytes)...');
             end;
           except
             on Ex:Exception do

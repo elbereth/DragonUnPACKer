@@ -23,7 +23,7 @@ uses
   StrUtils,
   Windows,
   SysUtils,
-  UBufferedHS, ULZMADecoder, ULZMACommon,
+  ULZMADecoder, ULZMACommon,
   U_IntList in '..\..\..\common\U_IntList.pas',
   spec_DDS in '..\..\..\common\spec_DDS.pas',
   spec_HRF in '..\..\..\common\spec_HRF.pas',

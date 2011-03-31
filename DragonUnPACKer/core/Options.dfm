@@ -17,165 +17,6 @@ object frmConfig: TfrmConfig
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
-  object tabBasic: TPanel
-    Left = 184
-    Top = 8
-    Width = 449
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 1
-    object grpLanguage: TGroupBox
-      Left = 0
-      Top = 184
-      Width = 441
-      Height = 97
-      Caption = 'Langue'
-      Color = clBtnFace
-      ParentColor = False
-      TabOrder = 0
-      object strAuthor: TLabel
-        Left = 8
-        Top = 44
-        Width = 34
-        Height = 13
-        Caption = 'Auteur:'
-      end
-      object lblAuthor: TLabel
-        Left = 48
-        Top = 44
-        Width = 385
-        Height = 13
-        AutoSize = False
-      end
-      object strEmail: TLabel
-        Left = 8
-        Top = 59
-        Width = 31
-        Height = 13
-        Caption = 'E-mail:'
-      end
-      object strURL: TLabel
-        Left = 8
-        Top = 76
-        Width = 25
-        Height = 13
-        Caption = 'URL:'
-      end
-      object lblEmail: TLabel
-        Left = 48
-        Top = 59
-        Width = 385
-        Height = 13
-        AutoSize = False
-      end
-      object lblURL: TLabel
-        Left = 40
-        Top = 76
-        Width = 393
-        Height = 13
-        AutoSize = False
-      end
-      object lblFindNewLanguages: TLabel
-        Left = 296
-        Top = 16
-        Width = 141
-        Height = 25
-        Cursor = crHandPoint
-        Alignment = taCenter
-        AutoSize = False
-        Caption = 'Trouver d'#39'autres traductions...'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlue
-        Font.Height = -11
-        Font.Name = 'MS Sans Serif'
-        Font.Style = []
-        ParentFont = False
-        Transparent = True
-        WordWrap = True
-        OnClick = lblFindNewLanguagesClick
-        OnMouseEnter = lblFindNewLanguagesMouseEnter
-        OnMouseLeave = lblFindNewLanguagesMouseLeave
-      end
-      object lstLangues: TComboBoxEx
-        Left = 8
-        Top = 16
-        Width = 281
-        Height = 22
-        ItemsEx = <
-          item
-            Caption = 'Fran'#231'ais (French)'
-            ImageIndex = 0
-            SelectedImageIndex = 0
-          end>
-        Style = csExDropDownList
-        ItemHeight = 16
-        TabOrder = 0
-        OnKeyDown = FormKeyDown
-        OnSelect = lstLanguesSelect
-        Images = imgLstLangue
-        DropDownCount = 8
-      end
-    end
-    object grpOptions: TGroupBox
-      Left = 0
-      Top = 0
-      Width = 441
-      Height = 161
-      Caption = 'Options'
-      TabOrder = 1
-      object ChkNoSplash: TCheckBox
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 17
-        Caption = 'Ne pas afficher d'#39#233'cran de d'#233'marrage'
-        TabOrder = 0
-        OnClick = ChkNoSplashClick
-        OnKeyDown = FormKeyDown
-      end
-      object ChkOneInstance: TCheckBox
-        Left = 8
-        Top = 32
-        Width = 425
-        Height = 17
-        Caption = 'Permettre seulement une instance du programme a la fois'
-        TabOrder = 1
-        OnClick = ChkOneInstanceClick
-        OnKeyDown = FormKeyDown
-      end
-      object ChkSmartOpen: TCheckBox
-        Left = 8
-        Top = 48
-        Width = 425
-        Height = 17
-        Caption = 'D'#233'tection intelligente des formats de fichiers'
-        TabOrder = 2
-        OnClick = ChkSmartOpenClick
-        OnKeyDown = FormKeyDown
-      end
-      object chkRegistryIcons: TCheckBox
-        Left = 8
-        Top = 64
-        Width = 425
-        Height = 17
-        Caption = 'Rechercher les icones en base de registre'
-        TabOrder = 3
-        OnClick = chkRegistryIconsClick
-      end
-      object chkUseHyperRipper: TCheckBox
-        Left = 8
-        Top = 80
-        Width = 425
-        Height = 17
-        Caption = 
-          'Utiliser l'#39'HyperRipper si aucun plugin n'#39'arrive '#224' ouvrir le fich' +
-          'ier'
-        TabOrder = 4
-        WordWrap = True
-        OnClick = chkUseHyperRipperClick
-      end
-    end
-  end
   object tabLog: TPanel
     Left = 184
     Top = 8
@@ -235,6 +76,15 @@ object frmConfig: TfrmConfig
         Caption = 'Afficher le journal d'#39'ex'#233'cution'
         TabOrder = 0
         OnClick = chkLogClick
+      end
+      object chkLogClearNew: TCheckBox
+        Left = 8
+        Top = 32
+        Width = 425
+        Height = 17
+        Caption = 'Clear when opening a new file'
+        TabOrder = 1
+        OnClick = chkLogClearNewClick
       end
     end
   end
@@ -495,107 +345,6 @@ object frmConfig: TfrmConfig
         Caption = 'Shrinked/Streched to preview panel'
         TabOrder = 1
         OnClick = optPreviewDisplayStretchClick
-      end
-    end
-  end
-  object tabLook: TPanel
-    Left = 184
-    Top = 8
-    Width = 449
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 2
-    object strLookList: TLabel
-      Left = 0
-      Top = 0
-      Width = 425
-      Height = 13
-      AutoSize = False
-      Caption = 'Fichiers de Look:'
-    end
-    object lstLook: TListBox
-      Left = 0
-      Top = 16
-      Width = 441
-      Height = 121
-      ItemHeight = 13
-      TabOrder = 0
-      OnClick = lstLookClick
-      OnKeyDown = FormKeyDown
-    end
-    object grpLookInfo: TGroupBox
-      Left = 0
-      Top = 144
-      Width = 441
-      Height = 137
-      Caption = 'Information'
-      TabOrder = 1
-      object strLookName: TLabel
-        Left = 8
-        Top = 16
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'Nom:'
-      end
-      object strLookAuthor: TLabel
-        Left = 8
-        Top = 32
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'Auteur:'
-      end
-      object strLookEmail: TLabel
-        Left = 8
-        Top = 48
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'E-mail:'
-      end
-      object lblLookName: TLabel
-        Left = 64
-        Top = 16
-        Width = 369
-        Height = 13
-        AutoSize = False
-      end
-      object lblLookAuthor: TLabel
-        Left = 64
-        Top = 32
-        Width = 369
-        Height = 13
-        AutoSize = False
-      end
-      object lblLookEmail: TLabel
-        Left = 64
-        Top = 48
-        Width = 369
-        Height = 13
-        AutoSize = False
-      end
-      object strLookComment: TLabel
-        Left = 8
-        Top = 64
-        Width = 57
-        Height = 13
-        AutoSize = False
-        Caption = 'Comment:'
-      end
-      object Panel2: TPanel
-        Left = 64
-        Top = 64
-        Width = 369
-        Height = 65
-        BevelOuter = bvLowered
-        TabOrder = 0
-        object lblLookComment: TLabel
-          Left = 1
-          Top = 1
-          Width = 3
-          Height = 13
-        end
       end
     end
   end
@@ -1156,6 +905,107 @@ object frmConfig: TfrmConfig
       OnClick = lstTypesClick
     end
   end
+  object tabLook: TPanel
+    Left = 184
+    Top = 8
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 2
+    object strLookList: TLabel
+      Left = 0
+      Top = 0
+      Width = 425
+      Height = 13
+      AutoSize = False
+      Caption = 'Fichiers de Look:'
+    end
+    object lstLook: TListBox
+      Left = 0
+      Top = 16
+      Width = 441
+      Height = 121
+      ItemHeight = 13
+      TabOrder = 0
+      OnClick = lstLookClick
+      OnKeyDown = FormKeyDown
+    end
+    object grpLookInfo: TGroupBox
+      Left = 0
+      Top = 144
+      Width = 441
+      Height = 137
+      Caption = 'Information'
+      TabOrder = 1
+      object strLookName: TLabel
+        Left = 8
+        Top = 16
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'Nom:'
+      end
+      object strLookAuthor: TLabel
+        Left = 8
+        Top = 32
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'Auteur:'
+      end
+      object strLookEmail: TLabel
+        Left = 8
+        Top = 48
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'E-mail:'
+      end
+      object lblLookName: TLabel
+        Left = 64
+        Top = 16
+        Width = 369
+        Height = 13
+        AutoSize = False
+      end
+      object lblLookAuthor: TLabel
+        Left = 64
+        Top = 32
+        Width = 369
+        Height = 13
+        AutoSize = False
+      end
+      object lblLookEmail: TLabel
+        Left = 64
+        Top = 48
+        Width = 369
+        Height = 13
+        AutoSize = False
+      end
+      object strLookComment: TLabel
+        Left = 8
+        Top = 64
+        Width = 57
+        Height = 13
+        AutoSize = False
+        Caption = 'Comment:'
+      end
+      object Panel2: TPanel
+        Left = 64
+        Top = 64
+        Width = 369
+        Height = 65
+        BevelOuter = bvLowered
+        TabOrder = 0
+        object lblLookComment: TLabel
+          Left = 1
+          Top = 1
+          Width = 3
+          Height = 13
+        end
+      end
+    end
+  end
   object tabPluginsInfos: TPanel
     Left = 184
     Top = 8
@@ -1241,6 +1091,187 @@ object frmConfig: TfrmConfig
             'ype of plugins (see below).'
           WordWrap = True
         end
+      end
+    end
+  end
+  object tabBasic: TPanel
+    Left = 184
+    Top = 8
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 1
+    object grpLanguage: TGroupBox
+      Left = 0
+      Top = 184
+      Width = 441
+      Height = 97
+      Caption = 'Langue'
+      Color = clBtnFace
+      ParentColor = False
+      TabOrder = 0
+      object strAuthor: TLabel
+        Left = 8
+        Top = 44
+        Width = 34
+        Height = 13
+        Caption = 'Auteur:'
+      end
+      object lblAuthor: TLabel
+        Left = 48
+        Top = 44
+        Width = 385
+        Height = 13
+        AutoSize = False
+      end
+      object strEmail: TLabel
+        Left = 8
+        Top = 59
+        Width = 31
+        Height = 13
+        Caption = 'E-mail:'
+      end
+      object strURL: TLabel
+        Left = 8
+        Top = 76
+        Width = 25
+        Height = 13
+        Caption = 'URL:'
+      end
+      object lblEmail: TLabel
+        Left = 48
+        Top = 59
+        Width = 385
+        Height = 13
+        AutoSize = False
+      end
+      object lblURL: TLabel
+        Left = 40
+        Top = 76
+        Width = 393
+        Height = 13
+        AutoSize = False
+      end
+      object lblFindNewLanguages: TLabel
+        Left = 296
+        Top = 16
+        Width = 141
+        Height = 25
+        Cursor = crHandPoint
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'Trouver d'#39'autres traductions...'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlue
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = []
+        ParentFont = False
+        Transparent = True
+        WordWrap = True
+        OnClick = lblFindNewLanguagesClick
+        OnMouseEnter = lblFindNewLanguagesMouseEnter
+        OnMouseLeave = lblFindNewLanguagesMouseLeave
+      end
+      object lstLangues: TComboBoxEx
+        Left = 8
+        Top = 16
+        Width = 281
+        Height = 22
+        ItemsEx = <
+          item
+            Caption = 'Fran'#231'ais (French)'
+            ImageIndex = 0
+            SelectedImageIndex = 0
+          end>
+        Style = csExDropDownList
+        ItemHeight = 16
+        TabOrder = 0
+        OnKeyDown = FormKeyDown
+        OnSelect = lstLanguesSelect
+        Images = imgLstLangue
+        DropDownCount = 8
+      end
+    end
+    object grpOptions: TGroupBox
+      Left = 0
+      Top = 0
+      Width = 441
+      Height = 161
+      Caption = 'Options'
+      TabOrder = 1
+      object ChkNoSplash: TCheckBox
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Ne pas afficher d'#39#233'cran de d'#233'marrage'
+        TabOrder = 0
+        OnClick = ChkNoSplashClick
+        OnKeyDown = FormKeyDown
+      end
+      object ChkOneInstance: TCheckBox
+        Left = 8
+        Top = 32
+        Width = 425
+        Height = 17
+        Caption = 'Permettre seulement une instance du programme a la fois'
+        TabOrder = 1
+        OnClick = ChkOneInstanceClick
+        OnKeyDown = FormKeyDown
+      end
+      object ChkSmartOpen: TCheckBox
+        Left = 8
+        Top = 48
+        Width = 425
+        Height = 17
+        Caption = 'D'#233'tection intelligente des formats de fichiers'
+        TabOrder = 2
+        OnClick = ChkSmartOpenClick
+        OnKeyDown = FormKeyDown
+      end
+      object chkRegistryIcons: TCheckBox
+        Left = 8
+        Top = 64
+        Width = 425
+        Height = 17
+        Caption = 'Rechercher les icones en base de registre'
+        TabOrder = 3
+        OnClick = chkRegistryIconsClick
+      end
+      object chkUseHyperRipper: TCheckBox
+        Left = 8
+        Top = 80
+        Width = 425
+        Height = 17
+        Caption = 
+          'Utiliser l'#39'HyperRipper si aucun plugin n'#39'arrive '#224' ouvrir le fich' +
+          'ier'
+        TabOrder = 4
+        WordWrap = True
+        OnClick = chkUseHyperRipperClick
+      end
+      object chkAutoExpand: TCheckBox
+        Left = 8
+        Top = 96
+        Width = 425
+        Height = 17
+        Caption = 'D'#233'velopper automatiquement les r'#233'pertoires '#224' l'#39'ouverture'
+        TabOrder = 5
+        WordWrap = True
+        OnClick = chkAutoExpandClick
+      end
+      object chkKeepFilterIndex: TCheckBox
+        Left = 8
+        Top = 112
+        Width = 425
+        Height = 17
+        Caption = 
+          'Garder en m'#233'moire le type de fichier s'#233'lectionn'#233' sur l'#39#233'cran d'#39'o' +
+          'uverture'
+        TabOrder = 6
+        WordWrap = True
+        OnClick = chkKeepFilterIndexClick
       end
     end
   end

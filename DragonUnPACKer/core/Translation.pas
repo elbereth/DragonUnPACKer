@@ -291,8 +291,11 @@ begin
     chkUseHyperRipper.Caption := DLNGStr('OPT125');
     chkUseHyperRipper.Font.Name := GetFont();
 
-    chkLog.Caption := DLNGStr('OPT126');
-    chkLog.Font.Name := GetFont();
+    chkAutoExpand.Caption  := DLNGStr('OPT127');
+    chkAutoExpand.Font.Name := GetFont();
+
+    chkKeepFilterIndex.Caption  := DLNGStr('OPT128');
+    chkKeepFilterIndex.Font.Name := GetFont();
 
     cmdCnvAbout.Caption := DLNGStr('OPT201');
     cmdCnvAbout.Font.Name := GetFont();
@@ -401,6 +404,8 @@ begin
 
     chkLog.Caption := DLNGStr('OPT811');
     chkLog.Font.Name := GetFont();
+    chkLogClearNew.Caption := DLNGStr('OPT812');
+    chkLogClearNew.Font.Name := GetFont();
 
     lblPluginsDrivers.Caption := DLNGStr('OPT203');
     lblPluginsDrivers.Font.Name := GetFont();

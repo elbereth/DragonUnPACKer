@@ -90,8 +90,8 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=E:\Developpement\dup-dev-5.1-compiled\data\drivers
-UnitOutputDir=E:\Developpement\dup-dev-5.1-dcu
+OutputDir=C:\Developpement\dup-dev-5.1-compiled\data\drivers
+UnitOutputDir=C:\Developpement\dup-dev-5.1-dcu
 PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=
@@ -101,7 +101,7 @@ DebugSourceDirs=
 UsePackages=0
 [Parameters]
 RunParams=
-HostApplication=E:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
+HostApplication=C:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
 Launcher=
 UseLauncher=0
 DebugCWD=
@@ -111,7 +111,7 @@ AutoIncBuild=1
 MajorVer=2
 MinorVer=1
 Release=1
-Build=940
+Build=941
 Debug=0
 PreRelease=0
 Special=0
@@ -122,7 +122,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=Elbereth's Main Driver plugin for Dragon UnPACKer 5
-FileVersion=2.1.1.940
+FileVersion=2.1.1.941
 InternalName=drv_default
 LegalCopyright=Created by Alexandre Devilliers (aka Elbereth/Piecito)
 LegalTrademarks=Mozilla Public License 1.1

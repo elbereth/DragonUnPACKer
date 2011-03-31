@@ -303,11 +303,13 @@ var
 
 procedure Tdup5Main.Open_Hub(src: String);
 var Reg: TRegistry;
-    res: boolean;
+    res,clearlog,autoexpand: boolean;
     loadRes: TDriverLoadResult;
 begin
 
   Res := false;
+  ClearLog := false;
+  AutoExpand := true;
   Reg := TRegistry.Create;
   Try
     Reg.RootKey := HKEY_CURRENT_USER;
@@ -315,13 +317,20 @@ begin
     begin
       if Reg.ValueExists('UseHyperRipper') then
         Res := Reg.ReadBool('UseHyperRipper');
+      if Reg.ValueExists('ClearLogWhenOpenFile') then
+        ClearLog := Reg.ReadBool('ClearLogWhenOpenFile');
+      if Reg.ValueExists('AutoExpand') then
+        ClearLog := Reg.ReadBool('AutoExpand');
       Reg.CloseKey;
     end;
   Finally
     FreeAndNil(Reg);
   end;
 
-  separatorLog;
+  if ClearLog then
+    richLog.Clear
+  else
+    separatorLog;
   writeLog(ReplaceValue('%f',DLNGStr('LOG101'),src));
 
   loadRes := FSE.LoadFile(src, res);
@@ -335,7 +344,8 @@ begin
     menuEdit.Visible := True;
     menuTools.Visible := True;
     Status.Panels.Items[3].Text := FSE.DriverID;
-    lstIndex2.FullExpand(); 
+    if autoexpand then
+      lstIndex2.FullExpand();
   end
   else
   begin
@@ -497,14 +507,22 @@ end;
 
 function Tdup5Main.LoadFilterIndex(hash: integer): integer;
 var reg: TRegistry;
+    KeepFilterIndex: boolean;
 begin
 
   Result := -1;
+  KeepFilterIndex := true;
 
   Reg := TRegistry.Create;
   Try
     Reg.RootKey := HKEY_CURRENT_USER;
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Options',True) then
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      if Reg.ValueExists('KeepFilterIndex') then
+        KeepFilterIndex := Reg.ReadBool('KeepFilterIndex');
+      Reg.CloseKey;
+    end;
+    if KeepFilterIndex and Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Options',True) then
     begin
       if Reg.ValueExists('LastFilterIndex_Hash') then
         if (Reg.ReadInteger('LastFilterIndex_Hash') = hash) then
@@ -3158,7 +3176,7 @@ begin
   // Free the cache structure for the directory in FSE
   // We need the full directory path and not only the current directory name
   disp := GetNodePath2(Node);
-  FSE.FreeDir(NodeData.dirname);
+  FSE.FreeDir(disp);
 
   // We free the directory name (string)
   NodeData := lstIndex2.GetNodeData(Node);

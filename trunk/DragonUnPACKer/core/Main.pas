@@ -27,7 +27,8 @@ uses
   BrowseForFolderU, dwProgressBar, classConvertExport,
   // Vampyre Imaging Library
   ImagingTypes, Imaging, ImagingClasses, ImagingComponents, ImagingCanvases,
-  ImagingFormats, ImagingUtility, dwTaskbarComponents;
+  ImagingFormats, ImagingUtility, dwTaskbarComponents,
+  lib_crc;
 
 type
   Tdup5Main = class(TForm)
@@ -253,6 +254,8 @@ type
     procedure RecentFiles_Load();
     procedure RecentFiles_Add(newfile: string);
     procedure RecentFiles_Decal(oldpos: integer);
+    procedure SaveFilterIndex(index, hash: integer);
+    function LoadFilterIndex(hash: integer): integer;
   public
     TempFiles: TStrings;
     isPreviewLimit: boolean;
@@ -332,6 +335,7 @@ begin
     menuEdit.Visible := True;
     menuTools.Visible := True;
     Status.Panels.Items[3].Text := FSE.DriverID;
+    lstIndex2.FullExpand(); 
   end
   else
   begin
@@ -469,6 +473,48 @@ begin
 
   RecentFiles_Save;
   RecentFiles_Display;
+
+end;
+
+procedure Tdup5Main.SaveFilterIndex(index, hash: integer);
+var reg: TRegistry;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Options',True) then
+    begin
+      Reg.WriteInteger('LastFilterIndex',index);
+      Reg.WriteInteger('LastFilterIndex_Hash',hash);
+      Reg.CloseKey;
+    end;
+  Finally
+    FreeAndNil(Reg);
+  end;
+
+end;
+
+function Tdup5Main.LoadFilterIndex(hash: integer): integer;
+var reg: TRegistry;
+begin
+
+  Result := -1;
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Options',True) then
+    begin
+      if Reg.ValueExists('LastFilterIndex_Hash') then
+        if (Reg.ReadInteger('LastFilterIndex_Hash') = hash) then
+          if Reg.ValueExists('LastFilterIndex') then
+            result := Reg.ReadInteger('LastFilterIndex');
+      Reg.CloseKey;
+    end;
+  Finally
+    FreeAndNil(Reg);
+  end;
 
 end;
 
@@ -649,7 +695,8 @@ end;
 procedure Tdup5Main.menuFichier_OuvrirClick(Sender: TObject);
 var src, exts : string;
     extlist: ExtensionsResult;
-    cl,t : integer;
+    cl,t,savedFilterIndex: integer;
+    hash: integer;
 begin
 
 extlist := FSE.GetAllFileTypes(True);
@@ -667,17 +714,30 @@ begin
     end
     else
       exts := DLNGStr('ALLCMP') + ' ('+Uppercase(Copy(extlist.lists[cl],0,t-1))+' -> '+Uppercase(Copy(extlist.lists[cl],posrev(';',extlist.lists[cl])+1,length(extlist.lists[cl])-PosRev(';',extlist.lists[cl])))+ ')|'+extlist.lists[cl];
+    setlength(extlist.Lists[cl],0);
   end;
 end
 else
   exts := DLNGStr('ALLCMP') + '|' + extlist.lists[1];
 
 OpenDialog.Filter := exts + '|'+DLNGStr('ALLFIL')+'|*.*' + '|' + FSE.GetFileTypes;
+SetLength(exts,0);
 
-if extlist.Num > 1 then
-  OpenDialog.FilterIndex := extlist.Num+1
+// Get CRC32 hash of the OpenDialog.Filter string
+// we use it to detect if the format list changed
+// If it did the saved FilterIndex is not correct and will not be used
+hash := getStrCRC32(OpenDialog.Filter);
+savedFilterIndex := loadFilterIndex(hash);
+
+if savedFilterIndex = -1 then
+begin
+  if extlist.Num > 1 then
+    OpenDialog.FilterIndex := extlist.Num+1
+  else
+    OpenDialog.FilterIndex := 1;
+end
 else
-  OpenDialog.FilterIndex := 1;
+  OpenDialog.FilterIndex := savedFilterIndex;
 
 OpenDialog.Title := DLNGStr('OPEN00');
 
@@ -688,9 +748,10 @@ if OpenDialog.Execute then
 begin
   CloseCurrent;
   src := OpenDialog.FileName;
+  SaveFilterIndex(OpenDialog.FilterIndex,hash);
   RecentFiles_Add(src);
   Open_HUB(src);
-end
+end;
 
 end;
 
@@ -2909,6 +2970,7 @@ end;
 procedure Tdup5Main.FormDestroy(Sender: TObject);
 begin
 
+  FreeAndNil(OpenDialog);
   FreeAndNil(FPreviewImage);
   FreeAndNil(FPreviewBitmap);
 

@@ -843,9 +843,9 @@ begin
                 DataBlocAdd(Test.FileName,Test.Offset,Test.Size,Test.DataX,Test.DataY);
               end
               else if (Test.Offset < 0) then
-                dup5Main.writeLogVerbose(2,'Skipped '+Test.FileName+' (Offset < 0)...')
+                dup5Main.writeLogVerbose(2,ReplaceValue('%r',ReplaceValue('%f',DLNGstr('LOG505'),Test.FileName),DLNGstr('LOG507')))
               else if (Test.Size = 0) then
-                dup5Main.writeLogVerbose(2,'Skipped '+Test.FileName+' (Empty file / Size = 0 bytes)...');
+                dup5Main.writeLogVerbose(2,ReplaceValue('%r',ReplaceValue('%f',DLNGstr('LOG505'),Test.FileName),DLNGstr('LOG506')));
             end;
           except
             on Ex:Exception do

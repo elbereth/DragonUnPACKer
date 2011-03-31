@@ -152,6 +152,9 @@ type
     optPreviewDisplayStretch: TRadioButton;
     lblFindNewLanguages: TLabel;
     lstTypes: TCheckListBox;
+    chkLogClearNew: TCheckBox;
+    chkAutoExpand: TCheckBox;
+    chkKeepFilterIndex: TCheckBox;
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cmdOkClick(Sender: TObject);
@@ -204,6 +207,9 @@ type
     procedure lblFindNewLanguagesMouseLeave(Sender: TObject);
     procedure lblFindNewLanguagesClick(Sender: TObject);
     procedure lstTypesClick(Sender: TObject);
+    procedure chkLogClearNewClick(Sender: TObject);
+    procedure chkAutoExpandClick(Sender: TObject);
+    procedure chkKeepFilterIndexClick(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -449,6 +455,18 @@ begin
         ChkLog.Checked := Reg.ReadBool('ShowLog')
       else
         ChkLog.Checked := true;
+      if Reg.ValueExists('ClearLogWhenOpenFile') then
+        ChkLogClearNew.Checked := Reg.ReadBool('ClearLogWhenOpenFile')
+      else
+        ChkLogClearNew.Checked := false;
+      if Reg.ValueExists('KeepFilterIndex') then
+        ChkKeepFilterIndex.Checked := Reg.ReadBool('KeepFilterIndex')
+      else
+        ChkKeepFilterIndex.Checked := true;
+      if Reg.ValueExists('AutoExpand') then
+        ChkAutoExpand.Checked := Reg.ReadBool('AutoExpand')
+      else
+        ChkAutoExpand.Checked := true;
       // Remove obsolete key
       if Reg.ValueExists('XPStyle') then
         Reg.DeleteKey('XPStyle');
@@ -666,6 +684,29 @@ begin
   else
     if frmConfig.lstLook.Count > 0 then
       frmConfig.lstLook.ItemIndex := 0;
+
+end;
+
+procedure TfrmConfig.chkAutoExpandClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        Reg.WriteBool('AutoExpand',chkAutoExpand.Checked);
+        Reg.CloseKey;
+      end;
+    Finally
+      FreeAndNil(Reg);
+    end;
+
+  end;
 
 end;
 
@@ -1459,6 +1500,52 @@ begin
   except
     on e: exception do
       dup5Main.writeLog(e.ClassName+' '+e.Message);
+  end;
+
+end;
+
+procedure TfrmConfig.chkLogClearNewClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        Reg.WriteBool('ClearLogWhenOpenFile',chkLogClearNew.Checked);
+        Reg.CloseKey;
+      end;
+    Finally
+      FreeAndNil(Reg);
+    end;
+
+  end;
+
+end;
+
+procedure TfrmConfig.chkKeepFilterIndexClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        Reg.WriteBool('KeepFilterIndex',chkKeepFilterIndex.Checked);
+        Reg.CloseKey;
+      end;
+    Finally
+      FreeAndNil(Reg);
+    end;
+
   end;
 
 end;

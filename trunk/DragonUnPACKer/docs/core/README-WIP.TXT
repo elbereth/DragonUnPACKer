@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.6.1 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    30/03/2011
+by Alexande "Elbereth" Devilliers                                    31/03/2011
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,7 +10,7 @@ by Alexande "Elbereth" Devilliers                                    30/03/2011
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.6.1.252
+Version 5.6.1.254
 Release [Unreleased]
 
  i Now using FastMM v4.97 as memory manager. Only core for the moment.
@@ -29,6 +29,10 @@ Release [Unreleased]
    I was doing some pretty dumb things which were slow as hell!!! 
  - Removed use of CxCpu (which was only used in Error handling popup).
    Unmaintained and not really useful anyway.
+ * Auto-expand the folder list when loading a file.
+ + The program now remembers which file type you had selected in the open dialog
+   and will reselect it automatically unless the format list changed (ex: when
+   updating the driver plugins).
  * Elbereth's Main Driver plugin v2.1.1:
    * Enhanced Bloodrayne .POD support by using buffered directory reading.
    + Added Ghostbusters: The Video Game .POD support (POD5).

@@ -68,6 +68,7 @@ type
     procedure optSortAlphaClick(Sender: TObject);
     procedure optSortSizeClick(Sender: TObject);
     procedure optSortOffsetClick(Sender: TObject);
+    procedure FormHide(Sender: TObject);
   private
     lstDUHT: array[1..MAX_DUHT] of TDUHT;
     numDUHT: integer;
@@ -179,6 +180,7 @@ begin
         seltemp := numDUHT-1;
 //      showmessage(sr.Name);
     until FindNext(sr) <> 0;
+    FindClose(sr);
     if numDUHT > 0 then
     begin
       lstTemplates.ItemIndex := seltemp;
@@ -272,7 +274,7 @@ var header,footer,varstart: string;
     ss,outBuf: TStringStream;
     outFile: TFileStream;
     Size,x,TotSize,per,perold: integer;
-    dname, dpath, rep, perstr, fnam: string;
+    dname, dpath, rep, perstr, fnam, dext: string;
 
     EntRec: PEntList;
     Data: pvirtualTreeData;
@@ -287,6 +289,11 @@ begin
   if SaveDialog.Execute then
   begin
     dname := SaveDialog.FileName;
+    dext := extractfileext(dname);
+    if (dext = '') then
+      dname := dname + '.' + lstDUHT[lstTemplates.ItemIndex+1].GetInfoFromDUHT().Ext
+    else if (dext = '.') then
+      dname := dname + lstDUHT[lstTemplates.ItemIndex+1].GetInfoFromDUHT().Ext;
     dpath := extractfilepath(dname);
 
     status.simpletext := '[1/9] '+DLNGStr('LST501');
@@ -923,6 +930,13 @@ begin
   Finally
     FreeAndNil(Reg);
   end;
+
+end;
+
+procedure TfrmList.FormHide(Sender: TObject);
+begin
+
+  clearUHT;
 
 end;
 

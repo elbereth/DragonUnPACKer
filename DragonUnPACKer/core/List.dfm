@@ -14,6 +14,7 @@ object frmList: TfrmList
   Font.Style = []
   OldCreateOrder = False
   Position = poOwnerFormCenter
+  OnHide = FormHide
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13

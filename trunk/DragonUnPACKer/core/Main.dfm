@@ -1,6 +1,6 @@
 object dup5Main: Tdup5Main
-  Left = 452
-  Top = 213
+  Left = 456
+  Top = 172
   HelpContext = 1
   AlphaBlendValue = 128
   AutoScroll = False
@@ -174,7 +174,6 @@ object dup5Main: Tdup5Main
     Height = 177
     HelpContext = 11
     Align = alClient
-    DragMode = dmAutomatic
     DragOperations = []
     Header.AutoSizeIndex = -1
     Header.DefaultHeight = 17
@@ -249,7 +248,6 @@ object dup5Main: Tdup5Main
     OnCompareNodes = lstIndex2CompareNodes
     OnContextPopup = lstIndex2ContextPopup
     OnFocusChanged = lstIndex2FocusChanged
-    OnFreeNode = lstIndex2FreeNode
     OnGetText = lstIndex2GetText
     OnGetImageIndex = lstIndex2GetImageIndex
     Columns = <>
@@ -5429,6 +5427,13 @@ object dup5Main: Tdup5Main
     OnPopup = Popup_LogPopup
     Left = 584
     Top = 72
+    object menuLog_CopyClipboard: TMenuItem
+      Caption = 'Copy To Clipboard'
+      OnClick = menuLog_CopyClipboardClick
+    end
+    object N5: TMenuItem
+      Caption = '-'
+    end
     object menuLog_Hide: TMenuItem
       Caption = 'Cacher le journal...'
       OnClick = menuLog_HideClick

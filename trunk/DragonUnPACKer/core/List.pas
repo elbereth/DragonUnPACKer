@@ -291,9 +291,9 @@ begin
     dname := SaveDialog.FileName;
     dext := extractfileext(dname);
     if (dext = '') then
-      dname := dname + '.' + lstDUHT[lstTemplates.ItemIndex+1].GetInfoFromDUHT().Ext
+      dname := dname + '.' + LowerCase(lstDUHT[lstTemplates.ItemIndex+1].GetInfoFromDUHT().Ext)
     else if (dext = '.') then
-      dname := dname + lstDUHT[lstTemplates.ItemIndex+1].GetInfoFromDUHT().Ext;
+      dname := dname + LowerCase(lstDUHT[lstTemplates.ItemIndex+1].GetInfoFromDUHT().Ext);
     dpath := extractfilepath(dname);
 
     status.simpletext := '[1/9] '+DLNGStr('LST501');

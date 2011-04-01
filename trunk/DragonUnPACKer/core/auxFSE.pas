@@ -222,6 +222,7 @@ begin
           before := before + parse+'\';
           //ShowMessage(a^.Name+#10+parse+#10+curdir+#10+before+#10+BoolToStr(Dupe));
         end;
+        SetLength(parse,0);
         pslash := pos(sch,curdir);
       end;
     end;
@@ -229,8 +230,9 @@ begin
 
   end;
 
-//  ShowMessage(inttostr(nbdir)+#10+inttostr(MilliSecondsBetween(Now,StartTime)));
+  SetLength(before,0);
 
+//  ShowMessage(inttostr(nbdir)+#10+inttostr(MilliSecondsBetween(Now,StartTime)));
   FreeAndNil(ht);
   dup5Main.lstIndex2.RootNodeCount := 1;
   dup5Main.lstIndex2.FocusedNode := Root2;

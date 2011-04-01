@@ -127,6 +127,8 @@ type
     menuStatus_PreviewHide: TMenuItem;
     N4: TMenuItem;
     menuAbout_NewVersions: TMenuItem;
+    N5: TMenuItem;
+    menuLog_CopyClipboard: TMenuItem;
     procedure FormResize(Sender: TObject);
     procedure menuFichier_QuitterClick(Sender: TObject);
     procedure menuAbout_AboutClick(Sender: TObject);
@@ -137,7 +139,6 @@ type
     procedure menuIndex_ExtractAllClick(Sender: TObject);
     procedure menuIndex_ExtractDirsClick(Sender: TObject);
     procedure menuOptions_SubClick(Sender: TObject);
-    procedure FormHide(Sender: TObject);
     procedure Bouton_OptionsClick(Sender: TObject);
     procedure Bouton_FermerClick(Sender: TObject);
     procedure Bouton_OuvrirClick(Sender: TObject);
@@ -218,7 +219,6 @@ type
     procedure menuOptions_LogClick(Sender: TObject);
     procedure lstContentClick(Sender: TObject);
     procedure imgPreviewPaint(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
     procedure lstContentKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure TimerInitTimer(Sender: TObject);
@@ -235,6 +235,9 @@ type
       Node: PVirtualNode);
     procedure lstContentFreeNode(Sender: TBaseVirtualTree;
       Node: PVirtualNode);
+    procedure FormDestroy(Sender: TObject);
+    procedure FormHide(Sender: TObject);
+    procedure menuLog_CopyClipboardClick(Sender: TObject);
   private
     FPreviewBitmap: TImagingBitmap;
     FPreviewImage: TMultiImage;
@@ -957,71 +960,6 @@ begin
 
   TabSelect := 0;
   frmConfig.ShowModal;
-
-end;
-
-procedure Tdup5Main.FormHide(Sender: TObject);
-var Reg: TRegistry;
-    x: integer;
-    maxed: TWindowState;
-begin
-
-  maxed := WindowState;
-  WindowState := wsNormal;
-
-  if (CurFile > 0) then
-    CloseCurrent;
-
-  Reg := TRegistry.Create;
-  Try
-    Reg.RootKey := HKEY_CURRENT_USER;
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Windows',True) then
-    begin
-      if maxed = wsMaximized then
-        Reg.WriteInteger('Main_M',1)
-      else
-        Reg.WriteInteger('Main_M',0);
-      Reg.WriteInteger('Main_X',Left);
-      Reg.WriteInteger('Main_Y',Top);
-      Reg.WriteInteger('Main_H',Height);
-      Reg.WriteInteger('Main_W',Width);
-      Reg.WriteInteger('Main_S',lstIndex2.Width);
-      Reg.WriteInteger('Main_P',panPreview.Width);
-      if richLog.Visible then
-        Reg.WriteInteger('Main_B',panBottom.Height)
-      else
-        Reg.WriteInteger('Main_B',bottomHeight);
-      Reg.WriteInteger('lstContent_0',lstContent.Header.Columns.Items[0].Width);
-      Reg.WriteInteger('lstContent_1',lstContent.Header.Columns.Items[1].Width);
-      Reg.WriteInteger('lstContent_2',lstContent.Header.Columns.Items[2].Width);
-      Reg.WriteInteger('lstContent_3',lstContent.Header.Columns.Items[3].Width);
-      Reg.WriteInteger('toolBar_T',toolBar.Top);
-      Reg.WriteInteger('toolBar_L',ToolBar.Left);
-      Reg.WriteInteger('Percent_T',Percent.Top);
-      Reg.WriteInteger('Percent_L',Percent.Left);
-      Reg.CloseKey;
-    end;
-  Finally
-    FreeAndNil(Reg);
-  end;
-
-  FSE.CloseFile;
-  FSE.FreeDrivers;
-  FreeAndNil(FSE);
-
-  CPlug.FreePlugins;
-  FreeAndNil(CPlug);
-  
-  Icons.close;
-  FreeAndNil(Icons);
-
-  for x := 0 to TempFiles.Count-1 do
-    if FileExists(TempFiles.Strings[x]) and Not(DeleteFile(TempFiles.Strings[x])) then
-      MessageDlg(ReplaceValue('%f',DLNGStr('ERRTMP'),TempFiles.Strings[x]),mtWarning,[mbOk],0);
-
-  FreeAndNil(TempFiles);
-
-  Application.Terminate;
 
 end;
 
@@ -2985,16 +2923,6 @@ begin
 
 end;
 
-procedure Tdup5Main.FormDestroy(Sender: TObject);
-begin
-
-  FreeAndNil(OpenDialog);
-  FreeAndNil(FPreviewImage);
-  FreeAndNil(FPreviewBitmap);
-
-end;
-
-
 procedure Tdup5Main.lstContentKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
@@ -3167,6 +3095,7 @@ end;
 //
 // Free the memory associated with a node of lstIndex2
 //
+// NOT HOOKED as it seems to make Dup5 dump when closing...
 procedure Tdup5Main.lstIndex2FreeNode(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 var NodeData: pvirtualIndexData;
@@ -3195,6 +3124,105 @@ begin
   Data := lstContent.GetNodeData(Node);
   setLength(Data.desc,0);
             
+end;
+
+procedure Tdup5Main.FormDestroy(Sender: TObject);
+begin
+
+  Icons.close;
+  FreeAndNil(Icons);
+
+//  FreeAndNil(lstIndex2);
+//  FreeAndNil(lstContent);
+//  FreeAndNil(ImgContents);
+
+//  FreeAndNil(OpenDialog);
+//  FreeAndNil(XPManifest);
+//  FreeAndNil(DropFileSource);
+  FreeAndNil(FPreviewImage);
+  FreeAndNil(FPreviewBitmap);
+
+  Application.Terminate;
+  
+end;
+
+procedure Tdup5Main.FormHide(Sender: TObject);
+var Reg: TRegistry;
+    x: integer;
+    maxed: TWindowState;
+begin
+
+  maxed := WindowState;
+  WindowState := wsNormal;
+
+  if (CurFile > 0) then
+    CloseCurrent;
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Windows',True) then
+    begin
+      if maxed = wsMaximized then
+        Reg.WriteInteger('Main_M',1)
+      else
+        Reg.WriteInteger('Main_M',0);
+      Reg.WriteInteger('Main_X',Left);
+      Reg.WriteInteger('Main_Y',Top);
+      Reg.WriteInteger('Main_H',Height);
+      Reg.WriteInteger('Main_W',Width);
+      Reg.WriteInteger('Main_S',lstIndex2.Width);
+      Reg.WriteInteger('Main_P',panPreview.Width);
+      if richLog.Visible then
+        Reg.WriteInteger('Main_B',panBottom.Height)
+      else
+        Reg.WriteInteger('Main_B',bottomHeight);
+      Reg.WriteInteger('lstContent_0',lstContent.Header.Columns.Items[0].Width);
+      Reg.WriteInteger('lstContent_1',lstContent.Header.Columns.Items[1].Width);
+      Reg.WriteInteger('lstContent_2',lstContent.Header.Columns.Items[2].Width);
+      Reg.WriteInteger('lstContent_3',lstContent.Header.Columns.Items[3].Width);
+      Reg.WriteInteger('toolBar_T',toolBar.Top);
+      Reg.WriteInteger('toolBar_L',ToolBar.Left);
+      Reg.WriteInteger('Percent_T',Percent.Top);
+      Reg.WriteInteger('Percent_L',Percent.Left);
+      Reg.CloseKey;
+    end;
+  Finally
+    FreeAndNil(Reg);
+  end;
+
+  FSE.CloseFile;
+  FSE.FreeDrivers;
+  FreeAndNil(FSE);
+
+  CPlug.FreePlugins;
+  FreeAndNil(CPlug);
+
+  for x := 0 to TempFiles.Count-1 do
+    if FileExists(TempFiles.Strings[x]) and Not(DeleteFile(TempFiles.Strings[x])) then
+      MessageDlg(ReplaceValue('%f',DLNGStr('ERRTMP'),TempFiles.Strings[x]),mtWarning,[mbOk],0);
+
+  FreeAndNil(TempFiles);
+
+end;
+
+//
+// Popup Log -> Copy Selected Log text to Clipboard
+//
+procedure Tdup5Main.menuLog_CopyClipboardClick(Sender: TObject);
+begin
+
+  // If nothing is selected we copy everything to the clipboard
+  if (richLog.SelLength = 0) then
+  begin
+    richLog.SelectAll;
+    richlog.CopyToClipboard;
+    richLog.SelLength := 0;
+  end
+  // If something is select we copy only this part to the clipboard
+  else
+    richLog.CopyToClipboard;
+
 end;
 
 end.

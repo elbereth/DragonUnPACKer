@@ -92,6 +92,7 @@ POP2S5=Ocultar todo
 POP3S1=Mostrar el diario
 POP3S2=Ocultar el diario
 POP3S3=Borrar el diario
+POP3S4=Copiar el diario al portapapeles
 POP4S1=Ocultar la previsualización
 POP4S2=Mostrar la previsualización
 POP5S1=Modo de previsualización

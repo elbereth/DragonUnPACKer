@@ -30,7 +30,7 @@
 # ============================================================================
 #
 # version 14:
-# Ajout de LOG505, LOG506, LOG507, OPT127, OPT128 et OPT812
+# Ajout de LOG505, LOG506, LOG507, OPT127, OPT128, OPT812 et POP3S4
 #
 # version 13:
 # Ajout de HR2031, HR4061, HR4062 et HR4063
@@ -227,6 +227,7 @@ POP2S5=Replier tout
 POP3S1=Afficher le journal
 POP3S2=Cacher le journal
 POP3S3=Effacer le journal
+POP3S4=Copier le journal dans le presse papier
 POP4S1=Cacher la prévisualisation
 POP4S2=Afficher la prévisualisation
 POP5S1=Mode d'affichage

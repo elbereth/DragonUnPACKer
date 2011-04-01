@@ -29,7 +29,7 @@
 # ============================================================================
 #
 # version 14:
-# Added LOG505, LOG506, LOG507, OPT127, OPT128 and OPT812
+# Added LOG505, LOG506, LOG507, OPT127, OPT128, OPT812 and POP3S4
 #
 # version 13:
 # Added HR2031, HR4061, HR4062 and HR4063
@@ -280,6 +280,7 @@ POP2S5=Full Collapse
 POP3S1=Show log
 POP3S2=Hide log
 POP3S3=Clear log
+POP3S4=Copy log to clipboard
 POP4S1=Hide preview
 POP4S2=Show preview
 POP5S1=Display mode

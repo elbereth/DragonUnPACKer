@@ -155,6 +155,8 @@ begin
     result := 'Cacher le journal'
   else if sch = 'POP3S3' then
     result := 'Effacer le journal'
+  else if sch = 'POP3S4' then
+    result := 'Copier le journal dans le presse papier'
   else if sch = 'POP4S1' then
     result := 'Cacher la prévisualisation'
   else if sch = 'POP4S2' then

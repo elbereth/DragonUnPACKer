@@ -94,6 +94,7 @@ begin
     menuLog_Show.Caption := DLNGstr('POP3S1');
     menuLog_Hide.Caption := DLNGstr('POP3S2');
     menuLog_Clear.Caption := DLNGstr('POP3S3');
+    menuLog_CopyClipboard.Caption := DLNGstr('POP3S4');
 
     lstContent.Header.Columns.Items[0].Text := DLNGStr('LSTCP1');
     lstContent.Header.Columns.Items[1].Text := DLNGStr('LSTCP2');

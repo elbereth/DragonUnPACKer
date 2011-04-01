@@ -14,7 +14,7 @@
 ; (elbereth@users.sourceforge.net, http://www.elberethzone.net).
 
 [Setup]
-Compression=lzma/max
+Compression=lzma2/max
 SolidCompression=true
 AppName=Dragon UnPACKer 5
 AppVerName=Dragon UnPACKer v5.6.1 Exedra-Benton (stable)

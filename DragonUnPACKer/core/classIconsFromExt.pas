@@ -250,6 +250,7 @@ begin
   end;
 
   FreeAndNil(iconNum);
+  iconList.Clear;
 
 end;
 

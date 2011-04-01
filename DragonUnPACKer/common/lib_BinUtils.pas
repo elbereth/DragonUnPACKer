@@ -58,7 +58,6 @@ end;
 
 function GetStm0(stm: TStream): TMemoryStream;
 var tchar: Char;
-    res: string;
 begin
 
   result := TMemoryStream.Create;

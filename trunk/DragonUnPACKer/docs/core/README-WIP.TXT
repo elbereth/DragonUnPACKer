@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.6.1 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    31/03/2011
+by Alexande "Elbereth" Devilliers                                    01/04/2011
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,8 +10,8 @@ by Alexande "Elbereth" Devilliers                                    31/03/2011
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.6.1.255
-SVN Release 591 [Unreleased]
+Version 5.6.1.260
+SVN Release 596 [Unreleased]
 
  i Now using FastMM v4.97 as memory manager. Only core for the moment.
  ! Fixed a lot of memory leaks (more to come). Thanks to FastMM debuging mode.
@@ -38,6 +38,7 @@ SVN Release 591 [Unreleased]
  + Added option to automatically clear the log everytime a file is opened.
  * The create file list now automatically adds the extension to the filename
    if it is missing.
+ + Added Copy to clipboard option to the popup menu of the Log.
  * Elbereth's Main Driver plugin v2.1.1:
    * Enhanced Bloodrayne .POD support by using buffered directory reading.
    + Added Ghostbusters: The Video Game .POD support (POD5).

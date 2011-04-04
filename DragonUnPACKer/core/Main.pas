@@ -19,8 +19,7 @@ unit Main;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, Menus, ImgList,
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,  Dialogs, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, Menus, ImgList,
   lib_language, translation, ShellApi, VirtualTrees, lib_look, ToolWin,
   DropSource, XPMan, DragDrop, DragDropFile, prg_ver, StrUtils,
   classIconsFromExt, DateUtils, lib_binutils, commonTypes,
@@ -92,7 +91,7 @@ type
     menuIndex_Collapse: TMenuItem;
     N2: TMenuItem;
     menuIndex_Infos: TMenuItem;
-    lstIndex2: TVirtualStringTree;
+    lstIndex: TVirtualStringTree;
     TimerParam: TTimer;
     SplitterBottom: TSplitter;
     Popup_Log: TPopupMenu;
@@ -197,18 +196,18 @@ type
     procedure TDup5FileOpenExecute(Sender: TObject);
     procedure TDup5FileCloseExecute(Sender: TObject);
     procedure TDup5ToolsListExecute(Sender: TObject);
-    function GetNodePath2(Nod: PVirtualNode): string;
-    procedure lstIndex2GetText(Sender: TBaseVirtualTree;
+    function GetNodePath(Nod: PVirtualNode): string;
+    procedure lstIndexGetText(Sender: TBaseVirtualTree;
       Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType;
       var CellText: WideString);
-    procedure lstIndex2GetImageIndex(Sender: TBaseVirtualTree;
+    procedure lstIndexGetImageIndex(Sender: TBaseVirtualTree;
       Node: PVirtualNode; Kind: TVTImageKind; Column: TColumnIndex;
       var Ghosted: Boolean; var ImageIndex: Integer);
-    procedure lstIndex2FocusChanged(Sender: TBaseVirtualTree;
+    procedure lstIndexFocusChanged(Sender: TBaseVirtualTree;
       Node: PVirtualNode; Column: TColumnIndex);
-    procedure lstIndex2CompareNodes(Sender: TBaseVirtualTree; Node1,
+    procedure lstIndexCompareNodes(Sender: TBaseVirtualTree; Node1,
       Node2: PVirtualNode; Column: TColumnIndex; var Result: Integer);
-    procedure lstIndex2ContextPopup(Sender: TObject; MousePos: TPoint;
+    procedure lstIndexContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
     procedure TimerParamTimer(Sender: TObject);
     procedure menuLog_ShowClick(Sender: TObject);
@@ -231,7 +230,7 @@ type
     procedure menuPreview_Display_FullClick(Sender: TObject);
     procedure menuRecentClick(Sender: TObject);
     procedure menuAbout_NewVersionsClick(Sender: TObject);
-    procedure lstIndex2FreeNode(Sender: TBaseVirtualTree;
+    procedure lstIndexFreeNode(Sender: TBaseVirtualTree;
       Node: PVirtualNode);
     procedure lstContentFreeNode(Sender: TBaseVirtualTree;
       Node: PVirtualNode);
@@ -259,6 +258,8 @@ type
     procedure RecentFiles_Decal(oldpos: integer);
     procedure SaveFilterIndex(index, hash: integer);
     function LoadFilterIndex(hash: integer): integer;
+    procedure CreateDirs(Nod: PVirtualNode; Pth: String);
+    procedure InitOptions();
   public
     TempFiles: TStrings;
     isPreviewLimit: boolean;
@@ -348,7 +349,7 @@ begin
     menuTools.Visible := True;
     Status.Panels.Items[3].Text := FSE.DriverID;
     if autoexpand then
-      lstIndex2.FullExpand();
+      lstIndex.FullExpand();
   end
   else
   begin
@@ -783,11 +784,6 @@ begin
 
 end;
 
-procedure RegNothing();
-begin
-
-end;
-
 procedure Tdup5Main.menuEdit_SearchClick(Sender: TObject);
 var Reg: TRegistry;
 begin
@@ -882,28 +878,42 @@ begin
 
 end;
 
-procedure CreateDirs2(Nod: PVirtualNode; Pth: String);
+//
+// Create all sub-directories folders on the destination path so the extraction
+// don't fail
+//
+procedure Tdup5Main.CreateDirs(Nod: PVirtualNode; Pth: String);
 var NodC: PVirtualNode;
     NodeData: pvirtualIndexData;
     NewDir: string;
 begin
 
-//  MessageDlg(Nod.Text, mtInformation,[mbok],0);
-
+  // If there is at least one sub-folder
   if Nod.ChildCount > 0 then
   begin
 
+    // Go through all sub-folders and create them
     NodC := Nod.FirstChild;
-//    duP5Main.lstIndex2.get NodC.
 
+    // Until there are no more sub-folders
     while NodC <> Nil do
     begin
-      NodeData := dup5main.lstIndex2.GetNodeData(NodC); 
+
+      // Get full path (starting from sub-folder)
+      NodeData := dup5main.lstIndex.GetNodeData(NodC);
+
+      // Compute new directory name
       NewDir := Pth + NodeData.dirname;
-//      MessageDlg(NewDir,mtInformation,[mbok],0);
-      //CreateDir(NewDir);
-      CreateDirs2(NodC,NewDir+'\');
+
+      // Create the folder on the disk
+      CreateDir(NewDir);
+
+      // Recurse on sub-folders of current sub-folder
+      CreateDirs(NodC,NewDir+'\');
+
+      // Get next sub-folder
       NodC := NodC.NextSibling;
+
     end;
 
   end;
@@ -920,8 +930,8 @@ begin
     if copy(outputdir,length(outputdir),1) <> '\' then
       outputdir := outputdir + '\';
 
-    CreateDirs2(lstIndex2.FocusedNode,outputdir);
-    FSE.ExtractDir(GetNodePath2(lstIndex2.FocusedNode),outputdir)
+    CreateDirs(lstIndex.FocusedNode,outputdir);
+    FSE.ExtractDir(GetNodePath(lstIndex.FocusedNode),outputdir)
 
   end
 
@@ -937,14 +947,14 @@ begin
     if copy(outputdir,length(outputdir),1) <> '\' then
       outputdir := outputdir + '\';
 
-    CreateDirs2(lstIndex2.FocusedNode,outputdir);
+    CreateDirs(lstIndex.FocusedNode,outputdir);
     FSE.ExtractDir('',outputdir)
 
   end
 
 end;
 
-procedure InitOptions;
+procedure Tdup5Main.InitOptions;
 begin
 
   frmConfig.Top := dup5Main.Top + ((dup5Main.Height - frmConfig.Height) div 2) ;
@@ -1066,7 +1076,7 @@ begin
 
     tmpfil := getTemporaryDir+getTemporaryFilename(Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos));
 
-{    rep := GetNodePath2(lstIndex2.FocusedNode);
+{    rep := GetNodePath(lstIndex.FocusedNode);
     if length(rep) > 0 then
       rep := rep + FSE.SlashMode;}
     FSE.ExtractFile(data.data,tmpfil,false);
@@ -1125,14 +1135,14 @@ procedure Tdup5Main.menuIndex_ExpandClick(Sender: TObject);
 begin
 
 //  lstIndex.FullExpand;
-  lstIndex2.FullExpand(lstIndex2.FocusedNode);
+  lstIndex.FullExpand(lstIndex.FocusedNode);
 
 end;
 
 procedure Tdup5Main.menuIndex_CollapseClick(Sender: TObject);
 begin
 
-  lstIndex2.FullCollapse(lstIndex2.FocusedNode); 
+  lstIndex.FullCollapse(lstIndex.FocusedNode); 
 //  lstIndex.FullCollapse;
 
 end;
@@ -1152,7 +1162,7 @@ begin
   if SaveDialog.Execute then
   begin
     dstfil := SaveDialog.Filename;
-    rep := GetNodePath2(lstIndex2.FocusedNode);
+    rep := GetNodePath(lstIndex.FocusedNode);
     if length(rep) > 0 then
       rep := rep + FSE.SlashMode;
 //    FSE.ExtractFile(rep+Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos),dstfil,false)
@@ -1239,7 +1249,7 @@ begin
       outputdir := outputdir + '\';
     CurFiles := 1;
 
-    rep := GetNodePath2(lstIndex2.FocusedNode);
+    rep := GetNodePath(lstIndex.FocusedNode);
     if length(rep) > 0 then
       rep := rep + FSE.SlashMode;
 
@@ -1292,7 +1302,7 @@ begin
       outputdir := outputdir + '\';
     x := 0;
 
-    rep := GetNodePath2(lstIndex2.FocusedNode);
+    rep := GetNodePath(lstIndex.FocusedNode);
     if length(rep) > 0 then
       rep := rep + FSE.SlashMode;
 
@@ -1442,7 +1452,7 @@ begin
   lstContent.NodeDataSize := SizeOf(virtualTreeData);
   lstContent.Header.SortColumn := 0;
 
-  lstIndex2.NodeDataSize := SizeOf(virtualIndexData);
+  lstIndex.NodeDataSize := SizeOf(virtualIndexData);
 
   // Indicate version number in title and in log
   Caption := 'Dragon UnPACKer v' + CurVersion + ' ' + CurEdit;
@@ -1563,7 +1573,7 @@ begin
       begin
         tmpi := Reg.ReadInteger('Main_S');
         if tmpi > 20 then
-          lstIndex2.Width := tmpi;
+          lstIndex.Width := tmpi;
       end;
       if Reg.ValueExists('Main_P') then
       begin
@@ -1870,7 +1880,7 @@ begin
      Popup_ExtraireMulti.Visible := True;
      Popup_Open.Visible := False;
 
-     rep := GetNodePath2(lstIndex2.FocusedNode);
+     rep := GetNodePath(lstIndex.FocusedNode);
      if length(rep) > 0 then
        rep := rep + FSE.SlashMode;
 
@@ -1963,7 +1973,7 @@ begin
      Popup_ExtraireMulti.Visible := False;
      Popup_Open.Visible := True;
 
-     rep := GetNodePath2(lstIndex2.FocusedNode);
+     rep := GetNodePath(lstIndex.FocusedNode);
      if length(rep) > 0 then
        rep := rep + FSE.SlashMode;
 
@@ -2034,7 +2044,7 @@ begin
   dup5Main.lstContent.clear;
 //  dup5Main.lstIndex.Items.Clear;
 
-  dup5Main.lstIndex2.Clear;
+  dup5Main.lstIndex.Clear;
 
   isPreviewImage := false;
   ImgPreview.Repaint;
@@ -2103,7 +2113,7 @@ begin
     if not(DirectoryExists(tmpdir)) then
       mkdir(tmpdir);
 
-{    rep := GetNodePath2(lstIndex2.FocusedNode);
+{    rep := GetNodePath(lstIndex.FocusedNode);
     if length(rep) > 0 then
       rep := rep + FSE.SlashMode;}
 
@@ -2395,7 +2405,7 @@ begin
 
 end;
 
-procedure Tdup5Main.lstIndex2GetText(Sender: TBaseVirtualTree;
+procedure Tdup5Main.lstIndexGetText(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType;
   var CellText: WideString);
 var NodeData: pvirtualIndexData;
@@ -2408,7 +2418,7 @@ begin
 
 end;
 
-procedure Tdup5Main.lstIndex2GetImageIndex(Sender: TBaseVirtualTree;
+procedure Tdup5Main.lstIndexGetImageIndex(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Kind: TVTImageKind; Column: TColumnIndex;
   var Ghosted: Boolean; var ImageIndex: Integer);
 var NodeData: pvirtualIndexData;
@@ -2430,12 +2440,12 @@ begin
 
 end;
 
-procedure Tdup5Main.lstIndex2FocusChanged(Sender: TBaseVirtualTree;
+procedure Tdup5Main.lstIndexFocusChanged(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Column: TColumnIndex);
 var disp: string;
 begin
 
-  disp := GetNodePath2(Node);
+  disp := GetNodePath(Node);
   writelogVerbose(1,ReplaceValue('%d',DLNGStr('LOG300'),disp));
   FSE.BrowseDir(disp);
   CurrentDir := disp;
@@ -2443,18 +2453,18 @@ begin
 
 end;
 
-function Tdup5Main.GetNodePath2(Nod: PVirtualNode): string;
+function Tdup5Main.GetNodePath(Nod: PVirtualNode): string;
 var res: string;
     NodeData: pvirtualIndexData;
 begin
 
   if (Nod <> nil) then
   begin
-    NodeData := lstIndex2.GetNodeData(Nod);
+    NodeData := lstIndex.GetNodeData(Nod);
 
     if (NodeData <> nil) and (NodeData.imageIndex <> 2) then
     begin
-      res := GetNodePath2(Nod.Parent);
+      res := GetNodePath(Nod.Parent);
       if length(res)>0 then
         res := res + FSE.SlashMode;
       res := res + NodeData.dirname;
@@ -2468,7 +2478,7 @@ begin
 
 end;
 
-procedure Tdup5Main.lstIndex2CompareNodes(Sender: TBaseVirtualTree; Node1,
+procedure Tdup5Main.lstIndexCompareNodes(Sender: TBaseVirtualTree; Node1,
   Node2: PVirtualNode; Column: TColumnIndex; var Result: Integer);
 var Data1, Data2: pvirtualIndexData;
 begin
@@ -2477,8 +2487,8 @@ begin
   Data2 := Sender.GetNodeData(Node2);
 
   Result := AnsiCompareStr(UpperCase(Data1.dirname),UpperCase(Data2.dirname));
-//  ShowMessage(GetNodePath2(Node1)+#10+GetNodePath2(Node2)+#10+#10+Data1.dirname+#10+Data2.dirname);
-//  Result := AnsiCompareStr(GetNodePath2(Node1),GetNodePath2(Node2));
+//  ShowMessage(GetNodePath(Node1)+#10+GetNodePath(Node2)+#10+#10+Data1.dirname+#10+Data2.dirname);
+//  Result := AnsiCompareStr(GetNodePath(Node1),GetNodePath(Node2));
 
 {  if (UpperCase(Data1.dirname) < UpperCase(Data2.dirName)) then
     Result := -1
@@ -2489,21 +2499,21 @@ begin
 
 end;
 
-procedure Tdup5Main.lstIndex2ContextPopup(Sender: TObject;
+procedure Tdup5Main.lstIndexContextPopup(Sender: TObject;
   MousePos: TPoint; var Handled: Boolean);
 var NodeData: pvirtualIndexData;
 begin
 
- if (lstIndex2.RootNodeCount > 0) and (lstIndex2.FocusedNode <> nil) then
+ if (lstIndex.RootNodeCount > 0) and (lstIndex.FocusedNode <> nil) then
  begin
-   NodeData := lstIndex2.GetNodeData(lstIndex2.FocusedNode);
+   NodeData := lstIndex.GetNodeData(lstIndex.FocusedNode);
    if (NodeData.imageIndex = 2) then
    begin
      menuIndex_ExtractAll.Visible := True;
      menuIndex_Infos.Visible := True;
      menuIndex_ExtractDirs.Visible := False;
      N2.Visible := true;
-     lstIndex2.PopupMenu.Popup(Left + MousePos.X + 8, Top + lstIndex2.Top + ToolBar.Top + ToolBar.Height + 20 + MousePos.Y)
+     lstIndex.PopupMenu.Popup(Left + MousePos.X + 8, Top + lstIndex.Top + ToolBar.Top + ToolBar.Height + 20 + MousePos.Y)
    end
    else
    begin
@@ -2511,7 +2521,7 @@ begin
      menuIndex_Infos.Visible := False;
      N2.Visible := false;
      menuIndex_ExtractDirs.Visible := True;
-     lstIndex2.PopupMenu.Popup(Left + MousePos.X + 8, Top + lstIndex2.Top + ToolBar.Top + ToolBar.Height + 20 + MousePos.Y)
+     lstIndex.PopupMenu.Popup(Left + MousePos.X + 8, Top + lstIndex.Top + ToolBar.Top + ToolBar.Height + 20 + MousePos.Y)
    end;
  end
  else
@@ -2753,7 +2763,7 @@ begin
     else if (lstContent.SelectedCount = 1) then
     begin
 
-      rep := GetNodePath2(lstIndex2.FocusedNode);
+      rep := GetNodePath(lstIndex.FocusedNode);
       if length(rep) > 0 then
         rep := rep + FSE.SlashMode;
 
@@ -3093,10 +3103,10 @@ begin
 end;
 
 //
-// Free the memory associated with a node of lstIndex2
+// Free the memory associated with a node of lstIndex
 //
 // NOT HOOKED as it seems to make Dup5 dump when closing...
-procedure Tdup5Main.lstIndex2FreeNode(Sender: TBaseVirtualTree;
+procedure Tdup5Main.lstIndexFreeNode(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 var NodeData: pvirtualIndexData;
     disp: string;
@@ -3104,11 +3114,11 @@ begin
 
   // Free the cache structure for the directory in FSE
   // We need the full directory path and not only the current directory name
-  disp := GetNodePath2(Node);
+  disp := GetNodePath(Node);
   FSE.FreeDir(disp);
 
   // We free the directory name (string)
-  NodeData := lstIndex2.GetNodeData(Node);
+  NodeData := lstIndex.GetNodeData(Node);
   setLength(NodeData.dirname,0);
 
 end;
@@ -3132,7 +3142,7 @@ begin
   Icons.close;
   FreeAndNil(Icons);
 
-//  FreeAndNil(lstIndex2);
+//  FreeAndNil(lstIndex);
 //  FreeAndNil(lstContent);
 //  FreeAndNil(ImgContents);
 
@@ -3171,7 +3181,7 @@ begin
       Reg.WriteInteger('Main_Y',Top);
       Reg.WriteInteger('Main_H',Height);
       Reg.WriteInteger('Main_W',Width);
-      Reg.WriteInteger('Main_S',lstIndex2.Width);
+      Reg.WriteInteger('Main_S',lstIndex.Width);
       Reg.WriteInteger('Main_P',panPreview.Width);
       if richLog.Visible then
         Reg.WriteInteger('Main_B',panBottom.Height)

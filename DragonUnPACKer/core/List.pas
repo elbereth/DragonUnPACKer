@@ -363,7 +363,7 @@ begin
         if (dup5Main.lstContent.SelectedCount > 1) then
         begin
 
-          rep := dup5Main.GetNodePath2(dup5Main.lstIndex2.FocusedNode);
+          rep := dup5Main.GetNodePath(dup5Main.lstIndex.FocusedNode);
           if length(rep) > 0 then
             rep := rep + FSE.SlashMode;
 
@@ -388,7 +388,7 @@ begin
       else if optCurrentDir.Checked then
       begin
 
-        rep := dup5Main.GetNodePath2(dup5Main.lstIndex2.FocusedNode);
+        rep := dup5Main.GetNodePath(dup5Main.lstIndex.FocusedNode);
         if length(rep) > 0 then
           rep := rep + FSE.SlashMode;
 

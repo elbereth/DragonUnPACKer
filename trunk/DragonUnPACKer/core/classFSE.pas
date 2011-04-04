@@ -1474,6 +1474,11 @@ begin
       FileClose(dst);
       if not(silent) then
         dup5Main.appendLog(DLNGStr('LOG510'));
+    end
+    else if not(silent) then
+    begin
+      dup5Main.appendLog(DLNGStr('LOG512'));
+      dup5Main.colorLog(clRed);
     end;
   end;
  except

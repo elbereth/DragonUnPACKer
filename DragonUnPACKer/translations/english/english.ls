@@ -29,7 +29,7 @@
 # ============================================================================
 #
 # version 14:
-# Added LOG505, LOG506, LOG507, OPT127, OPT128, OPT812 and POP3S4
+# Added LOG505, LOG506, LOG507, OPT127, OPT128, OPT812, POP2S6 and POP3S4
 #
 # version 13:
 # Added HR2031, HR4061, HR4062 and HR4063
@@ -272,11 +272,12 @@ PSUB02=Convert to %d
 POP1S2=Extract files to...
 POP1S3=Open
 POP1S4=Without Convertion
-POP2S1=Extract all to...
-POP2S2=Extract sub-directories to...
+POP2S1=Extract all...
+POP2S2=Extract sub-directories...
 POP2S3=Informations
 POP2S4=Full Expand
 POP2S5=Full Collapse
+POP2S6=Extract sub-directories to %d...
 POP3S1=Show log
 POP3S2=Hide log
 POP3S3=Clear log

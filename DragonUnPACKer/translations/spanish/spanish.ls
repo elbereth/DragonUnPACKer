@@ -89,6 +89,7 @@ POP2S2=Extraer los sub-directorios...
 POP2S3=Informaciones
 POP2S4=Mostrar todo
 POP2S5=Ocultar todo
+POP2S6=Extraer los sub-directorios en %d...
 POP3S1=Mostrar el diario
 POP3S2=Ocultar el diario
 POP3S3=Borrar el diario

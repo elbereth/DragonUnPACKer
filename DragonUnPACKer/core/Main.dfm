@@ -5394,6 +5394,10 @@ object dup5Main: Tdup5Main
       Visible = False
       OnClick = menuIndex_ExtractDirsClick
     end
+    object menuIndex_ExtractDirsNamedFolder: TMenuItem
+      Caption = 'Extraire les sous-r'#233'pertoires vers %f...'
+      OnClick = menuIndex_ExtractDirsNamedFolderClick
+    end
     object N1: TMenuItem
       Caption = '-'
     end

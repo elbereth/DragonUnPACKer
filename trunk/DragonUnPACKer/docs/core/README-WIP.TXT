@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.6.1 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    01/04/2011
+by Alexande "Elbereth" Devilliers                                    04/04/2011
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,8 +10,8 @@ by Alexande "Elbereth" Devilliers                                    01/04/2011
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.6.1.260
-SVN Release 596 [Unreleased]
+Version 5.6.1.262
+SVN Release 601 [Unreleased]
 
  i Now using FastMM v4.97 as memory manager. Only core for the moment.
  ! Fixed a lot of memory leaks (more to come). Thanks to FastMM debuging mode.
@@ -39,6 +39,18 @@ SVN Release 596 [Unreleased]
  * The create file list now automatically adds the extension to the filename
    if it is missing.
  + Added Copy to clipboard option to the popup menu of the Log.
+ ! Fixed a huge extraction bug (when extracting folders from the left pane).
+   Thanks to Paul (from http://www.spookcentral.tk) for noticing and helping
+   nailing this bug out.
+ + Added option on the popup menu on left pane to extract current selected
+   folder to his own folder (with same name).
+   Ex: You right-click on "Animation" folder which contains sub-folders.
+     Extract sub-directories... will extract all sub-folder directly
+                                to the selected folder.
+     Extract sub-directories to folder... will create a sub-folder named as
+                                "Animation" to the selected folder and extract
+                                all-subfolders there.
+ ! Fixed double menu popup in left pane when right clicking.
  * Elbereth's Main Driver plugin v2.1.1:
    * Enhanced Bloodrayne .POD support by using buffered directory reading.
    + Added Ghostbusters: The Video Game .POD support (POD5).

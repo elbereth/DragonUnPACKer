@@ -128,6 +128,7 @@ type
     menuAbout_NewVersions: TMenuItem;
     N5: TMenuItem;
     menuLog_CopyClipboard: TMenuItem;
+    menuIndex_ExtractDirsNamedFolder: TMenuItem;
     procedure FormResize(Sender: TObject);
     procedure menuFichier_QuitterClick(Sender: TObject);
     procedure menuAbout_AboutClick(Sender: TObject);
@@ -196,7 +197,7 @@ type
     procedure TDup5FileOpenExecute(Sender: TObject);
     procedure TDup5FileCloseExecute(Sender: TObject);
     procedure TDup5ToolsListExecute(Sender: TObject);
-    function GetNodePath(Nod: PVirtualNode): string;
+    function GetNodePath(Nod: PVirtualNode; ReturnFullPath : boolean = true): string;
     procedure lstIndexGetText(Sender: TBaseVirtualTree;
       Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType;
       var CellText: WideString);
@@ -237,6 +238,7 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure FormHide(Sender: TObject);
     procedure menuLog_CopyClipboardClick(Sender: TObject);
+    procedure menuIndex_ExtractDirsNamedFolderClick(Sender: TObject);
   private
     FPreviewBitmap: TImagingBitmap;
     FPreviewImage: TMultiImage;
@@ -2453,7 +2455,7 @@ begin
 
 end;
 
-function Tdup5Main.GetNodePath(Nod: PVirtualNode): string;
+function Tdup5Main.GetNodePath(Nod: PVirtualNode; ReturnFullPath : boolean = true): string;
 var res: string;
     NodeData: pvirtualIndexData;
 begin
@@ -2464,10 +2466,15 @@ begin
 
     if (NodeData <> nil) and (NodeData.imageIndex <> 2) then
     begin
-      res := GetNodePath(Nod.Parent);
-      if length(res)>0 then
-        res := res + FSE.SlashMode;
-      res := res + NodeData.dirname;
+      if ReturnFullPath then
+      begin
+        res := GetNodePath(Nod.Parent);
+        if length(res)>0 then
+          res := res + FSE.SlashMode;
+        res := res + NodeData.dirname;
+      end
+      else
+        res := NodeData.dirname;
     end
     else
       res := '';
@@ -2512,8 +2519,9 @@ begin
      menuIndex_ExtractAll.Visible := True;
      menuIndex_Infos.Visible := True;
      menuIndex_ExtractDirs.Visible := False;
+     menuIndex_ExtractDirsNamedFolder.Visible := False;
      N2.Visible := true;
-     lstIndex.PopupMenu.Popup(Left + MousePos.X + 8, Top + lstIndex.Top + ToolBar.Top + ToolBar.Height + 20 + MousePos.Y)
+//     lstIndex.PopupMenu.Popup(Left + MousePos.X + 8, Top + lstIndex.Top + ToolBar.Top + ToolBar.Height + 20 + MousePos.Y)
    end
    else
    begin
@@ -2521,7 +2529,9 @@ begin
      menuIndex_Infos.Visible := False;
      N2.Visible := false;
      menuIndex_ExtractDirs.Visible := True;
-     lstIndex.PopupMenu.Popup(Left + MousePos.X + 8, Top + lstIndex.Top + ToolBar.Top + ToolBar.Height + 20 + MousePos.Y)
+     menuIndex_ExtractDirsNamedFolder.Caption := ReplaceValue('%d',DLNGStr('POP2S6'),NodeData.dirname);
+     menuIndex_ExtractDirsNamedFolder.Visible := True;
+//     lstIndex.PopupMenu.Popup(Left + MousePos.X + 8, Top + lstIndex.Top + ToolBar.Top + ToolBar.Height + 20 + MousePos.Y)
    end;
  end
  else
@@ -3232,6 +3242,25 @@ begin
   // If something is select we copy only this part to the clipboard
   else
     richLog.CopyToClipboard;
+
+end;
+
+procedure Tdup5Main.menuIndex_ExtractDirsNamedFolderClick(Sender: TObject);
+var outputdir: string;
+begin
+
+  outputdir := CallDirSelect;
+  if length(outputdir)>0 then
+  begin
+    if copy(outputdir,length(outputdir),1) <> '\' then
+      outputdir := outputdir + '\';
+    outputdir := outputdir + GetNodePath(lstIndex.FocusedNode,false) + '\';
+    CreateDir(outputdir);
+
+    CreateDirs(lstIndex.FocusedNode,outputdir);
+    FSE.ExtractDir(GetNodePath(lstIndex.FocusedNode),outputdir)
+
+  end
 
 end;
 

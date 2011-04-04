@@ -224,7 +224,7 @@ object dup5Main: Tdup5Main
         WideText = 'Description'
       end>
   end
-  object lstIndex2: TVirtualStringTree
+  object lstIndex: TVirtualStringTree
     Left = 0
     Top = 30
     Width = 113
@@ -245,11 +245,11 @@ object dup5Main: Tdup5Main
     TabOrder = 2
     TreeOptions.PaintOptions = [toHideSelection, toShowButtons, toShowDropmark, toShowRoot, toShowTreeLines, toThemeAware, toUseBlendedImages]
     TreeOptions.SelectionOptions = [toRightClickSelect]
-    OnCompareNodes = lstIndex2CompareNodes
-    OnContextPopup = lstIndex2ContextPopup
-    OnFocusChanged = lstIndex2FocusChanged
-    OnGetText = lstIndex2GetText
-    OnGetImageIndex = lstIndex2GetImageIndex
+    OnCompareNodes = lstIndexCompareNodes
+    OnContextPopup = lstIndexContextPopup
+    OnFocusChanged = lstIndexFocusChanged
+    OnGetText = lstIndexGetText
+    OnGetImageIndex = lstIndexGetImageIndex
     Columns = <>
   end
   object panBottom: TPanel

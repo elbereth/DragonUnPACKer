@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.6.0 "Exedra"                             MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    15/10/2010
+Dragon UnPACKer v5.6.1 "Exedra-Benton"                      MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    05/04/2011
 ===============================================================================
 
   ** English ** (voir Historique.txt pour la version française)
@@ -22,7 +22,7 @@ Plugins versions:
 
 Drivers plugins:					                    Version:
 Elbereth's 11th Hour Driver (drv_11th.d5d)              1.0.0.9
-Main Driver (drv_default.d5d)                           2.1.0.937
+Main Driver (drv_default.d5d)                           2.1.1.941
 A.Cordero's UT Packages Driver (drv_ut.d5d)             2.3.0.125
 Info-ZIP's ZIP Driver (DLL wrapper) (drv_zip.d5d)       1.1.3.139
   Info-ZIP's UnZip DLL for Win32 (unzip32.dll)          5.5.2
@@ -33,7 +33,56 @@ Picture/Textures convert Plugin (cnv_pictex.d5c)        2.2.0.122
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.6.0.239
+Version 5.6.1.262 "Exedra-Benton"
+Release [05/04/2011]
+
+ i Thanks to Paul (from http://www.spookcentral.tk) for all his good ideas
+   for features and helping fixing bugs for this version.
+ i Now using FastMM v4.97 as memory manager. Only core for the moment.
+ ! Fixed a lot of memory leaks (more to come). Thanks to FastMM debuging mode.
+ ! Fixed the missing sort options in the file listing pane. Clicking on the
+   header would do nothing.
+ * Changed association icons to use 256x256 icons (much more appropriate for
+   modern OSes than the old 32x32 one.
+   The chest icons (closed & open) were made by Mohsen Fakharian, check his
+   work here: http://mohsenfakharian.deviantart.com
+   For the moment only the first icon is used, I will try to modify the
+   association part so it can be choosen between both possibilities.
+ * MAJOR speedup when lots of entries in the opened resource file:
+     When left-clicking an entry for a preview
+	 When right-clicking for popup menu
+   I was doing some pretty dumb things which were slow as hell!!! 
+ - Removed use of CxCpu (which was only used in Error handling popup).
+   Unmaintained and not really useful anyway.
+ * Auto-expand the folder list when loading a file.
+   This can be turned off in the Basic Options.
+ + The program now remembers which file type you had selected in the open dialog
+   and will reselect it automatically unless the format list changed (ex: when
+   updating the driver plugins).
+   This can also be turned off in the Basic Options.
+ + Added option to automatically clear the log everytime a file is opened.
+ * The create file list now automatically adds the extension to the filename
+   if it is missing.
+ + Added Copy to clipboard option to the popup menu of the Log.
+ + Added option on the popup menu on left pane to extract current selected
+   folder to his own folder (with same name).
+   Ex: You right-click on "Animation" folder which contains sub-folders.
+     Extract sub-directories... will extract all sub-folder directly
+                                to the selected folder.
+     Extract sub-directories to folder... will create a sub-folder named as
+                                "Animation" to the selected folder and extract
+                                all-subfolders there.
+ ! Fixed double menu popup in left pane when right clicking.
+ * Elbereth's Main Driver plugin v2.1.1:
+   * Enhanced Bloodrayne .POD support by using buffered directory reading.
+   + Added Ghostbusters: The Video Game .POD support (POD5).
+     This is almost the same file format as Bloodrayne .POD (POD3).
+   + Added Ghostbusters: Sanctum of Slime .PAK support.
+     Includes decompression of entries (LZMA).
+   * Changed how magic ID string is copied.
+   
+
+Version 5.6.0.239 "Exedra"
 Release [15/10/2010]
  
  ! Fixed Preview option main menu & popup menu (ETreeViewError with Invalid
@@ -164,7 +213,7 @@ Release [15/10/2010]
      of Dragon UnPACKer.
 
 	 
-Version 5.4.0.192
+Version 5.4.0.192 "Degei"
 Release A [23/04/2009]
 
  i Very minor release, but still some annoying bugs. :p
@@ -175,7 +224,7 @@ Release A [23/04/2009]
  ! Fixed Maximized status lost after quit.
 
  
-Version 5.4.0.191
+Version 5.4.0.191 "Degei"
 Release [20/11/2008]
 
  i This stable release was long to come, but there are some neat additions and
@@ -319,7 +368,7 @@ Release [20/11/2008]
    + Duppi now has its own language files.
  
 
-Version 5.2.0.169
+Version 5.2.0.169 "Cinthia"
 Release B [30/01/2006]
 
  ! Fixed bug: By implementing (too quickly) the feature request 1216790, I
@@ -328,7 +377,7 @@ Release B [30/01/2006]
    The new language files are compatible with all 5.2.0 versions.
 
 
-Version 5.2.0.168
+Version 5.2.0.168 "Cinthia"
 Release A [29/12/2005]
 
  + Implemented feature request 1216790: file size/length needed.
@@ -338,7 +387,7 @@ Release A [29/12/2005]
      Thanks to the XentaX Wiki for the info.
 
 
-Version 5.2.0.167
+Version 5.2.0.167 "Cinthia"
 Release [23/12/2005]
 
  i Since last version 5.1.2 WIP (9 months ago), I was quite inactive in

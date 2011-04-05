@@ -1,5 +1,5 @@
 Dragon UnPACKer 5.6.1 "Exedra-Benton" Source Code               MPL open source
-by Alexande "Elbereth" Devilliers                                    31/03/2011
+by Alexande "Elbereth" Devilliers                                    05/04/2011
 ===============================================================================
 
 This source code can be used and modified if following the Mozilla Public

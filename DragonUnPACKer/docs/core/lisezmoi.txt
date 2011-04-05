@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.6.0 "Exedra"                             MPL 1.1 open source
-par Alexande "Elbereth" Devilliers                                   15/10/2010
+Dragon UnPACKer v5.6.1 "Exedra-Benton"                      MPL 1.1 open source
+par Alexande "Elbereth" Devilliers                                   05/04/2011
 ===============================================================================
 
   ** Français ** (see Readme.txt for english)
@@ -36,8 +36,8 @@ les fichiers textes doivent rester intact dans le fichier zip, et aucun autre
 fichier ne doit etre rajouté.
 
  Le programme est distribuée sous deux formes (meme contenu):
-    SETUP - ~2.5Mo - dup560exedra-setup.exe - Avec Installation/Désinstallation
-       7Z - ~2.4Mo - dup560exedra.7z        - Archive 7-Zip (v9.17 beta)
+  SETUP - ~2.5Mo - dup561exedrabenton-setup.exe Avec installation (recommendé)
+     7Z - ~2.4Mo - dup561exedrabenton.7z        Archive 7-Zip (v9.20)
 
 ===============================================================================
  2. DESCRIPTION DU PROGRAMME
@@ -74,13 +74,13 @@ associations de fichiers dans les options.
  (si vous n'avez pas ses fichiers allez telecharger Dragon UnPACKer sur la
   page officielle, voir fin du fichier)
 
-*drgunpack5.exe             3477 Ko
+*drgunpack5.exe             3767 Ko
  drgunpack5.exe.sig            1 Ko  Signature GnuPG du fichier drgunpack5.exe
  file_id.diz                   1 Ko
- historique.txt               42 Ko
+ historique.txt               54 Ko
  lisezmoi.txt                 61 Ko
- readme.txt                   55 Ko
- whatsnew.txt                 36 Ko
+ readme.txt                   54 Ko
+ whatsnew.txt                 45 Ko
  
  data\
  default.dulk                 40 Ko  Look par défaut
@@ -101,7 +101,7 @@ associations de fichiers dans les options.
  
  data\drivers\
  drv_11th.d5d                412 Ko  Extension Pilote 11th Hour (v1.0.0)
- drv_default.d5d             273 Ko  Extension Pilote principale (v2.1.0)
+ drv_default.d5d             289 Ko  Extension Pilote principale (v2.1.1)
  drv_default_mix.lst         266 Ko  Liste de nom de fichiers pour .MIX
  drv_ut.d5d                  669 Ko  Extension Pilote UT Packages (v2.3.0)
  drv_zip.d5d                 103 Ko  Extension Pilote ZIP (v1.1.3)
@@ -142,6 +142,7 @@ associations de fichiers dans les options.
  english-533-changes.txt       2 Ko  Changements english.ls 5.3.2 -> 5.3.3 Beta
  english-540-changes.txt       7 Ko  Changements english.ls 5.3.3 Beta -> 5.4.0
  english-551-changes.txt       1 Ko  Changements english.ls 5.4.0 -> 5.5.1 Beta
+ english-561-changes.txt       2 Ko  Changements english.ls 5.5.1 Beta -> 5.6.1
  flag_fr.bmp                   1 Ko  Icone du drapeau de la France
  flag_sp.bmp                   1 Ko  Icone du drapeau de l'Espagne
  flag_us.bmp                   1 Ko  Icone du drapeau des Etats-Unis d'Amerique
@@ -307,17 +308,17 @@ contenu du répertoire dans le volet de droite.
     Ouvre une fenetre d'informations sur le fichier et sur le driver pour se
     format de fichier avec les temps d'execution pour les etapes de lecture
     et de chargement.
-  + Utiliser HyperRipper si aucun plugin n'a pu charger le fichier
-    Permet d'ouvrir automatiquement l'HyperRipper avec le fichier source qui
-    n'a pas pu etre ouvert par les plugins de drivers installés.
 
  Si vous cliquez sur un répertoire avec le bouton de droite vous aurez 1
  option:
  
-  + Extraire les sous-répertoires vers...
+  + Extraire les sous-répertoires...
     Permet l'extraction de tous les fichiers contenu dans se répertoire et dans
     ses sous-répertoires. Cette option n'est pas toujours disponible.
     Elle preserve l'arborescence des sous-répertoires.
+  + Extraire les sous-répertoires vers "nom de l'entrée"...
+    Idem que l'option précédente sauf qu'un répertoire "nom de l'entrée" sera
+	créé dans le répertoire sélectionné et tous sera extrait dans celui-ci.
   + Développer tout
     Développe toute l'arborescence des répertoires.
   + Replier tout
@@ -395,6 +396,7 @@ dans les options ou de tout simplement cacher le journal.
  
   + Cacher/Afficher le journal
   + Effacer le journal
+  + Copier vers le presse-papier
  
  Une ligne rouge implique une erreur.
  Une ligne orange implique un point d'attention.
@@ -637,10 +639,17 @@ vous n'aurez evidement aucun resultat..
    (ex: l'icone de WinAmp pour les fichiers MP3)
    Si cela ralenti trop la navigation désactivez cette option, les icones
    internes seront alors utilisées.
- + Utilisez l'HyperRipper si aucun plugin n'arrive à ouvrir le fichier
+ + Utiliser l'HyperRipper si aucun plugin n'arrive à ouvrir le fichier
    Comme cela l'indique, si aucun plugin n'arrive à ouvrir le fichier, le
    HyperRipper sera executé avec comme source le fichier que vous tentez
-   d'ouvrir.
+   d'ouvrir
+ + Développer automatiquement les répertoires à l'ouverture
+   Si ce n'est pas sélectionné alors les répertoires resterons repliés à
+   l'ouverture d'un fichier.
+ + Garder en mémoire le type de fichier sélectionné sur l'écran d'ouverture
+   Si ce n'est pas sélectionné alors "Tous les fichiers" sera sélectionné à
+   chaque affichage du dialogue d'ouverture.
+
    
  + Langue
    Vous permet de choisir la langue utilisé pour Dragon UnPACKer.
@@ -871,6 +880,8 @@ http://www.elberethzone.net/lang-fr/dup-supportedgames.html
  Freelancer                                             .FLMOD drv_zip 
  Freespace 2                                               .VP drv_default 
  Fuzzy's World of Miniature Space Golf                    .RES drv_default 
+ Ghostbusters: The Video Game                             .POD drv_default 
+ Ghostbusters: Sanctum of Slime                           .PAK drv_default
  Giants: Citizen Kabuto                                   .GZP drv_giants 
  Grand Theft Auto 3                                  .IMG/.DIR drv_default 
  Grand Theft Auto: Vice City                              .ADF drv_default 
@@ -1088,7 +1099,7 @@ format n'hesitez pas, contactez moi (voir section 9. CONTACTEZ MOI).
  En français, anglais ou espagnol UNIQUEMENT!!
  Vous pouvez contacter l'auteur (Alex Devilliers) par:
  
-  E-Mail: dup560 (arobase) dragonunpacker (point) com
+  E-Mail: dup561 (arobase) dragonunpacker (point) com
      ICQ: 1535372 (elbereth)
      
  ATTENTION: Vous ne recevrez JAMAIS d'email de ma part avec comme adresse
@@ -1183,7 +1194,10 @@ format n'hesitez pas, contactez moi (voir section 9. CONTACTEZ MOI).
               de Delphi TListView.
               EMail: public (arobase) lischke-online (point) de
                 URL: http://www.lischke-online.de
- 
+
+ Mohsen Fakharian pour ses icônes de coffre (ouvert et fermé) utilisée pour les
+        fichiers associés. URL: http://mohsenfakharian.deviantart.com
+				
  Mr.Mouse pour ses trouvailles a propos du format .PAK de Painkiller (et pour
           sa version DLL de MultiEx).
           URL: http://forum.xentax.com/viewtopic.php?t=664

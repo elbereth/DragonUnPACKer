@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.6.0 "Exedra"                             MPL 1.1 open source
-par Alexande "Elbereth" Devilliers                                   15/10/2010
+Dragon UnPACKer v5.6.1 "Exedra-Benton"                      MPL 1.1 open source
+par Alexande "Elbereth" Devilliers                                   05/04/2011
 ===============================================================================
 
   ** Français ** (see Whatsnew.txt for english version)
@@ -23,7 +23,7 @@ Version des extensions incluses:
 
 Extensions de Drivers:				                          Version:
 Elbereth's 11th Hour Driver (drv_11th.d5d)              1.0.0.9
-Main Driver (drv_default.d5d)                           2.1.0.937
+Main Driver (drv_default.d5d)                           2.1.1.941
 A.Cordero's UT Packages Driver (drv_ut.d5d)             2.3.0.125
 Info-ZIP's ZIP Driver (DLL wrapper) (drv_zip.d5d)       1.1.3.139
   Info-ZIP's UnZip DLL for Win32 (unzip32.dll)          5.5.2
@@ -34,7 +34,66 @@ Picture/Textures convert Plugin (cnv_pictex.d5c)        2.2.0.122
 -------------------------------------------------------------------------------
 Version du programme principal et historique:
 
-Version 5.6.0.239
+Version 5.6.1.262 "Exedra-Benton"
+Release [05/04/2011]
+
+ i Utilisation de FastMM v4.97 comme gestionnaire mémoire. Seulement pour l'exe
+   principal et le plugin drv_default pour le moment.
+ ! Correction de plusieurs fuites mémoires (j'espère en corriger plus à
+   l'avenir) grâce au mode debug de FastMM.
+ ! Correction du bug de tri par click sur les colonnes du panneau central
+   (liste de fichiers). Un click sur l'entête des colonnes n'avais aucun effet.
+ * Amélioration des icônes d'association. Ce sont désormais des icônes d'une
+   taille de 256x256 (utilisées par Vista ou 7). Une bien meilleur définition
+   que les anciennes icônes en 32x32.
+   Les deux icônes (coffre ouvert et fermé) ont été faites par Mohsen Fakharian
+   vous pouvez voir sa gallerie d'art sur dA:
+   http://mohsenfakharian.deviantart.com
+   Pour le moment, le programme n'utilise que la première icône. Je vais
+   modifier le programme ultérieurement pour pouvoir choisir entre les 2.
+ * Amélioration MAJEURE de la vitesse lorsqu'il y a beaucoup d'entrées dans un
+   fichier. L'affichage devrait maintenant être quasi instantanné:
+     Lors d'un click gauche sur une entrée pour voir un preview
+	 Lors d'un click droit pour afficher le menu popup
+   Je faisait quelquechose d'incroyablement stupide et inutile. Cela prenait un
+   temps de fou car c'était extremement lent!!!!
+ - Suppression du composant CxCpu (utilisé lors d'une erreur inconnue).
+   Non maintenu et inutile pour Dragon UnPACKer de toutes façons.
+ * Lors de l'ouverture d'un fichier avec des répertoires la liste des
+   répertoires à gauche se développe automatiquement.
+   Cette option peut être coupée dans les options Basiques.
+ + Le programme se souvient désormais du type de fichier sélectionné dans le
+   dialogue d'ouverture et le re-sélectionnera automatiquement à moins que la
+   liste des formats supportées ai changée (par ex: lors de la mise à jour des
+   plugins).
+   Ceci peut aussi être coupée dans les options Basiques.
+ + Ajout d'une option pour effacer automatiquement le journal d'execution à
+   chaque ouverture de fichier.
+ * L'option de création d'une liste de fichiers ajoute l'extension par défaut
+   automatiquement si aucune extension n'est spécifiée.
+ + Ajout d'une option de copie du journal d'execution vers le presse papier.
+ + Ajout d'une option dans le popup du panneau de gauche pour extraire le
+   répertoire sélectionner dans un répertoire ayant son propre nom.
+   Ex: Vous cliquez droit sur un répertoire "Anims" qui contient des sous
+       répertoires.
+	 Extraire les sous-répertoires... va extraire tous les sous répertoires
+	                            directement dans le répertoire sélectionné.
+	 Extraire les sous-répertoires vers "Anims"... va créer le sous répertoire
+	                            Anims dans le répertoire sélectionné et
+								extraire tout dedans.
+ ! Correction du bug qui affichait le menu popup en double dans le panneau de
+   gauche.
+ * Elbereth's Main Driver plugin v2.1.1:
+   * Amélioration du support des .POD de Bloodrayne .POD en utilisant un cache
+     pour la lecture de l'index.
+   + Ajout du support des fichiers .POD de Ghostbusters: The Video Game (POD5).
+     Quasiment le même format que Bloodrayne .POD (POD3).
+   + Ajout du support des fichiers .PAK de Ghostbusters: Sanctum of Slime.
+     Ceci inclus la décompression des entrées (LZMA).
+   * Amélioration de la copie des chaînes de caractères magiques. :p
+
+
+Version 5.6.0.239 "Exedra"
 Release [15/10/2010]
  
  ! Correction de l'option Prévisualisation dans le menu principal et dans
@@ -184,7 +243,7 @@ Release [15/10/2010]
      manuellement une nouvelle version de Dragon UnPACKer.
 
 
-Version 5.4.0.192
+Version 5.4.0.192 "Degei"
 Release A [23/04/2009]
 
  i Version très mineure, mais qui corrige quelques bugs bien embettants. :p
@@ -196,7 +255,7 @@ Release A [23/04/2009]
  ! Correction du status de maximisation perdu après avoir quitté l'application.
  
 
-Version 5.4.0.191
+Version 5.4.0.191 "Degei"
 Release [20/11/2008]
 
  i Et voilà! 2 ans pour cette nouvelle version! Mais je pense que ça en valais
@@ -362,7 +421,7 @@ Release [20/11/2008]
      version de Dragon UnPACKer.
 
 
-Version 5.2.0.169
+Version 5.2.0.169 "Cinthia"
 Release B [30/01/2006]
 
  ! Correction bug: En ajoutant la requete 1216790: taille du fichier nécessaire
@@ -371,7 +430,7 @@ Release B [30/01/2006]
    Ces fichiers de langue sont compatibles avec les autres version 5.2.0.
 
 
-Version 5.2.0.168
+Version 5.2.0.168 "Cinthia"
 Release A [29/12/2005]
 
  + Requete d'ajout 1216790: taille du fichier nécessaire.
@@ -382,7 +441,7 @@ Release A [29/12/2005]
      Merci au Wiki de XentaX pour l'info.
 
 
-Version 5.2.0.167
+Version 5.2.0.167 "Cinthia"
 Release [23/12/2005]
 
  i Depuis la dernière version 5.1.2 WIP (il y a 9 mois!), j'ai été trés inactif

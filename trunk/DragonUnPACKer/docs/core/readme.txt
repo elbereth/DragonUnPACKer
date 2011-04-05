@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.6.0 "Exedra"                             MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    15/10/2010
+Dragon UnPACKer v5.6.1 "Exedra-Benton"                      MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    05/04/2011
 ===============================================================================
 
   ** English Readme (voir lisezmoi.txt pour la version française)
@@ -34,8 +34,8 @@ media for distribution (ex: CD-Rom, FTP, HTTP, etc..). But all text files must
 stay intact, and no files can be added to the archive file (7Z/SETUP).
 
  This program have 2 differents types of releases (same content):
-  SETUP - ~2.5MB - dup560exedra-setup.exe With Install/Uninstall (recommended)
-     7Z - ~2.4MB - dup560exedra.7z        Plain 7-Zip (v9.17 beta) archive
+  SETUP - ~2.5MB - dup561exedrabenton-setup.exe With Installer (recommended)
+     7Z - ~2.4MB - dup561exedrabenton.7z        Plain 7-Zip (v9.20) archive
 
 ===============================================================================
  2. PROGRAM DESCRIPTION
@@ -67,13 +67,13 @@ DrgUnPack5.exe and voila it is installed..
  Here is a list of files you must find in the Dragon UnPACKer distribution:
  (if not go to homepage and download it from there)
 
-*drgunpack5.exe    	        3477 KB
+*drgunpack5.exe    	        3767 KB
  drgunpack5.exe.sig            1 KB  GPG Signature of drgunpack5.exe file
  file_id.diz       	           1 KB
- historique.txt    	          42 KB
+ historique.txt    	          54 KB
  lisezmoi.txt      	          61 KB
- readme.txt        	          55 KB
- whatsnew.txt      	          36 KB
+ readme.txt        	          54 KB
+ whatsnew.txt      	          45 KB
  
  data\
  default.dulk                 40 KB  Default Look
@@ -94,7 +94,7 @@ DrgUnPack5.exe and voila it is installed..
  
  data\drivers\
  drv_11th.d5d                412 KB  11th Hour driver plugin (v1.0.0)
- drv_default.d5d             273 KB  Elbereth's Main driver plugin (v2.1.0)
+ drv_default.d5d             289 KB  Elbereth's Main driver plugin (v2.1.1)
  drv_default_mix.lst         266 KB  Filename list for .MIX support
  drv_ut.d5d                  669 KB  UT Packages driver plugin (v2.3.0)
  drv_zip.d5d                 103 KB  ZIP driver plugin (v1.1.2)
@@ -135,6 +135,7 @@ DrgUnPack5.exe and voila it is installed..
  english-533-changes.txt       2 KB  Changes in english.ls 5.3.2 -> 5.3.3 Beta
  english-540-changes.txt       7 KB  Changes in english.ls 5.3.3 Beta -> 5.4.0
  english-551-changes.txt       1 KB  Changes in english.ls 5.4.0 -> 5.5.1 Beta
+ english-561-changes.txt       2 KB  Changes in english.ls 5.5.1 Beta -> 5.6.1
  flag_fr.bmp                   1 KB  France flag icon
  flag_sp.bmp                   1 KB  Spain flag icon
  flag_us.bmp                   1 KB  USA flag icon
@@ -289,6 +290,9 @@ Right-Side Explorer all files found in that directory.
     Allow to extract all files in this directory and all sub-directories.
     This option is not always available.
     Directories tree is keeped.
+  + Extract sub-directories to "entryname"...
+    Like previous option but the directory "entryname" will be created in the
+	folder selected and everything will be extracted in it.
   + Expand all
     This will expand all nodes.
   + Collapse all
@@ -362,6 +366,7 @@ detail you wish in the options or just disable (hide) the log.
  
   + Hide/Display the log
   + Clear the log
+  + Copy log to clipboard
  
  A red line indicates an error.
  An orange line indicates a warning or something important.
@@ -593,6 +598,12 @@ instead of having an HUGE single MPEG Audio file.
    current file selected as source.
    If this isn't checked then a message box is displayed saying no driver could
    load the file.
+ + Auto-expand the folders at opening
+   If this isn't checked the folders on left-pane will not auto-expand once a
+   file is loaded.
+ + Keep the selected file type in open dialog
+   If this isn't checked the open dialog will not remember the previously
+   file type and "All files" will always be used.
    
  + Language
    Allow you to select the language used for Dragon UnPACKer.
@@ -809,6 +820,8 @@ see the webpage at: http://www.elberethzone.net/dup-supportedgames.html
  Freelancer                                             .FLMOD drv_zip 
  Freespace 2                                               .VP drv_default 
  Fuzzy's World of Miniature Space Golf                    .RES drv_default 
+ Ghostbusters: The Video Game                             .POD drv_default 
+ Ghostbusters: Sanctum of Slime                           .PAK drv_default
  Giants: Citizen Kabuto                                   .GZP drv_default
  Grand Theft Auto 3                                  .IMG/.DIR drv_default 
  Grand Theft Auto: Vice City                              .ADF drv_default 
@@ -1029,7 +1042,7 @@ contact me (see Contacts chapter).
  Send bug reports, comments, suggestions, etc...
  Write me only in french, english or spanish.
  
-  E-Mail: dup560 (at) dragonunpacker (DOT) com
+  E-Mail: dup561 (at) dragonunpacker (DOT) com
      ICQ: 1535372 (Elbereth)
      
  WARNING: You will NEVER receive any email from me having the above email as
@@ -1110,6 +1123,9 @@ contact me (see Contacts chapter).
  Marek Mauder for the Vampyre Imaging Library v0.26.0 (used for fast preview)
         Email: marekmauder (at) gmail (dot) com
           URL: http://imaginglib.sourceforge.net/
+
+ Mohsen Fakharian for his chest icons (opened & closed) used for associated
+        files. URL: http://mohsenfakharian.deviantart.com
           
  Michele Marcon for the Italian translation of Dragon UnPACKer (italiano.lng).
                 EMail: markovitch (at) inwind (dot) it

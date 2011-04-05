@@ -150,7 +150,7 @@ begin
   else if sch = 'POP2S5' then
     result := 'Replier tout'
   else if sch = 'POP2S6' then
-    result := 'Extraire les sous-répertoires vers %d...'
+    result := 'Extraire les sous-répertoires vers "%d"...'
   else if sch = 'POP3S1' then
     result := 'Afficher le journal'
   else if sch = 'POP3S2' then

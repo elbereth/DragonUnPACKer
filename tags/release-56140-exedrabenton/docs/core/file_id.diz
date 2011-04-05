@@ -1,0 +1,14 @@
+Dragon UnPACKer v5.6.1 "Exedra-Benton"  WIN32
+Alexandre DEVILLIERS       OPENSOURCE MPL 1.1
+CAT : Game Utility                      (1/1)
+--------------------------------------------- 
+This  program  allow you to see into the  big
+files in games like  Quake 2 ( go look in the
+baseq2 sub directory ,  see the big  pak0.pak
+file ,  that's one )  and  extract  files  to
+anywhere you want easily. It can also convert
+some  weird formats to common formats  ( like
+.ART  Duke Nukem 3D  files to  Windows BitMaP
+.BMP files).                                 
+--------------------------------------------- 
+Open Source under Mozilla Public License v1.1

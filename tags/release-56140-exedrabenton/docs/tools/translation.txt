@@ -1,0 +1,56 @@
+How to translate Dragon UnPACKer v5 (revision 2)                       Freeware
+by Alexande "Elbereth" Devilliers                                    16/11/2008
+===============================================================================
+
+The only thing you need is:
+
+ + DLNGC.EXE version 3 file (should be along with this text file in same dir).
+ + The translated LSF (for an example see english.ls).
+
+The example files:
+
+ English.LS        English translation of main Dragon UnPACKer
+ English_Duppi.LS  English translation of helper program Duppi
+ Espanol.LS        Spanish translation of main Dragon UnPACKer
+ Espanol_Duppi.LS  Spanish translation of helper program Duppi
+ French.LS         French translation of main Dragon UnPACKer
+ French_Duppi.LS   French translation of helper program Duppi
+
+In order to make your translation, you will have to make a new LS File, you
+should copy one of this files to a new file (ex: MyTranslation.LS).
+
+Then you will have to edit file and follow instructions.
+
+When your LS file is finished you only need to compile your LSF to a LNG file
+by using DLNGC.EXE.
+
+Ex: DLNGC MyTranslation.LS
+
+When LNG file is created put it in the \Data\ sub directory of Dragon UnPACKer
+and run Dragon UnPACKer with the /lng command line.
+
+Ex: DrgUnPACK5.exe /lng
+
+The program will ask you to select your language, select yours and voila!
+
+When your LNG files are working (tested) you can contact Alex Devilliers (the
+author of Dragon UnPACKer) so it can distribute the new language from its
+homepage.
+
+PLEASE NOTE: A valid/complete translation MUST include the 2 files (the one for
+             Dragon UnPACKer and the one for Duppi). You are not obliged to
+             release the LS files but this is easier for everybody.
+
+
+  Contact
+  -------
+
+Elbereth Zone is available on the internet at:
+http://www.elberethzone.net
+
+You can reach Alex Devilliers:
+
+ By E-Mail: support (at) dragonunpacker (dot) com
+    By ICQ: 1535372 (Elbereth)
+
+===============================================================================

@@ -1,0 +1,1227 @@
+Dragon UnPACKer v5.6.1 "Exedra-Benton"                      MPL 1.1 open source
+par Alexande "Elbereth" Devilliers                                   05/04/2011
+===============================================================================
+
+  ** Français ** (see Readme.txt for english)
+
+  ** Pour savoir ce qu'il y a de nouveau dans cette version voir le
+     fichier historique.txt
+
+  Index:
+   1. License et Informations de Distribution
+   2. Description du programme
+   3. Installation
+   4. Necessaire au fonctionnement
+   5. Comment l'utiliser
+   6. HyperRipper
+   7. Options
+   8. Formats Supportés
+   9. Contacts
+  10. Remerciements Speciaux
+  
+
+===============================================================================
+ 1. LICENSE ET INFORMATIONS DE DISTRIBUTION
+-------------------------------------------------------------------------------
+
+ Ce programme est open source via la licence Mozilla Public Licence 1.1 (voir
+le fichier LICENCE.txt pour le détail de la licence).
+
+ Rapidement: - Utilisation entièrement gratuite
+             - Source code disponible (voir http://www.dragonunpacker.com)
+
+ Toutes les versions publiques (beta, release candidate ou finale) peuvent etre
+distribuée via n'importe quel media (ex: CD-Rom, FTP, HTTP, etc..). Mais tous
+les fichiers textes doivent rester intact dans le fichier zip, et aucun autre
+fichier ne doit etre rajouté.
+
+ Le programme est distribuée sous deux formes (meme contenu):
+  SETUP - ~2.5Mo - dup561exedrabenton-setup.exe Avec installation (recommendé)
+     7Z - ~2.4Mo - dup561exedrabenton.7z        Archive 7-Zip (v9.20)
+
+===============================================================================
+ 2. DESCRIPTION DU PROGRAMME
+-------------------------------------------------------------------------------
+
+ Il vous permet tout simplement de lire les gros fichiers de jeux comme par
+exemple pour Quake 2 (allez voir dans le sous-répertoire BaseQ2 vous y
+trouverez un fichier du nom de PAK0.PAK assez volumineux qui contient les
+graphismes, sons, etc.. de Quake 2) et ensuite d'extraire vers des fichiers
+se qu'ils contiennent. Mais il peux aussi convertir quelques formats de
+fichiers vers des formats 'lisibles' (comme par exemple des fichiers .ART de
+Duke Nukem 3D vers des fichiers Windows BitMaP .BMP).
+
+ Cette version 5 apporte une conception modulaire et extensible via des plugins
+externes, une vitesse et une gestion de la memoire bien meilleure que pour la
+version 4.
+
+ Voir la section FORMATS SUPPORTEES pour savoir quels fichiers peuvent etre lu.
+
+
+===============================================================================
+ 3. INSTALLATION
+-------------------------------------------------------------------------------
+
+ Si vous avez la version installable (distribution SETUP en .exe) alors vous
+n'avez rien a faire. Et dailleurs si vous lisez ceci c'est que vous avez déjà
+installé le programme.
+
+ Sinon decompressée l'archive RAR dans le répertoire de votre choix (répertoire
+d'installation) et lancez Dragon UnPACKer 5 pour configurer la langue et les
+associations de fichiers dans les options.
+ 
+ Voici la liste des fichiers que vous devriez avoir.
+ (si vous n'avez pas ses fichiers allez telecharger Dragon UnPACKer sur la
+  page officielle, voir fin du fichier)
+
+*drgunpack5.exe             3767 Ko
+ drgunpack5.exe.sig            1 Ko  Signature GnuPG du fichier drgunpack5.exe
+ file_id.diz                   1 Ko
+ historique.txt               54 Ko
+ lisezmoi.txt                 61 Ko
+ readme.txt                   54 Ko
+ whatsnew.txt                 45 Ko
+ 
+ data\
+ default.dulk                 40 Ko  Look par défaut
+*english.lng                  10 Ko  Traduction	 anglaise de DUP5
+ homepage.uht                 22 Ko  Modele de creation de liste "DUP4 Style"
+*spanish.lng                  11 Ko  Traduction espagnole de DUP5
+ text-db.uht                   6 Ko  Modele de creation de liste "Text DB"
+ xml-db.uht                    6 Ko  Modele de creation de liste "XML DB"
+
+ data\convert\
+ Blood.dpal                    1 Ko  Palette de couleurs de Blood
+ cnv_pictex.d5c              457 Ko  Plugin convertion textures (v2.2.0)
+ Doom.dpal                     1 Ko  Palette de couleurs de Doom
+ Duke3D.dpal                   1 Ko  Palette de couleurs de Duke Nukem 3D
+ Quake 1.dpal                  1 Ko  Palette de couleurs de Quake
+ Quake 2.dpal                  1 Ko  Palette de couleurs de Quake 2
+ Shadow Warrior.dpal           1 Ko  Palette de couleurs de Shadow Warrior
+ 
+ data\drivers\
+ drv_11th.d5d                412 Ko  Extension Pilote 11th Hour (v1.0.0)
+ drv_default.d5d             289 Ko  Extension Pilote principale (v2.1.1)
+ drv_default_mix.lst         266 Ko  Liste de nom de fichiers pour .MIX
+ drv_ut.d5d                  669 Ko  Extension Pilote UT Packages (v2.3.0)
+ drv_zip.d5d                 103 Ko  Extension Pilote ZIP (v1.1.3)
+ unzip32.dll                 100 Ko  Info-Zip's UnZip32.Dll v5.5.2
+
+ utils\
++duppi.exe                  1102 Ko  Instalateur de packages de DUP5 (v3.0.0)
++DuppiInstall.exe             50 Ko  Auto mise à jour de Duppi
+ hrf_30_spec.txt               7 Ko  Specification des fichiers HyperRipper 3.0
++libcurl-3.dll               268 Ko  Librairie Curl (sans SSL) (v7.21.0)
++zlib1.dll                    80 Ko  Librairie Zlib (v1.2.5)
+
+ utils\data\
++english.lng                   4 KB  Traduction Anglaise de Duppi
++spanish.lng                   4 KB  Traduction Españole de Duppi
+
+ utils\templates\
+ duhtcomp.exe                116 Ko  Compilateur de fichier .UHT
+ duhtcomp.txt                  5 Ko  Documentation du compilateur UHT
+ ex-homepage.zip              23 Ko  Sources du modele homepage.uht
+ ex-text.zip                   8 Ko  Sources du modele text-db.uht
+ ex-xml.zip                    7 Ko  Sources du modele xml-db.uht
+ 
+ utils\translation\
+ dlngc.exe                   124 Ko  Compilateur de fichier .LNG
+ dlngc.txt                     4 Ko  Documentation du compilateur LNG
+ english.ls                   19 Ko  Source de la traduction anglaise (DUP5)
+ english_duppi.ls              9 Ko  Source de la traduction anglaise (Duppi)
+ english-duppi-320-changes.txt 2 Ko  Changements duppi 3.0.0 -> 3.2.0
+ english-duppi-330-changes.txt 1 Ko  Changements duppi 3.2.0 -> 3.3.0
+ english-beta2-changes.txt     4 Ko  Changements english.ls 5.0.0 Beta 1 -> 2
+ english-beta3-changes.txt     4 Ko  Changements english.ls 5.0.0 Beta 2 -> 3
+ english-rc1-changes.txt       2 Ko  Changements english.ls 5.0.0 Beta 3 -> RC1
+ english-rc2-changes.txt       2 Ko  Changements english.ls 5.0.0 RC1 -> RC2
+ english-rc3-changes.txt       3 Ko  Changements english.ls 5.0.0 RC2 -> RC3
+ english-520-changes.txt       4 Ko  Changements english.ls 5.0.0 -> 5.2.0
+ english-532-changes.txt       3 Ko  Changements english.ls 5.2.0 -> 5.3.2 WIP
+ english-533-changes.txt       2 Ko  Changements english.ls 5.3.2 -> 5.3.3 Beta
+ english-540-changes.txt       7 Ko  Changements english.ls 5.3.3 Beta -> 5.4.0
+ english-551-changes.txt       1 Ko  Changements english.ls 5.4.0 -> 5.5.1 Beta
+ english-561-changes.txt       2 Ko  Changements english.ls 5.5.1 Beta -> 5.6.1
+ flag_fr.bmp                   1 Ko  Icone du drapeau de la France
+ flag_sp.bmp                   1 Ko  Icone du drapeau de l'Espagne
+ flag_us.bmp                   1 Ko  Icone du drapeau des Etats-Unis d'Amerique
+ french.ls                    20 Ko  Source de la traduction française (DUP5)
+ french_duppi.ls              10 Ko  Source de la traduction française (Duppi)
+ spanish.ls                   16 Ko  Source de la traduction espagnole (DUP5)
+ spanish_duppi.ls              7 Ko  Source de la traduction espagnole (Duppi)
+ translation.txt               2 Ko  Informations sur la traduction de DUP5
+
+  * Necessaire au fonctionnement multi-langue de DRGUNPACK5.EXE.
+  + Necessaire au fonctionnement multi-langue de DUPPI.EXE
+
+
+===============================================================================
+ 4. NECESSAIRE AU FONCTIONNEMENT
+-------------------------------------------------------------------------------
+
+ Vous avez besoin de:
+
+  * Windows 98/ME ou Windows NT/2000/XP/2003/Vista/2008/Seven.
+    Testé sous:
+      Windows Seven Ultimate x64       (Voir le hardware ci-dessous / UAC=Off)
+	  Windows Seven Ultimate x86       (VM avec 2x CPU et 2Go RAM / UAC=On)
+	  Windows XP Professional x86 SP3  (VM avec 2x CPU et 1Go RAM)
+    Ne fonctionne pas sous Windows 95.
+  * The programme tourne sous Linux grâce à Wine mais malheureusement
+    l'affichage est extrêmement lent...
+    La seule alternative sous Linux pour Dragon UnPACKer serais une compilation
+    native grâce à Lazarus et FreePascal (ce qui devrais théoriquement
+    permettre de supporté MacOS entre autres). Mais ceci est très difficile car
+    toutes les librairies utilisés ne sont pas disponible pour Lazarus/FPC.
+    
+ La machine de l'auteur:
+
+  * Boitier moyenne tour Antec Solo
+  * Alimentation Seasonic S12-500
+  * Gigabyte GA-EX58-UD5 (BIOS F3)
+  * Intel Quad Core Core i7 920 2.4Ghz (Nehalem) [166Mhz x 20 = 3.3Ghz]
+    Noctua C12P
+  * 6144MB (3x2048MB) de DDR3-1333 OCZ Platinum Cas 7 (7-7-7-20)
+  * Intel SSD X25-M G2 (Postville)      160Go (OS)
+    Samsung Spinpoint F1 (HD103UJ)        1To
+	Western Digital Green (WD10EADS)      1To (2x)
+	Western VelociRaptor (WD3000HlFS)   300Go (Jeux)
+  * Carte graphique nVidia GeForce GTX 285 1024Mo (648Mhz/1242Mhz/1476Mhz)
+
+  (si je dit que quelque chose est rapide testez par vous même dabord!! :)
+
+
+===============================================================================
+ 5. COMMENT L'UTILISER
+-------------------------------------------------------------------------------
+
+ Introduction:
+ -------------
+
+ Vous n'avez qu'a lancer DRGUNPACK5.EXE.
+ S'il sagit de votre premier démarrage, vous devrez choisir la langue a
+utiliser. Par defaut c'est le Français. Mais l'anglais et l'espagnol sont
+disponibles.
+
+ --> Si vous voulez faire une traduction c'est tres simple, allez dans le
+     sous-répertoire UTILS\TRANSLATION et lisez le fichier TRANSLATION.TXT
+     (en anglais).
+
+ Vous pourrez aussi associés les fichiers supportés par Dragon UnPACKer 5 dans
+les options.
+
+ C'est l'unique chose que vous aurez besoin de configurer pour utiliser le
+programme. Il existe d'autres options, mais si vous ne vous y connaissez pas je
+vous conseille de ne pas y toucher.
+
+
+ Interface:
+ ----------
+ 
+ Elle se compose d'un menu, d'une barre d'outils, de 2 volets d'exploration,
+d'une barre de status, d'une zone de prévisualisation (optionelle) sur la
+droite et d'un journal d'exécution.
+
+ Les differents menus sont:
+ Menu                             Description
+ Fichier > Ouvrir                 Permet d'ouvrir un fichier dont le format est
+                                  connus (voir la section Formats Supportés)
+ Fichier > Fermer                 Permet de fermer un fichier ouvert.
+                                  Cette action est automatique lors de la
+                                  selection du menu Fichier > Ouvrir.
+ Fichier > Ouvert Récement...     La liste des 10 derniers fichiers ouverts se
+                                  trouve ici. Cela permet de ré-ouvrir un
+                                  fichier rapidement.
+ Fichier > HyperRipper            Permet de lancer le module HyperRipper de
+                                  Dragon UnPACKer.
+ Edition > Rechercher             Le menu n'est actif que lorsqu'un fichier
+                                  est chargé et que la recherche est
+                                  disponible.
+                                  Cette option vous permet d'afficher tous les
+                                  fichiers dont le nom possede se que vous avez
+                                  tapé comme recherche.
+ Outils > Créer liste d'entrées   Ouvre la fenetre de creation d'une liste des
+                                  entrées du fichier actuellement ouvert.
+                                  Si vous désirez créer de nouveaux modeles
+                                  pour la creation de liste regardez dans le
+                                  sous répertoire UTILS\TEMPLATES de Dragon
+                                  UnPACKer.
+ Options > Générales > Générales  Ouvre le panneau de configuration de Dragon
+                                  UnPACKer sur les options Générales.
+ Options > Générales > Avancées   Ouvre le panneau de configuration de Dragon
+                                  UnPACKer sur les options Avancées.
+ Options > Générales > Journal    Ouvre le panneau de configuration de Dragon
+                     d'exécution  UnPACKer sur les options du journal
+                                  d'exécution.
+ Options > Générales > Générales  Ouvre le panneau de configuration de Dragon
+                                  UnPACKer sur les options Générales.
+ Options > Extensions >           Ouvre le panneau de configuration de Dragon
+                      Convertion  UnPACKer sur la liste des plugins de
+                                  convertion.
+ Options > Extensions > Pilotes   Ouvre le panneau de configuration de Dragon
+                                  UnPACKer sur la liste des plugins pilotes.
+ Options > Extensions >           Ouvre le panneau de configuration de Dragon
+                     HyperRipper  UnPACKer sur la liste des plugins 
+                                  HyperRipper.
+ Options > Associations           Ouvre le panneau de configuration de Dragon
+                                  UnPACKer sur les Associations de fichiers.
+ Options > Icônes/Look            Ouvre le panneau de configuration de Dragon
+                                  UnPACKer sur le choix du thème (Icônes/Look).
+ Options > Prévisualisation       Ouvre le panneau de configuration de Dragon
+                                  UnPACKer sur les options de prévisualisation.
+ ? > Rechercher de nouvelles      Lance Duppi pour récupérer les dernières
+     versions sur Internet...     versions des extensions et des programmes.
+ ? > A Propos de...               Affiche des informations sur la version
+                                  actuelle de Dragon UnPACKer.
+                                  
+ La barre d'outils est composés des boutons suivants (dans l'ordre):
+ Ouvrir  Fermer | Options | []
+
+
+ Volet de Gauche:
+ ----------------
+ 
+ Il affiche l'arborescence du fichier que vous avez ouvert, en commencant par
+le nom du fichier, puis les répertoires s'il y en a. Exemple:
+
+ --- Exemple.PAK
+  |--- Sound
+  |--- Maps
+  |--- Textures
+
+ En cliquant sur le nom du fichier ou les répertoires le programme affichera le
+contenu du répertoire dans le volet de droite.
+
+ En cliquant avec le bouton de droite de la souris vous accedez au menu Pop-Up.
+ Si vous cliquez sur le nom de fichier vous aurez 2 options:
+ 
+  + Extraire tout vers...
+    Permet l'extraction de tous les fichiers contenu dans se fichier vers un
+    répertoire. Cette option n'est pas toujours disponible.
+    Elle preserve l'arborescence des répertoires.
+  + Développer tout
+    Développe toute l'arborescence des répertoires.
+  + Replier tout
+    Replie toute l'arborescence des répertoires.
+  + Informations
+    Ouvre une fenetre d'informations sur le fichier et sur le driver pour se
+    format de fichier avec les temps d'execution pour les etapes de lecture
+    et de chargement.
+
+ Si vous cliquez sur un répertoire avec le bouton de droite vous aurez 1
+ option:
+ 
+  + Extraire les sous-répertoires...
+    Permet l'extraction de tous les fichiers contenu dans se répertoire et dans
+    ses sous-répertoires. Cette option n'est pas toujours disponible.
+    Elle preserve l'arborescence des sous-répertoires.
+  + Extraire les sous-répertoires vers "nom de l'entrée"...
+    Idem que l'option précédente sauf qu'un répertoire "nom de l'entrée" sera
+	créé dans le répertoire sélectionné et tous sera extrait dans celui-ci.
+  + Développer tout
+    Développe toute l'arborescence des répertoires.
+  + Replier tout
+    Replie toute l'arborescence des répertoires.
+
+
+ Volet de Droite:
+ ----------------
+ 
+ Il affiche la liste des fichiers contenu dans le fichier, dans un répertoire
+ou le resultat de la recherche. Exemple:
+
+ Fichier               Taille     Position     Description
+ Exemple1.WAV           36201           12     Sons (RIFF/WAVE)
+ Exemple2.WAV           97321        36213     Sons (RIFF/WAVE)
+
+ Voici des explications sur chaque colonne:
+
+  + Fichier
+    Le nom du fichier
+  + Taille
+    La taille en octets du fichier
+  + Position
+    La position du fichier (debut a l'octet #0) dans le fichier ouvert.
+    Cette information est plutot interessante pour les utilisateurs chevronnés.
+  + Description
+    Indique le type de fichier (Son, Images, etc..) et si possible son format
+    (RIFF/WAVE, MPEG, etc..).
+
+ En cliquant avec le bouton de droite sur le nom de fichier 2 options sont
+disponibles:
+
+  + Extraire le fichier vers...
+    Vous avez plusieurs choix, soit vous l'extraction se passe sans convertion
+    (et alors vous extrayez des données brutes) soit vous pouvez convertir le
+    fichier en un format proposé (si aucun format n'est proposé alors aucune
+    convertion n'est possible).
+  + Ouvrir
+    Ouvre le fichier avec un programme externe déclaré par défaut dans la base
+    de registre de Windows.
+    Exemple: Les fichiers .TXT sont ouverts par le Bloc Note (généralement).
+
+ Vous pouvez selectionner plusieurs fichiers a la fois, alors si vous cliquez
+avec le bouton de droite sur cette selection vous aurez 2 options:
+
+  + Extraire les fichiers...
+    Vous permet d'extraire tous les fichiers selectionné vers un répertoire au
+    choix.
+
+
+ Volet de Prévisualisation:
+ --------------------------
+ 
+ Ce volet permet d'afficher l'image ou la texture actuellement sélectionnée
+dans le volet de d'exploration de droite. L'image peut être afficher en taille
+originale ou élargie/diminuée à la taille de la fenêtre.
+
+ Un click droit sur ce volet offre les 4 options suivantes:
+ 
+  + Cacher la prévisualisation
+  + Mode d'affichage > Taille originale avec barre de défilement si nécessaire
+  + Mode d'affichage > Réduit/Augmenté à la taille du panneau
+  + Options de la prévisualisation...
+    Ceci ouvre le panneau de configuration sur les options de prévisualisation.
+    
+ 
+ Journal d'exécution:
+ --------------------
+ 
+ Il se situe en bas de la fenêtre juste au dessus de la barre de status. Il 
+indique ce que le programme fait. Il est possible de regler le niveau de détail
+dans les options ou de tout simplement cacher le journal.
+
+ En cliquant avec le bouton droit vous pouvez :
+ 
+  + Cacher/Afficher le journal
+  + Effacer le journal
+  + Copier vers le presse-papier
+ 
+ Une ligne rouge implique une erreur.
+ Une ligne orange implique un point d'attention.
+
+ 
+ Ligne de commande:
+ ------------------
+ 
+ Vous pouvez lancer l'executable de Dragon UnPACKer avec les options suivantes:
+ 
+ DrgUnPack5.exe /lng
+ Affiche l'ecran du choix des langues au démarrage.
+ 
+ DrgUnPack5.exe <fichier.ext>
+ Ouvre le fichier fichier.ext dans Dragon UnPACKer.
+
+
+===============================================================================
+ 6. HYPER RIPPER
+-------------------------------------------------------------------------------
+
+!!! A reserver aux utilisateurs chevronnées !!!
+
+ Introduction:
+ -------------
+
+ Cette methode d'ouverture d'un fichier vous permet d'en scanner le contenu
+a la recherche des formats connus suivants:
+
+ -669        - Module UNIT 669
+  AVI        - Audio-Video Interleace
+  BIK        - Video Bink
+  BMP        - Images Windows BitMap
+  DDS        - Direct-X Surface file (Textures)
+  EMF        - Windows Enhanced MetaFile
+ -FLIC       - Autodesk Animator FLIC
+  GIF        - Graphics Interchange Format
+  IFF        - Images Interchange File Format
+ *IT         - Module Impulse Tracker
+  JPEG       - JPEG Interchange File Format (JFIF)
+  MIDI       - Fichier de Musiques
+  MOV        - QuickTime Movie
+  MPEG Audio - MPEG Layer III mieu connu sous le nom de MP3
+  OGG        - Ogg Stream
+  PNG        - Images Portable Network Graphics (PNG)
+ *S3M        - Module ScreamTracker 3
+  TGA        - Truevision Targa (Seulement RGB)
+  VOC        - Sons (Creative VOice)
+  WAV        - Sons (RIFF/WAVE)
+  WMF        - Windows MetaFile (Aldus Placeable)
+  XM         - Module Fast Tracker 2
+
+  * = Fonctionnement non-sur (taille des fichiers peuvent etre erronnées).
+  - = Produisent beaucoup de faux positifs (des fichiers "trouvés" qui ne sont
+      pas de vrai 669 ou FLIC)
+
+ Utilisation:
+ ------------
+
+ L'utilisation de l'HyperRipper est simple mais donne des resultats qui peuvent
+sembler bizarres. Par exemple l'HyperRipper va trouver des fichiers qu'il
+considère comme étant bien du format indiqué alors que se ne sera pas le cas.
+
+ Choisissez tout dabord le fichier a scanner (fichier Source).
+
+ Cliquez ensuite sur les formats a rechercher. Moins vous choisirez de format
+et plus vite l'HyperRipper travaillera. Ainsi si le fichier source se nomme par
+exemple SOUND.??? alors enlevez les formats d'images (PNG, IFF/LBM et BMP).
+
+ Quand vous aurez choisi les formats a rechercher il ne vous restera plus qu'a
+cliquez sur Rechercher et a attendre un assez long moment (dépend de la taille
+du fichier). Si vous le pouvez je vous conseille de mettre le fichier sur un
+RAM Disk, l'HyperRipper travaillera alors beaucoup plus vite.
+
+
+ Option 'Creer un fichier HyperRipper':
+ --------------------------------------
+ 
+ Si vous cochez cette option l'HyperRipper va creer un fichier companion du
+fichier source avec l'extension .HRF (vous pouvez changer se nom a volonter)
+qui stockera tous les resultats de l'HyperRipper. Ceci vous permettra en
+ouvrant le fichier .HRF avec Dragon UnPACKer de retrouver les resultats de
+l'HyperRipper sans avoir a tout rechercher.
+
+ Ce format posede une option (dans l'onglet 'Fichier HyperRipper'). Vous avez
+le choix entre 3 versions du fichier:
+
+ + La version 1 est la version de base, se type de fichier sera toujours le
+   moin volumineux par rapport aux autres versions. Il est extrêmement limité
+   et est a utilisé uniquement si vous désirez un fichier HRF compatible avec
+   les plus anciennes versions de Dragon UnPACKer (v4.00).
+ + La version 2 est la version étendue, elle est un peu meilleure que la
+   version 1 mais reste limitée. Supporté en lecture par Dragon UnPACKer depuis
+   la version 4.13.
+ + La version 3.0 est la version recommandée. Elle a été conçue pour la version
+   5.0 de l'HyperRipper.
+
+
+ Options avancées:
+ -----------------
+ 
+ => Le tampon de mémoire et le rollback de mémoire?
+ 
+ HyperRipper va lire dans le fichier source puis rechercher les structures
+ qu'il connais, le tampon de mémoire indique combien d'octet sont lu dans le
+ fichier source a chaque fois. Par exemple 256 octets indique que le fichier
+ source est lu par blocs de 256 octets.
+ Le rollback de mémoire devient alors nécessaire, il sagit a chaque lecture de
+ revenir un certain nombre d'octets en arriere.
+ 
+ Par exemple avec un tampon de 6 octets et un rollback de 3.
+ 
+ Fichier source: A B C D E F G H I J K L M N O P Q R S T ...
+ Premiere lecture: A B C D E F
+ Seconde lecture : D E F G H I (retour en arriere de 3 et lecture de 6)
+
+ Ainsi par exemple si le format de fichier recherché est F G H alors il sera
+ trouvé. Sans rollback le programme pourrais ne pas le trouver.
+ 
+ En résumé laissez les valeurs par défaut:
+ Tampon de mémoire: 256 octets
+ Rollback         : 128 octets
+ 
+ Si vous voulez testé pour voir si vous avez de meilleures performance il faut
+ changer les valeurs du tampon de mémoire. Le rollback de 128 octets est
+ largement nécessaire pour tous les formats supportés actuellement.
+ 
+ REMARQUE: Dans la v5.4.0 ces options ne sont plus modifiables, les valeurs par
+           défaut de 128 Ko pour le buffer et de 32 octets pour le retour en
+           arrière (Rollback) permettent une vitesse optimale.
+
+ => Le formatage des entrées?
+ 
+ L'option faire des répertoires grâce au type retourné par le plugin permet en
+ fait de mettre toutes les vidéos trouvé dans un sous-répertoire Video, tous
+ les sons et musiques dans un répertoire Audio, ainsi de suite
+ 
+ Les options de nommage, permettre de définir le nom qu'auront les fichiers
+ trouvé par le HyperRipper. Il y a deux modes:
+  Automatique: Meme nom que dans les versions précedentes.
+               Par ex: pak01.pak_0000003.wav
+ Personnalisé: Vous pouvez définir le nom qu'auront les fichiers trouvés.
+               Il faut absolument indiquer %n, %o ou %h quelque part dans le
+               nom du fichier sinon tous les fichiers auront le même nom!
+               Les "macros":  %f = nom du fichier source (sans extension)
+                              %x = extension du fichier source (sans point)
+                              %n = nombre representant le n-ième fichier trouvé
+                              %o = offset du fichier trouvé en décimal
+                              %h = offset du fichier trouvé en hexa-décimal
+               Par ex: %f.$x_%h      pak01.pak_000002DF.wav
+                       %f_%h         pak01_000002DF.wav
+                       %f_%o         pak01_735.wav
+                       %f_%n         pak01_0000003.wav
+
+
+ Options 'MPEG Audio':
+ ---------------------
+
+ Pour accéder aux options MPEG Audio cliquez sur MPEG Audio dans les formats
+de fichiers a chercher puis sur le bouton Configurer.
+
+ Cette feuille d'option vous permet d'affiner la recherche de fichiers Audio au
+format MPEG.
+
+ Tout dabord on y trouve un tableau composé de 3 lignes et de 3 colonnes.
+ La premiere colonne correspond au format MPEG 1.
+ La seconde colonne correspond au format MPEG 2.0.
+ La troisieme colonne correspond au format MPEG 2.5.
+ La premiere ligne correspond au Layer I.
+ La seconde ligne correspond au Layer II.
+ La troisime ligne correspond au Layer III.
+
+ Chaque format a ses caracteristiques propres mais sachez que le MPEG 2.5 est
+un format non-officiel qui a été crée pour les BitRates et Frequences les moins
+élevée (ex: 8Khz à 8KBps). Sachez aussi que le format le plus connu est le
+Layer III (communement appelé MP3 ou MPEG3).
+
+ Les formats suivant n'ont pas été testé (faute de fichiers de tests):
+ MPEG 2.0 Layer I, MPEG 2.0 Layer II, MPEG 2.5 Layer I et MPEG 2.5 Layer II
+
+ Pour choisir un format qui sera recherché cochez la case correspondante.
+ A la droite du tableau il y a 3 boutons (numéroté 1, 2 et 3) qui vous
+permettent de choisir tout un Layer complet (Layer I, Layer II et Layer III).
+
+ Les Limitations:
+ Elles vous permettre d'éviter que l'HyperRipper trouve de 'faux' fichiers MPEG
+Audio en limitant leur nombre de frames (un fichier MPEG Audio est composé de
+Frames indépendantes qui forment le son/la musique) et/ou la taille.
+ Je vous conseille de toujours limiter le nombre minimum de frames a au moin 5
+(sachant que pour un fichier MPEG3, 1 seconde correspond a environ 40 frames),
+par défaut elle est réglé a 20 (soit environ 0.5 secondes).
+ Je vous conseille aussi de limiter la taille minimum a au moin 2048 Octets.
+ Les maximums vous permettront uniquement de synder vos MPEG Audio en plusieurs
+morceaux, plutot que d'avoir un seul gros MPEG Audio.
+ Attention si vous donnez une limite maximum plus petite que la limite minimum
+vous n'aurez evidement aucun resultat..
+
+ Special:
+ Deux options vous permettent d'ajouter quelques options a la recherche d'un
+ fichier:
+
+ + Recherche entête Xing VBR:
+   La société Xing Tech. ajouté une entête de se type a leur fichiers au format
+   VBR (Variable Bit Rate). Cette entête accelere grandement l'identification
+   d'un fichier MPEG3 mais supprime toute verification de se fichier.
+   Je vous conseille de toujours cocher cette option.
+ + Recherche ID3Tag v1.0/v1.1:
+   Les ID3Tag sont les informations sur le Titre de la chanson, l'Auteur, etc..
+   Elles sont situé en fin de fichier. Si cette option n'est pas coché le
+   programme ignorera les ID3Tag et ne les incluera pas avec le fichier.
+   Les ID3Tag v2.0 (situé en debut de fichiers) ne sont pas, et ne seront
+   surement pas supporté.
+
+
+===============================================================================
+ 7. OPTIONS
+-------------------------------------------------------------------------------
+
+ Options Générales:
+ ------------------
+ 
+ + Ne pas afficher d'écran de démarrage
+   Supprime l'écran d'introduction (Dragon UnPACKer) qui s'affiche au démarrage
+   du programme. Le programme ne démarrera pas plus vite.
+ + Permettre seulement une instance du programme a la fois
+   Vous permet de limiter a une instance du programme a la fois.
+   C'est a dire que si vous double cliquez successivement sur des fichiers
+   supporté par Dragon UnPACKer, seulement une seule fenetre sera ouverte et
+   aura ouvert le dernier fichier double cliqué.
+ + Détection intelligente des formats de fichiers
+   Par défaut le programme determine le format d'un fichier grace a son
+   extension mais quelques fois cela n'est pas possible, alors si vous cochez
+   cette option le programme lira l'entete du fichier pour essayer de
+   reconnaitre le format. Recommandé. Attention toutefois tous les plugins ne
+   supporte pas forcement cette option (s'il ne la supporte pas il
+   fonctionneront comme si elle etait decochée).
+ + Prendre les icônes dans le registre Windows (plus lent)
+   Cette option permet d'afficher dans Dragon UnPACKer pour chaque type de
+   fichier l'icône que vous voyez dans Windows Explorer.
+   (ex: l'icone de WinAmp pour les fichiers MP3)
+   Si cela ralenti trop la navigation désactivez cette option, les icones
+   internes seront alors utilisées.
+ + Utiliser l'HyperRipper si aucun plugin n'arrive à ouvrir le fichier
+   Comme cela l'indique, si aucun plugin n'arrive à ouvrir le fichier, le
+   HyperRipper sera executé avec comme source le fichier que vous tentez
+   d'ouvrir
+ + Développer automatiquement les répertoires à l'ouverture
+   Si ce n'est pas sélectionné alors les répertoires resterons repliés à
+   l'ouverture d'un fichier.
+ + Garder en mémoire le type de fichier sélectionné sur l'écran d'ouverture
+   Si ce n'est pas sélectionné alors "Tous les fichiers" sera sélectionné à
+   chaque affichage du dialogue d'ouverture.
+
+   
+ + Langue
+   Vous permet de choisir la langue utilisé pour Dragon UnPACKer.
+   Le changement est instantané. Le site internet affiché est le site de
+   l'auteur du fichier de langue (voir Utils\Translate.Txt).
+   Un lien hyper texte "Trouver d'autres traductions..." permet de lancer Duppi
+   et de montrer toutes les traductions disponibles pour votre version de
+   Dragon UnPACKer.
+   
+   REMARQUE: Les traductions (autre qu'anglais/français/español) sont faites
+             par des auteurs tiers. Il est donc possible que leur traduction ne
+             soit disponible que plusieurs mois après la publication d'une
+             version de Dragon UnPACKer. Alors n'hésitez pas a perseverer si
+             votre langue n'est pas disponible. Sinon vous pouvez toujours vous
+             en charger (voir Utils\Translation.Txt). Dans ce cas n'oubliez pas
+             de me l'envoyer pour que je puisse en faire profiter aux autres.
+
+
+ Options Avancées:
+ -----------------
+
+ + Répertoire temporaire
+   Ce répertoire est utilisé par Dragon UnPACKer pour stocker des fichiers
+   temporaire (ils sont supprimés lorsque vous quittez le programme). Ils sont
+   principalement utilisés lors du click sur "Ouvrir" d'une entrée. Mais
+   parfois aussi lors d'une conversion de formats lorsque des extensions
+   obsoletes sont utilisées (DUDI v3).
+   Vous pouvez soit utiliser le répertoire temporaire auto-détecté
+   (généralement le répertoire temporaire de l'utilisateur Windows connecté) ou
+   définir votre propre répertoire (par ex: un disque RAM).
+
+ + Options pour le double click
+   Lorsque vous double cliquez sur une entrée (volet droit) l'action par défaut
+   est l'ouverture du fichier par le programme associée a cette extension de
+   fichier. Si vous preferez que l'option par défaut soit l'extraction, cliquez
+   sur l'option 'Extraire fichier... Sans conversion' l'option par défaut.
+   
+ + Mémoire cache
+   Cette mémoire est utilisée lors de l'extraction des fichiers (si ce n'est
+   pas une extension qui s'en charge). La mémoire par défaut est suffisante
+   pour une vitesse optimale, mais vous pouvez le changer si vous voulez.
+ 
+ 
+ Journal d'exécution:
+ --------------------
+ 
+ Ceci vous permet de configurer le journal d'exécution:
+ + L'afficher ou pas
+ + Selectionner le niveau de détail affiché:
+     Bas - Seul les messages important et les erreurs apparaîtrons
+     Moyen
+     Haut - Tous les messages, remarques et erreurs apparaîtrons
+
+
+ Plugins:
+ --------
+ 
+ Permet de voir la liste des plugins chargés et leurs versions.
+ 
+ Cadre "Informations Avancées" contient les informations de :
+ + Version de l'interface du plugin :
+     DUDI pour les Drivers
+     DUCI pour les Conversions
+     DUHI pour l'HyperRipper
+ + La version interne du plugin (utilisée principalement par Duppi).
+ + Pour les drivers ce cadre contient en plus un champs priorité:
+   Cela permet aux utilisateurs chevronnés de preférer un driver plutôt qu'un
+   autre lors de l'ouverture d'un fichier.
+   Prenons un exemple:
+   Si vous voulez que drv_mix essaye d'ouvrir un fichier avant drv_default vous
+   donnerez a drv_mix une priorité plus élevée que celle de drv_default.
+   Priorité maximum: 200
+   Priorité minimum:   0
+ 
+ S'il contient un écran d'information le bouton "A Propos..." sera actif.
+ Si un plugin contient un écran de configuration le bouton "Configurer" sera
+ actif.
+ 
+ 
+ Icones/Look:
+ ------------
+ 
+ Cette section vous permet de choisir les icones utilisées par Dragon UnPACKer.
+ Actuellement seul le look "XT (XP Look)" est disponible.
+
+
+ Types de fichiers:
+ ------------------
+ 
+ Cette section vous permet d'associer des fichiers a Dragon UnPACKer pour qu'en
+double-cliquant sur eux dans l'explorateur (par exemple) ils soient ouvert par
+Dragon UnPACKer.
+
+ Toutes les extensions cochées sont associés a Dragon UnPACKer.
+ 
+ + Le bouton Aucune permet de décocher toutes les extensions
+ + Le bouton Toutes permet de cocher toutes les extensions
+ 
+ Il y a 4 options dans ce panneau:
+ 
+ + Vérifier les associations au démarrage
+   A chaque démarrage de Dragon UnPACKer toutes les associations sélectionnées
+   seront automatiquement recréés.
+ + Utilisez une icône externe
+   Vous permet de spécifier une icône personnalisée pour les associations de
+   fichiers.
+ + Changer le texte associé:
+   Permet d'utiliser un texte personnalisé avec l'association de Dragon
+   UnPACKer.
+ + Ajout de l'extension "Ouvrir avec Dragon UnPACKer 5" dans Windows Explorer
+   Lorsque vous cliquez droit sur un fichier dans l'Explorateur Windows vous
+   aurez le choix de l'ouvrir avec Dragon UnPACKer.
+
+
+ Prévisualisation:
+ -----------------
+ 
+ Cette section permet de configurer le fonctionnement de la prévisualisation en
+choisissant le mode d'affichage (taille originale ou réduit/augmenté à la
+taille du panneau).
+
+ Il est aussi possible de choisir la taille limite de prévisualisation. Il faut
+comprendre que le plus lent lors d'une prévisualisation est l'extraction du
+fichier (si vous voulez prévisualiser une image de 100Mo elle ne va pas
+s'extraire très rapidement, surtout lorsque le fichier est compressé et/ou
+crypté à la base). Afin d'éviter une attente trop longue, une limite en octets
+est fixée. Par défaut cette limite est a 2000000 octets (environ 2Mo). Vous
+pouvez soit la baisser, soit l'augmenter, soit carrement la désactivée (non
+recommandé).
+
+
+===============================================================================
+ 8. FORMATS SUPPORTEES
+-------------------------------------------------------------------------------
+
+ Si vous desirez que Dragon UnPACKer supporte un format de fichier en
+particulier contacter l'auteur (voir la section CONTACTEZ MOI). Pour une liste
+plus complète et détaillée rendez vous sur:
+http://www.elberethzone.net/lang-fr/dup-supportedgames.html
+
+ Support complet:
+ ----------------
+
+ Jeu                                                  Fichiers Pilote
+ 18 Wheels of Steel: Across America                     .ZIPFS drv_zip 
+ 18 Wheels of Steel: Pedal to the Metal                   .CSC drv_zip 
+ The 11th Hour                                            .GJD drv_11th 
+ Act of War                                               .DAT drv_default 
+ Against Rome                                             .DAT drv_zip 
+ Age of Empires 2: Age of Kings                           .DRS drv_default 
+ Age of Empires 3                                         .BAR drv_default 
+ Age of Mythology                                         .BAR drv_default 
+ AGON                                                     .SFL drv_default 
+ Alien vs Predator                                        .FFL drv_default 
+ Alien vs Predator 2                                      .REZ drv_default 
+ Alpha Black Zero                                         .ABZ drv_zip 
+ American McGee Alice                                     .PK3 drv_zip 
+ Arena Wars                                 .TEXTUREPACK;.DATA drv_zip 
+ Ascendancy                                               .COB drv_default 
+ Battlefield 1942                                         .RFA drv_default 
+ Battlefield 2                                            .ZIP drv_zip 
+ Battleforge                                              .PAK drv_default
+ Black & White                                            .SAD drv_default 
+ Black & White 2                                   .LUG;.STUFF drv_default 
+ Blade Runner                                             .MIX drv_default
+ Blitzkrieg                                               .PAK drv_zip 
+ Blitzkrieg Burning Horizon                               .PAK drv_zip 
+ Blitzkrieg Rolling Thunder                               .PAK drv_zip 
+ Blood                                                    .ART drv_default 
+ Blood 2                                                  .REZ drv_default 
+ Bloodrayne                                               .POD drv_default 
+ Brothers Pilots 4                                        .PAK drv_zip 
+ Call of Duty                                             .PK3 drv_zip 
+ Call of Duty 2                                           .IWD drv_zip 
+ Call of Duty 3                                           .IWD drv_zip 
+ Call of Duty 4: Modern Warfare                           .IWD drv_zip 
+ Call of Duty: World at War                               .IWD drv_zip 
+ Call of Juarez                                           .PAK drv_zip 
+ Call to Power                                            .CTP drv_zip 
+ Cellblock Squadrons                                      .BOX drv_zip 
+ Civilization 4                                           .FPK drv_default 
+ Command & Conquer                                        .MIX drv_default
+ Command & Conquer: Generals                              .BIG drv_default 
+ Command & Conquer: Red Alert                             .MIX drv_default
+ Conflict: Freespace                                       .VP drv_default 
+ Cyberbykes                                               .BIN drv_default 
+ Dark Forces                                              .GOB drv_default 
+ Darkstone                                                .MTF drv_default 
+ Deadly Dozen                                              .ZA drv_zip 
+ Deadly Dozen 2: Pacific Theater                           .ZA drv_zip 
+ Defiance                                                 .DAT drv_zip 
+ Descent                                                  .HOG drv_default 
+ Descent 2                                                .HOG drv_default 
+ Descent 3                                           .HOG/.MN3 drv_default 
+ Desperados: Wanted Dead of Alive                         .PAC drv_zip 
+ Dethkarz                                                 .ZIP drv_zip 
+ Dreamfall: The Longest Journey                           .PAK drv_default 
+ Dinosaur Digs                                            .ZTD drv_zip 
+ Dirty Little Helper 98                                   .DLU drv_zip 
+ Doom 3                                                   .PK4 drv_zip 
+ Doom 3: Resurrection of Evil                             .PK4 drv_zip 
+ Dragon Age: Origins                                      .ERF drv_default
+ Duke Nukem 3D                                            .ART drv_default 
+ Duke Nukem: Manhattan Project                          .ZIPFS drv_zip 
+ Dune 2                                                   .PAK drv_default 
+ Dungeon Keeper 2                                         .SDT drv_default 
+ Earth Siege 2                                            .VOL drv_default 
+ El Airplane                                              .ARH drv_zip 
+ Electranoid                                              .RES drv_default 
+ Elite Warriors                                            .ZA drv_zip 
+ Emperor: Battle for Dune                            .BAG;.RFD drv_default 
+ Empire Earth 2                                           .ZIP drv_zip 
+ Enclave                                             .XTC;.XWC drv_default 
+ Entropia Universe                                        .BNT drv_default 
+ Eve Online                                             .STUFF drv_default 
+ Evil Island                                              .RES drv_default 
+ Fable: The Lost Chapters                                 .LUG drv_default 
+ Falcon 4                                                 .ZIP drv_zip 
+ Fallout Tactics                                          .BOS drv_zip 
+ Far Cry                                                  .PAK drv_zip 
+ F.E.A.R.                                              .ARCH00 drv_default 
+ Fire Starter                                             .ZIP drv_zip 
+ Florensia                                                .PAK drv_default 
+ Freedom Fighters                                         .ZIP drv_zip 
+ Freedom Fighters                                         .TEX drv_default 
+ Freedom Force                                             .FF drv_zip 
+ Freedom Force vs The 3rd Reich                            .FF drv_zip 
+ Freelancer                                             .FLMOD drv_zip 
+ Freespace 2                                               .VP drv_default 
+ Fuzzy's World of Miniature Space Golf                    .RES drv_default 
+ Ghostbusters: The Video Game                             .POD drv_default 
+ Ghostbusters: Sanctum of Slime                           .PAK drv_default
+ Giants: Citizen Kabuto                                   .GZP drv_giants 
+ Grand Theft Auto 3                                  .IMG/.DIR drv_default 
+ Grand Theft Auto: Vice City                              .ADF drv_default 
+ Gunlok                                                   .DAT drv_default 
+ Half Life                                           .PAK;.WAD drv_default 
+ Hands of Fate                                       .PAK;.TLK drv_default 
+ Harbinger                                                .SQH drv_default 
+ Heavy Metal F.A.K.K.2                                    .PK3 drv_zip 
+ Hellhog XP                                                 .A drv_zip 
+ Heretic 2                                           .PAK;.WAD drv_default 
+ Heroes of Might & Magic 5                                .PAK drv_zip 
+ Hexen 2                                             .PAK;.WAD ??? 
+ Hidden & Dangerous                                  .DTA/.CNT drv_default 
+ Hitman: Bloodmoney                                       .ZIP drv_zip 
+ Hitman: Bloodmoney                                  .TEX;.PRM drv_default 
+ Hitman 2: Silent Assassin                                .ZIP drv_zip 
+ Hitman 2: Silent Assassin                           .TEX;.PRM drv_default 
+ Hitman: Contracts                                        .ZIP drv_zip 
+ Hitman: Contracts                                   .TEX;.PRM drv_default 
+ Holy Games 2005                                          .POD drv_zip 
+ Hooligans                                                .X13 drv_default 
+ Hot Rod American Street Drag                             .ROD drv_zip 
+ Hunting Unlimited 3                                      .SCS drv_zip 
+ Indiana Jones 3D                                         .GOB drv_default 
+ Interstate '76                                           .ZFS drv_default 
+ Interstate '82                                           .ZFS drv_default 
+ Itch                                                     .PSH drv_zip 
+ Jagged Alliance 2                                        .SLF drv_default 
+ James Bond 007: Nightfire                                .007 drv_default 
+ Jedi Knight 2: Jedi Outcast                              .PK3 drv_zip 
+ Lands of Lore                                       .PAK;.TLK drv_default 
+ Laser Light                                              .RES drv_default 
+ LEGO Star Wars                                           .DAT drv_default 
+ Leisure Suite Larry: Magna Cum Laude                     .JAM drv_default 
+ Lemmings Revolution                                      .BOX drv_default 
+ Line of Sight: Vietnam                                    .ZA drv_zip 
+ Low and Order 3: Justice is Served                       .LZP drv_zip 
+ Marine Mania                                             .ZTD drv_zip 
+ Master of Orion 3                                        .MOB drv_zip 
+ Maximus XV                                               .PAK drv_zip 
+ MDK                                                      .SNI drv_default 
+ Medal of Honor: Allied Assault                           .PK3 drv_zip 
+ Metal Gear Solid                                         .MGZ drv_zip 
+ Microsoft Flight Simulator 2004                          .CAB drv_zip 
+ Monkey Island 3                                          .BUN drv_default 
+ Monte Cristo                                             .PAK drv_zip 
+ Mortyr                                                   .HAL drv_default 
+ Moto Racer                                               .BKF drv_default 
+ Myst IV: Revelation                                      .M4B drv_default 
+ Nascar Racing                                            .DAT drv_default 
+ Neighbours From Hell                                     .BND drv_zip 
+ Neighbours From Hell 2                                   .BND drv_zip 
+ No One Lives for Ever                                    .REZ drv_default 
+ No One Lives for Ever 2                                  .REZ drv_default 
+ Nocturne                                                 .POD drv_default 
+ Outfront                                                 .PAK drv_zip 
+ Packmania 2                                              .ARF drv_zip 
+ Painkiller                                               .PAK drv_default 
+ Paridise Cracked                                         .PAK drv_zip 
+ Patrician II                                             .CPR drv_default 
+ Perimeter                                                .PAK drv_zip 
+ Port Royale                                              .CPR drv_default 
+ Postal                                                   .SAK drv_default 
+ Purge                                                    .REZ drv_default 
+ Pusher                                                   .PSH drv_zip 
+ Quake                                               .PAK;.WAD drv_default 
+ Quake 2                                                  .PAK drv_default 
+ Quake 3 Arena                                            .PK3 drv_zip 
+ Quake 4                                                  .PK4 drv_zip 
+ Qui veut gagner des millions                             .AWF drv_default 
+ Rage of Mages                                            .RES drv_default 
+ Rage of Mages 2                                          .RES drv_default 
+ realMyst 3D                                              .DNI drv_default 
+ Revenant                                           .RVI;.RVM;.RVR drv_zip 
+ Richard Burns Rally                                      .RBZ drv_zip 
+ Ricochet: Lost Worlds Recharged                          .DAT drv_zip 
+ Ricochet Xtreme                                          .DAT drv_zip 
+ Sabotain                                                 .SAB drv_zip 
+ Sanity Aiken's Artifact                                  .REZ drv_default 
+ Serious Sam                                              .GRO drv_zip 
+ Serious Sam 2                                            .GRO drv_zip 
+ Shadow Warrior                                           .GRP drv_default 
+ Shadowgrounds                                            .FBZ drv_zip 
+ Shogo                                                    .REZ drv_default 
+ Sin                                                      .SIN drv_default 
+ Singles: Flirt up your Life                              .SXT drv_zip 
+ Slave Zero                                               .ZIP drv_zip 
+ Spellforce                                               .PAK drv_default 
+ Star Crusader                                        .GL;.PAK drv_default 
+ Star Wolves                                              .DAT drv_zip 
+ SWAT 3: Close Quarters Battle                            .RES drv_zip 
+ System Shock 2                                           .CRF drv_zip 
+ Team Factor                                              .BOT drv_zip 
+ Terminal Velocity                                        .POD drv_default 
+ Terminator 3                                             .POD drv_zip 
+ The Chronicles of Riddick: Escape from Butcher Bay  .XTC;.XWC drv_default 
+ The Elder Scroll 4: Oblivion                             .BSA drv_default 
+ The Lord of the Rings: Battle for the Middle Earth       .BIG drv_default 
+ The Movies                                          .LUG;.PAK drv_default 
+ The Sims                                                 .FAR drv_default 
+ Theme Park World                                    .WAD;.SDT drv_default 
+ Thief                                                    .CRF drv_zip 
+ Thief 2                                                  .CRF drv_zip 
+ Tony Hawk Pro Skater 2                                   .PAK drv_default 
+ Total Annihilation                                  .HPI;.UFO drv_default 
+ Total Annihilation: Counter-Strike                       .CCX drv_default 
+ Tribes                                                   .VOL drv_default 
+ Tribes 2                                                 .VL2 drv_zip 
+ Trickstyle                                               .PAK drv_default 
+ Tron 2.0                                                 .REZ drv_default 
+ UFO: Afterlight                                          .VFS drv_default 
+ UFO: Aftermath                                           .VFS drv_default 
+ UFO: Aftershock                                          .VFS drv_default 
+ Uplink                                                   .DAT drv_zip 
+ Vampire: The Masquerade                                  .NOB drv_zip 
+ Vampire: The Masquerade: Redemption                      .NOB drv_zip 
+ Warlords Battlecry                                       .XCR drv_default 
+ Warlords Battlecry 2                                     .XCR drv_default 
+ Who wants to be a millionaire                            .AWF drv_default 
+ X-Men Legends 2                                          .BIN drv_zip 
+ Xatax                                                    .RES drv_default 
+ Xpand Rally                                              .BIN drv_zip 
+ XS Mark                                             .PK1;.PK2 drv_zip 
+ Zanzarah                                                 .PAK drv_default 
+
+ Support partiel:
+ ----------------
+ 
+ Jeu                                                  Fichiers Pilote
+ Armored Fist 3                                           .PFF drv_default 
+ Comanche 4                                               .PFF drv_default 
+ Delta Force                                              .PFF drv_default 
+ Delta Force 2                                            .PFF drv_default 
+ Delta Force: Land Warrior                                .PFF drv_default 
+ F22 Lightning 3                                          .PFF drv_default 
+                Seul les fichiers de type PFF3 sont supportés!
+
+ Commandos 3                                              .PCK drv_default 
+                     Les clés de décryptage sont codés en dur.
+
+ Dig It!                                                  .XRS drv_default 
+                           Crypté/Compressé? Je ne sais pas...
+
+ Dungeon Keeper 2                                         .SDT drv_default 
+ F-22 Air Dominance Fighter                               .DAT drv_default 
+ Super EF2000                                             .DAT drv_default 
+   Les noms de fichiers ne sont pas corrects et la décompression des fichiers
+                                        .RA n'est pas incluse.
+
+ Operation Flashpoint                                     .PBO drv_default 
+                                        Limité a 2000 entrées.
+
+ Deus Ex                                        .UAX;.UMX;.UTX drv_ut 
+ Harry Potter                                   .UAX;.UMX;.UTX drv_ut 
+ Rune                                           .UAX;.UMX;.UTX drv_ut 
+ Undying                                             .UAX;.UTX drv_ut 
+ Unreal                                         .UAX;.UMX;.UTX drv_ut 
+ Unreal 2                                            .UAX;.UTX drv_ut 
+ Unreal: Return to Na Pali                      .UAX;.UMX;.UTX drv_ut 
+ Unreal Tournament                              .UAX;.UMX;.UTX drv_ut 
+ Unreal Tournament 2003                              .UAX;.UTX drv_ut 
+   Les packets du Unreal Engine (.UAX, .UMX & .UTX) provenant de jeux récents
+   s'ouvriront surement par le plugin UT Package driver de Dragon UnPACKer mais
+   il est quasiment certain qu'il n'arrivera pas a extraire de données en
+   raison de changements dans ces paquets récents.
+
+ Support expérimental/non-fonctionnel:
+ -------------------------------------
+
+ Jeu                                                  Fichiers Pilote
+ Breakneck                                                .SYN drv_default 
+ Excessive Speed                                          .SYN drv_default 
+ N.I.C.E. 2                                               .SYN drv_default 
+                                                 Non décrypté.
+
+ Daikatana                                                .PAK drv_default 
+                      Impossible d'extraire quoique se soit...
+                      
+ Empires: Dawn of the Modern World                        .SSA drv_default 
+   Quelques fichiers utilisent une méthode de compression inconnue.
+
+ NoX                                                  .BAG/IDX drv_default 
+               Seul le fichier GABA/Audio.bag\idx est supporté
+   
+ Si vous trouvez d'autres jeux qui marchent veuillez me contacter en me
+fournissant le nom du jeu et sa version (pour me contacter voir la section de
+se fichier CONTACTEZ MOI).
+ Si un jeu qui devrait marcher ne marche pas chez vous contactez moi aussi.
+
+
+ Informations sur d'autres Formats
+ ---------------------------------
+
+ Jeux                   Extension   Informations
+ C&C,C&C2,C&C:RA,Dune 2000   .???   Formats cryptées et/ou compressés
+                                    NE SERONT SUREMENT JAMAIS SUPPORTE!
+ Descent 1                   .PIG   Les specifications du DDN sont mauvaises
+                                    alors n'attendez pas grand chose.
+ Jeux Blizzard               .MPQ   Ne pas trop esperer... Utilisez donc
+                                    MPQView si vous en avez vraiment besoin.
+                                    (http://www.starcraft.org).
+ 
+ Si vous pouvez m'aider en me donnant des informations ou la specification d'un
+format n'hesitez pas, contactez moi (voir section 9. CONTACTEZ MOI).
+
+
+===============================================================================
+ 9. CONTACTS
+-------------------------------------------------------------------------------
+
+ Vous trouverez la dernière version publique du programme sur:
+ http://www.dragonunpacker.com
+
+ Envoyez vos suggestions, questions, bugs, etc..
+ En français, anglais ou espagnol UNIQUEMENT!!
+ Vous pouvez contacter l'auteur (Alex Devilliers) par:
+ 
+  E-Mail: dup561 (arobase) dragonunpacker (point) com
+     ICQ: 1535372 (elbereth)
+     
+ ATTENTION: Vous ne recevrez JAMAIS d'email de ma part avec comme adresse
+            email l'adresse si-dessus. Si vous en recevez vous pouvez (devez)
+            les effacer!
+
+
+===============================================================================
+ 10. REMERCIEMENTS SPECIAUX
+-------------------------------------------------------------------------------
+
+ Alexey Vasilyev pour avoir fait une traduction de Dragon UnPACKer
+                 et pour son aide sur la correction de bugs de traduction.
+                 EMail: alexxwiz (arobase) chat (point) ru
+                   URL: http://alexxwiz.newmail.ru
+
+ Andrew Bondar pour avoir traduit Dragon UnPACKer et avoir cherché tous les
+               bugs de l'interface que j'avais laissé. ;)
+               EMail: pit0n2 (arobase) mail (point) ru
+
+ Andre N Belokon pour son implementation Delphi de la methode de hachage
+                 dynamique HashTrie.
+                 EMail: support (arobase) softlab (point) od (point) ua
+                   URL: http://www.softlab.od.ua
+
+ Anonimeitor pour son aide qui a permis d'améliorer le support des fichiers
+             .PAK de Spellforce.
+
+ Beaubois Luc pour l'image dans A Propos de et l'ecran de démarrage.
+              EMail: barf (arobase) hellokitty (point) ne (point) jp
+
+ Cariad Ysbryd pour son aide sur le test du support du MP3 dans l'HyperRipper
+               et pour sa participation a la prise de données sur les CD du
+               jeu Final Fantasy 8.
+               EMail: cariad (arobase) lodoss (point) org
+                 URL: http://www.multimania.com/epistein2/Cariad
+
+ Christoph Schulze pour ses nombreux tests du support des fichiers .PAK de Final
+                   Fantasy 8.
+                   EMail: chr.schulze (arobase) aon (point) at
+
+ Deniz Oezmen pour ses specifications et son aide pour les fichiers au format
+              RL/GJD de The 8th Guest et The 11th Hour.
+              Ainsi que pour ça traduction en Allemand de Dragon UnPACKer.
+              EMail: Deniz.Oezmen (arobase) t-online (point) de
+
+ Descent Developper Network (DDN) pour les specs de formats pour Descent 1/2/3
+                                  et Descent Freespace
+                                  URL: http://www.descent2.com/
+
+ Felix Riemann pour son plugin driver WestWood MIX.
+
+ Gustav Munkby pour sa page web 'Get "non-musical" data from an .MP3-file':
+               EMail: grd (arobase) swipnet (point) se
+                 URL: http://home.swipnet.se/grd/mp3info/
+
+ Guy Ratajczak pour son code de décompression des fichiers MTF de DarkStone:
+               EMail: guy (point) ratajczak (arobase) wanadoo (point) fr
+                 URL: http://www.chez.com/misterjack/
+
+ Info-ZIP pour UnZip32.DLL v5.5.2 (permettant la lecture/extraction des ZIP)
+          Par le groupe Info-ZIP
+          Portions:
+          Copyright (c) 1992 Igor Mandrichenko.
+          Copyright (c) 1994 Greg Roelofs.
+          Copyright (c) 1996 Mike White.
+          Les sources/executables de Info-ZIP peuvent etre telechargée sur le
+          site Internet/WWW suivant.
+          URL: http://www.info-zip.org/pub/infozip/UnZip.html
+
+ Jordan Russell pour Inno Setup (programme d'installation):
+                URL: http://www.innosetup.com
+
+ Ken Taylor pour les sources de dniExtract ayant permis le support des fichiers
+            DNI de realMyst 3D.
+            Email: taylork (at) alum (dot) mit (dot) edu
+ 
+ Marek Mauder pour sa librairie Vampyre Imaging Library v0.26.0 (utilisée pour
+              la prévisualisation et la conversion de certains formats)
+        Email: marekmauder (at) gmail (dot) com
+          URL: http://imaginglib.sourceforge.net/
+          
+ Michal Hajek pour la traduction en Tcheque de Dragon UnPACKer (cestina.lng).
+              EMail: michal.hajek (arobase) email (point) cz
+                URL: http://bouchac.misto.cz
+
+ Michele Marcon pour la traduction en Italien de Dragon UnPACKer (italiano.lng)
+                EMail: markovitch (arobase) inwind (point) it
+                  URL: http://arena.sci.univr.it/~marcon
+
+ Mike Lischke pour son superbe VirtualTree pour remplacer le composant standard
+              de Delphi TListView.
+              EMail: public (arobase) lischke-online (point) de
+                URL: http://www.lischke-online.de
+
+ Mohsen Fakharian pour ses icônes de coffre (ouvert et fermé) utilisée pour les
+        fichiers associés. URL: http://mohsenfakharian.deviantart.com
+				
+ Mr.Mouse pour ses trouvailles a propos du format .PAK de Painkiller (et pour
+          sa version DLL de MultiEx).
+          URL: http://forum.xentax.com/viewtopic.php?t=664
+               http://www.xentax.com
+
+ Psych0phobiA pour son patch amenant le support TrueVision Targa .TGA dans
+              HyperRipper.
+ 
+ Quake Specs v3.4 par Olivier Montanuy pour la specs du format des fichiers
+                  PACK de Quake 1
+
+ Qhimm pour ses informations pour ouvrir les fichiers Final Fantasy 8 .PAK.
+       EMail: mrdata82 (arobase) swipnet (point) se
+         URL: http://home.swipnet.se/mrdata82/
+
+ The Wotsit's Format possedant beaucoup d'infos sur les formats de fichiers
+ Thilo Girmann (Nullpointer) pour le code permettant de decompresser les GZP.
+                     URL: http://www.wotsit.org
+
+                   EMail: nullpointer (arobase) planetcitizenkabuto (point) com
+                     URL: http://www.planetcitizenkabuto.com/
+
+ UPX - The Ultimate Packer for eXecutables
+       Copyright (c) 1996-2001 Markus Oberhumer & Laszlo Molnar
+       URLs: http://upx.sourceforge.net/
+
+===============================================================================

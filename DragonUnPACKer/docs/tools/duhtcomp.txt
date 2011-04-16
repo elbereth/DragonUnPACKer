@@ -1,5 +1,5 @@
-Dragon UnPACKer HTML Template Compiler (DUTHComp) v2.0.3 Beta          Freeware
-(c)Copyright 2000-2003 Alex Devilliers                               07-04-2003
+Dragon UnPACKer HTML Template Compiler (DUTHComp) v2.0.4    MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    16/04/2011
 ===============================================================================
 
   What is DUHTComp ?
@@ -29,27 +29,38 @@ You can find those examples in the files:
 
 It should be enough to understand how to make a template.
 
+The resulting .UHT file must be placed in the \data\ subfolder of Dragon
+UnPACKer 5.
+
 But here is the list of macros to know:
 (H = Header, F = Footer and V = Variable)
 
-                  HFV
-  $$FILE$$          X  File (ex: VERSION.TXT)
-  $$FILE0$$         X  File without extension (ex: VERSION)
-  $$FILEEXT$$       X  File extension (ex: TXT)
-  $$FILENAME$$    XXX  Filename of the currently opened file in Dragon UnPACKer
-  $$FORMAT$$      XX   Format of the currently opened file in Dragon UnPACKer
-  $$DESC$$          X  Description
-  $$DIRECTORY$$   XXX  Current directory in main file
-  $$DUPVER$$      XX   Dragon UnPACKer version (displayed #.##.##)
-  $$DUPEDIT$$     XX   Dragon UnPACKer release (displayed ###, ex: Beta)
-  $$DUPURL$$      XX   Dragon UnPACKer Web page URL
-  $$LNG<??????>$$ XX   Dragon UnPACKer Language keyword "??????"
-  $$OFFSET$$        X  Offset
-  $$HOFFSET$$       X  Offset (In Hexa, ex: 0009AD01)
-  $$SIZE$$          X  Size
-  $$HSIZE$$         X  Size (In Hexa, ex: 0009AD01)
-  $$TOTNUMBYTES$$  X   Number of bytes in file
-  $$TOTNUMFILES$$  X   Number of files in file
+                   HFV
+  $$FILE$$           X File (ex: VERSION.TXT)
+  $$FILE0$$          X File without extension (ex: VERSION)
+  $$FILEEXT$$        X File extension (ex: TXT)
+  $$FILENAME$$     XXX Filename of the currently opened file in Dragon UnPACKer
+  $$FORMAT$$       XX  Format of the currently opened file in Dragon UnPACKer
+  $$DESC$$           X Description
+  $$DIRECTORY$$    XXX Current directory in main file
+  $$DUPVER$$       XX  Dragon UnPACKer version (displayed #.##.##)
+  $$DUPEDIT$$      XX  Dragon UnPACKer release (displayed ###, ex: Beta)
+  $$DUPURL$$       XX  Dragon UnPACKer Web page URL
+  $$LNG<??????>$$  XX  Dragon UnPACKer Language keyword "??????"
+  $$OFFSET$$         X Offset
+  $$FOFFSET$$        X Offset (formatted with thousands seps)
+  $$HOFFSET$$        X Offset (In Hexa, ex: 0009AD01)
+  $$SIZE$$           X Size
+  $$FSIZE$$          X Size (formatted with thousands seps)
+  $$HSIZE$$          X Size (In Hexa, ex: 0009AD01)
+  $$TOTNUMBYTES$$  XX  Number of bytes in file
+  $$TOTNUMFILES$$  XX  Number of files in file
+  $$FTOTNUMBYTES$$ XX  Number of bytes in file (formatted with thousands seps)
+  $$FTOTNUMFILES$$ XX  Number of files in file (formatted with thousands seps)
+  
+The formatted macros (with thousands separators) will use your Windows settings
+to format the number (ex: USA thousands separator is "," but in France it is
+" ").
 
   Compatibility list
   ------------------
@@ -79,6 +90,10 @@ You can reach Alex Devilliers:
   What's new?
   -----------
 
+Version 2.0.4:
+
+ ! Corrected a grammar mistake.
+  
 Version 2.0.3 Beta:
 
  i Public release (Dragon UnPACKer v5.0.0 Beta 3) with DUHT v2 (rev 11/03/2003)

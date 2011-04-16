@@ -77,6 +77,7 @@ type
     function macroHeader(src, cdir: string): string;
     function macroFooter(src, cdir: string; totSize: int64; totE: integer): string;
     function macroVar(src,cdir,fnam,desc: string; offset, size: int64; datax, datay: integer): string;
+    function macroTotals(src: string; totSize: int64; totE: integer): string;
     { Private declarations }
   public
     { Public declarations }
@@ -447,7 +448,13 @@ begin
       status.simpletext := '[6/9] '+ReplaceValue('%p',ReplaceValue('%v',DLNGStr('LST506'),inttostr(SortList.Count)),'0');
       frmList.Refresh;
 
-      OutBuf.WriteString(header);
+      for x := 0 to SortList.Count-1 do
+      begin
+        EntRec := SortList.Items[x];
+        inc(TotSize,EntRec^.Size);
+      end;
+
+      OutBuf.WriteString(macroTotals(header,TotSize,SortList.Count));
 
       TotSize := 0;
       perold := 0;
@@ -478,7 +485,6 @@ begin
         end;
 
         OutBuf.WriteString(macroVar(varstart,rep,FNam,DescFromExt(ExtractFileExt(EntRec^.FileName)),EntRec^.Offset,EntRec^.Size,EntRec^.DataX,EntRec^.DataY));
-        inc(TotSize,EntRec^.Size);
       end;
 
       OutBuf.WriteString(macroFooter(footer,rep,TotSize,SortList.Count));
@@ -598,32 +604,28 @@ begin
 
 end;
 
+function TfrmList.macroTotals(src: string; totSize: int64;
+  totE: integer): string;
+var tmpFloat: Real;
+begin
+
+  src := StringReplace(src,'$$TOTNUMFILES$$',IntToStr(totE), [rfReplaceAll]);
+  src := StringReplace(src,'$$TOTNUMBYTES$$',IntToStr(totSize), [rfReplaceAll]);
+  tmpFloat := totE;
+  src := StringReplace(src,'$$FTOTNUMFILES$$',Format('%.0n',[tmpFloat]), [rfReplaceAll]);
+  tmpFloat := totSize;
+  src := StringReplace(src,'$$FTOTNUMBYTES$$',Format('%.0n',[tmpFloat]), [rfReplaceAll]);
+
+  result := src;
+
+end;
+
 function TfrmList.macroFooter(src, cdir: string; totSize: int64;
   totE: integer): string;
-var i: integer;
 begin
 
   src := macroHeader(src,cdir);
-
-  i := 0;
-  repeat
-    i := PosEx('$$TOTNUMFILES$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+IntToStr(totE)+RightStr(src,Length(src)-(i+14));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$TOTNUMBYTES$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+IntToStr(totSize)+RightStr(src,Length(src)-(i+14));
-    end;
-  until i = 0;
-
-  result := src;
+  result := macroTotals(src,totSize,totE);
 
 end;
 
@@ -631,138 +633,35 @@ function TfrmList.macroVar(src, cdir, fnam, desc: string; offset,
   size: int64; datax, datay: integer): string;
 var i: integer;
     tmp: string;
+    tmpFloat: Real;
 begin
 
-  i := 0;
-  repeat
-    i := PosEx('$$FILENAME$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+ExtractFilename(FSE.GetFileName)+RightStr(src,Length(src)-(i+11));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$DIRECTORY$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+cdir+RightStr(src,Length(src)-(i+12));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$FILE$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+ExtractFilename(fnam)+RightStr(src,Length(src)-(i+7));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$FILE0$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+ChangeFileExt(ExtractFilename(fnam),'')+RightStr(src,Length(src)-(i+8));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$FILEEXT$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      tmp := ExtractFileExt(fnam);
-      if length(tmp) > 1 then
-        tmp := RightStr(tmp,Length(tmp)-1)
-      else if length(tmp) = 1 then
-        tmp := '';
-      src := LeftStr(src,i-1)+tmp+RightStr(src,Length(src)-(i+10));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$DESC$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+desc+RightStr(src,Length(src)-(i+7));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$SIZE$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+inttostr(size)+RightStr(src,Length(src)-(i+7));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$HSIZE$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+inttohex(size,8)+RightStr(src,Length(src)-(i+8));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$OFFSET$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+inttostr(offset)+RightStr(src,Length(src)-(i+9));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$HOFFSET$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+inttohex(offset,16)+RightStr(src,Length(src)-(i+10));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$DATAX$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+inttostr(datax)+RightStr(src,Length(src)-(i+8));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$HDATAX$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+inttohex(datax,8)+RightStr(src,Length(src)-(i+9));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$DATAY$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+inttostr(datay)+RightStr(src,Length(src)-(i+8));
-    end;
-  until i = 0;
-
-  i := 0;
-  repeat
-    i := PosEx('$$HDATAY$$',uppercase(src),i+1);
-    if i > 0 then
-    begin
-      src := LeftStr(src,i-1)+inttohex(datay,8)+RightStr(src,Length(src)-(i+9));
-    end;
-  until i = 0;
+  src := StringReplace(src,'$$FILENAME$$',ExtractFilename(FSE.GetFileName), [rfReplaceAll]);
+  src := StringReplace(src,'$$DIRECTORY$$',cdir, [rfReplaceAll]);
+  src := StringReplace(src,'$$FILE$$',ExtractFilename(fnam), [rfReplaceAll]);
+  src := StringReplace(src,'$$FILE0$$',ChangeFileExt(ExtractFilename(fnam),''), [rfReplaceAll]);
+  tmp := ExtractFileExt(fnam);
+  if length(tmp) > 1 then
+    tmp := RightStr(tmp,Length(tmp)-1)
+  else if length(tmp) = 1 then
+    tmp := '';
+  src := StringReplace(src,'$$FILEEXT$$',tmp, [rfReplaceAll]);
+  src := StringReplace(src,'$$DESC$$',desc, [rfReplaceAll]);
+  src := StringReplace(src,'$$SIZE$$',inttostr(size), [rfReplaceAll]);
+  tmpFloat := size;
+  src := StringReplace(src,'$$FSIZE$$',Format('%.0n',[tmpFloat]), [rfReplaceAll]);
+  if (size > High(Cardinal)) then
+    src := StringReplace(src,'$$HSIZE$$',inttohex(size,16), [rfReplaceAll])
+  else
+    src := StringReplace(src,'$$HSIZE$$',inttohex(size,8), [rfReplaceAll]);
+  src := StringReplace(src,'$$OFFSET$$',inttostr(offset), [rfReplaceAll]);
+  tmpFloat := offset;
+  src := StringReplace(src,'$$FOFFSET$$',Format('%.0n',[tmpFloat]), [rfReplaceAll]);
+  src := StringReplace(src,'$$HOFFSET$$',inttohex(offset,16), [rfReplaceAll]);
+  src := StringReplace(src,'$$DATAX$$',inttostr(datax), [rfReplaceAll]);
+  src := StringReplace(src,'$$DATAY$$',inttostr(datay), [rfReplaceAll]);
+  src := StringReplace(src,'$$HDATAX$$',inttohex(datax,8), [rfReplaceAll]);
+  src := StringReplace(src,'$$HDATAY$$',inttohex(datay,8), [rfReplaceAll]);
 
   result := src;
 

@@ -1,63 +1,42 @@
-Dragon UnPACKer v5.6.1 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    04/04/2011
+Dragon UnPACKer v5.6.2 Beta                                 MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    16/04/2011
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
            use it at your own risk. Might be unstable. You were warned! **
 
-  Documentation files are not updated since last stable release (v5.6.0).
+  Documentation files are not updated since last stable release (v5.6.1).
   
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.6.1.262
-SVN Release 601 [Unreleased]
+Version 5.6.2.263
+SVN Release 608 [Unreleased]
 
- i Now using FastMM v4.97 as memory manager. Only core for the moment.
- ! Fixed a lot of memory leaks (more to come). Thanks to FastMM debuging mode.
- ! Fixed the missing sort options in the file listing pane. Clicking on the
-   header would do nothing.
- * Changed association icons to use 256x256 icons (much more appropriate for
-   modern OSes than the old 32x32 one.
-   The chest icons (closed & open) were made by Mohsen Fakharian, check his
-   work here: http://mohsenfakharian.deviantart.com
-   For the moment only the first icon is used, I will try to modify the
-   association part so it can be choosen between both possibilities.
- * MAJOR speedup when lots of entries in the opened resource file:
-     When left-clicking an entry for a preview
-	 When right-clicking for popup menu
-   I was doing some pretty dumb things which were slow as hell!!! 
- - Removed use of CxCpu (which was only used in Error handling popup).
-   Unmaintained and not really useful anyway.
- * Auto-expand the folder list when loading a file.
-   This can be turned off in the Basic Options.
- + The program now remembers which file type you had selected in the open dialog
-   and will reselect it automatically unless the format list changed (ex: when
-   updating the driver plugins).
-   This can also be turned off in the Basic Options.
- + Added option to automatically clear the log everytime a file is opened.
- * The create file list now automatically adds the extension to the filename
-   if it is missing.
- + Added Copy to clipboard option to the popup menu of the Log.
- ! Fixed a huge extraction bug (when extracting folders from the left pane).
-   Thanks to Paul (from http://www.spookcentral.tk) for noticing and helping
-   nailing this bug out.
- + Added option on the popup menu on left pane to extract current selected
-   folder to his own folder (with same name).
-   Ex: You right-click on "Animation" folder which contains sub-folders.
-     Extract sub-directories... will extract all sub-folder directly
-                                to the selected folder.
-     Extract sub-directories to folder... will create a sub-folder named as
-                                "Animation" to the selected folder and extract
-                                all-subfolders there.
- ! Fixed double menu popup in left pane when right clicking.
- * Elbereth's Main Driver plugin v2.1.1:
-   * Enhanced Bloodrayne .POD support by using buffered directory reading.
-   + Added Ghostbusters: The Video Game .POD support (POD5).
-     This is almost the same file format as Bloodrayne .POD (POD3).
-   + Added Ghostbusters: Sanctum of Slime .PAK support.
-     Includes decompression of entries (LZMA).
-   * Changed how magic ID string is copied.
+ + Added new macros to the create list feature:
+   Available in both header & footer:
+    $$FTOTNUMBYTES$$  Number of bytes in file (formatted with thousands seps)
+    $$FTOTNUMFILES$$  Number of files in file (formatted with thousands seps)
+   Available in variable:
+    $$FSIZE$$         Size (formatted with thousands seps)
+    $$FOFFSET$$       Offset (formatted with thousands seps)
+   The formatting is using the regional settings of Windows.
+   For example, for English (USA) the separator will be a comma "," but for
+   French (France) it will be a space " ".
+ * Changed the following 2 macros in create list feature to be usable also in
+   the header (and not only in footer):
+    $$TOTNUMBYTES$$   Number of bytes in file
+    $$TOTNUMFILES$$   Number of files in file
+ + External Tools Convertion plugin v0.0.1 Alpha:
+   i This plugin allows to use external command line tools to convert file
+     formats (for example the excellent vgmstream tool for audio files).
+	 This first version works fine but is only configured for vgmstream and to
+	 trigger on .smp files of Ghostbusters.
+	 Configuration is completely done in the .INI file:
+	 data\convert\cnv_exttools.ini
+	 You will also need a working test.exe file from vgmstream in the following
+	 folder (along with needed dlls):
+     data\convert\tools\vgmstream
 
 
 Beta Developement Page:

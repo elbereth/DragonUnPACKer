@@ -28,7 +28,7 @@ uses
   classes,
   CRC32 in 'CRC32.pas';
 
-const AppVersion = 20310;
+const AppVersion = 20440;
 
 type TEntryType = record
        ID: array[0..1] of char;
@@ -487,13 +487,13 @@ begin
 
         FreeMem(Buffer);
 
-        writeln('     OK  ('+rightstr('   '+inttostr(numEnt),3)+' entries writed)  ['+rightstr('      '+inttostr(FSize),6)+' bytes]');
+        writeln('     OK  (wrote '+rightstr('   '+inttostr(numEnt),3)+' entries)   ['+rightstr('      '+inttostr(FSize),6)+' bytes]');
 
         tsize := FileSeek(ofil,0,2);
         FileClose(ofil);
         etime := now;
 
-        writeln(' - Compiled successfully! ['+inttostr(tsize)+' bytes] ['+Format('%3.3f',[MillisecondsBetween(etime, stime)/1000])+' secs]');
+        writeln(' - Compiled successfully! ['+inttostr(tsize)+' bytes] ['+Format('%.3f',[MillisecondsBetween(etime, stime)/1000])+' secs]');
       end
     else
       writeln('   Error could not create/open the file.. Aborting!');
@@ -508,14 +508,15 @@ var xp: integer;
 begin
   { TODO -oUser -cConsole Main : Insert code here }
 
-   writeln('Dragon Software - DUP5 UHT Compiler            Version: '+GetVersionFromInt(AppVersion));
-   writeln('(c)Copyright 2002-2003 Alexandre Devilliers        URL: http://www.drgsoft.com/');
+   writeln('Dragon Software - DUP5 UHT Compiler     Version: '+GetVersionFromInt(AppVersion));
+   writeln('Created by Alexandre Devilliers             URL: http://www.elberethzone.net/');
    writeln;
 
    if ParamCount = 0 then
    begin
      writeln(' This program will compile a Dragon UnPACKer TS source file (plus include');
      writeln(' files) to a DUP5 compiled HTML template file (DUHT).');
+     writeln(' Place the resulting file in "data" subfolder of Dragon UnPACKer to use it.');
      writeln;
      writeln(' Usage: duhtcomp <sourcefile.ts> [options]');
      writeln;

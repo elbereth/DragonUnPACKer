@@ -27,7 +27,7 @@ uses
   // Vampyre Imaging Library
   ImagingTypes, Imaging, ImagingClasses, ImagingComponents, ImagingCanvases,
   ImagingFormats, ImagingUtility, dwTaskbarComponents,
-  lib_crc;
+  lib_crc, lib_temptools;
 
 type
   Tdup5Main = class(TForm)

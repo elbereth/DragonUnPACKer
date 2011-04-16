@@ -28,6 +28,7 @@ interface
 uses
   lib_Language,
   lib_utils,
+  lib_temptools,
   UBufferedFS,
   classConvertExport,
   Forms,

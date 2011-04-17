@@ -201,6 +201,10 @@ begin
     result := '%d Moctets'
   else if sch = 'OPT036' then
     result := 'Par Défaut'
+  else if sch = 'OPT040' then
+    result := 'Intégrité des entrées retournés par les extensions Pilotes'
+  else if sch = 'OPT041' then
+    result := 'Ne pas ignorer les fichiers dont la taille fait 0 octets (non recommandé)'
   else if sch = 'OPT100' then
     result := 'Options générales'
   else if sch = 'OPT110' then

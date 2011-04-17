@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-# Programa: Dragon UnPACKer v5.6.1
+# Programa: Dragon UnPACKer v5.6.2
 # Lenguaje: Español
-#  Version: 14
+#  Version: 15
 #    Autor: Alexandre Devilliers (con la ayuda de Cinthia)
 # ============================================================================
 {LSF}
@@ -12,7 +12,7 @@ Author = Alexandre Devilliers
 Email = translation@dragonunpacker.com
 URL = http://www.dragonunpacker.com
 ProgramID = UP
-ProgramVer = 14
+ProgramVer = 15
 IconFile = flag_sp.bmp
 Compression=99
 OutFile = spanish.lng
@@ -115,6 +115,8 @@ OPT033=%d octeto(s)
 OPT034=%d Koctetos
 OPT035=%d Moctetos
 OPT036=Por Defecto
+OPT040=Integridad de las entradas leidas por las extensiones pilotos
+OPT041=Aceptar ficheros con tamaño = 0 Octetos (no recomendado)
 OPT100=Opciones generales
 OPT110=Lenguaje
 OPT111=Encontrar otras traduciones...

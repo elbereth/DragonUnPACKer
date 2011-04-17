@@ -52,8 +52,12 @@ var
   real1, real2: real;
 begin
 
-    if not(silent) then
-      DisplayPercent(0);
+  if not(silent) then
+    DisplayPercent(0);
+
+  // Test there is something to do, without it the result is weird....
+  if ssize > 0 then
+  begin
 
     src.Seek(soff,0);
     numbuf := ssize div bufsize;
@@ -82,8 +86,10 @@ begin
 
     dst.CopyFrom(src,restbuf);
 
-    if not(silent) then
-      DisplayPercent(100);
+  end;
+
+  if not(silent) then
+    DisplayPercent(100);
 
 end;
 

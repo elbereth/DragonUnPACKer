@@ -1,8 +1,8 @@
 # Language Source File (pour DLNGC v4.0)
 # ============================================================================
-#  Programme: Dragon UnPACKer v5.6.1 Exedra-Benton
+#  Programme: Dragon UnPACKer v5.6.2 Exedra-Chac
 #     Langue: English
-#    Version: 14
+#    Version: 15
 #     Auteur: Alex Devilliers
 # ============================================================================
 #
@@ -28,6 +28,9 @@
 # ============================================================================
 # Informations sur cette traduction
 # ============================================================================
+#
+# version 15:
+# Ajout de OPT040 et OPT041
 #
 # version 14:
 # Ajout de LOG505, LOG506, LOG507, OPT127, OPT128, OPT812 et POP3S4
@@ -98,9 +101,10 @@ URL = http://www.dragonunpacker.com
 # Dragon UnPACKer v5.4.0         UP      12
 # Dragon UnPACKer v5.5.1 Beta    UP      13
 # Dragon UnPACKer v5.6.1         UP      14
+# Dragon UnPACKer v5.6.2         UP      15
 #
 ProgramID = UP
-ProgramVer = 14
+ProgramVer = 15
 #
 # + IconFile +
 # Chemin & nom du fichier de l'icône affichée avec le nom de langue.
@@ -250,6 +254,8 @@ OPT033=%d octet(s)
 OPT034=%d koctets
 OPT035=%d Moctets
 OPT036=Par Défaut
+OPT040=Intégrité des entrées retournés par les extensions Pilotes
+OPT041=Ne pas ignorer les fichiers dont la taille fait 0 octets (non recommandé)
 OPT100=Options générales
 OPT110=Langue
 OPT111=Trouver d'autres traductions...

@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-#  Program: Dragon UnPACKer v5.6.1
+#  Program: Dragon UnPACKer v5.6.2
 # Language: English
-#  Version: 14
+#  Version: 15
 #   Author: Alex Devilliers
 # ============================================================================
 #
@@ -27,6 +27,9 @@
 # ============================================================================
 # Informations about this translation
 # ============================================================================
+#
+# version 15:
+# Added OPT040 and OPT041
 #
 # version 14:
 # Added LOG505, LOG506, LOG507, OPT127, OPT128, OPT812, POP2S6 and POP3S4
@@ -152,9 +155,10 @@ URL = http://www.dragonunpacker.com
 # Dragon UnPACKer v5.4.0         UP      12
 # Dragon UnPACKer v5.5.1 Beta    UP      13
 # Dragon UnPACKer v5.6.1         UP      14
+# Dragon UnPACKer v5.6.2         UP      15
 #
 ProgramID = UP
-ProgramVer = 14
+ProgramVer = 15
 #
 # + IconFile +
 # Path & FileName of the "icon" displayed with language name (ex: c:\test.bmp)
@@ -303,6 +307,8 @@ OPT033=%d byte(s)
 OPT034=%d kbytes
 OPT035=%d Mbytes
 OPT036=Default
+OPT040=Drivers plugin entries integrity
+OPT041=Do not ignore files with size = 0 bytes (not recommended)
 OPT100=Basic options
 OPT110=Language
 OPT111=Find available translations...

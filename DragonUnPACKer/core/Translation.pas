@@ -436,6 +436,12 @@ begin
     chkMakeExtractDefault.Caption := DLNGStr('OPT021');
     chkMakeExtractDefault.Font.Name := GetFont();
 
+    grpDriversIntegrity.Caption := DLNGStr('OPT040');
+    grpDriversIntegrity.Font.Name := GetFont();
+    
+    chkAccept0Bytes.Caption := DLNGStr('OPT041');
+    chkAccept0Bytes.Font.Name := GetFont();
+
     grpAdvBufferSize.Caption := DLNGStr('OPT030');
     grpAdvBufferSize.Font.Name := GetFont();
 

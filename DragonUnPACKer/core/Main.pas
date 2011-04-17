@@ -1220,7 +1220,6 @@ begin
       tmpStm.Seek(0,soFromBeginning);
       writeLogVerbose(1,ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[CurrentMenu.Tag].Info.Display));
       CPlug.convert(CListInfo.List[CurrentMenu.Tag].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
-      appendLog(DLNGStr('LOG510'));
     finally
       FreeAndNil(tmpStm);
       FreeAndNil(outStm);
@@ -1331,7 +1330,6 @@ begin
         tmpStm.Seek(0,soFromBeginning);
         appendLog(DLNGStr('LOGC15'));
         CPlug.convert(CListInfo.List[CurrentMenu.Tag].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
-        appendLog(DLNGStr('LOG510'));
       except
         on E: Exception do
         begin
@@ -2865,8 +2863,9 @@ begin
                 cnvInfo := CPlug.getPluginInfo(i);
                 dup5Main.appendLogVerbose(2,cnvInfo.Name+' v'+cnvInfo.Version);
                 stmSource.Seek(0,soFromBeginning);
-                CPlug.Convert(i,stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true);
-                stmBitmap.Seek(0,soFromBeginning);
+                if CPlug.Convert(i,stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true) then
+                begin
+                  stmBitmap.Seek(0,soFromBeginning);
 
                 try
                   dup5Main.appendLogVerbose(2,'... '+DLNGStr('PRV004')+'...');
@@ -2889,6 +2888,7 @@ begin
                     scrollPreview.Visible := isPreviewImage;
                     imgPreview.Refresh;
                   end;
+                end;
                 end;
               end;
             end;

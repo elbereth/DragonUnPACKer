@@ -1,6 +1,6 @@
 library cnv_exttools;
 
-// $Id: cnv_pictex.dpr 522 2010-07-22 13:45:08Z elbereth $
+// $Id$
 //
 // The contents of this file are subject to the Mozilla Public License
 // Version 1.1 (the "License"); you may not use this file except in compliance
@@ -64,6 +64,10 @@ type ConvertListElem = record
        path: string;
        command: string;
        resultext: string;
+       resultoktest: integer;
+       resultok: integer;
+       resulterrortest: integer;
+       resulterror: integer;
        extensions: TStrArray;
      end;
 
@@ -80,13 +84,17 @@ var Percent: TPercentCallback;
 const
   DUCI_VERSION = 4;
   DUCI_VERSION_COMPATIBLE = 3;
-  DRIVER_VERSION = 00100;
+  DRIVER_VERSION = 00200;
   DUP_VERSION = 56240;
-  SVN_REVISION = '$Rev: 522 $';
-  SVN_DATE = '$Date: 2010-07-22 15:45:08 +0200 (jeu., 22 juil. 2010) $';
+  SVN_REVISION = '$Rev$';
+  SVN_DATE = '$Date$';
 
 { * Version History:
   * v0.0.1 Alpha (00100): First version (never distributed)
+  * v0.0.2 Alpha (00200): Added return code testing (in order to know something
+  *                       went wrong
+  *                       The list of configured tools is now shown in the
+  *                       about box
   * }
 
 function Explode(var a: TStrArray; Border, S: string): Integer;
@@ -143,9 +151,9 @@ var iniFile: TMemIniFile;
     x, curnum: integer;
 begin
 
-  if fileexists('cnv_exttools.ini') then
+  if fileexists(CurPath+'cnv_exttools.ini') then
   begin
-    iniFile := TMemInifile.Create('cnv_exttools.ini');
+    iniFile := TMemInifile.Create(CurPath+'cnv_exttools.ini');
     try
       if iniFile.SectionExists('cnv_exttools') and iniFile.ValueExists('cnv_exttools','toolslist') then
       begin
@@ -163,6 +171,8 @@ begin
           and iniFile.ValueExists('tool-'+toolslist[x],'path')
           and iniFile.ValueExists('tool-'+toolslist[x],'command')
           and iniFile.ValueExists('tool-'+toolslist[x],'resultext')
+          and iniFile.ValueExists('tool-'+toolslist[x],'resultoktest')
+          and iniFile.ValueExists('tool-'+toolslist[x],'resultok')
           and iniFile.ValueExists('tool-'+toolslist[x],'extensions')) then
           begin
             ListOfTools[curnum].enabled := iniFile.ReadBool('tool-'+toolslist[x],'enabled',false);
@@ -173,6 +183,8 @@ begin
             ListOfTools[curnum].path := iniFile.ReadString('tool-'+toolslist[x],'path','');
             ListOfTools[curnum].command := iniFile.ReadString('tool-'+toolslist[x],'command','');
             ListOfTools[curnum].resultext := iniFile.ReadString('tool-'+toolslist[x],'resultext','');
+            ListOfTools[curnum].resultoktest := iniFile.ReadInteger('tool-'+toolslist[x],'resultoktest',0);
+            ListOfTools[curnum].resultok := iniFile.ReadInteger('tool-'+toolslist[x],'resultok',0);
             explode(ListOfTools[curnum].extensions,' ',iniFile.ReadString('tool-'+toolslist[x],'extensions',''));
           end;
         end;
@@ -280,6 +292,34 @@ begin
     else
       path := ListOfTools[toolnum].path;
     result := ShellExec(path,params,extractfilepath(path));
+    
+    case ListOfTools[toolnum].resultoktest of
+      0: if (result = ListOfTools[toolnum].resultok) then
+           result := 0
+         else
+           result := -1;
+      1: if (result > ListOfTools[toolnum].resultok) then
+           result := 0
+         else
+           result := -1;
+      2: if (result < ListOfTools[toolnum].resultok) then
+           result := 0
+         else
+           result := -1;
+      3: if (result >= ListOfTools[toolnum].resultok) then
+           result := 0
+         else
+           result := -1;
+      4: if (result <= ListOfTools[toolnum].resultok) then
+           result := 0
+         else
+           result := -1;
+      5: if (result <> ListOfTools[toolnum].resultok) then
+           result := 0
+         else
+           result := -1;
+    end;
+
     if FileExists(tmpFileNameOut) then
     begin
       tmpFile := TFileStream.Create(tmpFileNameOut,fmOpenRead);
@@ -337,7 +377,10 @@ end;
 
 procedure AboutBox; stdcall;
 var aboutText: string;
+    x: integer;
 begin
+
+  reloadSettings;
 
   if (SupportedDUCI >= 4) then
   begin
@@ -349,7 +392,17 @@ begin
                  '\b0\i0\fs20 Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+'\par'+#10+
                  'Driver Interface [DUCI] v'+inttostr(DUCI_VERSION)+' (v'+inttostr(DUCI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUCI)+']\par'+#10+
                  'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+'\par'+#10+
-                 'Based on SVN rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')\par'+#10+'}'+#10;
+                 'Based on SVN rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')\par'+#10+
+                 '\par'+#10+
+                 'List of enabled tools:\par'+#10;
+
+    for x := Low(ListOfTools) to High(ListOfTools) do
+    begin
+      if ListOfTools[x].enabled then
+        aboutText := aboutText + inttostr(x+1) + ': '+ListOfTools[x].name+ '('+ListOfTools[x].author+') ['+ListOfTools[x].comment+']\par'+#10+'URL: {\field{\*\fldinst HYPERLINK "'+ListOfTools[x].url+'"}{\fldrslt '+ListOfTools[x].url+'}}\par'+#10;
+    end;
+
+    aboutText := aboutText + '}'+#10;
 
   end
   else

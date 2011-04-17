@@ -91,7 +91,7 @@ ImageBase=4194304
 ExeDescription=
 [Directories]
 OutputDir=E:\Developpement\dup-dev-5.1-compiled\data\convert
-UnitOutputDir=
+UnitOutputDir=E:\Developpement\dup-dev-5.1-dcu
 PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=
@@ -104,14 +104,14 @@ RunParams=
 HostApplication=E:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
 Launcher=
 UseLauncher=0
-DebugCWD=
+DebugCWD=E:\Developpement\dup-dev-5.1-compiled\
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=0
 MinorVer=0
-Release=1
-Build=2
+Release=2
+Build=5
 Debug=0
 PreRelease=1
 Special=0
@@ -122,7 +122,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=DUP5 - External Tools Convert Plugin
-FileVersion=0.0.1.2
+FileVersion=0.0.2.5
 InternalName=cnv_exttools
 LegalCopyright=Created by Alexandre Devilliers (aka Elbereth/Piecito)
 LegalTrademarks=Mozilla Public License 1.1

@@ -130,7 +130,7 @@ type plugin = record
   public
     function getNumPlugins(): integer;
     function getPluginInfo(pid: integer): ConvertInfoEx;
-    function convert(pid: integer; src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer;
+    function convert(pid: integer; src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): boolean;
 end;
 
 type EUndefinedPlugin = class(Exception);
@@ -149,9 +149,10 @@ end;
 
 { TDrivers }
 
-function TPlugins.convert(pid: integer; src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer;
-var stmFile: TBufferedFS;
+function TPlugins.convert(pid: integer; src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): boolean;
+var stmFile: TFileStream;
     tmpfil, tmpfil2: string;
+    res: integer;
 begin
 
   dec(pid);
@@ -162,19 +163,28 @@ begin
   if Plugins[pid].DUCIVersion < 3 then
   begin
     tmpfil := getTemporaryDir+getTemporaryFilename('src');
-    stmFile := TBufferedFS.Create(tmpfil,fmCreate);
+    stmFile := TFileStream.Create(tmpfil,fmCreate);
     try
       stmFile.CopyFrom(src,src.size);
     finally
       FreeAndNil(stmFile);
     end;
     tmpfil2 := getTemporaryDir+getTemporaryFilename('dst');
-    Plugins[pid].Convert(tmpfil,tmpfil2,nam,fmt,cnv,Offset,DataX,DataY,Silent);
-    stmFile := TBufferedFS.Create(tmpfil2,fmOpenRead);
-    try
-      dst.CopyFrom(stmFile,stmFile.Size);
-    finally
-      FreeAndNil(stmFile);
+    result := (Plugins[pid].Convert(tmpfil,tmpfil2,nam,fmt,cnv,Offset,DataX,DataY,Silent) = 0);
+    if result then
+    begin
+      stmFile := TFileStream.Create(tmpfil2,fmOpenRead);
+      try
+        dst.CopyFrom(stmFile,stmFile.Size);
+      finally
+        FreeAndNil(stmFile);
+      end;
+      try
+        if FileExists(tmpfil2) then
+          DeleteFile(tmpfil2);
+      except
+        dup5Main.tempFiles.Add(tmpfil2);
+      end;
     end;
     try
       if FileExists(tmpfil) then
@@ -182,15 +192,17 @@ begin
     except
       dup5Main.tempFiles.Add(tmpfil);
     end;
-    try
-      if FileExists(tmpfil2) then
-        DeleteFile(tmpfil2);
-    except
-      dup5Main.tempFiles.Add(tmpfil2);
-    end;
   end
   else
-    Plugins[pid].ConvertStream(src,dst,nam,fmt,cnv,Offset,DataX,DataY,Silent);
+    result := (Plugins[pid].ConvertStream(src,dst,nam,fmt,cnv,Offset,DataX,DataY,Silent) = 0);
+
+  if result then
+    dup5Main.appendLog(DLNGStr('LOG510'))
+  else
+  begin
+    dup5Main.colorLog(clRed);
+    dup5Main.appendLog(DLNGStr('LOG512'));
+  end;
 
 end;
 

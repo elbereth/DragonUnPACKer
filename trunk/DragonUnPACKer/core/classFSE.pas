@@ -704,7 +704,8 @@ var x,y,i: integer;
     ErrList: TStringList;
     ErrStr: String;
     ErrNum, hTest: integer;
-    zero64: int64;
+    zero64, sizeTest: int64;
+    reg: TRegistry;
 begin
 
   SaveTitle;
@@ -833,11 +834,26 @@ begin
 
           dup5Main.writeLogVerbose(1,ReplaceValue('%x',DLNGStr('LOG502'),inttostr(NumElems)));
 
+          Reg := TRegistry.Create;
+          Try
+            Reg.RootKey := HKEY_CURRENT_USER;
+            if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+            begin
+              if Reg.ValueExists('Accept0Bytes') and Reg.ReadBool('Accept0Bytes') then
+                sizeTest := -1
+              else
+                sizeTest := 0;
+              Reg.CloseKey;
+            end;
+          Finally
+            FreeAndNil(Reg);
+          end;
+
           try
             for y := 1 to NumElems do
             begin
               Test := Drivers[CurrentDriver].GetEntry();
-              if (Test.Offset >= 0) and (Test.Size > 0) then
+              if (Test.Offset >= 0) and (Test.Size > sizeTest) then
               begin
                 Inc(DispNumElems);
                 DataBlocAdd(Test.FileName,Test.Offset,Test.Size,Test.DataX,Test.DataY);
@@ -1467,10 +1483,13 @@ begin
     dst := FileCreate(outfile, (fmOpenWrite or fmShareDenyWrite));
     if dst > 0 then
     begin
-      tmpStm := THandleStream.Create(dst);
+      if size > 0 then
+      begin
+        tmpStm := THandleStream.Create(dst);
 //      BinCopy(CurrentFile,dst,Offset,Size,0,16384,silent);
-      BinCopyToStream(CurrentFile,tmpStm,Offset,Size,0,getBufferSize(),silent,percent);
-      FreeAndNil(tmpStm);
+        BinCopyToStream(CurrentFile,tmpStm,Offset,Size,0,getBufferSize(),silent,percent);
+        FreeAndNil(tmpStm);
+      end;
       FileClose(dst);
       if not(silent) then
         dup5Main.appendLog(DLNGStr('LOG510'));
@@ -1534,7 +1553,8 @@ begin
   end
   else
   begin
-    BinCopyToStream(CurrentFile,outstream,Offset,Size,0,getBufferSize(),silent,percent);
+    if (Size > 0) then
+      BinCopyToStream(CurrentFile,outstream,Offset,Size,0,getBufferSize(),silent,percent);
     if not(silent) then
       dup5Main.appendLog(DLNGStr('LOG510'));
   end;

@@ -155,6 +155,8 @@ type
     chkLogClearNew: TCheckBox;
     chkAutoExpand: TCheckBox;
     chkKeepFilterIndex: TCheckBox;
+    grpDriversIntegrity: TGroupBox;
+    chkAccept0Bytes: TCheckBox;
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cmdOkClick(Sender: TObject);
@@ -210,6 +212,7 @@ type
     procedure chkLogClearNewClick(Sender: TObject);
     procedure chkAutoExpandClick(Sender: TObject);
     procedure chkKeepFilterIndexClick(Sender: TObject);
+    procedure chkAccept0BytesClick(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -463,6 +466,10 @@ begin
         ChkKeepFilterIndex.Checked := Reg.ReadBool('KeepFilterIndex')
       else
         ChkKeepFilterIndex.Checked := true;
+      if Reg.ValueExists('Accept0Bytes') then
+        ChkAccept0Bytes.Checked := Reg.ReadBool('Accept0Bytes')
+      else
+        ChkAccept0Bytes.Checked := false;
       if Reg.ValueExists('AutoExpand') then
         ChkAutoExpand.Checked := Reg.ReadBool('AutoExpand')
       else
@@ -1540,6 +1547,29 @@ begin
       if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
       begin
         Reg.WriteBool('KeepFilterIndex',chkKeepFilterIndex.Checked);
+        Reg.CloseKey;
+      end;
+    Finally
+      FreeAndNil(Reg);
+    end;
+
+  end;
+
+end;
+
+procedure TfrmConfig.chkAccept0BytesClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        Reg.WriteBool('Accept0Bytes',chkAccept0Bytes.Checked);
         Reg.CloseKey;
       end;
     Finally

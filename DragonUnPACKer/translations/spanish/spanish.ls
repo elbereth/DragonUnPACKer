@@ -44,6 +44,8 @@ LSTCP1=Fichero
 LSTCP2=Tamaño (Octetos)
 LSTCP3=Posición
 LSTCP4=Descripción
+LSTCP5=Dato X
+LSTCP6=Dato Y
 STAT10=objeto(s)
 STAT20=octeto(s)
 
@@ -129,6 +131,7 @@ OPT125=Utilizar el HyperRipper si ninguna extensión piloto a podido cargar el fi
 OPT126=Ver al diario de ejecución
 OPT127=Mostrar todo automaticamente al abrir un fichero
 OPT128=Guardar en memoria el tipo de fichero seleccionado
+OPT129=Mostrar columnas avanzadas en la lista de entradas (no recomendado)
 OPT191=Estas extensiónes se encargan de convertir los formatos de ficheros a la extracción o al pre visualizar. Ejemplo: Convertir las texturas desde .ART hasta .BMP
 OPT192=Estas extensiónes se encargan de abrir los formatos de ficheros soportados por Dragon UnPACKer. Si un fichero no es suportado significa que ninguna extensión piloto puede cargarlo. El HyperRipper se ocupa de los ficheros con otras extensiónes (ver abajo).
 OPT193=Estas extensiónes se encargan de escanear formatos de ficheros en el HyperRipper (ej.: MPEG Audio, BMP, etc.)

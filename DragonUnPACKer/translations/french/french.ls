@@ -30,7 +30,7 @@
 # ============================================================================
 #
 # version 15:
-# Ajout de OPT040 et OPT041
+# Ajout de LSTCP5, LSTCP6, OPT040, OPT041 et OPT129
 #
 # version 14:
 # Ajout de LOG505, LOG506, LOG507, OPT127, OPT128, OPT812 et POP3S4
@@ -183,6 +183,8 @@ LSTCP1=Fichier
 LSTCP2=Taille (Octets)
 LSTCP3=Position
 LSTCP4=Description
+LSTCP5=Donnée X
+LSTCP6=Donnée Y
 STAT10=objet(s)
 STAT20=octet(s)
 
@@ -268,6 +270,7 @@ OPT125=Utiliser l'HyperRipper si aucune extension n'arrive à ouvrir le fichier
 OPT126=Afficher le journal d'exécution
 OPT127=Développer automatiquement les répertoires à l'ouverture
 OPT128=Garder en mémoire le type de fichier sélectionné sur l'écran d'ouverture
+OPT129=Afficher les champs étendues sur la liste des entrées (non recommandé)
 OPT191=Ces extensions gèrent la convertion des formats de fichiers lors de l'extraction et de la prévisualisation. Exemple: Conversion des textures .ART vers .BMP
 OPT192=Ces extensions gèrent l'ouverture des formats de fichiers pour que Dragon UnPACKer puisse les explorer. Si un fichier n'est pas supporté cela signifie qu'aucune extension ne peut le lire (voir HyperRipper dans ce cas ci-dessous).
 OPT193=Ces extensions gèrent les formats qu'il est possible de rechercher dans le HyperRipper (ex: MPEG Audio, BMP, etc..)

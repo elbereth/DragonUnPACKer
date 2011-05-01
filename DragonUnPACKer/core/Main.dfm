@@ -222,6 +222,20 @@ object dup5Main: Tdup5Main
         Position = 3
         Width = 150
         WideText = 'Description'
+      end
+      item
+        Alignment = taRightJustify
+        Options = [coAllowClick, coDraggable, coEnabled, coParentBidiMode, coParentColor, coResizable, coShowDropMark, coAllowFocus]
+        Position = 4
+        Width = 100
+        WideText = 'Data X'
+      end
+      item
+        Alignment = taRightJustify
+        Options = [coAllowClick, coDraggable, coEnabled, coParentBidiMode, coParentColor, coResizable, coShowDropMark, coAllowFocus]
+        Position = 5
+        Width = 100
+        WideText = 'Data Y'
       end>
   end
   object lstIndex: TVirtualStringTree

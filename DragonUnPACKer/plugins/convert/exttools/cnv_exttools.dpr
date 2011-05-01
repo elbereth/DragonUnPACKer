@@ -399,7 +399,7 @@ begin
     for x := Low(ListOfTools) to High(ListOfTools) do
     begin
       if ListOfTools[x].enabled then
-        aboutText := aboutText + inttostr(x+1) + ': '+ListOfTools[x].name+ '('+ListOfTools[x].author+') ['+ListOfTools[x].comment+']\par'+#10+'URL: {\field{\*\fldinst HYPERLINK "'+ListOfTools[x].url+'"}{\fldrslt '+ListOfTools[x].url+'}}\par'+#10;
+        aboutText := aboutText + inttostr(x+1) + ': '+ListOfTools[x].name+ ' ('+ListOfTools[x].author+') ['+ListOfTools[x].comment+']\par'+#10+'URL: {\field{\*\fldinst HYPERLINK "'+ListOfTools[x].url+'"}{\fldrslt '+ListOfTools[x].url+'}}\par'+#10;
     end;
 
     aboutText := aboutText + '}'+#10;

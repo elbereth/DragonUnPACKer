@@ -239,6 +239,7 @@ type
     procedure FormHide(Sender: TObject);
     procedure menuLog_CopyClipboardClick(Sender: TObject);
     procedure menuIndex_ExtractDirsNamedFolderClick(Sender: TObject);
+    procedure lstContent_displayHiddenHeader();
   private
     FPreviewBitmap: TImagingBitmap;
     FPreviewImage: TMultiImage;
@@ -1428,6 +1429,8 @@ begin
     1: CellText := IntToStr(Data.data^.size);
     2: CellText := IntToStr(Data.data^.offset);
     3: CellText := Data.desc;
+    4: CellText := IntToStr(Data.data^.DataX);
+    5: CellText := IntToStr(Data.data^.DataY);
   else
     CellText := '';
   end;
@@ -1664,6 +1667,7 @@ begin
     LoadLook(clook);
 
   application.Title := dup5Main.Caption;
+  lstContent_displayHiddenHeader;
 
   // This require admin privileges on Vista/7...
   try
@@ -3261,6 +3265,38 @@ begin
     FSE.ExtractDir(GetNodePath(lstIndex.FocusedNode),outputdir)
 
   end
+
+end;
+
+procedure Tdup5Main.lstContent_displayHiddenHeader();
+var reg: TRegistry;
+    ShowHidden: boolean;
+begin
+
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      if Reg.ValueExists('DisplayXYInContent') then
+        ShowHidden := Reg.ReadBool('DisplayXYInContent')
+      else
+        ShowHidden := False;
+      Reg.CloseKey;
+    end;
+    if ShowHidden then
+    begin
+      lstContent.Header.Columns.Items[4].Options := lstContent.Header.Columns.Items[4].Options + [coVisible];
+      lstContent.Header.Columns.Items[5].Options := lstContent.Header.Columns.Items[5].Options + [coVisible];
+    end
+    else
+    begin
+      lstContent.Header.Columns.Items[4].Options := lstContent.Header.Columns.Items[4].Options - [coVisible];
+      lstContent.Header.Columns.Items[5].Options := lstContent.Header.Columns.Items[5].Options - [coVisible];
+    end;
+  Finally
+    FreeAndNil(Reg);
+  end;
 
 end;
 

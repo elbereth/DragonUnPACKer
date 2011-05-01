@@ -157,6 +157,7 @@ type
     chkKeepFilterIndex: TCheckBox;
     grpDriversIntegrity: TGroupBox;
     chkAccept0Bytes: TCheckBox;
+    chkDisplayXY: TCheckBox;
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cmdOkClick(Sender: TObject);
@@ -213,6 +214,7 @@ type
     procedure chkAutoExpandClick(Sender: TObject);
     procedure chkKeepFilterIndexClick(Sender: TObject);
     procedure chkAccept0BytesClick(Sender: TObject);
+    procedure chkDisplayXYClick(Sender: TObject);
   private
     { Déclarations privées }
   public
@@ -466,6 +468,10 @@ begin
         ChkKeepFilterIndex.Checked := Reg.ReadBool('KeepFilterIndex')
       else
         ChkKeepFilterIndex.Checked := true;
+      if Reg.ValueExists('DisplayXYInContent') then
+        ChkDisplayXY.Checked := Reg.ReadBool('DisplayXYInContent')
+      else
+        ChkDisplayXY.Checked := False;
       if Reg.ValueExists('Accept0Bytes') then
         ChkAccept0Bytes.Checked := Reg.ReadBool('Accept0Bytes')
       else
@@ -1577,6 +1583,31 @@ begin
     end;
 
   end;
+
+end;
+
+procedure TfrmConfig.chkDisplayXYClick(Sender: TObject);
+var Reg: TRegistry;
+begin
+
+  if not(Loading) then
+  begin
+
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        Reg.WriteBool('DisplayXYInContent',chkDisplayXY.Checked);
+        Reg.CloseKey;
+      end;
+    Finally
+      FreeAndNil(Reg);
+    end;
+
+  end;
+
+  dup5Main.lstContent_displayHiddenHeader;
 
 end;
 

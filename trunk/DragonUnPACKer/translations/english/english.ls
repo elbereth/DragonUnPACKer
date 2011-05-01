@@ -29,7 +29,7 @@
 # ============================================================================
 #
 # version 15:
-# Added OPT040 and OPT041
+# Added LSTCP5, LSTCP6, OPT040, OPT041 and OPT129
 #
 # version 14:
 # Added LOG505, LOG506, LOG507, OPT127, OPT128, OPT812, POP2S6 and POP3S4
@@ -236,6 +236,8 @@ LSTCP1=File
 LSTCP2=Size (Bytes)
 LSTCP3=Offset
 LSTCP4=Description
+LSTCP5=Data X
+LSTCP6=Data Y
 STAT10=object(s)
 STAT20=byte(s)
 
@@ -321,6 +323,7 @@ OPT125=Use HyperRipper if no plugin could open the file
 OPT126=Show runtime log
 OPT127=Auto-expand the folders at opening
 OPT128=Keep the selected file type in open dialog
+OPT129=Display extra advanced fields in the list of entries (not recommended)
 OPT191=Those plugins will handle the convertion of file formats when extracting or previewing files. Example: Convert textures from .ART file format to .BMP
 OPT192=Those plugins handle opening file formats so Dragon UnPACKer can browse into them. If a file is not supported that means no driver plugin could load it. HyperRipper handle files with another type of plugins (see below).
 OPT193=Those plugins handle the file format to scan in HyperRipper (ex: MPEG Audio, BMP, etc..)

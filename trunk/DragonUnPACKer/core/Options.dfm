@@ -17,6 +17,221 @@ object frmConfig: TfrmConfig
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
+  object tabLog: TPanel
+    Left = 184
+    Top = 8
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 7
+    object grpLogVerbose: TGroupBox
+      Left = 0
+      Top = 200
+      Width = 441
+      Height = 81
+      Caption = 'Verbose Options'
+      Color = clBtnFace
+      ParentColor = False
+      TabOrder = 0
+      object strVerbose: TLabel
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 13
+        AutoSize = False
+        Caption = 'Select level of verbose for log:'
+      end
+      object lblVerbose: TLabel
+        Left = 168
+        Top = 32
+        Width = 265
+        Height = 41
+        AutoSize = False
+        Layout = tlCenter
+        WordWrap = True
+      end
+      object trackbarVerbose: TTrackBar
+        Left = 8
+        Top = 40
+        Width = 150
+        Height = 33
+        Max = 2
+        PageSize = 1
+        TabOrder = 0
+        OnChange = trackbarVerboseChange
+      end
+    end
+    object grpLogOptions: TGroupBox
+      Left = 0
+      Top = 0
+      Width = 441
+      Height = 193
+      Caption = 'Log Options'
+      TabOrder = 1
+      object chkLog: TCheckBox
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Afficher le journal d'#39'ex'#233'cution'
+        TabOrder = 0
+        OnClick = chkLogClick
+      end
+      object chkLogClearNew: TCheckBox
+        Left = 8
+        Top = 32
+        Width = 425
+        Height = 17
+        Caption = 'Clear when opening a new file'
+        TabOrder = 1
+        OnClick = chkLogClearNewClick
+      end
+    end
+  end
+  object tabAdvanced: TPanel
+    Left = 183
+    Top = 8
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 8
+    Visible = False
+    object grpAdvOpenFile: TGroupBox
+      Left = 0
+      Top = 120
+      Width = 441
+      Height = 41
+      Caption = 'Options for '#39'Open file'#39
+      Color = clBtnFace
+      ParentColor = False
+      TabOrder = 0
+      object chkMakeExtractDefault: TCheckBox
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Make '#39'Extract file... Without conversion'#39' the default option'
+        TabOrder = 0
+        OnClick = chkMakeExtractDefaultClick
+      end
+    end
+    object grpAdvTemp: TGroupBox
+      Left = 0
+      Top = 0
+      Width = 441
+      Height = 113
+      Caption = 'Temporary Directory'
+      TabOrder = 1
+      object txtTmpDir: TEdit
+        Left = 24
+        Top = 85
+        Width = 385
+        Height = 21
+        Enabled = False
+        TabOrder = 0
+        OnChange = txtTmpDirChange
+      end
+      object butTmpDirSelect: TButton
+        Left = 408
+        Top = 85
+        Width = 21
+        Height = 21
+        Caption = '+'
+        Enabled = False
+        TabOrder = 1
+        OnClick = butTmpDirSelectClick
+      end
+      object radTmpDirDefault: TRadioButton
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Use auto-detected temporary directory'
+        Checked = True
+        TabOrder = 2
+        TabStop = True
+        OnClick = radTmpDirOtherClick
+      end
+      object radTmpDirOther: TRadioButton
+        Left = 8
+        Top = 64
+        Width = 425
+        Height = 17
+        Caption = 'Use defined temporary directory:'
+        TabOrder = 3
+        OnClick = radTmpDirOtherClick
+      end
+      object txtTmpDirDefault: TEdit
+        Left = 24
+        Top = 36
+        Width = 409
+        Height = 21
+        ReadOnly = True
+        TabOrder = 4
+      end
+    end
+    object grpAdvBufferSize: TGroupBox
+      Left = 0
+      Top = 216
+      Width = 441
+      Height = 65
+      Caption = 'Buffer memory'
+      Color = clBtnFace
+      ParentColor = False
+      TabOrder = 2
+      object lblBufferSize: TLabel
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 13
+        AutoSize = False
+        Caption = 'Select the size of the extraction buffer:'
+      end
+      object lstBufferSize: TComboBox
+        Left = 8
+        Top = 32
+        Width = 425
+        Height = 21
+        Style = csDropDownList
+        ItemHeight = 13
+        TabOrder = 0
+        OnChange = lstBufferSizeChange
+        Items.Strings = (
+          '1 byte -- No buffer'
+          '512 bytes'
+          '1 kbytes'
+          '2 kbytes'
+          '4 kbytes'
+          '8 kbytes'
+          '16 kbytes -- Default'
+          '32 kbytes'
+          '64 kbytes'
+          '128 kbytes'
+          '256 kbytes'
+          '512 kbytes'
+          '1 Mbytes')
+      end
+    end
+    object grpDriversIntegrity: TGroupBox
+      Left = 0
+      Top = 168
+      Width = 441
+      Height = 41
+      Caption = 'Drivers plugin entries integrity'
+      Color = clBtnFace
+      ParentColor = False
+      TabOrder = 3
+      object chkAccept0Bytes: TCheckBox
+        Left = 8
+        Top = 16
+        Width = 425
+        Height = 17
+        Caption = 'Do not ignore files with size = 0 bytes (not recommended)'
+        TabOrder = 0
+        OnClick = chkAccept0BytesClick
+      end
+    end
+  end
   object tabPreview: TPanel
     Left = 183
     Top = 6
@@ -1001,7 +1216,7 @@ object frmConfig: TfrmConfig
       Left = 0
       Top = 0
       Width = 441
-      Height = 161
+      Height = 177
       Caption = 'Options'
       TabOrder = 1
       object ChkNoSplash: TCheckBox
@@ -1077,220 +1292,17 @@ object frmConfig: TfrmConfig
         WordWrap = True
         OnClick = chkKeepFilterIndexClick
       end
-    end
-  end
-  object tabLog: TPanel
-    Left = 184
-    Top = 8
-    Width = 449
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 7
-    object grpLogVerbose: TGroupBox
-      Left = 0
-      Top = 200
-      Width = 441
-      Height = 81
-      Caption = 'Verbose Options'
-      Color = clBtnFace
-      ParentColor = False
-      TabOrder = 0
-      object strVerbose: TLabel
+      object chkDisplayXY: TCheckBox
         Left = 8
-        Top = 16
+        Top = 128
         Width = 425
-        Height = 13
-        AutoSize = False
-        Caption = 'Select level of verbose for log:'
-      end
-      object lblVerbose: TLabel
-        Left = 168
-        Top = 32
-        Width = 265
-        Height = 41
-        AutoSize = False
-        Layout = tlCenter
+        Height = 17
+        Caption = 
+          'Afficher les champs '#233'tendues sur la liste des entr'#233'es (non recom' +
+          'mand'#233')'
+        TabOrder = 7
         WordWrap = True
-      end
-      object trackbarVerbose: TTrackBar
-        Left = 8
-        Top = 40
-        Width = 150
-        Height = 33
-        Max = 2
-        PageSize = 1
-        TabOrder = 0
-        OnChange = trackbarVerboseChange
-      end
-    end
-    object grpLogOptions: TGroupBox
-      Left = 0
-      Top = 0
-      Width = 441
-      Height = 193
-      Caption = 'Log Options'
-      TabOrder = 1
-      object chkLog: TCheckBox
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 17
-        Caption = 'Afficher le journal d'#39'ex'#233'cution'
-        TabOrder = 0
-        OnClick = chkLogClick
-      end
-      object chkLogClearNew: TCheckBox
-        Left = 8
-        Top = 32
-        Width = 425
-        Height = 17
-        Caption = 'Clear when opening a new file'
-        TabOrder = 1
-        OnClick = chkLogClearNewClick
-      end
-    end
-  end
-  object tabAdvanced: TPanel
-    Left = 183
-    Top = 8
-    Width = 449
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 8
-    Visible = False
-    object grpAdvOpenFile: TGroupBox
-      Left = 0
-      Top = 120
-      Width = 441
-      Height = 41
-      Caption = 'Options for '#39'Open file'#39
-      Color = clBtnFace
-      ParentColor = False
-      TabOrder = 0
-      object chkMakeExtractDefault: TCheckBox
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 17
-        Caption = 'Make '#39'Extract file... Without conversion'#39' the default option'
-        TabOrder = 0
-        OnClick = chkMakeExtractDefaultClick
-      end
-    end
-    object grpAdvTemp: TGroupBox
-      Left = 0
-      Top = 0
-      Width = 441
-      Height = 113
-      Caption = 'Temporary Directory'
-      TabOrder = 1
-      object txtTmpDir: TEdit
-        Left = 24
-        Top = 85
-        Width = 385
-        Height = 21
-        Enabled = False
-        TabOrder = 0
-        OnChange = txtTmpDirChange
-      end
-      object butTmpDirSelect: TButton
-        Left = 408
-        Top = 85
-        Width = 21
-        Height = 21
-        Caption = '+'
-        Enabled = False
-        TabOrder = 1
-        OnClick = butTmpDirSelectClick
-      end
-      object radTmpDirDefault: TRadioButton
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 17
-        Caption = 'Use auto-detected temporary directory'
-        Checked = True
-        TabOrder = 2
-        TabStop = True
-        OnClick = radTmpDirOtherClick
-      end
-      object radTmpDirOther: TRadioButton
-        Left = 8
-        Top = 64
-        Width = 425
-        Height = 17
-        Caption = 'Use defined temporary directory:'
-        TabOrder = 3
-        OnClick = radTmpDirOtherClick
-      end
-      object txtTmpDirDefault: TEdit
-        Left = 24
-        Top = 36
-        Width = 409
-        Height = 21
-        ReadOnly = True
-        TabOrder = 4
-      end
-    end
-    object grpAdvBufferSize: TGroupBox
-      Left = 0
-      Top = 216
-      Width = 441
-      Height = 65
-      Caption = 'Buffer memory'
-      Color = clBtnFace
-      ParentColor = False
-      TabOrder = 2
-      object lblBufferSize: TLabel
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 13
-        AutoSize = False
-        Caption = 'Select the size of the extraction buffer:'
-      end
-      object lstBufferSize: TComboBox
-        Left = 8
-        Top = 32
-        Width = 425
-        Height = 21
-        Style = csDropDownList
-        ItemHeight = 13
-        TabOrder = 0
-        OnChange = lstBufferSizeChange
-        Items.Strings = (
-          '1 byte -- No buffer'
-          '512 bytes'
-          '1 kbytes'
-          '2 kbytes'
-          '4 kbytes'
-          '8 kbytes'
-          '16 kbytes -- Default'
-          '32 kbytes'
-          '64 kbytes'
-          '128 kbytes'
-          '256 kbytes'
-          '512 kbytes'
-          '1 Mbytes')
-      end
-    end
-    object grpDriversIntegrity: TGroupBox
-      Left = 0
-      Top = 168
-      Width = 441
-      Height = 41
-      Caption = 'Drivers plugin entries integrity'
-      Color = clBtnFace
-      ParentColor = False
-      TabOrder = 3
-      object chkAccept0Bytes: TCheckBox
-        Left = 8
-        Top = 16
-        Width = 425
-        Height = 17
-        Caption = 'Do not ignore files with size = 0 bytes (not recommended)'
-        TabOrder = 0
-        OnClick = chkAccept0BytesClick
+        OnClick = chkDisplayXYClick
       end
     end
   end

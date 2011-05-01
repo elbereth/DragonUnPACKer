@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.6.2 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    17/04/2011
+by Alexande "Elbereth" Devilliers                                    01/05/2011
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,7 +10,7 @@ by Alexande "Elbereth" Devilliers                                    17/04/2011
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.6.2.264
+Version 5.6.2.265
 SVN Release 612 [Unreleased]
 
  + Added new macros to the create list feature:
@@ -30,7 +30,10 @@ SVN Release 612 [Unreleased]
  + Added Advanced option to accept 0 bytes entries from the Drivers plugins.
    When this option is checked the 0 bytes entries are not skipped. This is not
    recommended but it will work (extraction will create a 0 bytes file).
- + External Tools Convertion plugin v0.0.1 Alpha:
+ + Added Basic option to display Data X & Y fields in the content list. Those
+   fields are used internally by some plugins (and some formats). This is for
+   debug purposes and will most likely be only useful to me. :p
+ + External Tools Convertion plugin v0.0.2 Alpha:
    i This plugin allows to use external command line tools to convert file
      formats (for example the excellent vgmstream tool for audio files).
 	 This first version works fine but is only configured for vgmstream and to

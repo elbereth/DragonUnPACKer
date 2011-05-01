@@ -11,7 +11,7 @@ by Alexande "Elbereth" Devilliers                                    01/05/2011
 Main program version and versions history:
 
 Version 5.6.2.265
-SVN Release 612 [Unreleased]
+SVN Release 617 [Unreleased]
 
  + Added new macros to the create list feature:
    Available in both header & footer:

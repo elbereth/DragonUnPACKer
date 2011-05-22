@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.6.1 "Exedra-Benton"                      MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    05/04/2011
+Dragon UnPACKer v5.6.2 "Exedra-Chac"                        MPL 1.1 open source
+by Alexande "Elbereth" Devilliers                                    22/05/2011
 ===============================================================================
 
   ** English Readme (voir lisezmoi.txt pour la version française)
@@ -34,8 +34,8 @@ media for distribution (ex: CD-Rom, FTP, HTTP, etc..). But all text files must
 stay intact, and no files can be added to the archive file (7Z/SETUP).
 
  This program have 2 differents types of releases (same content):
-  SETUP - ~2.5MB - dup561exedrabenton-setup.exe With Installer (recommended)
-     7Z - ~2.4MB - dup561exedrabenton.7z        Plain 7-Zip (v9.20) archive
+  SETUP - ~2.5MB - dup562exedrachac-setup.exe  With Installer (recommended)
+     7Z - ~2.4MB - dup562exedrachac.7z         Plain 7-Zip (v9.20) archive
 
 ===============================================================================
  2. PROGRAM DESCRIPTION
@@ -85,12 +85,16 @@ DrgUnPack5.exe and voila it is installed..
 
  data\convert\
  Blood.dpal                    1 KB  Blood color palette
+ cnv_exttools.d5c            120 KB  External Tools convert plugin (v0.0.1 Alp)
  cnv_pictex.d5c              457 KB  Textures convert plugin (v2.2.0)
  Doom.dpal                     1 KB  Doom color palette
  Duke3D.dpal                   1 KB  Duke Nukem 3D color palette
  Quake 1.dpal                  1 KB  Quake color palette
  Quake 2.dpal                  1 KB  Quake 2 color palette
  Shadow Warrior.dpal           1 KB  Shadow Warrior color palette
+ 
+ data\convert\tools\vgmstream\
+ *.*                                 vgmstream & needed DLLs
  
  data\drivers\
  drv_11th.d5d                412 KB  11th Hour driver plugin (v1.0.0)
@@ -489,8 +493,8 @@ between 3 versions of the file:
  buffer size. The 128 bytes rollback is more than enough for all supported
  formats.
 
- NOTE: In v5.4.0 those options are NOT modifiable anymore, the default values
-       of 128 KB for Buffer and 32 bytes for Rollback.
+ NOTE: In v5.4.0+ those options are NOT modifiable anymore, the default values
+       are 128 KB for Buffer and 32 bytes for Rollback.
 
  => Entries formatting?
  
@@ -636,6 +640,16 @@ instead of having an HUGE single MPEG Audio file.
    By default the file is Opened by the associated program.
    If you prefer you can set: Make 'Extract file... Without Convertion' the
    default option
+   
+ + Drivers plugin entries integrity
+   By default (and in order to maintain integrity), Dragon UnPACKer considers
+   0 bytes entries as "wrong" and will just skip them (if you have the log
+   verbosity at maximum you will get a message in the log when such an entry is
+   skipped).
+   If you really NEED to see those entries in the list, just set the following
+   option:
+   Do not ignore files with size = 0 bytes (not recommended)
+   It will take effect the next time a file is loaded.
    
  + Buffer memory
    The buffer memory is used for extraction (when handled by Dragon UnPACKer).
@@ -1042,7 +1056,7 @@ contact me (see Contacts chapter).
  Send bug reports, comments, suggestions, etc...
  Write me only in french, english or spanish.
  
-  E-Mail: dup561 (at) dragonunpacker (DOT) com
+  E-Mail: dup562 (at) dragonunpacker (DOT) com
      ICQ: 1535372 (Elbereth)
      
  WARNING: You will NEVER receive any email from me having the above email as

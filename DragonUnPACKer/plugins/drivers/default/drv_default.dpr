@@ -192,6 +192,7 @@ type FSE = ^element;
                  Removed Avatar preliminary/experimental support (quite complex format actually)
     21140  56140 Added Ghostbusters: The Video Game .POD files support (slightly modified BloodRayne .POD format)
                  Added Ghostbusters: Sanctum of Slime .PAK files support (with LZMA decompression)
+    21230        Added preliminary The Witcher 2: Assassins of Kings .DZIP files support
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -213,8 +214,8 @@ type FSE = ^element;
 const
   DUDI_VERSION = 5;
   DUDI_VERSION_COMPATIBLE = 4;
-  DRIVER_VERSION = 21140;
-  DUP_VERSION = 56140;
+  DRIVER_VERSION = 21230;
+  DUP_VERSION = 56240;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
   BUFFER_SIZE = 8192;
@@ -223,7 +224,7 @@ var DataBloc: FSE;
     FHandle: Integer = 0;
     CurFormat: Integer = 0;
     DrvInfo: CurrentDriverInfo;
-    TotFSize: Integer = 0;
+    TotFSize: Int64 = 0;
     CompressionWindow: Integer = 0; // For UFO Aftermath VFS only at the moment
     ErrInfo: ErrorInfo;
     SetPercent: TPercentCallback;
@@ -827,7 +828,7 @@ begin
     handle_stm := THandleStream.Create(Fhandle);
 
     // Seek to the Directory Offset
-    handle_stm.Seek(HDR.DirOffset,soFromBeginning);
+    handle_stm.Seek(HDR.DirOffset,soBeginning);
 
     // Create the Directory buffer stream
     dirBuffer := TMemoryStream.Create;
@@ -839,7 +840,7 @@ begin
     FreeAndNil(handle_stm);
 
     // Seek to the start of the buffer
-    dirBuffer.Seek(0,soFromBeginning);
+    dirBuffer.Seek(0,soBeginning);
 
     Result := ReadActOfWarDAT_aux(dirBuffer,HDR.DirSize,'');
 
@@ -1173,7 +1174,7 @@ begin
       handle_stm := THandleStream.Create(Fhandle);
 
       // Seek to the Folders Directory Offset
-      handle_stm.Seek(HDR.FoldersDirOffset,soFromBeginning);
+      handle_stm.Seek(HDR.FoldersDirOffset,soBeginning);
 
       // Create the Folders Directory buffer stream
       foldersBuffer := TMemoryStream.Create;
@@ -1182,7 +1183,7 @@ begin
       foldersBuffer.CopyFrom(handle_stm,(HDR.NumberOfFolders * 16)-4);
 
       // Seek to the Files Directory Offset
-      handle_stm.Seek(HDR.FilesDirOffset,soFromBeginning);
+      handle_stm.Seek(HDR.FilesDirOffset,soBeginning);
 
       // Create the Files Directory buffer stream
       filesBuffer := TMemoryStream.Create;
@@ -1191,7 +1192,7 @@ begin
       filesBuffer.CopyFrom(handle_stm,(HDR.NumberOfFiles * 17));
 
       // Seek to the Name Directory Offset
-      handle_stm.Seek(HDR.FilenameDirOffset,soFromBeginning);
+      handle_stm.Seek(HDR.FilenameDirOffset,soBeginning);
 
       // Create the Names Directory buffer stream
       nameBuffer := TMemoryStream.Create;
@@ -1519,7 +1520,7 @@ begin
       handle_stm := THandleStream.Create(Fhandle);
 
       // Seek to the Directory Offset
-      handle_stm.Seek(4,soFromBeginning);
+      handle_stm.Seek(4,soBeginning);
 
       // Create the Directory buffer stream
       headerBuffer := TMemoryStream.Create;
@@ -5461,7 +5462,7 @@ begin
           dirStream.CopyFrom(filStream,SizeOf(DIR)*HDR.NumDirectories);
 
           // We go back to the stored offset
-          filStream.Seek(curP,soFromBeginning);
+          filStream.Seek(curP,soBeginning);
 
         finally
 
@@ -5503,13 +5504,13 @@ begin
 
             // We go to the next entry
             inc(curDir);
-            dirStream.Seek(curDir*SizeOf(DIR),soFromBeginning);
+            dirStream.Seek(curDir*SizeOf(DIR),soBeginning);
 
             // We read it
             dirStream.ReadBuffer(DIR,SizeOf(DIR));
 
             // We retrieve the name
-            namStream.Seek(DIR.NamePos,soFromBeginning);
+            namStream.Seek(DIR.NamePos,soBeginning);
             dirname := strip0(get0(namStream));
 
             // We include the trailing slash is needed
@@ -5522,7 +5523,7 @@ begin
           FileRead(FHandle,ENT,SizeOf(ENT));
 
           // We retrieve the name
-          namStream.Seek(ENT.NamePos,soFromBeginning);
+          namStream.Seek(ENT.NamePos,soBeginning);
           disp := strip0(get0(namStream));
 
           // We store the entry
@@ -5579,7 +5580,7 @@ begin
 
   inStm := THandleStream.Create(inFile);
   try
-    inStm.Seek(0,soFromBeginning);
+    inStm.Seek(0,soBeginning);
     inStm.Read(numEntries,4);
     totSize := (numEntries * SizeOf(FlorensiaPAK_Entry)) + 4;
     if (totSize < inStm.Size) and (numEntries > 0) then
@@ -7497,7 +7498,7 @@ begin
 
   for x := 0 to DirTableSize-1 do
   begin
-    stmNames.Seek(DIR[x].NamePos,soFromBeginning);
+    stmNames.Seek(DIR[x].NamePos,soBeginning);
     disp := Strip0(Get0(stmNames));
     if length(DirName[x]) = 0 then
       DirName[x] := disp
@@ -8854,7 +8855,7 @@ begin
     try
 
       // Seek to index
-      HF.Seek(HDR.Offset,soFromBeginning);
+      HF.Seek(HDR.Offset,soBeginning);
 
       // Read number of entries in index
       HF.Read(NbFatEntry,4);
@@ -10129,7 +10130,7 @@ begin
     MaxOffset := FileSource.Seek(0,sofromEnd);
 
     // Seek back to the beginning of file
-    FileSource.Seek(0,sofromBeginning);
+    FileSource.Seek(0,soBeginning);
 
     // Read the ID (4 bytes)
     FileSource.Read(ID,4);
@@ -10152,7 +10153,7 @@ begin
     begin
 
       // Seek to directory
-      FileSource.Seek(Offset,sofromBeginning);
+      FileSource.Seek(Offset,soBeginning);
 
       // Read the block ID (4 bytes)
       FileSource.Read(ID,4);
@@ -10176,7 +10177,7 @@ begin
 
         // Load the full directory filename in the first buffer
         BufferNam.CopyFrom(FileSource,Size);
-        BufferNam.Seek(0,soFromBeginning);
+        BufferNam.Seek(0,soBeginning);
 
         // Next offset is at Offset plus:
         //      8 bytes
@@ -10187,7 +10188,7 @@ begin
         Inc(Offset,Size mod 2);
 
         // Go to that new offset
-        FileSource.Seek(Offset,soFromBeginning);
+        FileSource.Seek(Offset,soBeginning);
 
         // Read the block ID
         FileSource.Read(ID,4);
@@ -10211,7 +10212,7 @@ begin
 
           // Load the full directory entries in the second buffer
           BufferIdx.CopyFrom(FileSource,Size);
-          BufferIdx.Seek(0,soFromBeginning);
+          BufferIdx.Seek(0,soBeginning);
 
           // Calculate the number of entries
           NumE := Size div SizeOf(PVOL_Entry);
@@ -10633,7 +10634,7 @@ begin
               end;
 
               // Move to end of sub block
-              check := handle_stm.Seek(nextSubOffset,soFromBeginning);
+              check := handle_stm.Seek(nextSubOffset,soBeginning);
 
             until (handle_stm.Position >= nextOffset);
 
@@ -10656,7 +10657,7 @@ begin
         end;
 
         // Move to end of block
-        check := handle_stm.Seek(nextOffset,soFromBeginning);
+        check := handle_stm.Seek(nextOffset,soBeginning);
 
       until (handle_stm.Position >= TotSize);
 
@@ -10681,7 +10682,7 @@ begin
         // Size the DirList array
         SetLength(DirList,NumD);
 
-        DLstBuffer.Seek(0,SoFromBeginning);
+        DLstBuffer.Seek(0,soBeginning);
 
         // For each directory entry
         for x := 0 to NumD-1 do
@@ -10689,7 +10690,7 @@ begin
           // Read entries values
           DLstBuffer.Read(DLstENT,SizeOf(MRC_DLstEntry));
           // Seek to filename in buffer
-          NLstBuffer.Seek(DLstENT.RelDirNameOffset,SoFromBeginning);
+          NLstBuffer.Seek(DLstENT.RelDirNameOffset,soBeginning);
           // Add entry
           DirList[x].Name := Strip0(get0(NLstBuffer));
           // This directory has following files as children
@@ -10722,7 +10723,7 @@ begin
         // Calculate the number of entries
         NumE := FLstBuffer.Size div 16;
 
-        FLstBuffer.Seek(0,SoFromBeginning);
+        FLstBuffer.Seek(0,soBeginning);
 
         // For each entry
         for x := 1 to NumE do
@@ -10730,7 +10731,7 @@ begin
           // Read entries values
           FLstBuffer.Read(FLstENT,SizeOf(MRC_FLstEntry));
           // Seek to filename in buffer
-          NLstBuffer.Seek(FLstENT.RelNameOffset,SoFromBeginning);
+          NLstBuffer.Seek(FLstENT.RelNameOffset,soBeginning);
           EName := '';
           for y := 0 to NumD-1 do
             if (DirList[y].StartFileNum <= x) and (DirList[y].EndFileNum >= x) then
@@ -10853,7 +10854,7 @@ begin
     try
 
       // We seek to the offset of the directory chunk
-      FilData.Seek(HDR.DirOffset,soFromBeginning);
+      FilData.Seek(HDR.DirOffset,soBeginning);
 
       // We copy the chunk to the memory stream
       DirData.CopyFrom(FilData,HDR.DirSize);
@@ -10892,7 +10893,7 @@ begin
         // The DirPos integer needs to be "decoded"
         // Only 15 bits are relevant
         // We seek to that offset in the directory chunk
-        DirData.Seek((ENT.DirPos and $7FFF) shr 1, soFromBeginning);
+        DirData.Seek((ENT.DirPos and $7FFF) shr 1, soBeginning);
 
         // We get the directory (null terminated)
         disp := Strip0(Get0(DirData));
@@ -10999,6 +11000,87 @@ begin
 end;
 
 // -------------------------------------------------------------------------- //
+// The Witcher 2: Assassins of Kings .DZIP support ========================== //
+// -------------------------------------------------------------------------- //
+
+type DZIP_Header = packed record
+       ID: array[0..3] of char;
+       Version: integer;
+       NumEntries: integer;
+       Unknown: integer;
+       EntriesOffset: int64;
+     end;
+     // Get16 EntryName
+     DZIP_Entry = packed record
+       Unknown1: int64;
+       UncompressedSize: int64;
+       Offset: int64;
+       Size: int64;
+     end;
+
+function ReadTheWitcher2DZIP(src: string): Integer;
+var HDR: DZIP_Header;
+    ENT: DZIP_Entry;
+    NumE,x,cdir : integer;
+    stmInput: THandleStream;
+    strName: String;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+    stmInput := THandleStream.Create(Fhandle);
+
+    TotFSize := stmInput.Size;
+    stmInput.Seek(0,soBeginning);
+    stmInput.ReadBuffer(HDR, Sizeof(DZIP_Header));
+
+    if (HDR.ID <> 'DZIP') and (HDR.Version <> 2) and (HDR.EntriesOffset > TotFSize) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'DZIP';
+      ErrInfo.Games := 'The Witcher 2: Assassins of Kings';
+    end
+    else
+    begin
+
+      stmInput.Seek(HDR.EntriesOffset,soBeginning);
+      NumE := 0;
+
+      for x := 1 to HDR.NumEntries do
+      begin
+        strName := get16(stmInput);
+        stmInput.ReadBuffer(ENT,SizeOf(DZIP_Entry));
+        if (ENT.Offset + ENT.Size) <= TotFSize then
+        begin
+          FSE_Add(Strip0(strName),ENT.Offset,ENT.Size,ENT.Unknown1,ENT.UncompressedSize);
+          Inc(NumE);
+        end
+        else
+          inc(NumErrors);
+      end;
+
+      Result := NumE;
+
+      DrvInfo.ID := 'DZIP';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+    FreeAndNil(stmInput);
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
 // Tony Hawk Pro Skater 2 .PKR support ====================================== //
 // -------------------------------------------------------------------------- //
 
@@ -11027,7 +11109,7 @@ var HDR: PKR_Header;
     ENT: PKR_Entry;
     NumE,x,cdir : integer;
     EList: TStringList;
-    DList: array[0..1000] of Integer; 
+    DList: array[0..1000] of Integer;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead);
@@ -11751,7 +11833,7 @@ begin
           InputStream := TMemoryStream.Create;
           try
             InputStream.Write(Buf^,chunkSize);
-            InputStream.Seek(0, soFromBeginning);
+            InputStream.Seek(0, soBeginning);
 
             DStream := TDecompressionStream.Create(InputStream);
             try
@@ -13655,6 +13737,12 @@ begin
         FileClose(FHandle);
         Result := ReadEntropiaUniverseBNT(fil);
       end
+      // The Witcher 2: Assassins of Kings .DZIP file
+      else if (ID4 = 'DZIP') then
+      begin
+        FileClose(FHandle);
+        Result := ReadTheWitcher2DZIP(fil);
+      end
       // Hitman: Contracts .PRM file
       else if (ID4[0] = #30) and (ID4[1] = #7) and (ID4[2] = #0) and (ID4[3] = #0) then
       begin
@@ -14007,6 +14095,8 @@ begin
       ReadFormat := ReadAoe2DRS(fil)
     else if ext = 'DTA' then
       ReadFormat := ReadHiddenAndDangerousDTA(fil)
+    else if ext = 'DZIP' then
+      ReadFormat := ReadTheWitcher2DZIP(fil)
     else if ext = 'ERF' then
       Result := ReadDragonAgeOriginsERF(fil)
     else if ext = 'FAR' then
@@ -14287,6 +14377,9 @@ begin
     // Entropia Universe .BNT file
     else if (ID4Last = 'BNT2') then
       Result := true
+    // The Witcher 2: Assassins of Kings .DZIP file
+    else if (ID4 = 'DZIP') then
+      Result := true
     // Hitman: Contracts .PRM file
     else if (ID4[0] = #30) and (ID4[1] = #7) and (ID4[2] = #0) and (ID4[3] = #0) then
       Result := true
@@ -14531,6 +14624,9 @@ begin
     else if ext = 'DRS' then
       IsFormat := True
     else if ext = 'DTA' then
+      IsFormat := True
+    // The Witcher 2: Assassins of Kings .DZIP
+    else if ext = 'DZIP' then
       IsFormat := True
     // Dragon Age: Origins .ERF
     else if ext = 'ERF' then
@@ -15141,7 +15237,7 @@ begin
     InputStream := TMemoryStream.Create;
     try
       InputStream.Write(Buf^,Size-4);
-      InputStream.Seek(0, soFromBeginning);
+      InputStream.Seek(0, soBeginning);
 
       DStream := TDecompressionStream.Create(InputStream);
       try
@@ -15176,7 +15272,7 @@ begin
     InputStream := TMemoryStream.Create;
     try
       InputStream.Write(Buf^,Size);
-      InputStream.Seek(0, soFromBeginning);
+      InputStream.Seek(0, soBeginning);
 
       DStream := TDecompressionStream.Create(InputStream);
       try

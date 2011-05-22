@@ -17,6 +17,8 @@ library cnv_exttools;
 
 uses
   FastMM4,
+  Forms,
+  ComCtrls,
   Windows,
   StrUtils,
   SysUtils,
@@ -25,7 +27,9 @@ uses
   Classes,
   lib_version in '..\..\..\common\lib_version.pas',
   lib_BinUtils in '..\..\..\common\lib_BinUtils.pas',
-  lib_temptools in '..\..\..\common\lib_temptools.pas';
+  lib_temptools in '..\..\..\common\lib_temptools.pas',
+  u_frmExtTool in 'u_frmExtTool.pas' {frmExtTool},
+  u_ListOfToolsDataStruct in 'u_ListOfToolsDataStruct.pas';
 
 {$E d5c}
 
@@ -54,22 +58,7 @@ type ConvertListElem = record
 //     EBadType = class(Exception);
      // Procedure to display a message box by using host application
      TMsgBoxCallback = procedure(const title, msg: AnsiString);
-     TStrArray = array of string;
-     TToolInfo = record
-       enabled: boolean;
-       name: string;
-       author: string;
-       url: string;
-       comment: string;
-       path: string;
-       command: string;
-       resultext: string;
-       resultoktest: integer;
-       resultok: integer;
-       resulterrortest: integer;
-       resulterror: integer;
-       extensions: TStrArray;
-     end;
+
 
 var Percent: TPercentCallback;
     DLNGStr: TLanguageCallback;
@@ -84,7 +73,7 @@ var Percent: TPercentCallback;
 const
   DUCI_VERSION = 4;
   DUCI_VERSION_COMPATIBLE = 3;
-  DRIVER_VERSION = 00200;
+  DRIVER_VERSION = 01010;
   DUP_VERSION = 56240;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
@@ -95,6 +84,12 @@ const
   *                       went wrong
   *                       The list of configured tools is now shown in the
   *                       about box
+  * v0.1.0 Beta  (01010): Added configuration box
+  *                       Changed format of the configuration ini file:
+  *                        Tool sections are now [tool-<id>] where <id> is an
+  *                         integer (from 0 to 2^31-1)
+  *                        toolslist in the main section now indicate the
+  *                         number of Tool sections
   * }
 
 function Explode(var a: TStrArray; Border, S: string): Integer;
@@ -146,9 +141,7 @@ end;
 
 procedure reloadSettings();
 var iniFile: TMemIniFile;
-    toolsliststr: string;
-    toolslist: TStrArray;
-    x, curnum: integer;
+    x, curnum, nbtools: integer;
 begin
 
   if fileexists(CurPath+'cnv_exttools.ini') then
@@ -157,35 +150,39 @@ begin
     try
       if iniFile.SectionExists('cnv_exttools') and iniFile.ValueExists('cnv_exttools','toolslist') then
       begin
-        toolsliststr := iniFile.ReadString('cnv_exttools','toolslist','');
-        explode(toolslist,' ',toolsliststr);
-        setlength(ListOfTools,length(toolslist));
-        curnum := low(ListOfTools);
-        for x := low(toolslist) to high(toolslist) do
+        nbtools := iniFile.ReadInteger('cnv_exttools','toolslist',-1);
+        if nbtools >= 0 then
         begin
-          if (iniFile.ValueExists('tool-'+toolslist[x],'enabled')
-          and iniFile.ValueExists('tool-'+toolslist[x],'name')
-          and iniFile.ValueExists('tool-'+toolslist[x],'url')
-          and iniFile.ValueExists('tool-'+toolslist[x],'author')
-          and iniFile.ValueExists('tool-'+toolslist[x],'comment')
-          and iniFile.ValueExists('tool-'+toolslist[x],'path')
-          and iniFile.ValueExists('tool-'+toolslist[x],'command')
-          and iniFile.ValueExists('tool-'+toolslist[x],'resultext')
-          and iniFile.ValueExists('tool-'+toolslist[x],'resultoktest')
-          and iniFile.ValueExists('tool-'+toolslist[x],'resultok')
-          and iniFile.ValueExists('tool-'+toolslist[x],'extensions')) then
+          setlength(ListOfTools,nbtools);
+          for x := 0 to (nbtools-1) do
           begin
-            ListOfTools[curnum].enabled := iniFile.ReadBool('tool-'+toolslist[x],'enabled',false);
-            ListOfTools[curnum].name := iniFile.ReadString('tool-'+toolslist[x],'name',toolslist[x]);
-            ListOfTools[curnum].author := iniFile.ReadString('tool-'+toolslist[x],'author','');
-            ListOfTools[curnum].url := iniFile.ReadString('tool-'+toolslist[x],'url','');
-            ListOfTools[curnum].comment := iniFile.ReadString('tool-'+toolslist[x],'comment','');
-            ListOfTools[curnum].path := iniFile.ReadString('tool-'+toolslist[x],'path','');
-            ListOfTools[curnum].command := iniFile.ReadString('tool-'+toolslist[x],'command','');
-            ListOfTools[curnum].resultext := iniFile.ReadString('tool-'+toolslist[x],'resultext','');
-            ListOfTools[curnum].resultoktest := iniFile.ReadInteger('tool-'+toolslist[x],'resultoktest',0);
-            ListOfTools[curnum].resultok := iniFile.ReadInteger('tool-'+toolslist[x],'resultok',0);
-            explode(ListOfTools[curnum].extensions,' ',iniFile.ReadString('tool-'+toolslist[x],'extensions',''));
+            if iniFile.SectionExists('tool-'+inttostr(x)) then
+            begin
+              ListOfTools[x].enabled := iniFile.ReadBool('tool-'+inttostr(x),'enabled',false);
+              ListOfTools[x].name := iniFile.ReadString('tool-'+inttostr(x),'name','');
+              ListOfTools[x].author := iniFile.ReadString('tool-'+inttostr(x),'author','');
+              ListOfTools[x].url := iniFile.ReadString('tool-'+inttostr(x),'url','');
+              ListOfTools[x].comment := iniFile.ReadString('tool-'+inttostr(x),'comment','');
+              ListOfTools[x].path := iniFile.ReadString('tool-'+inttostr(x),'path','');
+              ListOfTools[x].command := iniFile.ReadString('tool-'+inttostr(x),'command','');
+              ListOfTools[x].resultext := iniFile.ReadString('tool-'+inttostr(x),'resultext','');
+              ListOfTools[x].resultoktest := iniFile.ReadInteger('tool-'+inttostr(x),'resultoktest',0);
+              ListOfTools[x].resultok := iniFile.ReadInteger('tool-'+inttostr(x),'resultok',0);
+              explode(ListOfTools[x].extensions,' ',iniFile.ReadString('tool-'+inttostr(x),'extensions',''));
+            end
+            else
+            begin
+              ListOfTools[x].enabled := false;
+              ListOfTools[x].name := '';
+              ListOfTools[x].author := '';
+              ListOfTools[x].url := '';
+              ListOfTools[x].comment := '';
+              ListOfTools[x].path := '';
+              ListOfTools[x].command := '';
+              ListOfTools[x].resultext := '';
+              ListOfTools[x].resultoktest := 0;
+              ListOfTools[x].resultok := 0;
+            end;
           end;
         end;
       end;
@@ -410,7 +407,7 @@ begin
     aboutText := 'Elbereth''s External Tools Convert plugin v'+getVersion(DRIVER_VERSION)+#10+
                  'Created by \b Alexandre Devilliers (aka Elbereth/Piecito)'+#10+#10+
                  'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
-                 'Driver Interface [DUCI] v'+inttostr(DUCI_VERSION)+' (v'+inttostr(DUCI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUCI)+#10+
+                 'Driver Interface [DUCI] v'+inttostr(DUCI_VERSION)+' (v'+inttostr(DUCI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUCI)+']'+#10+
                  'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+
                  'Based on CVS rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')'+#10;
   end;
@@ -419,9 +416,42 @@ begin
 
 end;
 
+procedure ConfigBox; stdcall;
+var frmExtConf: TfrmExtTool;
+    OApp: THandle;
+    itmX: TListItem;
+    toolInfo: PToolInfo;
+    x: integer;
+begin
+
+  OApp := Application.Handle;
+  Application.Handle := AHandle;
+  frmExtConf := TfrmExtTool.Create(AOwner);
+  try
+    frmExtConf.Caption := 'External Tools Convert Plugin v'+getVersion(DRIVER_VERSION)+' - Configuration';
+    frmExtConf.lblExtra1.Caption := 'Created by Alexandre Devilliers (aka Elbereth/Piecito)';
+    frmExtConf.lblExtra2.Caption := 'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION);
+
+    for x := Low(ListOfTools) to High(ListOfTools) do
+    begin
+      itmX := frmExtConf.lstTools.Items.Add;
+      itmX.Checked := ListOfTools[x].enabled;
+      itmX.Caption := ListOfTools[x].name;
+      toolInfo := @ListOfTools[x];
+      itmX.Data := toolInfo;
+    end;
+    frmExtConf.ShowModal;
+  finally
+    frmExtConf.Release;
+  end;
+  Application.Handle := OApp;
+
+end;
+
 exports
   DUCIVersion,
   DUCIVersionEx,
+  ConfigBox,
   Convert,
   ConvertStream,
   GetFileConvert,

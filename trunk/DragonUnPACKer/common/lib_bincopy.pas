@@ -17,7 +17,7 @@ unit lib_bincopy;
 // (elbereth@users.sourceforge.net, http://www.elberethzone.net).
 //
 // =============================================================================
-// Binary Copy library                                               version 4.0
+// Binary Copy library                                               version 5.0
 // =============================================================================
 //
 //  Functions:
@@ -25,6 +25,7 @@ unit lib_bincopy;
 //                    doff : Int64; bufsize : Integer; silent: boolean);
 //
 //  Version history:
+//  v5.0: Fixed Huge Files seeking --> Int64 seek()
 //  v4.0: Improved to drop GetMem & pointers
 //  v3.0: Updated for Stream support
 //  v2.0: Updated for Int64 support (very huge files supported)
@@ -59,13 +60,13 @@ begin
   if ssize > 0 then
   begin
 
-    src.Seek(soff,0);
+    src.Seek(soff,soBeginning);
     numbuf := ssize div bufsize;
     restbuf := ssize mod bufsize;
 
     oldper := 0;
 
-    dst.Seek(doff,soFromBeginning);
+    dst.Seek(doff,soBeginning);
 
     for i := 1 to numbuf do
     begin

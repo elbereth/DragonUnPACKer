@@ -174,7 +174,7 @@ object dup5Main: Tdup5Main
     Height = 177
     HelpContext = 11
     Align = alClient
-    DragOperations = []
+    DragMode = dmAutomatic
     Header.AutoSizeIndex = -1
     Header.DefaultHeight = 17
     Header.Font.Charset = DEFAULT_CHARSET
@@ -183,7 +183,6 @@ object dup5Main: Tdup5Main
     Header.Font.Name = 'MS Sans Serif'
     Header.Font.Style = []
     Header.Options = [hoColumnResize, hoShowSortGlyphs, hoVisible]
-    HintAnimation = hatNone
     Images = imgContents
     PopupMenu = Popup_Contents
     TabOrder = 1

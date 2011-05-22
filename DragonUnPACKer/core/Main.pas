@@ -1218,7 +1218,7 @@ begin
     outStm := TFileStream.Create(dstfil,fmCreate or fmShareDenyWrite);
     try
       FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,silentExtract);
-      tmpStm.Seek(0,soFromBeginning);
+      tmpStm.Seek(0,soBeginning);
       writeLogVerbose(1,ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[CurrentMenu.Tag].Info.Display));
       CPlug.convert(CListInfo.List[CurrentMenu.Tag].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
     finally
@@ -1328,7 +1328,7 @@ begin
       outStm := TFileStream.Create(dstfil,fmCreate or fmShareDenyWrite);
       try
         FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,false);
-        tmpStm.Seek(0,soFromBeginning);
+        tmpStm.Seek(0,soBeginning);
         appendLog(DLNGStr('LOGC15'));
         CPlug.convert(CListInfo.List[CurrentMenu.Tag].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
       except
@@ -2816,7 +2816,7 @@ begin
           dup5Main.appendLogVerbose(2,DLNGStr('PRV010')+'... ');
 
           FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
-          stmSource.Seek(0,soFromBeginning);
+          stmSource.Seek(0,soBeginning);
 
           dup5Main.appendLogVerbose(2,DLNGStr('PRV009')+'... ');
 
@@ -2866,10 +2866,10 @@ begin
               begin
                 cnvInfo := CPlug.getPluginInfo(i);
                 dup5Main.appendLogVerbose(2,cnvInfo.Name+' v'+cnvInfo.Version);
-                stmSource.Seek(0,soFromBeginning);
+                stmSource.Seek(0,soBeginning);
                 if CPlug.Convert(i,stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true) then
                 begin
-                  stmBitmap.Seek(0,soFromBeginning);
+                  stmBitmap.Seek(0,soBeginning);
 
                 try
                   dup5Main.appendLogVerbose(2,'... '+DLNGStr('PRV004')+'...');

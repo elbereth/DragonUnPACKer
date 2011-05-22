@@ -8,8 +8,10 @@ function Get0(src: integer): string; overload;
 function Get0(stm: TStream): string; overload;
 function GetStm0(stm: TStream): TMemoryStream;
 function Get0A(src: integer): string;
-function Get16(src: integer): string;
-function Get16v(src: integer; size: word): string;
+function Get16(src: integer): string; overload;
+function Get16(src: integer; size: word): string; overload;
+function Get16(src: TStream): string; overload;
+function Get16(src: TStream; size: word): string; overload;
 function Get32(src: TStream): string; overload;
 function Get32(src: TStream; size: integer): string; overload;
 function Get32(src: integer): string; overload;
@@ -96,7 +98,7 @@ begin
 
 end;
 
-function Get16(src: integer): string;
+function Get16(src: integer): string; overload;
 var tchar: Pchar;
     tword: Word;
     res: string;
@@ -108,13 +110,13 @@ begin
   FileRead(src,tchar^,tword);
 
   res := tchar;
-  Get16 := Copy(res,1,tword);
+  result := Copy(res,1,tword);
 
   FreeMem(tchar);
 
 end;
 
-function Get16v(src: integer; size: word): string;
+function Get16(src: integer; size: word): string; overload;
 var tchar: array[1..1024] of Char;
     res: string;
 begin
@@ -123,7 +125,33 @@ begin
   FileRead(src,tchar,size);
 
   res := tchar;
-  Get16v := Copy(res,1,size);
+  result := Copy(res,1,size);
+
+end;
+
+function Get16(src: TStream): string; overload;
+var tchar: Pchar;
+    tword: Word;
+    res: string;
+begin
+
+  src.ReadBuffer(tword,2);
+  GetMem(tchar,tword);
+  FillChar(tchar^,tword,0);
+  src.ReadBuffer(tchar^,tword);
+
+  res := tchar;
+  result := Copy(res,1,tword);
+
+  FreeMem(tchar);
+
+end;
+
+function Get16(src: TStream; size: word): string; overload;
+begin
+
+  setLength(result,size);
+  src.ReadBuffer(result,size);
 
 end;
 

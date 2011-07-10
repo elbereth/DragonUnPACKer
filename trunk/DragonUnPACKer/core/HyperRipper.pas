@@ -58,8 +58,7 @@ uses
   Windows, Messages, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, declFSE, lib_language, Registry, Math, spec_DDS,
   ExtCtrls, lib_utils, classFSE, spec_HRF, DateUtils, translation, U_IntList,
-  StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar, ImgList,
-  UBufferedFS, SysUtils;
+  UBufferedFS, StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar, ImgList, SysUtils;
 
 const MP_FRAMES_FLAG = 1;
       MP_BYTES_FLAG = 2;
@@ -1232,7 +1231,7 @@ begin
         begin
           // We seek into location
           // That is Current position in file + Current Buffer
-          sSRC.Seek(CurPos+CurPosBuf,soFromBeginning);
+          sSRC.Seek(CurPos+CurPosBuf,soBeginning);
 
           // We store the offset to data
           bufferOffset := curPos+curPosBuf;
@@ -3048,7 +3047,7 @@ begin
  try
   case formatid of
     1000: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(buf1,4);
             inStm.ReadBuffer(Size,4);
             inStm.ReadBuffer(buf2,4);
@@ -3061,7 +3060,7 @@ begin
             end;
           end;
     1001: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(VOCH,SizeOf(VOCHeader));
             if (VOCH.ID = 'Creative Voice File') and (VOCH.EOF = 26) then
             begin
@@ -3070,7 +3069,7 @@ begin
               COffset := COffset + Offset;
               while (true) do
               begin
-                inStm.Seek(COffset,0);
+                inStm.Seek(COffset,soBeginning);
                 inStm.ReadBuffer(tByte,1);
                 if TByte = 0 then
                   Break;
@@ -3091,7 +3090,7 @@ begin
             end;
           end;
     1002: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(MIDC,SizeOf(MIDIChunk));
             if (MIDC.ID = 'MThd') and (BigToLittle4(MIDC.Size) = 6) then
             begin
@@ -3115,7 +3114,7 @@ begin
                   size := size + 8;
                   size2 := BigToLittle4(MIDC.Size);
                   size := size + size2;
-                  inStm.Seek(offset+size,0);
+                  inStm.Seek(offset+size,soBeginning);
                 end;
                 if good then
                 begin
@@ -3129,7 +3128,7 @@ begin
           end;
     1003..1004: begin
             totSize := inStm.Size;
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(F669H,SizeOf(F669Header));
             if ((F669H.ID = 'if') or (F669H.ID = 'JN'))
             and (F669H.NOS <= 64)
@@ -3157,7 +3156,7 @@ begin
             end;
           end;
     1005: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(XMH,SizeOf(XMHeader));
             if (XMH.ID = 'Extended Module: ')
             and (XMH.EOF = $1A)
@@ -3169,7 +3168,7 @@ begin
               begin
                 inStm.ReadBuffer(XMP,SizeOf(XMPattern));
                 Inc(Size,XMP.HeaderLength+XMP.Size);
-                inStm.Seek(Offset+Size,0);
+                inStm.Seek(Offset+Size,soBeginning);
               end;
               for x:= 1 to XMH.NumIns do
               begin
@@ -3178,16 +3177,16 @@ begin
                 if XMIH.NumSamples > 0 then
                 begin
                   inStm.ReadBuffer(XMI,SizeOf(XMInstrument));
-                  inStm.Seek(Offset+Size,0);
+                  inStm.Seek(Offset+Size,soBeginning);
                   for y := 1 to XMIH.NumSamples do
                   begin
                     inc(Size,XMI.SampleHeaderSize);
                     inStm.ReadBuffer(XMSH,SizeOf(XMSampleHeader));
                     Inc(size,XMSH.Length);
-                    inStm.Seek(offset+size,0);
+                    inStm.Seek(offset+size,soBeginning);
                   end;
                 end;
-                inStm.Seek(offset+size,0);
+                inStm.Seek(offset+size,soBeginning);
               end;
               if ((Offset + Size) <= TotSize) then
               begin
@@ -3201,7 +3200,7 @@ begin
     1006: begin
             MPEGa := frmHyperRipper.formats.getMPEGOptions;
             totSize := inStm.Size;
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             Size := 0;
             MP3FrameLen := 0;
             MP3Frames := 0;
@@ -3253,7 +3252,7 @@ begin
 
                 if (MPEGa.XingVBR) then
                 begin
-                  inStm.Seek(offset+36,0);
+                  inStm.Seek(offset+36,soBeginning);
                   inStm.ReadBuffer(buf1,4);
                   if buf1 = 'Xing' then
                   begin
@@ -3462,7 +3461,7 @@ begin
                   break;
                 if MPEGa.LimitSizeMax and (Size >= MPEGa.SizeMax) then
                   break;
-                inStm.Seek(Offset+Size,0);
+                inStm.Seek(Offset+Size,soBeginning);
               end
               else
                 break;
@@ -3477,8 +3476,8 @@ begin
               begin
                 if MPEGa.ID3Tag then
                 begin
-                  inStm.Seek(offset+size,0);
-                  if ((inStm.Size - inStm.Position) > 3) then
+                  inStm.Seek(offset+size,soBeginning);
+                  if ((inStm.Size - (Offset+Size)) > 3) then
                   begin
                     inStm.ReadBuffer(buf3,3);
                     if buf3 = 'TAG' then
@@ -3509,7 +3508,7 @@ begin
             if Offset >= 0 then
             begin
               totSize := inStm.Size;
-              inStm.Seek(offset,0);
+              inStm.Seek(offset,soBeginning);
               inStm.ReadBuffer(S3MH,SizeOf(S3MHeader));
 
               CSize := 96+S3MH.OrdNum;
@@ -3517,10 +3516,10 @@ begin
 
               for x := 1 to S3MH.InsNum do
               begin
-                inStm.Seek(offset+CSize,0);
+                inStm.Seek(offset+CSize,soBeginning);
                 inStm.ReadBuffer(tWord,2);
                 tInteger := tWord * 16;
-                inStm.Seek(offset+tInteger,0);
+                inStm.Seek(offset+tInteger,soBeginning);
                 inStm.ReadBuffer(S3MS,SizeOf(S3MSample));
                 if S3MS.T >= 2 then
                   Inc(Size,80)
@@ -3538,12 +3537,12 @@ begin
               CSize := 96 + S3MH.OrdNum + 2 * S3MH.InsNum;
               for x := 1 to S3MH.PatNum do
               begin
-                inStm.Seek(Offset+CSize,0);
+                inStm.Seek(Offset+CSize,soBeginning);
                 inStm.ReadBuffer(tWord,2);
                 if tWord > 0 then
                 begin
                   tInteger := tWord * 16;
-                  inStm.Seek(Offset+tInteger,0);
+                  inStm.Seek(Offset+tInteger,soBeginning);
                   inStm.ReadBuffer(tWord,2);
                   if (tWord mod 16) > 0 then
                     tInteger := ((tWord div 16)+1)*16
@@ -3565,16 +3564,16 @@ begin
           end;
     1008: begin
             totSize := inStm.Size;
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(ITH,SizeOf(ITHeader));
             Size := 192 + ITH.OrdNum + ITH.InsNum * 4;
             MaxPointer := 0;
             CSize := 0;
             for x := 1 to ITH.SmpNum do
             begin
-              inStm.Seek(offset+size,0);
+              inStm.Seek(offset+size,soBeginning);
               inStm.ReadBuffer(tInteger,4);
-              inStm.Seek(offset+tInteger,0);
+              inStm.Seek(offset+tInteger,soBeginning);
               inStm.ReadBuffer(ITS,SizeOf(ITSample));
               if (ITS.SamplePointer > MaxPointer) then
               begin
@@ -3594,11 +3593,11 @@ begin
             result.GenType := HR_TYPE_AUDIO;
           end;
     1009: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             Size := 0;
             mustBeStart := true;
             repeat
-              inStm.ReadBuffer(OggH,SizeOf(OggH));
+              inStm.Read(OggH,SizeOf(OGGHeader));
               if (OggH.ID = 'OggS') and (OggH.Revision = 0) then
               begin
                 if (mustBeStart and ((OggH.BitFlags and 2) = 2))
@@ -3610,11 +3609,10 @@ begin
                     inStm.ReadBuffer(tbyte,1);
                     inc(OGGPageLen,tbyte);
                   end;
-                  inc(Size,OGGPageLen+sizeof(OggH)+OggH.NumPageSegments);
+                  inc(Size,OGGPageLen+sizeof(OGGHeader)+OggH.NumPageSegments);
                   if ((OggH.BitFlags and 4) = 4) then
                     break;
-                  cOffset := OGGPageLen;
-                  inStm.Seek(cOffset,1);
+                  inStm.Seek(Offset+Size,soBeginning);
                   mustBeStart := false;
                 end
                 else
@@ -3635,9 +3633,9 @@ begin
           end;
 
     2000: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(buf1,4);
-            inStm.Seek(Size,4);
+            inStm.ReadBuffer(Size,4);
             inStm.ReadBuffer(buf2,4);
             if (buf1 = 'RIFF') and (buf2 = 'AVI ') and ((Offset + Size + 8) <= Totsize) then
             begin
@@ -3652,14 +3650,14 @@ begin
             begin
               Dec(Offset,4);
               totSize := inStm.Size;
-              inStm.Seek(offset+Size,0);
+              inStm.Seek(offset+Size,soBeginning);
               inStm.ReadBuffer(tBytes4,4);
               inStm.ReadBuffer(buf1,4);
               if (buf1 = 'moov') then
               begin
                 Size := BigToLittle4(tBytes4);
                 repeat
-                  inStm.Seek(offset+size,0);
+                  inStm.Seek(offset+size,soBeginning);
                   inStm.ReadBuffer(tBytes4,4);
                   inStm.ReadBuffer(buf1,4);
                   Inc(Size,BigToLittle4(tBytes4));
@@ -3672,7 +3670,7 @@ begin
             end;
           end;
     2002: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(buf1,4);
             inStm.ReadBuffer(Size,4);
             // Bug 1914923: Sanity check for BIK files (check that the size is not bigger than the source data file!)
@@ -3689,7 +3687,7 @@ begin
             Dec(offset,4);
             if (offset >= 0) then
             begin
-              inStm.Seek(offset,0);
+              inStm.Seek(offset,soBeginning);
               inStm.ReadBuffer(FLICH,SizeOf(FLIC_Header));
               if (FLICH.Flags = 0) and (Offset+FLICH.Size <= totSize) then
               begin
@@ -3708,7 +3706,7 @@ begin
           end;
 
     3000: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(BMPH,SizeOf(BMPHeader));
             if (BMPH.ID = 'BM') and (BMPH.ID2 = 40) and (BMPH.Size > 14) and ((Offset + BMPH.Size) <= Totsize) then
             begin
@@ -3722,7 +3720,7 @@ begin
             Dec(offset,40);
             if (offset >= 0) then
             begin
-              inStm.Seek(offset,0);
+              inStm.Seek(offset,soBeginning);
               inStm.ReadBuffer(EMFH,SizeOf(EnhancedMetaHeader));
               if (EMFH.Signature = ' EMF') and (EMFH.RecordType = 1) and (EMFH.Reserved = 0) and ((Offset + EMFH.Size) <= Totsize) then
               begin
@@ -3734,7 +3732,7 @@ begin
             end;
           end;
     3002: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(WMFP,SizeOf(PlaceableMetaHeader));
             inStm.ReadBuffer(WMFH,SizeOf(WindowsMetaHeader));
             if ((WMFH.FileType = 1) or (WMFH.FileType = 0))
@@ -3750,13 +3748,13 @@ begin
             end;
           end;
     3003: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(tChars,8);
             Offset2 := offset + 8;
             if (tChars = #137 + 'PNG' + #13 + #10 + #26 + #10) then
             begin
               repeat
-                inStm.Seek(offset2,0);
+                inStm.Seek(offset2,soBeginning);
                 inStm.ReadBuffer(tBytes4,4);
                 CSize := BigToLittle4(tBytes4);
                 inStm.ReadBuffer(buf2,4);
@@ -3772,7 +3770,7 @@ begin
             end;
           end;
     3004: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(GIFH,SizeOf(GIFHeader));
             if ((GIFH.Version = '87a') or (GIFH.Version = '89a'))
             and ((GIFH.Flags and $8) = 0)
@@ -3785,7 +3783,7 @@ begin
                 Inc(Size,(Trunc(power(2,tByte))*3));
               end;
               repeat
-                inStm.Seek(offset+size,0);
+                inStm.Seek(offset+size,soBeginning);
                 inStm.ReadBuffer(tByte,1);
                 inc(Size);
                 case tbyte of
@@ -3799,22 +3797,22 @@ begin
                           Inc(Size,(Trunc(power(2,tByte2))*3));
                         end;
 
-                        inStm.Seek(offset+size,0);
+                        inStm.Seek(offset+size,soBeginning);
                         repeat
                           inStm.ReadBuffer(tByte2,1);
                           inc(size,tByte2+1);
-                          inStm.Seek(offset+size,0);
+                          inStm.Seek(offset+size,soBeginning);
                         until (tByte2 = 0);
                       end;
                   33: { ! }
                       begin
                         inc(Size);
 
-                        inStm.Seek(offset+size,0);
+                        inStm.Seek(offset+size,soBeginning);
                         repeat
                           inStm.ReadBuffer(tByte2,1);
                           inc(size,tByte2+1);
-                          inStm.Seek(offset+size,0);
+                          inStm.Seek(offset+size,soBeginning);
                         until (tByte2 = 0);
                       end;
                 end;
@@ -3827,7 +3825,7 @@ begin
             end;
           end;
     3005: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(buf1,4);
             inStm.ReadBuffer(tBytes4,4);
             inStm.ReadBuffer(buf2,4);
@@ -3841,7 +3839,7 @@ begin
           end;
     3006: begin
             totSize := inStm.Size;
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(jmark,2);
             Size := 2;
             if (jmark = #255+#216) then
@@ -3853,7 +3851,7 @@ begin
                 inStm.ReadBuffer(jpeglen,2);
                 jpeglencnv := BigToLittle2(jpeglen);
                 inc(Size,jpeglencnv);
-                inStm.Seek(Offset+Size,soFromBeginning);
+                inStm.Seek(Offset+Size,soBeginning);
                 inStm.ReadBuffer(jmark,2);
                 inc(Size,2);
                 if (jmark[1] <> #255) then
@@ -3863,7 +3861,7 @@ begin
                     strPCopy(szFind,#255+#217);
                     while (offset+Size < totSize) do
                     begin
-                      inStm.Seek(offset+size,0);
+                      inStm.Seek(offset+size,soBeginning);
                       if (totSize-(offset+Size) < 16384) then
                         bufsize := totSize-offset-size
                       else
@@ -3899,7 +3897,7 @@ begin
             end;
           end;
     3007: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(DDSH,SizeOf(DDSHeader));
             if (DDSH.ID = 'DDS ') and (DDSH.SurfaceDesc.dwSize = 124) and (DDSH.SurfaceDesc.ddpfPixelFormat.dwSize = 32) then
               if (DDSH.SurfaceDesc.dwFlags AND DDSD_LINEARSIZE) = DDSD_LINEARSIZE then
@@ -3942,7 +3940,7 @@ begin
           end;
     // TGA RGB searchFile by Psych0phobiA -- Start //
     3008: begin
-            inStm.Seek(offset,0);
+            inStm.Seek(offset,soBeginning);
             inStm.ReadBuffer(TGAH,SizeOf(TGAHeader));
             //Sanity check --
             //Next values represent the largest valid screen dimensions
@@ -3950,7 +3948,7 @@ begin
                (TGAH.Height <= 2048) then
             begin
                 Size := TGAH.Width * TGAH.Height * TGAH.Bits div 8;
-                inStm.Seek(size,1);
+                inStm.Seek(offset+size,soBeginning);
                 inStm.ReadBuffer(TGAF,SizeOf(TGAFooter));
                 if (TGAF.Signature = 'TRUEVISION-XFILE')
                 and (TGAF.Dot = '.')

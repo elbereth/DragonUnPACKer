@@ -120,7 +120,7 @@ begin
      InputStream := TMemoryStream.Create;
      try
       InputStream.Write(Buf^,entryList[idx].entry.Size);
-      InputStream.Seek(0, soFromBeginning);
+      InputStream.Seek(0, soBeginning);
       DStream := TDecompressionStream.Create(InputStream);
       try
         result.CopyFrom(DStream,entryList[idx].entry.FileSize);
@@ -136,7 +136,7 @@ begin
     begin
       result.Write(buf^,EntryList[idx].entry.Size);
     end;
-    result.Seek(0, soFromBeginning);
+    result.Seek(0, soBeginning);
 
   finally
     FreeMem(Buf);

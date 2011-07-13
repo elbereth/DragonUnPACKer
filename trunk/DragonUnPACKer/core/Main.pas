@@ -3107,7 +3107,7 @@ begin
 
   tmpStm := TMemoryStream.Create;
   tmpStm.WriteBuffer(Msg[1],Length(Msg));
-  tmpStm.Seek(0,0);
+  tmpStm.Seek(0,soBeginning);
   frmMsgBox.richText.Clear;
   frmMsgBox.richText.Lines.LoadFromStream(tmpStm);
   FreeAndNil(tmpStm);

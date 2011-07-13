@@ -261,7 +261,7 @@ begin
   src.Read(tint,4);
   if tint > 255 then
   begin
-    raise Exception.Create(inttostr(tint)+' octets! t''es fou ?!'+#10+inttostr(src.Seek(0,1))+#10+inttohex(src.Seek(0,1),8));
+    raise Exception.Create(inttostr(tint)+' octets! t''es fou ?!'+#10+inttostr(src.Position)+#10+inttohex(src.Position,16));
   end;
   GetMem(tchar,tint);
   FillChar(tchar^,tint,0);
@@ -281,7 +281,7 @@ begin
 
   if size > 255 then
   begin
-    raise Exception.Create(inttostr(size)+' octets! t''es fou ?!'+#10+inttostr(src.Seek(0,1))+#10+inttohex(src.Seek(0,1),8));
+    raise Exception.Create(inttostr(size)+' octets! t''es fou ?!'+#10+inttostr(src.Position)+#10+inttohex(src.Position,16));
   end;
   GetMem(tchar,size);
   FillChar(tchar^,size,0);

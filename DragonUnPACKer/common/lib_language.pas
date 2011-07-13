@@ -120,7 +120,7 @@ begin
 
                 inpFileStm := THandleStream.Create(lng);
                 try
-                  inpFileStm.Seek(HDR.DataOffSet,soFromBeginning);
+                  inpFileStm.Seek(HDR.DataOffSet,soBeginning);
 
                   if HDR.Compression = 0 then
                   begin
@@ -137,7 +137,7 @@ begin
 
                   end;
 
-                  dataStm.Seek(0,soFromBeginning);
+                  dataStm.Seek(0,soBeginning);
 
                 finally
                   FreeAndNil(inpFileStm);
@@ -152,7 +152,7 @@ begin
                   FillChar(Idx[x],SizeOf(DLNG_IndexEntry_v4),0);
                   FileRead(lng,Idx[x],SizeOf(DLNG_IndexEntry_v4));
                   tabLNG[x].ID := Idx[x].ID;
-                  dataStm.Seek(Idx[x].Offset*2,soFromBeginning);
+                  dataStm.Seek(Idx[x].Offset*2,soBeginning);
                   setLength(tabLNG[x].Value,Idx[x].Length);
                   dataStm.ReadBuffer(tabLNG[x].value[1],Idx[x].Length*2);
                 end;
@@ -234,7 +234,7 @@ begin
           GetMem(buffer,HDR.IconSize);
           FileRead(lng,Buffer^,HDR.IconSize);
           stm.WriteBuffer(Buffer^, HDR.IconSize);
-          stm.Seek(0,soFromBeginning);
+          stm.Seek(0,soBeginning);
           icn.LoadFromStream(stm);
           FreeAndNil(stm);
           FreeMem(buffer);

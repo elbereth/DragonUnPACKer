@@ -53,7 +53,7 @@ begin
     end;
 
     SetLength(Result, OutputStream.Size);
-    OutputStream.Seek(0, soFromBeginning);
+    OutputStream.Seek(0, soBeginning);
     OutputStream.Read(Result[1], Length(Result))
 
   finally 
@@ -71,7 +71,7 @@ begin
 
   try 
     InputStream.Write(S[1], Length(S));
-    InputStream.Seek(0, soFromBeginning);
+    InputStream.Seek(0, soBeginning);
 
     OutputStream := TDecompressionStream.Create(InputStream);
     try 

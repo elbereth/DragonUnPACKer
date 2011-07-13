@@ -303,11 +303,11 @@ begin
     if lstDUHT[lstTemplates.ItemIndex+1].isEntry('HD') then
     begin
       mem := lstDUHT[lstTemplates.ItemIndex+1].getEntry('HD');
-      size := mem.Seek(0,SoFromEnd);
-      mem.Seek(0,SoFromBeginning);
+      size := mem.Size;
+      mem.Seek(0,SoBeginning);
       ss := TStringStream.Create('');
       ss.CopyFrom(mem,size);
-      ss.Seek(0,SoFromBeginning);
+      ss.Seek(0,SoBeginning);
       header := ss.ReadString(size);
       FreeAndNil(mem);
       FreeAndNil(ss);
@@ -321,11 +321,11 @@ begin
     if lstDUHT[lstTemplates.ItemIndex+1].isEntry('FT') then
     begin
       mem := lstDUHT[lstTemplates.ItemIndex+1].getEntry('FT');
-      size := mem.Seek(0,SoFromEnd);
-      mem.Seek(0,SoFromBeginning);
+      size := mem.Size;
+      mem.Seek(0,SoBeginning);
       ss := TStringStream.Create('');
       ss.CopyFrom(mem,size);
-      ss.Seek(0,SoFromBeginning);
+      ss.Seek(0,SoBeginning);
       footer := ss.ReadString(size);
       FreeAndNil(mem);
       FreeAndNil(ss);
@@ -339,11 +339,11 @@ begin
     if lstDUHT[lstTemplates.ItemIndex+1].isEntry('VR') then
     begin
       mem := lstDUHT[lstTemplates.ItemIndex+1].getEntry('VR');
-      size := mem.Seek(0,SoFromEnd);
-      mem.Seek(0,SoFromBeginning);
+      size := mem.Size;
+      mem.Seek(0,SoBeginning);
       ss := TStringStream.Create('');
       ss.CopyFrom(mem,size);
-      ss.Seek(0,SoFromBeginning);
+      ss.Seek(0,SoBeginning);
       varstart := ss.ReadString(size);
       FreeAndNil(mem);
       FreeAndNil(ss);
@@ -497,7 +497,7 @@ begin
 
       OutFile := TFileStream.Create(dname,fmCreate);
       try
-        OutBuf.Seek(0,0);
+        OutBuf.Seek(0,soBeginning);
         OutFile.CopyFrom(OutBuf,OutBuf.Size);
       finally
         FreeAndNil(OutFile);

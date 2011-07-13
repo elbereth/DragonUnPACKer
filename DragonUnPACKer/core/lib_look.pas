@@ -302,12 +302,12 @@ begin
             FileRead(hin,Buffer^,ENT.Size);
             stm.Clear;
             stm.WriteBuffer(Buffer^, ENT.Size);
-            stm.Seek(0,soFromBeginning);
+            stm.Seek(0,soBeginning);
             icn.LoadFromStream(stm);
             icn.TransparentMode := tmFixed;
             icn.TransparentColor := $0000FF00;
             icn.Transparent := true;
-            stm.Seek(0,soFromBeginning);
+            stm.Seek(0,soBeginning);
             IcnMask.LoadFromStream(stm);
             icnMask.Mask($0000FF00);
             if imgl = 0 then

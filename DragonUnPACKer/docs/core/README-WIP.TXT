@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.6.2 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    22/05/2011
+by Alexande "Elbereth" Devilliers                                    14/07/2011
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,8 +10,8 @@ by Alexande "Elbereth" Devilliers                                    22/05/2011
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.6.2.266
-SVN Release 621 [Unreleased]
+Version 5.6.2.268
+SVN Release 625 [Unreleased]
 
  + Added new macros to the create list feature:
    Available in both header & footer:
@@ -36,6 +36,12 @@ SVN Release 621 [Unreleased]
  ! Fixed extraction in files of more than 2GB:
    The content of entries which offset was after the 2GB position was wrong...
  ! Fixed drag & drop extraction of files.
+ ! Fixed bug #3361911: OggS & TGA were not working correctly due to the use of
+   seek from current position (broken in TBufferedFS).
+ ! Changed all .Seek() calls to int64 compatible calls (or Position equivalent).
+ * Added new main icons for 128x128 and 256x256 (16x16 and 32x32 stays the same)
+   based on Iconshock design of Twitter treasure chest:
+     http://www.iconshock.com
  + External Tools Convertion plugin v0.1.0 Beta:
    i This plugin allows to use external command line tools to convert file
      formats (for example the excellent vgmstream tool for audio files).

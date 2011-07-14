@@ -65,6 +65,10 @@ begin
     result := 'Position'
   else if sch = 'LSTCP4' then
     result := 'Description'
+  else if sch = 'LSTCP5' then
+    result := 'Donnée X'
+  else if sch = 'LSTCP6' then
+    result := 'Donnée Y'
   else if sch = 'STAT10' then
     result := 'objet(s)'
   else if sch = 'STAT20' then
@@ -229,6 +233,8 @@ begin
     result := 'Développer automatiquement les répertoires à l''ouverture'
   else if sch = 'OPT128' then
     result := 'Garder en mémoire le type de fichier sélectionné sur l''écran d''ouverture'
+  else if sch = 'OPT129' then
+    result := 'Afficher les champs étendues sur la liste des entrées (non recommandé)'
   else if sch = 'OPT191' then
     result := 'Ces extensions gèrent la convertion des formats de fichiers lors de l''extraction et de la prévisualisation. Exemple: Conversion des textures .ART vers .BMP'
   else if sch = 'OPT192' then

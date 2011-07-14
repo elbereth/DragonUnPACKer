@@ -1160,6 +1160,10 @@ format n'hesitez pas, contactez moi (voir section 9. CONTACTEZ MOI).
                EMail: guy (point) ratajczak (arobase) wanadoo (point) fr
                  URL: http://www.chez.com/misterjack/
 
+ Iconshock pour l'icône de coffre (Twitter) utilisé comme base pour l'icône
+      principale.
+                 URL: http://www.iconshock.com/			 
+
  Info-ZIP pour UnZip32.DLL v5.5.2 (permettant la lecture/extraction des ZIP)
           Par le groupe Info-ZIP
           Portions:

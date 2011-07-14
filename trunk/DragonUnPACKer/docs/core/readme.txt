@@ -1115,6 +1115,10 @@ contact me (see Contacts chapter).
                EMail: guy.ratajczak (at) wanadoo (dot) fr
                  URL: http://www.chez.com/misterjack/
 
+ Iconshock for the base treasure icon (Twitter) used as a base for the main
+      application icon.
+                 URL: http://www.iconshock.com/			 
+				
  Info-ZIP for the UnZip32.DLL v5.5.2 (allowing ZIP file listing/extraction)
         By Info-ZIP group
         Portions:

@@ -194,7 +194,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 33440;
+  VERSION: Integer = 33540;
 
 implementation
 

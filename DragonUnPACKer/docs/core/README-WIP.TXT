@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.6.2 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    14/07/2011
+by Alexande "Elbereth" Devilliers                                    16/07/2011
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -11,7 +11,7 @@ by Alexande "Elbereth" Devilliers                                    14/07/2011
 Main program version and versions history:
 
 Version 5.6.2.268
-SVN Release 625 [Unreleased]
+SVN Release 627 [Unreleased]
 
  + Added new macros to the create list feature:
    Available in both header & footer:
@@ -42,6 +42,10 @@ SVN Release 625 [Unreleased]
  * Added new main icons for 128x128 and 256x256 (16x16 and 32x32 stays the same)
    based on Iconshock design of Twitter treasure chest:
      http://www.iconshock.com
+ * Duppi v3.3.5:
+   * Added new main icons for 64x64, 128x128 and 256x256.
+     Based on Oxygen Team's Apps system software update icon.
+	 Old resolutions 16x16 and 32x32 stays the same. :p
  + External Tools Convertion plugin v0.1.0 Beta:
    i This plugin allows to use external command line tools to convert file
      formats (for example the excellent vgmstream tool for audio files).

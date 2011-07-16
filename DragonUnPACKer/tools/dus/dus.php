@@ -16,8 +16,8 @@
 //
 
   // Program version
-  define(DUS_VERSION,'3.2.1');
-  define(DUS_DATE,'13:03 19/03/2011');
+  define(DUS_VERSION,'3.2.2');
+  define(DUS_DATE,'21:02 06/04/2011');
   
   // Sending the header
   header('Content-type: text/plain');
@@ -70,6 +70,7 @@
     $servers[$numservers]['id'] = $line['serverID'];
     $servers[$numservers]['url'] = $line['serverURL'];
     $servers[$numservers]['path'] = $line['serverUsePaths'];
+    $servers[$numservers]['sourceforge'] = $line['serverSourceForge'];
     $dusservers .= "Server".$numservers."=".$line['serverName']."\n";
     $numservers++;
      	
@@ -155,7 +156,10 @@
     if ($line2 = mysql_fetch_array($queryresult2, MYSQL_NUM)) {
       for ($x=0;$x<$numservers;$x++) {
         if ($x == 0) {
-          if ($servers[$x]['path'] == 'true') {
+          if ($servers[$x]['path'] == 'sourceforge') {
+            $duscoreupd .= "PackageURL=".$servers[$x]['url'].$line2[7]."\n";
+          }
+          else if ($servers[$x]['path'] == 'true') {
             $duscoreupd .= "PackageURL=".$servers[$x]['url'].$line2[2]."\n";
           }
           else {
@@ -163,7 +167,10 @@
           }
         }
         else {
-          if ($servers[$x]['path'] == 'true') {
+          if ($servers[$x]['path'] == 'sourceforge') {
+            $duscoreupd .= "PackageURL$x=".$servers[$x]['url'].$line2[7]."\n";
+          }
+          else if ($servers[$x]['path'] == 'true') {
             $duscoreupd .= "PackageURL$x=".$servers[$x]['url'].$line2[2]."\n";
           }
           else {

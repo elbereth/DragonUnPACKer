@@ -31,7 +31,8 @@ uses
   lib_zlib in '..\..\common\lib_zlib.pas',
   spec_DLNG in '..\..\common\spec_DLNG.pas',
   spec_DUPP in '..\..\common\spec_DUPP.pas',
-  lib_BinUtils in '..\..\common\lib_BinUtils.pas';
+  lib_BinUtils in '..\..\common\lib_BinUtils.pas',
+  lib_temptools in '..\..\common\lib_temptools.pas';
 
 {$R duppi.rec}
 {$R *.res}

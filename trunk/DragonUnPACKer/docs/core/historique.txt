@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.6.1 "Exedra-Benton"                      MPL 1.1 open source
-par Alexande "Elbereth" Devilliers                                   05/04/2011
+Dragon UnPACKer v5.6.2 "Exedra-Chac"                        MPL 1.1 open source
+par Alexande "Elbereth" Devilliers                                   07/08/2011
 ===============================================================================
 
   ** Français ** (see Whatsnew.txt for english version)
@@ -21,7 +21,7 @@ par Alexande "Elbereth" Devilliers                                   05/04/2011
 Version des extensions incluses:
 
 
-Extensions de Drivers:				                          Version:
+Extensions Pilote:	                                    Version:
 Elbereth's 11th Hour Driver (drv_11th.d5d)              1.0.0.9
 Main Driver (drv_default.d5d)                           2.1.1.941
 A.Cordero's UT Packages Driver (drv_ut.d5d)             2.3.0.125
@@ -34,6 +34,50 @@ Picture/Textures convert Plugin (cnv_pictex.d5c)        2.2.0.122
 -------------------------------------------------------------------------------
 Version du programme principal et historique:
 
+Version 5.6.2.268 "Exedra-Chac"
+Release [07/08/2011]
+
+ + Ajout de nouvelles macros a la fonction de création de liste:
+   Disponible dans l'entête et dans le pied de fichier:
+    $$FTOTNUMBYTES$$  Octets dans le fichier (formatté avec sép. milliers)
+    $$FTOTNUMFILES$$  Entrées dans le fichier (formatté avec sép. milliers)
+   Disponible dans la partie variable:
+    $$FSIZE$$         Taille (formatté avec séparateurs de milliers)
+    $$FOFFSET$$       Position (formatté avec séparateurs de milliers)
+   Le formattage utilisé est celui de votre région réglée dans Windows.
+   Par exemple, pour Anglais (USA) le séparateur est une virgule "," mais pour
+   Français (France) ce sera un espace " ".
+ * Les 2 macros suivantes ont été modifiés pour être utilisables aussi dans
+   l'entête (et pas seulement dans le pied de fichier):
+    $$TOTNUMBYTES$$   Octets dans le fichier
+    $$TOTNUMFILES$$   Entrées dans le fichier
+ + Ajout d'une option Avancée pour accepter les entrées de 0 octets depuis
+   les extensions Pilotes.
+   Lorsque cette option est choisie les fichiers d'une taille de 0 octets ne
+   sont pas cachés. Ce n'est pas recommandé mais ça marche (l'extraction va
+   créer un fichier vide).
+ + Ajout d'une option Basique pour affichier les champs Donnée X et Y dans la
+   liste de contenu. Ces champs sont utilisés de manière interne par certaines
+   extensions (et certains formats). Cela n'a qu'un but de déboguage et ne sera
+   probablement utile qu'à moi. :p
+ ! Correction de l'extraction dans des fichiers plus gros que 2Go:
+   Le contenu des entrées situés après la position 2Go était faux.
+ ! Correction de l'extraction des fichiers par glissé/déposé.
+ ! Correction du bogue #3361911: OggS & TGA ne fonctionnais plus correctement
+   depuis l'introduction (dans la version précédente) de l'utilisation de
+   TBufferedFS (qui ne fonctionne pas bien avec un seek depuis la position
+   actuelle).
+ ! Modification de tous les appels a .Seek() pour être compatible avec les 
+   int64 (ou un équivalent via Position).
+ * Ajout de nouvelles icônes 128x128 et 256x256 (les 16x16 et 32x32 restent
+   les mêmes) basés sur le design Iconshock du coffre au trésor Twitter:
+     http://www.iconshock.com
+ * Duppi v3.3.5:
+   * Ajout de nouvelles icônes 64x64, 128x128 et 256x256.
+     Basé sur "Apps system software update icon" de Oxygen Team.
+	 L'ancienne résolution 16x16 et 32x32 reste la même. :p
+
+	 
 Version 5.6.1.262 "Exedra-Benton"
 Release [05/04/2011]
 

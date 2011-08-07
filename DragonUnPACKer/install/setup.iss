@@ -14,10 +14,11 @@
 ; (elbereth@users.sourceforge.net, http://www.elberethzone.net).
 
 [Setup]
-Compression=lzma2/max
+Compression=lzma2/ultra64
+LZMAUseSeparateProcess=yes
 SolidCompression=true
 AppName=Dragon UnPACKer 5
-AppVerName=Dragon UnPACKer v5.6.1 Exedra-Benton (stable)
+AppVerName=Dragon UnPACKer v5.6.2 Exedra-Chac (stable)
 AppPublisher=Alexandre Devilliers (aka Elbereth)
 AppPublisherURL=http://www.elberethzone.net
 AppSupportURL=http://www.elberethzone.net/dup-support.html
@@ -25,7 +26,7 @@ AppUpdatesURL=http://www.dragonunpacker.com
 AppCopyright=Mozilla Public License 1.1
 DefaultDirName={pf}\Dragon UnPACKer 5
 DefaultGroupName=Dragon UnPACKer 5
-OutputBaseFilename=dup561exedrabenton-setup
+OutputBaseFilename=dup562exedrachac-setup
 AppMutex=DragonUnPACKer5
 AppId=DragonUnPACKer5
 DisableStartupPrompt=true
@@ -34,16 +35,16 @@ UninstallDisplayIcon={app}\drgunpack5.exe
 WizardImageBackColor=$ffffff
 WizardImageFile=dup5-instimage.bmp
 WizardSmallImageFile=dup5-inst55x55.bmp
-VersionInfoVersion=5.6.1
+VersionInfoVersion=5.6.2
 MinVersion=4.10,4.0sp6
 LicenseFile=..\docs\core\source\LICENCE.txt
 InternalCompressLevel=ultra64
 VersionInfoDescription=Dragon UnPACKer 5 Setup
-VersionInfoTextVersion=5.6.1 Exedra-Benton
+VersionInfoTextVersion=5.6.2 Exedra-Chac
 VersionInfoCopyright=Elbereth / MPL 1.1
 VersionInfoProductName=Dragon UnPACKer
-VersionInfoProductVersion=5.6.1
-AppVersion=5.6.1 Exedra Benton
+VersionInfoProductVersion=5.6.2
+AppVersion=5.6.2 Exedra Chac
 SetupIconFile=..\tools\duppi\duppi.ico
 AppReadmeFile={app}\readme.txt
 

@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.6.2 "Exedra-Chac"                        MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    22/05/2011
+by Alexande "Elbereth" Devilliers                                    07/08/2011
 ===============================================================================
 
   ** English Readme (voir lisezmoi.txt pour la version française)
@@ -34,8 +34,8 @@ media for distribution (ex: CD-Rom, FTP, HTTP, etc..). But all text files must
 stay intact, and no files can be added to the archive file (7Z/SETUP).
 
  This program have 2 differents types of releases (same content):
-  SETUP - ~2.5MB - dup562exedrachac-setup.exe  With Installer (recommended)
-     7Z - ~2.4MB - dup562exedrachac.7z         Plain 7-Zip (v9.20) archive
+  SETUP - ~3.1MB - dup562exedrachac-setup.exe  With Installer (recommended)
+     7Z - ~2.5MB - dup562exedrachac.7z         Plain 7-Zip (v9.20) archive
 
 ===============================================================================
  2. PROGRAM DESCRIPTION
@@ -67,87 +67,87 @@ DrgUnPack5.exe and voila it is installed..
  Here is a list of files you must find in the Dragon UnPACKer distribution:
  (if not go to homepage and download it from there)
 
-*drgunpack5.exe    	        3767 KB
- drgunpack5.exe.sig            1 KB  GPG Signature of drgunpack5.exe file
- file_id.diz       	           1 KB
- historique.txt    	          54 KB
- lisezmoi.txt      	          61 KB
- readme.txt        	          54 KB
- whatsnew.txt      	          45 KB
+*drgunpack5.exe    	        4315648
+ drgunpack5.exe.sig              72  GPG Signature of drgunpack5.exe file
+ file_id.diz       	            658
+ historique.txt    	          57606
+ lisezmoi.txt      	          64206
+ readme.txt        	          59007
+ whatsnew.txt      	          48220
  
  data\
- default.dulk                 40 KB  Default Look
-*english.lng                  10 KB  English translation of DUP5
- homepage.uht                 22 KB  Create list template "DUP4 Style"
-*spanish.lng                  11 KB  Spanish translation of DUP5
- text-db.uht                   6 KB  Create list template "Text Database"
- xml-db.uht                    6 KB  Create list template "XML Database"
+ default.dulk                 43110  Default Look
+*english.lng                  10688  English translation of DUP5
+ homepage.uht                 21759  Create list template "DUP4 Style"
+*spanish.lng                  10993  Spanish translation of DUP5
+ text-db.uht                   5400  Create list template "Text Database"
+ text-list.uht                14180  Create list template "Text List"
+ xml-db.uht                    5335  Create list template "XML Database"
 
  data\convert\
- Blood.dpal                    1 KB  Blood color palette
- cnv_exttools.d5c            120 KB  External Tools convert plugin (v0.0.1 Alp)
- cnv_pictex.d5c              457 KB  Textures convert plugin (v2.2.0)
- Doom.dpal                     1 KB  Doom color palette
- Duke3D.dpal                   1 KB  Duke Nukem 3D color palette
- Quake 1.dpal                  1 KB  Quake color palette
- Quake 2.dpal                  1 KB  Quake 2 color palette
- Shadow Warrior.dpal           1 KB  Shadow Warrior color palette
- 
- data\convert\tools\vgmstream\
- *.*                                 vgmstream & needed DLLs
+ Blood.dpal                    1024  Blood color palette
+ cnv_pictex.d5c              468480  Textures convert plugin (v2.2.0)
+ Doom.dpal                     1024  Doom color palette
+ Duke3D.dpal                   1024  Duke Nukem 3D color palette
+ Quake 1.dpal                  1024  Quake color palette
+ Quake 2.dpal                  1024  Quake 2 color palette
+ Shadow Warrior.dpal           1024  Shadow Warrior color palette
  
  data\drivers\
- drv_11th.d5d                412 KB  11th Hour driver plugin (v1.0.0)
- drv_default.d5d             289 KB  Elbereth's Main driver plugin (v2.1.1)
- drv_default_mix.lst         266 KB  Filename list for .MIX support
- drv_ut.d5d                  669 KB  UT Packages driver plugin (v2.3.0)
- drv_zip.d5d                 103 KB  ZIP driver plugin (v1.1.2)
- unzip32.dll                 100 KB  Info-Zip's UnZip32.Dll v5.5.2
+ drv_11th.d5d                423936  11th Hour driver plugin (v1.0.0)
+ drv_default.d5d             296960  Elbereth's Main driver plugin (v2.1.1)
+ drv_default_mix.lst         272755  Filename list for .MIX support
+ drv_ut.d5d                  686592  UT Packages driver plugin (v2.3.0)
+ drv_zip.d5d                 105984  ZIP driver plugin (v1.1.2)
+ unzip32.dll                 102400  Info-Zip's UnZip32.Dll v5.5.2
                                  
  utils\                          
-+duppi.exe                   798 KB  DUP5 Package installer (v3.3.3)
-+DuppiInstall.exe             42 KB  Duppi Auto-Update Installer
- hrf_30_spec.txt               7 KB  HyperRipper file 3.0 specification
-+libcurl-3.dll               268 KB  Curl Library (no SSL) (v7.21.0)
-+zlib1.dll                    80 KB  Zlib Library (v1.2.5)
++duppi.exe                  1173504  DUP5 Package installer (v3.3.5)
++DuppiInstall.exe             43520  Duppi Auto-Update Installer
+ hrf_30_spec.txt               6347  HyperRipper file 3.0 specification
++libcurl-3.dll               286208  Curl Library (no SSL) (v7.21.6)
++zlib1.dll                    82432  Zlib Library (v1.2.5)
 
  utils\data\
-+english.lng                   4 KB  Duppi English translation
-+spanish.lng                   4 KB  Duppi Spanish translation
++english.lng                   4535  Duppi English translation
++spanish.lng                   4816  Duppi Spanish translation
 
  utils\templates\
- duhtcomp.exe                116 KB  UHT file compiler
- duhtcomp.txt                  5 KB  UHT file compiler documentation
- ex-homepage.zip              23 KB  Sources of the homepage.uht template
- ex-text.zip                   8 KB  Sources of the text-db.uht template
- ex-xml.zip                    7 KB  Sources of the xml-db.uht template
+ duhtcomp.exe                127488  UHT file compiler
+ duhtcomp.txt                  5243  UHT file compiler documentation
+ ex-homepage.zip              23514  Sources of the homepage.uht template
+ ex-text.zip                   7045  Sources of the text-db.uht template
+ ex-text-list.zip             15756  Sources of the text-list.uht template
+ ex-xml.zip                    6906  Sources of the xml-db.uht template
  
  utils\translation\
- dlngc.exe                   124 KB  LNG file compiler
- dlngc.txt                     4 KB  LNG file compiler documentation
- english.ls                   18 KB  English translation sources (Core)
- english_duppi.ls              9 KB  English translation sources (Duppi)
- english-duppi-320-changes.txt 2 KB  Changes in duppi 3.0.0 -> 3.2.0
- english-duppi-330-changes.txt 1 KB  Changes in duppi 3.2.0 -> 3.3.0
- english-beta2-changes.txt     4 KB  Changes in english.ls 5.0.0 Beta 1 -> 2
- english-beta3-changes.txt     4 KB  Changes in english.ls 5.0.0 Beta 2 -> 3
- english-rc1-changes.txt       2 KB  Changes in english.ls 5.0.0 Beta 3 -> RC1
- english-rc2-changes.txt       2 KB  Changes in english.ls 5.0.0 RC1 -> RC2
- english-rc3-changes.txt       3 KB  Changes in english.ls 5.0.0 RC2 -> RC3
- english-520-changes.txt       4 KB  Changes in english.ls 5.0.0 -> 5.2.0
- english-532-changes.txt       3 KB  Changes in english.ls 5.2.0 -> 5.3.2 WIP
- english-533-changes.txt       2 KB  Changes in english.ls 5.3.2 -> 5.3.3 Beta
- english-540-changes.txt       7 KB  Changes in english.ls 5.3.3 Beta -> 5.4.0
- english-551-changes.txt       1 KB  Changes in english.ls 5.4.0 -> 5.5.1 Beta
- english-561-changes.txt       2 KB  Changes in english.ls 5.5.1 Beta -> 5.6.1
- flag_fr.bmp                   1 KB  France flag icon
- flag_sp.bmp                   1 KB  Spain flag icon
- flag_us.bmp                   1 KB  USA flag icon
- french.ls                    20 KB  French translation sources (Core)
- french_duppi.ls              10 KB  French translation sources (Duppi)
- spanish.ls                   16 KB  Spanish translation sources (Core)
- spanish_duppi.ls              7 KB  Spanish translation sources (Duppi)
- translation.txt               2 KB  How to make a DUP5 translation
+ dlngc.exe                   128512  LNG file compiler
+ dlngc.txt                     3226  LNG file compiler documentation
+ english.ls                   19529  English translation sources (Core)
+ english_duppi.ls             10202  English translation sources (Duppi)
+ english-duppi-320-changes.txt 2191  Changes in duppi 3.0.0 -> 3.2.0
+ english-duppi-330-changes.txt 1256  Changes in duppi 3.2.0 -> 3.3.0
+ english-duppi-334-changes.txt 1248  Changes in duppi 3.3.3 -> 3.3.4
+ english-beta2-changes.txt     3207  Changes in english.ls 5.0.0 Beta 1 -> 2
+ english-beta3-changes.txt     3306  Changes in english.ls 5.0.0 Beta 2 -> 3
+ english-rc1-changes.txt       2005  Changes in english.ls 5.0.0 Beta 3 -> RC1
+ english-rc2-changes.txt       1410  Changes in english.ls 5.0.0 RC1 -> RC2
+ english-rc3-changes.txt       2488  Changes in english.ls 5.0.0 RC2 -> RC3
+ english-520-changes.txt       4031  Changes in english.ls 5.0.0 -> 5.2.0
+ english-532-changes.txt       2517  Changes in english.ls 5.2.0 -> 5.3.2 WIP
+ english-533-changes.txt       1599  Changes in english.ls 5.3.2 -> 5.3.3 Beta
+ english-540-changes.txt       6215  Changes in english.ls 5.3.3 Beta -> 5.4.0
+ english-551-changes.txt       1293  Changes in english.ls 5.4.0 -> 5.5.1 Beta
+ english-561-changes.txt       1641  Changes in english.ls 5.5.1 Beta -> 5.6.1
+ english-562-changes.txt       1247  Changes in english.ls 5.6.1 -> 5.6.2
+ flag_fr.bmp                   1078  France flag icon
+ flag_sp.bmp                    246  Spain flag icon
+ flag_us.bmp                    218  USA flag icon
+ french.ls                    20799  French translation sources (Core)
+ french_duppi.ls              12167  French translation sources (Duppi)
+ spanish.ls                   15863  Spanish translation sources (Core)
+ spanish_duppi.ls              7957  Spanish translation sources (Duppi)
+ translation.txt               1974  How to make a DUP5 translation
 
   * Needed files for DRGUNPACK5.EXE to work.
   + Needed files for DUPPI.EXE to work.
@@ -176,12 +176,12 @@ DrgUnPack5.exe and voila it is installed..
 
   * Antec Solo case
   * Seasonic S12-500 power supply
-  * Gigabyte GA-EX58-UD5 (BIOS F12)
-  * Intel Quad Core Core i7 920 2.4Ghz (Nehalem) [166Mhz x 20 = 3.3Ghz]
-    Noctua C12P
-  * 6144MB (3x2048MB) of DDR3-1333 OCZ Platinum Cas 7 (7-7-7-20)
+  * Gigabyte GA-Z68XP-UD4 (BIOS F3)
+  * Intel Core i7 2600K 3.4Ghz (Quad Core with HyperThreading)
+    Noctua C14 (Dual 14cm fans)
+  * 8192MB (2x4096MB) of DDR3-1866 G-Skill Ripjaws-X Cas 9 (9-10-9-28-1T)
   * Intel SSD X25-M G2 (Postville)      160GB (System)
-    Samsung Spinpoint F1 (HD103UJ)        1TB
+    Samsung Spinpoint F1 (HD103UJ)        1TB (2x)
 	Western Digital Green (WD10EADS)      1TB (2x)
 	Western VelociRaptor (WD3000HlFS)   300GB (Games)
   * nVidia GeForce GTX 285 1024MB (648Mhz/1242Mhz/1476Mhz) graphic card
@@ -1142,8 +1142,9 @@ contact me (see Contacts chapter).
         Email: marekmauder (at) gmail (dot) com
           URL: http://imaginglib.sourceforge.net/
 
- Mohsen Fakharian for his chest icons (opened & closed) used for associated
-        files. URL: http://mohsenfakharian.deviantart.com
+ Michal Hajek for the Czech translation of Dragon UnPACKer (cestina.lng).
+              EMail: michal.hajek (arobase) email (point) cz
+                URL: http://bouchac.misto.cz
           
  Michele Marcon for the Italian translation of Dragon UnPACKer (italiano.lng).
                 EMail: markovitch (at) inwind (dot) it
@@ -1160,6 +1161,9 @@ contact me (see Contacts chapter).
            EMail (Technical questions and comments): pekangas (at) sci (dot) fi
            EMail (Licensing information): midas (at) housemarque (dot) fi
            URL: http://www.s2.org/midas/
+
+ Mohsen Fakharian for his chest icons (opened & closed) used for associated
+        files. URL: http://mohsenfakharian.deviantart.com
  
  Mr.Mouse for his findings about the Painkiller .PAK format (and for his DLL
           version of MultiEx).
@@ -1179,6 +1183,10 @@ contact me (see Contacts chapter).
 
  The Wotsit's Format for all those file formats specification.
                      URL: http://www.wotsit.org
+
+ Thilo Girmann (Nullpointer) for the decompression code for GZP files.
+                   EMail: nullpointer (arobase) planetcitizenkabuto (point) com
+                     URL: http://www.planetcitizenkabuto.com/
 
  UPX - The Ultimate Packer for eXecutables
        Copyright (c) 1996-2001 Markus Oberhumer & Laszlo Molnar

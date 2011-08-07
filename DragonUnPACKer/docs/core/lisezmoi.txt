@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.6.1 "Exedra-Benton"                      MPL 1.1 open source
-par Alexande "Elbereth" Devilliers                                   05/04/2011
+Dragon UnPACKer v5.6.2 "Exedra-Chac"                        MPL 1.1 open source
+par Alexande "Elbereth" Devilliers                                   07/08/2011
 ===============================================================================
 
   ** Français ** (see Readme.txt for english)
@@ -36,8 +36,8 @@ les fichiers textes doivent rester intact dans le fichier zip, et aucun autre
 fichier ne doit etre rajouté.
 
  Le programme est distribuée sous deux formes (meme contenu):
-  SETUP - ~2.5Mo - dup561exedrabenton-setup.exe Avec installation (recommendé)
-     7Z - ~2.4Mo - dup561exedrabenton.7z        Archive 7-Zip (v9.20)
+  SETUP - ~3.1Mo - dup562exedrachac-setup.exe  Avec installation (recommendé)
+     7Z - ~2.5Mo - dup562exedrachac.7z         Archive 7-Zip (v9.20)
 
 ===============================================================================
  2. DESCRIPTION DU PROGRAMME
@@ -74,83 +74,87 @@ associations de fichiers dans les options.
  (si vous n'avez pas ses fichiers allez telecharger Dragon UnPACKer sur la
   page officielle, voir fin du fichier)
 
-*drgunpack5.exe             3767 Ko
- drgunpack5.exe.sig            1 Ko  Signature GnuPG du fichier drgunpack5.exe
- file_id.diz                   1 Ko
- historique.txt               54 Ko
- lisezmoi.txt                 61 Ko
- readme.txt                   54 Ko
- whatsnew.txt                 45 Ko
+*drgunpack5.exe             4315648
+ drgunpack5.exe.sig              72  Signature GnuPG du fichier drgunpack5.exe
+ file_id.diz                    658
+ historique.txt               57606
+ lisezmoi.txt                 64206
+ readme.txt                   59007
+ whatsnew.txt                 48220
  
  data\
- default.dulk                 40 Ko  Look par défaut
-*english.lng                  10 Ko  Traduction	 anglaise de DUP5
- homepage.uht                 22 Ko  Modele de creation de liste "DUP4 Style"
-*spanish.lng                  11 Ko  Traduction espagnole de DUP5
- text-db.uht                   6 Ko  Modele de creation de liste "Text DB"
- xml-db.uht                    6 Ko  Modele de creation de liste "XML DB"
+ default.dulk                 43110  Look par défaut
+*english.lng                  10688  Traduction	 anglaise de DUP5
+ homepage.uht                 21759  Modele de creation de liste "DUP4 Style"
+*spanish.lng                  10993  Traduction espagnole de DUP5
+ text-db.uht                   5400  Modele de creation de liste "Text DB"
+ text-list.uht                14180  Modele de creation de liste "Text List"
+ xml-db.uht                    5335  Modele de creation de liste "XML DB"
 
  data\convert\
- Blood.dpal                    1 Ko  Palette de couleurs de Blood
- cnv_pictex.d5c              457 Ko  Plugin convertion textures (v2.2.0)
- Doom.dpal                     1 Ko  Palette de couleurs de Doom
- Duke3D.dpal                   1 Ko  Palette de couleurs de Duke Nukem 3D
- Quake 1.dpal                  1 Ko  Palette de couleurs de Quake
- Quake 2.dpal                  1 Ko  Palette de couleurs de Quake 2
- Shadow Warrior.dpal           1 Ko  Palette de couleurs de Shadow Warrior
+ Blood.dpal                    1024  Palette de couleurs de Blood
+ cnv_pictex.d5c              468480  Plugin convertion textures (v2.2.0)
+ Doom.dpal                     1024  Palette de couleurs de Doom
+ Duke3D.dpal                   1024  Palette de couleurs de Duke Nukem 3D
+ Quake 1.dpal                  1024  Palette de couleurs de Quake
+ Quake 2.dpal                  1024  Palette de couleurs de Quake 2
+ Shadow Warrior.dpal           1024  Palette de couleurs de Shadow Warrior
  
  data\drivers\
- drv_11th.d5d                412 Ko  Extension Pilote 11th Hour (v1.0.0)
- drv_default.d5d             289 Ko  Extension Pilote principale (v2.1.1)
- drv_default_mix.lst         266 Ko  Liste de nom de fichiers pour .MIX
- drv_ut.d5d                  669 Ko  Extension Pilote UT Packages (v2.3.0)
- drv_zip.d5d                 103 Ko  Extension Pilote ZIP (v1.1.3)
- unzip32.dll                 100 Ko  Info-Zip's UnZip32.Dll v5.5.2
+ drv_11th.d5d                423936  Extension Pilote 11th Hour (v1.0.0)
+ drv_default.d5d             296960  Extension Pilote principale (v2.1.1)
+ drv_default_mix.lst         272755  Liste de nom de fichiers pour .MIX
+ drv_ut.d5d                  686592  Extension Pilote UT Packages (v2.3.0)
+ drv_zip.d5d                 105984  Extension Pilote ZIP (v1.1.3)
+ unzip32.dll                 102400  Info-Zip's UnZip32.Dll v5.5.2
 
  utils\
-+duppi.exe                  1102 Ko  Instalateur de packages de DUP5 (v3.0.0)
-+DuppiInstall.exe             50 Ko  Auto mise à jour de Duppi
- hrf_30_spec.txt               7 Ko  Specification des fichiers HyperRipper 3.0
-+libcurl-3.dll               268 Ko  Librairie Curl (sans SSL) (v7.21.0)
-+zlib1.dll                    80 Ko  Librairie Zlib (v1.2.5)
++duppi.exe                  1173504  Instalateur de packages de DUP5 (v3.3.5)
++DuppiInstall.exe             43520  Auto mise à jour de Duppi
+ hrf_30_spec.txt               6347  Specification des fichiers HyperRipper 3.0
++libcurl-3.dll               286208  Librairie Curl (sans SSL) (v7.21.6)
++zlib1.dll                    82432  Librairie Zlib (v1.2.5)
 
  utils\data\
-+english.lng                   4 KB  Traduction Anglaise de Duppi
-+spanish.lng                   4 KB  Traduction Españole de Duppi
++english.lng                   4535  Traduction Anglaise de Duppi
++spanish.lng                   4816  Traduction Españole de Duppi
 
  utils\templates\
- duhtcomp.exe                116 Ko  Compilateur de fichier .UHT
- duhtcomp.txt                  5 Ko  Documentation du compilateur UHT
- ex-homepage.zip              23 Ko  Sources du modele homepage.uht
- ex-text.zip                   8 Ko  Sources du modele text-db.uht
- ex-xml.zip                    7 Ko  Sources du modele xml-db.uht
+ duhtcomp.exe                127488  Compilateur de fichier .UHT
+ duhtcomp.txt                  5243  Documentation du compilateur UHT
+ ex-homepage.zip              23514  Sources du modele homepage.uht
+ ex-text.zip                   7045  Sources du modele text-db.uht
+ ex-text-list.zip             15756  Sources du modele text-list.uht
+ ex-xml.zip                    6906  Sources du modele xml-db.uht
  
  utils\translation\
- dlngc.exe                   124 Ko  Compilateur de fichier .LNG
- dlngc.txt                     4 Ko  Documentation du compilateur LNG
- english.ls                   19 Ko  Source de la traduction anglaise (DUP5)
- english_duppi.ls              9 Ko  Source de la traduction anglaise (Duppi)
- english-duppi-320-changes.txt 2 Ko  Changements duppi 3.0.0 -> 3.2.0
- english-duppi-330-changes.txt 1 Ko  Changements duppi 3.2.0 -> 3.3.0
- english-beta2-changes.txt     4 Ko  Changements english.ls 5.0.0 Beta 1 -> 2
- english-beta3-changes.txt     4 Ko  Changements english.ls 5.0.0 Beta 2 -> 3
- english-rc1-changes.txt       2 Ko  Changements english.ls 5.0.0 Beta 3 -> RC1
- english-rc2-changes.txt       2 Ko  Changements english.ls 5.0.0 RC1 -> RC2
- english-rc3-changes.txt       3 Ko  Changements english.ls 5.0.0 RC2 -> RC3
- english-520-changes.txt       4 Ko  Changements english.ls 5.0.0 -> 5.2.0
- english-532-changes.txt       3 Ko  Changements english.ls 5.2.0 -> 5.3.2 WIP
- english-533-changes.txt       2 Ko  Changements english.ls 5.3.2 -> 5.3.3 Beta
- english-540-changes.txt       7 Ko  Changements english.ls 5.3.3 Beta -> 5.4.0
- english-551-changes.txt       1 Ko  Changements english.ls 5.4.0 -> 5.5.1 Beta
- english-561-changes.txt       2 Ko  Changements english.ls 5.5.1 Beta -> 5.6.1
- flag_fr.bmp                   1 Ko  Icone du drapeau de la France
- flag_sp.bmp                   1 Ko  Icone du drapeau de l'Espagne
- flag_us.bmp                   1 Ko  Icone du drapeau des Etats-Unis d'Amerique
- french.ls                    20 Ko  Source de la traduction française (DUP5)
- french_duppi.ls              10 Ko  Source de la traduction française (Duppi)
- spanish.ls                   16 Ko  Source de la traduction espagnole (DUP5)
- spanish_duppi.ls              7 Ko  Source de la traduction espagnole (Duppi)
- translation.txt               2 Ko  Informations sur la traduction de DUP5
+ dlngc.exe                   128512  Compilateur de fichier .LNG
+ dlngc.txt                     3226  Documentation du compilateur LNG
+ english.ls                   19529  Source de la traduction anglaise (DUP5)
+ english_duppi.ls             10202  Source de la traduction anglaise (Duppi)
+ english-duppi-320-changes.txt 2191  Changements duppi 3.0.0 -> 3.2.0
+ english-duppi-330-changes.txt 1256  Changements duppi 3.2.0 -> 3.3.0
+ english-duppi-334-changes.txt 1248  Changements duppi 3.3.3 -> 3.3.4
+ english-beta2-changes.txt     3207  Changements english.ls 5.0.0 Beta 1 -> 2
+ english-beta3-changes.txt     3306  Changements english.ls 5.0.0 Beta 2 -> 3
+ english-rc1-changes.txt       2005  Changements english.ls 5.0.0 Beta 3 -> RC1
+ english-rc2-changes.txt       1410  Changements english.ls 5.0.0 RC1 -> RC2
+ english-rc3-changes.txt       2488  Changements english.ls 5.0.0 RC2 -> RC3
+ english-520-changes.txt       4031  Changements english.ls 5.0.0 -> 5.2.0
+ english-532-changes.txt       2517  Changements english.ls 5.2.0 -> 5.3.2 WIP
+ english-533-changes.txt       1599  Changements english.ls 5.3.2 -> 5.3.3 Beta
+ english-540-changes.txt       6215  Changements english.ls 5.3.3 Beta -> 5.4.0
+ english-551-changes.txt       1293  Changements english.ls 5.4.0 -> 5.5.1 Beta
+ english-561-changes.txt       1641  Changements english.ls 5.5.1 Beta -> 5.6.1
+ english-562-changes.txt       1247  Changements english.ls 5.6.1 -> 5.6.2
+ flag_fr.bmp                   1078  Icone du drapeau de la France
+ flag_sp.bmp                    246  Icone du drapeau de l'Espagne
+ flag_us.bmp                    218  Icone du drapeau des Etats-Unis d'Amerique
+ french.ls                    20799  Source de la traduction française (DUP5)
+ french_duppi.ls              12167  Source de la traduction française (Duppi)
+ spanish.ls                   15863  Source de la traduction espagnole (DUP5)
+ spanish_duppi.ls              7957  Source de la traduction espagnole (Duppi)
+ translation.txt               1974  Informations sur la traduction de DUP5
 
   * Necessaire au fonctionnement multi-langue de DRGUNPACK5.EXE.
   + Necessaire au fonctionnement multi-langue de DUPPI.EXE
@@ -179,14 +183,14 @@ associations de fichiers dans les options.
 
   * Boitier moyenne tour Antec Solo
   * Alimentation Seasonic S12-500
-  * Gigabyte GA-EX58-UD5 (BIOS F3)
-  * Intel Quad Core Core i7 920 2.4Ghz (Nehalem) [166Mhz x 20 = 3.3Ghz]
-    Noctua C12P
-  * 6144MB (3x2048MB) de DDR3-1333 OCZ Platinum Cas 7 (7-7-7-20)
-  * Intel SSD X25-M G2 (Postville)      160Go (OS)
-    Samsung Spinpoint F1 (HD103UJ)        1To
-	Western Digital Green (WD10EADS)      1To (2x)
-	Western VelociRaptor (WD3000HlFS)   300Go (Jeux)
+  * Gigabyte GA-Z68XP-UD4 (BIOS F3)
+  * Intel Core i7 2600K 3.4Ghz (Quad Core with HyperThreading)
+    Noctua C14 (Dual 14cm fans)
+  * 8192MB (2x4096MB) of DDR3-1866 G-Skill Ripjaws-X Cas 9 (9-10-9-28-1T)
+  * Intel SSD X25-M G2 (Postville)      160GB (Système)
+    Samsung Spinpoint F1 (HD103UJ)        1TB (2x)
+	Western Digital Green (WD10EADS)      1TB (2x)
+	Western VelociRaptor (WD3000HlFS)   300GB (Jeux)
   * Carte graphique nVidia GeForce GTX 285 1024Mo (648Mhz/1242Mhz/1476Mhz)
 
   (si je dit que quelque chose est rapide testez par vous même dabord!! :)
@@ -1218,9 +1222,9 @@ format n'hesitez pas, contactez moi (voir section 9. CONTACTEZ MOI).
          URL: http://home.swipnet.se/mrdata82/
 
  The Wotsit's Format possedant beaucoup d'infos sur les formats de fichiers
- Thilo Girmann (Nullpointer) pour le code permettant de decompresser les GZP.
                      URL: http://www.wotsit.org
 
+ Thilo Girmann (Nullpointer) pour le code permettant de decompresser les GZP.
                    EMail: nullpointer (arobase) planetcitizenkabuto (point) com
                      URL: http://www.planetcitizenkabuto.com/
 

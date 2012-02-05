@@ -406,9 +406,9 @@ end;
 function TStringHashTrie.CompareValue(Value1, Value2: DWORD): Boolean;
 begin
   if FCaseSensitive then
-    Result:=PString(Value1)^ = PString(Value2)^
+    Result:=PAnsiString(Value1)^ = PAnsiString(Value2)^
   else
-    Result:=ANSICompareText(PString(Value1)^,PString(Value2)^) = 0;
+    Result:=ANSICompareText(PAnsiString(Value1)^,PAnsiString(Value2)^) = 0;
 end;
 
 constructor TStringHashTrie.Create;
@@ -425,7 +425,7 @@ end;
 
 procedure TStringHashTrie.DestroyItem(var Value,Data: DWORD);
 begin
-  DisposeStr(PString(Value));
+  DisposeStr(PAnsiString(Value));
   if FAutoFreeObjects then
     FreeAndNil(TObject(Data));
   Value:=0;
@@ -465,7 +465,7 @@ end;
 
 function TStringHashTrie.HashValue(Value: DWORD): DWORD;
 begin
-  Result:=HashStr(PString(Value)^);
+  Result:=HashStr(PAnsiString(Value)^);
 end;
 
 procedure TStringHashTrie.Traverse(UserData: Pointer;
@@ -477,7 +477,7 @@ end;
 procedure TStringHashTrie.TraverseProc(UserData, UserProc: Pointer; Value,
   Data: DWORD; var Done: Boolean);
 begin
-  TStrHashTraverseProc(UserProc)(UserData,PString(Value)^,TObject(Data),Done);
+  TStrHashTraverseProc(UserProc)(UserData,PAnsiString(Value)^,TObject(Data),Done);
 end;
 
 procedure TStringHashTrie.Traverse(UserData: Pointer; UserProc: TStrHashTraverseMeth);
@@ -490,7 +490,7 @@ procedure TStringHashTrie.TraverseMeth(UserData, UserProc: Pointer; Value,
 type
   PTStrHashTraverseMeth = ^TStrHashTraverseMeth;
 begin
-  PTStrHashTraverseMeth(UserProc)^(UserData,PString(Value)^,TObject(Data),Done);
+  PTStrHashTraverseMeth(UserProc)^(UserData,PAnsiString(Value)^,TObject(Data),Done);
 end;
 
 { dynamic crc32 table }

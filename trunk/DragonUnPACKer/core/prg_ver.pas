@@ -20,25 +20,33 @@ interface
 uses SysUtils, Windows, Forms, lib_binutils, StrUtils;
 
 function curBuild:integer;
+function LinkerTimestamp: TDateTime; overload;
 
 const
-  CurVersion: String = '5.6.2';
-  CurEdit: String = 'Exedra-Chac';
+  CurVersion: String = '5.7.0';
+  CurEdit: String = 'Fafnir';
   CurURL: String = 'http://www.dragonunpacker.com';
 
 implementation
 
-function LectureVersion: string;
+var
+  CurBuildCache: integer = 0;
+
+function LinkerTimestamp: TDateTime; overload;
+begin
+  Result := PImageNtHeaders(HInstance + PImageDosHeader(HInstance)^._lfanew)^.FileHeader.TimeDateStamp / SecsPerDay + UnixDateDelta;
+end;
+
+function getBuildFromVersionInfo: integer;
 var
     S        : string;
     Taille  : DWord;
     Buffer  : PChar;
-    VersionPC : PChar;
-    VersionL    : DWord;
-
+    iDummy : DWord;
+    pFileInfo : Pointer;
 begin
 
-    Result:='';
+    Result:=0;
     {--- on demande la taille des informations sur l'application ---}
     S := Application.ExeName;
     Taille := GetFileVersionInfoSize(PChar(S), Taille);
@@ -50,9 +58,12 @@ begin
       try
         {--- Copie dans le buffer des informations ---}
         GetFileVersionInfo(PChar(S), 0, Taille, Buffer);
-        {--- Recherche de l'information de version ---}
-        if VerQueryValue(Buffer, PChar('\StringFileInfo\040C04E4\FileVersion'), Pointer(VersionPC), VersionL)
-            then Result:=VersionPC;
+        VerQueryValue(Buffer, '\', pFileInfo, iDummy);
+//        iVer[1] := HiWord(PVSFixedFileInfo(pFileInfo)^.dwFileVersionMS);
+//        iVer[2] := LoWord(PVSFixedFileInfo(pFileInfo)^.dwFileVersionMS);
+//        iVer[3] := HiWord(PVSFixedFileInfo(pFileInfo)^.dwFileVersionLS);
+//        iVer[4] := LoWord(PVSFixedFileInfo(pFileInfo)^.dwFileVersionLS);
+        Result := LoWord(PVSFixedFileInfo(pFileInfo)^.dwFileVersionLS);
       finally
         FreeMem(Buffer, Taille);
       end;
@@ -64,8 +75,9 @@ function curBuild:integer;
 var lv : string;
 begin
 
-  lv := lectureVersion;
-  result := strtoint(rightstr(lv, length(lv) - posrev('.',lv)));
+  if (curBuildCache = 0) then
+    curBuildCache := getBuildFromVersionInfo;
+  result := curBuildCache;
 
 end;
 

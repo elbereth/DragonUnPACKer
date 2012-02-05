@@ -19,7 +19,7 @@ program drgunpack5;
 {$DEFINE DRGUNPACK}
 
 uses
-  FastMM4,
+//  FastMM4,
   About in 'About.pas' {frmAbout},
   DrvInfo in 'DrvInfo.pas' {frmDrvInfo},
   Error in 'Error.pas' {frmError},

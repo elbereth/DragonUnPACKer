@@ -22,8 +22,8 @@ uses SysUtils, Windows, Forms, lib_binutils, StrUtils;
 function curBuild:integer;
 
 const
-  CurVersion: String = '5.6.2';
-  CurEdit: String = 'Exedra-Chac';
+  CurVersion: String = '5.6.3';
+  CurEdit: String = 'Exedra-Drake';
   CurURL: String = 'http://www.dragonunpacker.com';
 
 implementation

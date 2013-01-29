@@ -60,6 +60,11 @@ begin
   if ssize > 0 then
   begin
 
+    // Avoid extracting past the end of the file (this should be only necessary
+    // for bad plugins which returns incorrect offsets/sizes
+    if (soff+ssize) > src.Size then
+      ssize := src.Size - soff;
+
     src.Seek(soff,soBeginning);
     numbuf := ssize div bufsize;
     restbuf := ssize mod bufsize;

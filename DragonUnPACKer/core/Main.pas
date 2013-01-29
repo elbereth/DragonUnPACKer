@@ -280,8 +280,7 @@ type
     procedure separatorLog();
     procedure separatorLogVerbose(minLevel: integer);
     function getPreviewLimitInBytes(value: integer): integer;
-    function messageDlgTitle(const Title: AnsiString; const Msg: Ansistring; Buttons: TMsgDlgButtons; HelpCtx: Longint): Integer;
-
+    function messageDlgTitle(const Title: String; const Msg: string; Buttons: TMsgDlgButtons; HelpCtx: Longint): Integer;
     { Déclarations publiques }
   end;
 
@@ -306,6 +305,8 @@ var
   CListInfo: extConvertList;
 
 {$R *.dfm}
+
+{$Include datetime.inc}
 
 procedure Tdup5Main.Open_Hub(src: String);
 var Reg: TRegistry;
@@ -704,7 +705,7 @@ begin
   frmAbout.Top := dup5Main.Top + ((Height - frmAbout.Height) div 2) ;
   frmAbout.Left := dup5Main.Left + ((Width - frmAbout.Width) div 2) ;
 
-  frmAbout.lblCompDate.Caption := DateToStr(LinkerTimestamp)+ ' '+TimeToStr(LinkerTimestamp);
+  frmAbout.lblCompDate.Caption := DateToStr(compileTime)+ ' '+TimeToStr(compileTime);
 
   if (pos('WIP',Uppercase(CurEdit)) > 0) or (pos('BETA',Uppercase(CurEdit)) > 0)
   or (pos('ALPHA',Uppercase(CurEdit)) > 0) then
@@ -1460,9 +1461,9 @@ begin
   Caption := 'Dragon UnPACKer v' + CurVersion + ' ' + CurEdit;
 
   if CurEdit = '' then
-    dup5Main.writeLog('Dragon UnPACKer v' + CurVersion + ' (Build ' + IntToStr(CurBuild) +' - '+DateToStr(LinkerTimestamp)+ ' '+TimeToStr(LinkerTimestamp)+')')
+    dup5Main.writeLog('Dragon UnPACKer v' + CurVersion + ' (Build ' + IntToStr(CurBuild) +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')')
   else
-    dup5Main.writeLog('Dragon UnPACKer v' + CurVersion + ' ' + CurEdit + ' (Build ' + IntToStr(CurBuild)  +' - '+DateToStr(LinkerTimestamp)+ ' '+TimeToStr(LinkerTimestamp)+')');
+    dup5Main.writeLog('Dragon UnPACKer v' + CurVersion + ' ' + CurEdit + ' (Build ' + IntToStr(CurBuild)  +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')');
 
   // Edit and Tools menus are hidden (visible only when a file is loaded)
   menuEdit.Visible := false;

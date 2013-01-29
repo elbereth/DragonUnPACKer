@@ -50,6 +50,7 @@ unit HyperRipper;
   * 56013 Fixed BigToLittle2
   *       Added support for Exif JPEG files (APP1 marker instead of APP0)
   * 56040 Removed unstable status for Dragon UnPACKer v5.6.0 release
+  * 56041 Fixed the BIK sanity check
   * }
 
 interface
@@ -65,7 +66,7 @@ const MP_FRAMES_FLAG = 1;
       MP_TOC_FLAG = 4;
       MP_VBR_SCALE_FLAG = 8;
 
-      HR_VERSION = 56040;	// HyperRipper version
+      HR_VERSION = 56041;	// HyperRipper version
 
 type FormatsListElem = record
        GenType: Integer;
@@ -3674,7 +3675,8 @@ begin
             inStm.ReadBuffer(buf1,4);
             inStm.ReadBuffer(Size,4);
             // Bug 1914923: Sanity check for BIK files (check that the size is not bigger than the source data file!)
-            if (buf1 = 'BIKf') or (buf1 = 'BIKi') and ((Offset + Size + 8) <= Totsize) then
+            // Bug 59: With correct parenthesis it is better...
+            if ((buf1 = 'BIKf') or (buf1 = 'BIKi')) and ((Offset + Size + 8) <= Totsize) then
             begin
                 result.Offset := offset;
                 result.Size := Size+8;

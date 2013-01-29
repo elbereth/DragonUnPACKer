@@ -17,6 +17,7 @@ library drv_default;
 //
 
 uses
+  FastMM4,
   Zlib,
   Classes,
   StrUtils,
@@ -191,8 +192,7 @@ type FSE = ^element;
                  Removed Avatar preliminary/experimental support (quite complex format actually)
     21140  56140 Added Ghostbusters: The Video Game .POD files support (slightly modified BloodRayne .POD format)
                  Added Ghostbusters: Sanctum of Slime .PAK files support (with LZMA decompression)
-    21210        Added preliminary The Witcher 2: Assassins of Kings .DZIP files support
-                 Updated for Delphi XE2 Compilation
+    21230        Added preliminary The Witcher 2: Assassins of Kings .DZIP files support
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -214,7 +214,7 @@ type FSE = ^element;
 const
   DUDI_VERSION = 5;
   DUDI_VERSION_COMPATIBLE = 4;
-  DRIVER_VERSION = 21210;
+  DRIVER_VERSION = 21230;
   DUP_VERSION = 56240;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
@@ -314,7 +314,6 @@ begin
   addFormat(result,'*.BUN','Monkey Island 3 (*.BUN)');
   addFormat(result,'*.CCX','Total Annihilation: Counter-Strike (*.CCX)');
   addFormat(result,'*.COB','Ascendancy (*.COB)');
-  addFormat(result,'*.CPK','Aztaka (*.CPK)');
   addFormat(result,'*.CPR','Port Royale (*.CPR)|Patrician II (*.CPR)');
   addFormat(result,'*.DAT','Nascar Racing (*.DAT)|Gunlok (*.DAT)|LEGO Star Wars (*.DAT)|Act of War (*.DAT)|F-22 Air Dominance Fighter (*.DAT)|F-22 Total Air War (*.DAT)|Super EF2000 (*.DAT)');
   addFormat(result,'*.DNI','realMyst 3D (*.DNI)');
@@ -2417,7 +2416,7 @@ begin
 
   Result := HDR.NumEntries;
 
-  DrvInfo.ID := ShortString(HDR.ID);
+  DrvInfo.ID := HDR.ID;
   DrvInfo.Sch := '\';
   DrvInfo.FileHandle := FHandle;
   DrvInfo.ExtractInternal := False;
@@ -9457,7 +9456,7 @@ begin
 
     Result := NumE;
 
-    DrvInfo.ID := ShortString(HDR.ID);
+    DrvInfo.ID := HDR.ID;
     DrvInfo.Sch := '';
     DrvInfo.FileHandle := FHandle;
     DrvInfo.ExtractInternal := False;
@@ -11022,7 +11021,7 @@ type DZIP_Header = packed record
 function ReadTheWitcher2DZIP(src: string): Integer;
 var HDR: DZIP_Header;
     ENT: DZIP_Entry;
-    NumE,x,cdir,NumErrors : integer;
+    NumE,x,cdir : integer;
     stmInput: THandleStream;
     strName: String;
 begin
@@ -11050,7 +11049,6 @@ begin
 
       stmInput.Seek(HDR.EntriesOffset,soBeginning);
       NumE := 0;
-      NumErrors := 0;
 
       for x := 1 to HDR.NumEntries do
       begin
@@ -15658,7 +15656,7 @@ end;
 procedure InternalMsgBox(const title, msg: AnsiString);
 begin
 
-  MessageBoxA(AHandle, PAnsiChar(msg), PAnsiChar(title), MB_OK);
+  MessageBoxA(AHandle, PChar(msg), PChar(title), MB_OK);
 
 end;
 

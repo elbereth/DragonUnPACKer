@@ -166,9 +166,7 @@ type
     procedure lstContentGetImageIndex(Sender: TBaseVirtualTree;
       Node: PVirtualNode; Kind: TVTImageKind; Column: TColumnIndex;
       var Ghosted: Boolean; var ImageIndex: Integer);
-    procedure lstContentHeaderClick(Sender: TVTHeader;
-      Column: TColumnIndex; Button: TMouseButton; Shift: TShiftState; X,
-      Y: Integer);
+
     procedure lstContentContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
     procedure closeCurrent();
@@ -240,6 +238,8 @@ type
     procedure menuLog_CopyClipboardClick(Sender: TObject);
     procedure menuIndex_ExtractDirsNamedFolderClick(Sender: TObject);
     procedure lstContent_displayHiddenHeader();
+    procedure lstContentHeaderClick(Sender: TVTHeader;
+      HitInfo: TVTHeaderHitInfo);
   private
     FPreviewBitmap: TImagingBitmap;
     FPreviewImage: TMultiImage;
@@ -281,6 +281,7 @@ type
     procedure separatorLogVerbose(minLevel: integer);
     function getPreviewLimitInBytes(value: integer): integer;
     function messageDlgTitle(const Title: String; const Msg: string; Buttons: TMsgDlgButtons; HelpCtx: Longint): Integer;
+    procedure addEntry(entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
     { Déclarations publiques }
   end;
 
@@ -1077,16 +1078,11 @@ begin
 
     Data := lstContent.getNodeData(lstContent.getFirstSelected);
 
-    tmpfil := getTemporaryDir+getTemporaryFilename(Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos));
+    tmpfil := getTemporaryDir+getTemporaryFilename(FSE.Items[Data.entryIndex].FileName);
 
-{    rep := GetNodePath(lstIndex.FocusedNode);
-    if length(rep) > 0 then
-      rep := rep + FSE.SlashMode;}
-    FSE.ExtractFile(data.data,tmpfil,false);
+    FSE.ExtractFile(Data.entryIndex,tmpfil,false);
 
     tempfiles.Add(tmpfil);
-
-//  ShowMessage(tmpfil);
 
     ShellExecute(Application.Handle,'open',Pchar(tmpfil),nil,nil, SW_SHOWNORMAL);
 
@@ -1160,7 +1156,7 @@ begin
 
   Data := lstContent.GetNodeData(lstContent.GetFirstSelected);
 
-  SaveDialog.FileName := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+  SaveDialog.FileName := FSE.Items[Data.entryIndex].FileName;
 
   if SaveDialog.Execute then
   begin
@@ -1168,9 +1164,7 @@ begin
     rep := GetNodePath(lstIndex.FocusedNode);
     if length(rep) > 0 then
       rep := rep + FSE.SlashMode;
-//    FSE.ExtractFile(rep+Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos),dstfil,false)
-    FSE.ExtractFile(Data.data,dstfil,false);
-    //  Application.MessageBox(PChar(DLNGStr('ERR101')),PChar(DLNGStr('ERR000')),MB_OK);
+    FSE.ExtractFile(Data.entryIndex,dstfil,false);
   end;
 
 end;
@@ -1193,9 +1187,9 @@ begin
   SaveDialog.Filter := DLNGStr('ALLFIL')+'|*.*';
 
   Data := lstContent.GetNodeData(lstContent.GetFirstSelected);
-  Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+  Filename := FSE.Items[Data.entryIndex].FileName;
 
-  writeLog(ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),Data.data^.Name),CListInfo.List[CurrentMenu.Tag].Info.Display));
+  writeLog(ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),CListInfo.List[CurrentMenu.Tag].Info.Display));
 
   SaveDialog.FileName := ChangeFileExt(filename,'.'+CListInfo.List[CurrentMenu.Tag].Info.Ext);
 
@@ -1217,10 +1211,10 @@ begin
     tmpStm := TMemoryStream.Create;
     outStm := TFileStream.Create(dstfil,fmCreate or fmShareDenyWrite);
     try
-      FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,silentExtract);
+      FSE.ExtractFileToStream(Data.entryIndex,tmpStm,tmpfil,silentExtract);
       tmpStm.Seek(0,soBeginning);
       writeLogVerbose(1,ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[CurrentMenu.Tag].Info.Display));
-      CPlug.convert(CListInfo.List[CurrentMenu.Tag].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,False);
+      CPlug.convert(CListInfo.List[CurrentMenu.Tag].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,FSE.Items[Data.entryIndex].Offset,FSE.Items[Data.entryIndex].DataX,FSE.Items[Data.entryIndex].DataY,False);
     finally
       FreeAndNil(tmpStm);
       FreeAndNil(outStm);
@@ -1262,9 +1256,9 @@ begin
     while Node <> nil do
     begin
       Data := lstContent.GetNodeData(Node);
-      Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+      Filename := FSE.Items[Data.entryIndex].FileName;
       dstfil := outputdir + fileName;
-      FSE.ExtractFile(data.data,dstfil,true);
+      FSE.ExtractFile(data.entryIndex,dstfil,true);
       Inc(CurFiles);
       perc := Round((CurFiles / lstContent.SelectedCount)*100);
       if (perc >= numper+5) then
@@ -1320,17 +1314,17 @@ begin
     while (Node <> Nil) do
     begin
       Data := lstContent.GetNodeData(Node);
-      filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+      filename := FSE.Items[Data.entryIndex].FileName;
       dstfil := outputdir + ChangeFileExt(fileName,'.'+CListInfo.List[CurrentMenu.Tag].Info.Ext);
       tmpfil := getTemporaryDir+getTemporaryFilename(fileName);
 
       tmpStm := TMemoryStream.Create;
       outStm := TFileStream.Create(dstfil,fmCreate or fmShareDenyWrite);
       try
-        FSE.ExtractFileToStream(Data.data,tmpStm,tmpfil,false);
+        FSE.ExtractFileToStream(Data.entryIndex,tmpStm,tmpfil,false);
         tmpStm.Seek(0,soBeginning);
         appendLog(DLNGStr('LOGC15'));
-        CPlug.convert(CListInfo.List[CurrentMenu.Tag].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,Data.Data^.Offset,Data.Data^.DataX,Data.Data^.DataY,Silent);
+        CPlug.convert(CListInfo.List[CurrentMenu.Tag].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,FSE.Items[Data.entryIndex].Offset,FSE.Items[Data.entryIndex].DataX,FSE.Items[Data.entryIndex].DataY,Silent);
       except
         on E: Exception do
         begin
@@ -1411,26 +1405,23 @@ begin
 
   if not(Data.loaded) then
   begin
-    posext := posrev('.',Data.data^.Name);
+    posext := posrev('.',FSE.Items[Data.entryIndex].FileName);
     if posext > 0 then
-      ext := Copy(Data.data^.Name,posext+1,length(Data.data^.Name)-posext)
+      ext := Copy(FSE.Items[Data.entryIndex].FileName,posext+1,length(FSE.Items[Data.entryIndex].FileName)-posext)
     else
       ext := '';
-      Data.desc := DescFromExt(ext);
-
-      Data.ImageIndex := icons.getIcon(Data.data^.Name);
-//      listData[x].ImageIndex := icons.getIcon(cache.getItem(x)^.Name);
-//    TotSize := TotSize + cache.getItem(x)^.Size;
+    Data.desc := DescFromExt(ext);
+    Data.ImageIndex := icons.getIcon(FSE.Items[Data.entryIndex].Name);
     Data.loaded := true;
   end;
 
   case Column of
-    0: CellText := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
-    1: CellText := IntToStr(Data.data^.size);
-    2: CellText := IntToStr(Data.data^.offset);
+    0: CellText := FSE.Items[Data.entryIndex].FileName;
+    1: CellText := IntToStr(FSE.Items[Data.entryIndex].size);
+    2: CellText := IntToStr(FSE.Items[Data.entryIndex].offset);
     3: CellText := Data.desc;
-    4: CellText := IntToStr(Data.data^.DataX);
-    5: CellText := IntToStr(Data.data^.DataY);
+    4: CellText := IntToStr(FSE.Items[Data.entryIndex].DataX);
+    5: CellText := IntToStr(FSE.Items[Data.entryIndex].DataY);
   else
     CellText := '';
   end;
@@ -1724,8 +1715,7 @@ begin
 
   dup5Main.writeLog(' = '+ReplaceValue('%p',DLNGStr('LOG009'),inttostr(CPlug.getNumPlugins)));
 
-  Icons := TIconsFromExt.Create;
-  Icons.init(imgContents);
+  Icons := TIconsFromExt.Create(imgContents);
 
   TempFiles := TStringList.Create;
 
@@ -1750,8 +1740,8 @@ begin
 
   Data1 := Sender.GetNodeData(Node1);
   Data2 := Sender.GetNodeData(Node2);
-  Filename1 := Copy(Data1.data^.Name, Data1.tdirpos+1,length(Data1.data^.Name)-Data1.tdirpos);
-  Filename2 := Copy(Data2.data^.Name, Data2.tdirpos+1,length(Data2.data^.Name)-Data2.tdirpos);
+  Filename1 := FSE.Items[Data1.entryIndex].FileName;
+  Filename2 := FSE.Items[Data2.entryIndex].FileName;
 
   case Column of
     -1, 0: begin
@@ -1763,17 +1753,17 @@ begin
                Result := 0;
            end;
         1: begin
-             if (Data1.data^.size < Data2.data^.size) then
+             if (FSE.Items[Data1.entryIndex].size < FSE.Items[Data2.entryIndex].size) then
                Result := -1
-             else if (Data1.data^.size > Data2.data^.size) then
+             else if (FSE.Items[Data1.entryIndex].size > FSE.Items[Data2.entryIndex].size) then
                Result := 1
              else
                Result := 0;
            end;
         2: begin
-             if (Data1.data^.offset < Data2.data^.offset) then
+             if (FSE.Items[Data1.entryIndex].offset < FSE.Items[Data2.entryIndex].offset) then
                Result := -1
-             else if (Data1.data^.offset > Data2.data^.offset) then
+             else if (FSE.Items[Data1.entryIndex].offset > FSE.Items[Data2.entryIndex].offset) then
                Result := 1
              else
                Result := 0;
@@ -1781,26 +1771,26 @@ begin
         3: begin
              if not(Data1.loaded) then
              begin
-               posext := posrev('.',Data1.data^.Name);
+               posext := posrev('.',FSE.Items[Data1.entryIndex].FileName);
                if posext > 0 then
-                 ext := Copy(Data1.data^.Name,posext+1,length(Data1.data^.Name)-posext)
+                 ext := Copy(FSE.Items[Data1.entryIndex].FileName,posext+1,length(FSE.Items[Data1.entryIndex].FileName)-posext)
                else
                  ext := '';
                Data1.desc := DescFromExt(ext);
 
-               Data1.ImageIndex := icons.getIcon(Data1.data^.Name);
+               Data1.ImageIndex := icons.getIcon(FSE.Items[Data1.entryIndex].Name);
                Data1.loaded := true;
              end;
              if not(Data2.loaded) then
              begin
-               posext := posrev('.',Data2.data^.Name);
+               posext := posrev('.',FSE.Items[Data2.entryIndex].FileName);
                if posext > 0 then
-                 ext := Copy(Data2.data^.Name,posext+1,length(Data2.data^.Name)-posext)
+                 ext := Copy(FSE.Items[Data2.entryIndex].FileName,posext+1,length(FSE.Items[Data2.entryIndex].FileName)-posext)
                else
                  ext := '';
                Data2.desc := DescFromExt(ext);
 
-               Data2.ImageIndex := icons.getIcon(Data2.data^.Name);
+               Data2.ImageIndex := icons.getIcon(FSE.Items[Data2.entryIndex].Name);
                Data2.loaded := true;
              end;
 
@@ -1829,16 +1819,14 @@ begin
     Data := Sender.GetNodeData(Node);
     if not(Data.loaded) then
     begin
-      posext := posrev('.',Data.data^.Name);
+      posext := posrev('.',FSE.Items[Data.entryIndex].FileName);
       if posext > 0 then
-        ext := Copy(Data.data^.Name,posext+1,length(Data.data^.Name)-posext)
+        ext := Copy(FSE.Items[Data.entryIndex].FileName,posext+1,length(FSE.Items[Data.entryIndex].FileName)-posext)
       else
         ext := '';
       Data.desc := DescFromExt(ext);
 
-//      Data.ImageIndex := IconFromExt(ext);
-      Data.ImageIndex := icons.getIcon(Data.data^.Name);
-//    TotSize := TotSize + cache.getItem(x)^.Size;
+      Data.ImageIndex := icons.getIcon(FSE.Items[Data.entryIndex].Name);
       Data.loaded := true;
     end;
 
@@ -1847,22 +1835,6 @@ begin
 
 end;
 
-procedure Tdup5Main.lstContentHeaderClick(Sender: TVTHeader;
-  Column: TColumnIndex; Button: TMouseButton; Shift: TShiftState; X,
-  Y: Integer);
-var curSort: TSortDirection;
-begin
-
-  if (Sender.SortDirection = sdAscending) then
-    curSort := sdDescending
-  else
-    curSort := sdAscending;
-
-  Sender.SortDirection := curSort;
-  Sender.SortColumn := Column;
-  lstContent.Sort(nil,Column,curSort);
-
-end;
 
 procedure Tdup5Main.lstContentContextPopup(Sender: TObject;
   MousePos: TPoint; var Handled: Boolean);
@@ -1891,7 +1863,7 @@ begin
      Node := lstContent.GetFirstSelected;
      Data := lstContent.GetNodeData(Node);
 
-     mext := ExtractFileExt(Data.data^.Name);
+     mext := ExtractFileExt(FSE.Items[Data.entryIndex].FileName);
      if mext[1] = '.' then
        mext := RightStr(mext,length(mext)-1);
      mext := UpperCase(mext);
@@ -1900,21 +1872,21 @@ begin
      while (Node <> nil) and ConvertOK do
      begin
          Data := lstContent.GetNodeData(Node);
-         ext := ExtractFileExt(Data.data^.Name);
+         ext := ExtractFileExt(FSE.Items[Data.entryIndex].FileName);
          if ext[1] = '.' then
            ext := RightStr(ext,length(ext)-1);
          ext := UpperCase(ext);
          ConvertOK := (ext = mext);
          if ConvertOK then
          begin
-           Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+           Filename := FSE.Items[Data.entryIndex].FileName;
            // SLOW LIKE HELL: Going through all entries until finding the good one
            //FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
-           // Instead we use the date directly as we already have it!!!
-           Size := Data.data^.Size;
-           Offset := Data.data^.Offset;
-           DataX := Data.data^.DataX;
-           DataY := Data.data^.DataY;
+           // Instead we use the data directly as we already have it!!!
+           Size := FSE.Items[Data.entryIndex].Size;
+           Offset := FSE.Items[Data.entryIndex].Offset;
+           DataX := FSE.Items[Data.entryIndex].DataX;
+           DataY := FSE.Items[Data.entryIndex].DataY;
            ConvertOK := CPlug.TestFileConvert(fileName,offset,size,FSE.DriverID,DataX,DataY);
          end;
          Node := lstContent.GetNextSelected(Node);
@@ -1926,11 +1898,11 @@ begin
      begin
        // SLOW LIKE HELL: Going through all entries until finding the good one
        //FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
-       // Instead we use the date directly as we already have it!!!
-       Size := Data.data^.Size;
-       Offset := Data.data^.Offset;
-       DataX := Data.data^.DataX;
-       DataY := Data.data^.DataY;
+       // Instead we use the data directly as we already have it!!!
+       Size := FSE.Items[Data.entryIndex].Size;
+       Offset := FSE.Items[Data.entryIndex].Offset;
+       DataX := FSE.Items[Data.entryIndex].DataX;
+       DataY := FSE.Items[Data.entryIndex].DataY;
        CList := CPlug.GetFileConvert(fileName,offset,size,FSE.DriverID,DataX, DataY);
 
        CListInfo.NumFormats := CList.NumFormats;
@@ -1983,15 +1955,15 @@ begin
 
      Node := lstContent.GetFirstSelected;
      Data := lstContent.GetNodeData(Node);
-     Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+     Filename := FSE.Items[Data.entryIndex].FileName;
 
      // SLOW LIKE HELL: Going through all entries until finding the good one
      //FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
-     // Instead we use the date directly as we already have it!!!
-     Size := Data.data^.Size;
-     Offset := Data.data^.Offset;
-     DataX := Data.data^.DataX;
-     DataY := Data.data^.DataY;
+     // Instead we use the data directly as we already have it!!!
+     Size := FSE.Items[Data.entryIndex].Size;
+     Offset := FSE.Items[Data.entryIndex].Offset;
+     DataX := FSE.Items[Data.entryIndex].DataX;
+     DataY := FSE.Items[Data.entryIndex].DataY;
 
      ext := ExtractFileExt(fileName);
      if ext <> '' then
@@ -2128,10 +2100,10 @@ begin
     while Node <> nil do
     begin
       Data := lstContent.GetNodeData(Node);
-      filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+      filename := FSE.Items[Data.entryIndex].FileName;
       dstfil := tmpdir + fileName;
 //      showmessage(dstfil+#10+DropFileSource.Files.Strings[curFiles-1]);
-      FSE.ExtractFile(Data.data,dstfil,true);
+      FSE.ExtractFile(Data.entryIndex,dstfil,true);
       TempFiles.Add(dstfil);
       Inc(CurFiles);
       perc := Round((CurFiles / lstContent.SelectedCount)*100);
@@ -2179,7 +2151,7 @@ begin
       while Node <> nil do
       begin
         Data := lstContent.GetNodeData(Node);
-        DropFileSource.Files.Add(tmpdir+Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos));
+        DropFileSource.Files.Add(tmpdir+FSE.Items[Data.entryIndex].FileName);
         Node := lstContent.GetNextSelected(Node);
       end;
 
@@ -2447,11 +2419,14 @@ end;
 procedure Tdup5Main.lstIndexFocusChanged(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Column: TColumnIndex);
 var disp: string;
+    VirtualNodeData: pvirtualindexdata;
 begin
 
   disp := GetNodePath(Node);
   writelogVerbose(1,ReplaceValue('%d',DLNGStr('LOG300'),disp));
-  FSE.BrowseDir(disp);
+//  FSE.BrowseDir(disp);
+  VirtualNodeData := lstIndex.GetNodeData(Node);
+  FSE.BrowseDirFromID(VirtualNodeData.FolderID);
   CurrentDir := disp;
   appendLogVerbose(1,ReplaceValue('%e',DLNGStr('LOG301'),inttostr(lstContent.TotalCount)));
 
@@ -2782,16 +2757,16 @@ begin
       Node := lstContent.GetFirstSelected;
       Data := lstContent.GetNodeData(Node);
 
-      Filename := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
+      Filename := FSE.Items[Data.entryIndex].FileName;
 
       // SLOW LIKE HELL: Going through all entries until finding the good one
       //FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
 
-      // Instead we use the date directly as we already have it!!!
-      Size := Data.data^.Size;
-      Offset := Data.data^.Offset;
-      DataX := Data.data^.DataX;
-      DataY := Data.data^.DataY;
+      // Instead we use the data directly as we already have it!!!
+      Size := FSE.Items[Data.entryIndex].Size;
+      Offset := FSE.Items[Data.entryIndex].Offset;
+      DataX := FSE.Items[Data.entryIndex].DataX;
+      DataY := FSE.Items[Data.entryIndex].DataY;
 
       ext := ExtractFileExt(fileName);
       if ext <> '' then
@@ -2803,10 +2778,10 @@ begin
 
       dup5Main.WriteLogVerbose(2,DLNGStr('PRV000')+' ');
 
-      if not(isPreviewLimit) or (Data.Data^.Size <= getPreviewLimitInBytes(previewLimitValue)) then
+      if not(isPreviewLimit) or (FSE.Items[Data.entryIndex].Size <= getPreviewLimitInBytes(previewLimitValue)) then
       begin
 
-        tmpfil := getTemporaryDir+getTemporaryFilename(Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos));
+        tmpfil := getTemporaryDir+getTemporaryFilename(FSE.Items[Data.entryIndex].FileName);
         foundCnv := false;
 
         stmSource := TMemoryStream.Create;
@@ -2815,7 +2790,7 @@ begin
 
           dup5Main.appendLogVerbose(2,DLNGStr('PRV010')+'... ');
 
-          FSE.ExtractFileToStream(Data.data,stmSource,tmpfil,true);
+          FSE.ExtractFileToStream(Data.entryIndex,stmSource,tmpfil,true);
           stmSource.Seek(0,soBeginning);
 
           dup5Main.appendLogVerbose(2,DLNGStr('PRV009')+'... ');
@@ -3119,7 +3094,6 @@ end;
 //
 // Free the memory associated with a node of lstIndex
 //
-// NOT HOOKED as it seems to make Dup5 dump when closing...
 procedure Tdup5Main.lstIndexFreeNode(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 var NodeData: pvirtualIndexData;
@@ -3128,8 +3102,9 @@ begin
 
   // Free the cache structure for the directory in FSE
   // We need the full directory path and not only the current directory name
-  disp := GetNodePath(Node);
-  FSE.FreeDir(disp);
+  //disp := GetNodePath(Node);
+  //FSE.FreeDir(disp);
+  // Disabled because the new cache is not enabled yet
 
   // We free the directory name (string)
   NodeData := lstIndex.GetNodeData(Node);
@@ -3153,7 +3128,6 @@ end;
 procedure Tdup5Main.FormDestroy(Sender: TObject);
 begin
 
-  Icons.close;
   FreeAndNil(Icons);
 
 //  FreeAndNil(lstIndex);
@@ -3297,6 +3271,29 @@ begin
   Finally
     FreeAndNil(Reg);
   end;
+
+end;
+
+procedure Tdup5Main.lstContentHeaderClick(Sender: TVTHeader;
+  HitInfo: TVTHeaderHitInfo);
+var curSort: TSortDirection;
+begin
+
+  if (Sender.SortDirection = sdAscending) then
+    curSort := sdDescending
+  else
+    curSort := sdAscending;
+
+  Sender.SortDirection := curSort;
+  Sender.SortColumn := HitInfo.Column;
+  lstContent.Sort(nil,HitInfo.Column,curSort);
+
+end;
+
+procedure Tdup5Main.addEntry(entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
+begin
+
+  FSE.addEntry(entrynam,offset,size,datax,datay)
 
 end;
 

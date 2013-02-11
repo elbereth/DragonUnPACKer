@@ -376,10 +376,11 @@ begin
           begin
             Data := dup5Main.lstContent.GetNodeData(Node);
 
+
             New(EntRec);
-            EntRec^.FileName := Copy(Data.data^.Name, Data.tdirpos+1,length(Data.data^.Name)-Data.tdirpos);
-            EntRec^.Offset := Data.data^.Offset ;
-            EntRec^.Size := Data.data^.Size;
+            EntRec^.FileName := FSE.Items[Data.entryIndex].FileName;
+            EntRec^.Offset := FSE.Items[Data.entryIndex].Offset ;
+            EntRec^.Size := FSE.Items[Data.entryIndex].Size;
             SortList.Add(EntRec);
 
             Node := dup5Main.lstContent.GetNextSelected(Node);

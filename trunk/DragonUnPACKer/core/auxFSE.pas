@@ -30,11 +30,22 @@ type FSE = ^element;
   suiv : FSE;
 end;
 
+type FSEentry = record
+  Name : String;
+  FolderID : Integer;
+  FileName : String;
+  Size : Int64;
+  Offset : Int64;
+  DataX : integer;
+  DataY : integer;
+end;
+
  pvirtualIndexData = ^virtualIndexData;
  virtualIndexData = record
    dirname: String;
    imageIndex: integer;
    selectedImageIndex: integer;
+   FolderID: integer;
  end;
 
 type TDirCache = class
@@ -65,7 +76,6 @@ procedure SetTitleDefault();
 procedure SetPanelEx(st: string);
 procedure DisplayPercent(value: integer);
 function GetDirCache(CurDir: string): TDirCache;
-procedure FreeDirCache(CurDir: string);
 
 implementation
 
@@ -115,21 +125,6 @@ begin
 
 end;
 
-procedure FreeDirCache(CurDir: string);
-var Data: TObject;
-begin
-
-  if (length(curDir) > 0) then
-  begin
-    data := nil;
-    dirCache.Find(curDir,data);
-    if data <> nil then
-      FreeAndNil(Pointer(data));
-    dirCache.Delete(curDir);
-  end;
-
-end;
-
 procedure ParseDirs(Sch: string; Databloc: FSE; Fname: String);
 var a: FSE;
     pslash: integer;
@@ -139,6 +134,7 @@ var a: FSE;
     Root, Nod, NodAdd: PVirtualNode;
     NodeData: pvirtualIndexData;
     cache: TDirCache;
+    x: integer;
 //    StartTime: TDateTime;
 begin
 

@@ -1326,7 +1326,7 @@ begin
               //\ Feature request 1216790 //\
               resprefix := ReplaceValue('%n',resprefix,Fill0(inttostr(numFound)));
 
-              FSE.SetListElem(predir+resprefix+'.'+Found.Ext,Found.Offset,Found.Size,0,0);
+              FSE.addEntry(predir+resprefix+'.'+Found.Ext,Found.Offset,Found.Size,0,0);
               curPos := Found.Offset+Found.Size;
               SomethingFound := true;
               LastOffset := curPos;

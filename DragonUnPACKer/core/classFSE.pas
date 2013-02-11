@@ -29,7 +29,8 @@ interface
 
 uses auxFSE, Classes, Comctrls, Controls, DateUtils, Dialogs, Forms,
      lib_binCopy, lib_binutils, lib_language, lib_utils, Main, prg_ver, Registry,
-     spec_HRF, strutils, Windows, SysUtils, Error, Graphics, commonTypes;
+     spec_HRF, strutils, Windows, SysUtils, Error, Graphics, commonTypes, virtualtrees,
+     HashTrie;
 
 { Record declaration }
 
@@ -75,7 +76,7 @@ type
 { External Function/Procedure declaration }
 
 const
-  DUDIVERSION = 5;  // Max supported DUDIVersion
+  DUDIVERSION = 6;  // Max supported DUDIVersion
 
 type
 
@@ -91,6 +92,9 @@ type
   // TMsgBoxCallback : Used by the plugin to display About box
   TMsgBoxCallback = procedure(const title, msg: AnsiString);
 
+  // TAddEntryCallback : Used by the plugin to add found entries
+  TAddEntryCallback = procedure (entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
+
   { Driver plugin functions }
 
   // TDUDIVersion : Returns the driver plugin DUDI (Dragon UnPACKer Driver
@@ -100,10 +104,11 @@ type
   //                                         3 = Version 3
   //                                         4 = Version 4
   //                                         5 = Version 5 (see DUDIVersionEx)
+  //                                         6 = Version 6
   //                Each version has different exported functions/procedure
   //                and/or same function/procedure with different export
   //                parameters.
-  //                For version 5 DUDI plugins this returns the minimum compatible
+  //                For version 5+ DUDI plugins this returns the minimum compatible
   //                version. Ex: DUDIVersionEx returns 5
   //                             DUDIVersion returns 4
   //                             This means the plugins is version 5 but is
@@ -116,6 +121,8 @@ type
   //                                         2 = Version 2
   //                                         3 = Version 3
   //                                         4 = Version 4
+  //                                         5 = Version 5
+  //                                         6 = Version 6
   //                Each version has different exported functions/procedure
   //                and/or same function/procedure with different export
   //                parameters.
@@ -147,6 +154,8 @@ type
   //                0 = No entries found in file
   //               >0 = Number of entries in file
   TOpenFormat2 = function(src: ShortString; Deeper: boolean): Integer; stdcall;
+  // TGetEntry : Called by core to retrieve entries
+  // (DUDI v1 to v5)
   TGetEntry = function(): FormatEntry; stdcall;
   TGetDriverInfo = function(): DriverInfo; stdcall;
   TGetNumVersion = function(): Integer; stdcall;
@@ -163,6 +172,9 @@ type
   TInitPlugin = procedure(percent: TPercentCallback; dlngstr: TLanguageCallback; dup5pth: shortstring); stdcall;
   TInitPlugin3 = procedure(percent: TPercentCallback; dlngstr: TLanguageCallback; dup5pth: shortstring; AppHandle: THandle; AppOwner: TComponent); stdcall;
   TInitPluginEx5 = procedure(MsgBox: TMsgBoxCallback); stdcall;
+  // TInitPluginEx6 : Pass the callback procedure used to send entries to core
+  // (DUDI v6)
+  TInitPluginEx6 = procedure(AddEntry: TAddEntryCallback); stdcall;
 
 type driver = record
    FileName : ShortString;
@@ -191,6 +203,7 @@ type driver = record
    InitPlugin : TInitPlugin;
    InitPlugin3 : TInitPlugin3;
    InitPluginEx5 : TInitPluginEx5;
+   InitPluginEx6 : TInitPluginEx6;
    Priority : Integer;         // 5.1 : Prioritization of drivers
  end;
 
@@ -198,7 +211,7 @@ type driver = record
  virtualTreeData = record
    ImageIndex: Integer;
    tdirpos: integer;
-   data: FSE;
+   entryIndex: integer;
    loaded: boolean;
    desc: String;
  end;
@@ -208,6 +221,7 @@ type driver = record
    dirname: String;
    imageIndex: integer;
    selectedImageIndex: integer;
+   FolderID: integer;
  end;
 
 type
@@ -221,7 +235,49 @@ type
   end;
 
 type TDrivers = class
-    Drivers: array[1..200] of Driver;
+  private
+    currentFolderID: integer;
+    HRipInfo: DriverInfo;
+    sizeTest: int64;
+    listData: array of virtualTreeData;
+    entryList: array of FSEentry;
+    entryListIndex: integer;
+    entryListFolderCache: TList;
+    LoadTimeOpen: Int64;
+    LoadTimeRetrieve: Int64;
+    LoadTimeParse: Int64;
+    DataBloc: FSE;
+    NumElems: Integer;
+    DispNumElems: Integer;
+    TView: TTreeView;
+    Percent: TPercentCallback;
+    CurrentDriver: Integer;
+    CurrentDriverID: String;
+    SCh: ShortString;
+    InternalExtract: Boolean;
+    CurrentFile: Integer;
+    CurrentFileName: string;
+    CurrentFileSize: Int64;
+    DUP5Pth: ShortString;
+    Language: TLanguageCallBack;
+    CurAOwner: TComponent;
+    function ParseFileTypes(names: string; ext: string): string;
+    procedure ExtractFile_Alt(outfile,entrynam: string; offset: int64; size: int64; datax: integer; datay: integer; silent: boolean);
+    procedure ExtractFileToStream_Alt(outstream: TStream; entrynam: string; offset: int64; size: int64; datax: integer; datay: integer; silent: boolean);
+    function CalculateNumberOfFiles(cdir: string): Integer;
+    function GetRegistryBool(key: string; value: string; default: boolean = false): boolean;
+    function SearchAll(searchst: string; CaseSensible: Boolean): integer;
+    function SearchDir(searchst, cdir: string; CaseSensible: Boolean): integer;
+    procedure saveHRF_v1(srcfil, filename: string; srcsize: int64; prgver: integer);
+    procedure saveHRF_v2(srcfil, filename: string; srcsize: int64; prgver: integer; info: boolean; title,author, url: string);
+    procedure saveHRF_v3(srcfil, filename: string; srcsize: int64; prgver: integer; prgid: byte; info: boolean; title,author, url: string);
+    function getDriverPriority(drivername: string): integer;
+    procedure quickSortDrivers(lowerPos, upperPos: integer);
+    function getBufferSize(): integer;
+    procedure parseEntriesForDirs();
+    function getEntryList(index: integer): FSEentry;
+  public
+    Drivers: array of Driver;
     NumDrivers: Integer;
     function CurrentDriverInfos(): DriverInfo;
     function GetNumEntries(): Integer;
@@ -229,8 +285,8 @@ type TDrivers = class
     function GetFileName(): string;
     function GetFileSize(): Int64;
 //    procedure ExtractFile(entrynam: string; outfile: string; silent: boolean);
-    procedure ExtractFile(entry: FSE; outfile: string; silent: boolean);
-    procedure ExtractFileToStream(entry: FSE; outstream: TStream; fallbacktempfile: string; silent: boolean);
+    procedure ExtractFile(entryIndex: integer; outfile: string; silent: boolean);
+    procedure ExtractFileToStream(entryIndex: integer; outstream: TStream; fallbacktempfile: string; silent: boolean);
     procedure ExtractDir(cdir: string; outpath: string);
     function IsListEmpty: Boolean;
     function GetListSize: Integer;
@@ -239,11 +295,8 @@ type TDrivers = class
     function GetFileTypes: string;
     function GetAllFileTypes(Partitionned: boolean): ExtensionsResult;
     procedure BrowseDir(cdir: string);
-    procedure FreeDir(cdir: string);
+    procedure BrowseDirFromID(CurrentDirID: integer);
     function BrowseDirToList(cdir: string; SubDirs: Boolean): TList;
-    procedure FreeList;
-    procedure GetListElem(Name: string; out Offset, Size: Int64; out DataX, DataY: integer);
-    procedure SetListElem(Name: string; Offset, Size: Int64; DataX, DataY: integer);
     procedure SetTreeView(a: TTreeView);
     procedure SetProgressBar(a: TPercentCallback);
     procedure LoadDrivers(pth: String);
@@ -263,45 +316,10 @@ type TDrivers = class
     procedure SetOwner(AOwner: TComponent);
     procedure setDriverPriority(index, priority: integer);
     procedure sortDriversByPriority;
-  private
-    HRipInfo: DriverInfo;
-    listData: array of virtualTreeData;
-    LoadTimeOpen: Int64;
-    LoadTimeRetrieve: Int64;
-    LoadTimeParse: Int64;
-    DataBloc: FSE;
-    NumElems: Integer;
-    DispNumElems: Integer;
-    TView: TTreeView;
-    Percent: TPercentCallback;
-    CurrentDriver: Integer;
-    CurrentDriverID: String;
-    SCh: ShortString;
-    InternalExtract: Boolean;
-    CurrentFile: Integer;
-    CurrentFileName: string;
-    CurrentFileSize: Int64;
-    DUP5Pth: ShortString;
-    Language: TLanguageCallBack;
-    CurAOwner: TComponent;
-    procedure DataBlocAdd(Name: String; Offset, Size: Int64; DataX, DataY: integer);
-    procedure DataBlocFree();
-    procedure DataBlocFree_Aux(a: FSE);
-    procedure FreeList_Aux(a: FSE);
-    function ParseFileTypes(names: string; ext: string): string;
-    procedure ExtractFile_Alt(outfile,entrynam: string; offset: int64; size: int64; datax: integer; datay: integer; silent: boolean);
-    procedure ExtractFileToStream_Alt(outstream: TStream; entrynam: string; offset: int64; size: int64; datax: integer; datay: integer; silent: boolean);
-    function CalculateNumberOfFiles(cdir: string): Integer;
-    function GetRegistryBool(key: string; value: string; default: boolean = false): boolean;
-    function SearchAll(searchst: string; CaseSensible: Boolean): integer;
-    function SearchDir(searchst, cdir: string; CaseSensible: Boolean): integer;
-    procedure saveHRF_v1(srcfil, filename: string; srcsize: int64; prgver: integer);
-    procedure saveHRF_v2(srcfil, filename: string; srcsize: int64; prgver: integer; info: boolean; title,author, url: string);
-    procedure saveHRF_v3(srcfil, filename: string; srcsize: int64; prgver: integer; prgid: byte; info: boolean; title,author, url: string);
-    function getDriverPriority(drivername: string): integer;
-    procedure quickSortDrivers(lowerPos, upperPos: integer);
-    function getBufferSize(): integer;
-  protected
+    procedure addEntry(entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
+    constructor Create();
+    destructor Destroy(); override;
+    property Items[Index : integer] : FSEentry read getEntryList;
 end;
 
 implementation
@@ -312,6 +330,13 @@ procedure showMsgBox(const title, msg: AnsiString);
 begin
 
   dup5Main.messageDlgTitle(title,msg,[mbOk],0);
+
+end;
+
+procedure addEntryCB(entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
+begin
+
+  dup5Main.addEntry(entrynam,offset,size,datax,datay);
 
 end;
 
@@ -349,36 +374,6 @@ begin
 
 end;
 
-// FreeList_Aux : Auxiliary function that frees the data chain (chained records)
-//                by going through the data and freeing every item.
-procedure TDrivers.FreeList_Aux(a: FSE);
-begin
-
-  if (a <> nil) then
-  begin
-
-    if (a^.suiv <> nil) then
-      FreeList_aux(a^.suiv);
-
-    dispose(a);
-
-  end;
-
-end;
-
-// FreeList : This frees all data allocated in the file list by the data chain
-procedure TDrivers.FreeList;
-begin
-
-  if Not(IsListEmpty) then
-  begin
-    FreeList_Aux(databloc);
-    DataBloc := Nil;
-    NumElems := 0;
-  end;
-
-end;
-
 // GetListSize : Return the size of the data chain
 //     Returns : 0 if the file list is empty
 //               n if the file list has n elements
@@ -404,38 +399,6 @@ begin
 
 end;
 
-procedure TDrivers.GetListElem(Name: string; out Offset, Size: Int64; out DataX, DataY: integer);
-var autrFSE: FSE;
-    Nam: Pchar;
-begin
-
-  Nam := PChar(Name);
-
-  autrFSE := DataBloc;
-
-  if autrFSE <> NIL then
-  begin
-    while (autrFSE^.suiv <> NIL) and (autrFSE^.Name <> Nam) do
-    begin
-      autrFSE := autrFSE^.suiv;
-    end;
-    if (autrFSE^.Name = Nam) then
-    begin
-      Offset := autrFSE^.Offset;
-      Size := autrFSE^.Size;
-      DataX := autrFSE^.DataX;
-      DataY := autrFSE^.DataY;
-    end
-    else
-    begin
-      Offset := 0;
-      Size := 0;
-      DataX := 0;
-      DataY := 0;
-    end
-  end;
-
-end;
 
 procedure TDrivers.SetTreeView(a: TTreeView);
 begin
@@ -504,6 +467,8 @@ begin
         if (@DUDIVer <> Nil) and ((DUDIVerVal >= 1) and (DUDIVerVal <= DUDIVersion)) then
         begin
           Inc(NumDrivers);
+          if NumDrivers > High(Drivers) then
+            SetLength(Drivers,High(Drivers)+8);
           if (@DUDIVerEx <> Nil) and (DUDIVerExVal >= 5) and (DUDIVerExVal <= DUDIVersion) then
             Drivers[NumDrivers].DUDIVersion := DUDIVerExVal
           else
@@ -543,6 +508,8 @@ begin
             @Drivers[NumDrivers].InitPlugin3 := GetProcAddress(Handle, 'InitPlugin');
             if (Drivers[NumDrivers].DUDIVersion >= 5) then
               @Drivers[NumDrivers].InitPluginEx5 := GetProcAddress(Handle, 'InitPluginEx5');
+            if (Drivers[NumDrivers].DUDIVersion >= 6) then
+              @Drivers[NumDrivers].InitPluginEx6 := GetProcAddress(Handle, 'InitPluginEx6');
             if (Drivers[NumDrivers].DUDIVersion = 4) or (Drivers[NumDrivers].DUDIVersion = 5) then
             begin
               @Drivers[NumDrivers].ExtractFileToStream := GetProcAddress(Handle, 'ExtractFileToStream');
@@ -562,6 +529,7 @@ begin
           or (((Drivers[NumDrivers].DUDIVersion = 3) or (Drivers[NumDrivers].DUDIVersion = 4) or (Drivers[NumDrivers].DUDIVersion = 5)) and (@Drivers[NumDrivers].InitPlugin3 = Nil))
           or (((Drivers[NumDrivers].DUDIVersion = 4) or (Drivers[NumDrivers].DUDIVersion = 5)) and (@Drivers[NumDrivers].ExtractFileToStream = Nil))
           or ((Drivers[NumDrivers].DUDIVersion = 5) and (@Drivers[NumDrivers].InitPluginEx5 = Nil))
+          or ((Drivers[NumDrivers].DUDIVersion = 6) and (@Drivers[NumDrivers].InitPluginEx6 = Nil))
           then
           begin
             if IsConsole then
@@ -596,6 +564,12 @@ begin
               begin
                 Drivers[NumDrivers].InitPlugin3(Percent,Language,dup5pth,Application.Handle,CurAOwner);
                 Drivers[NumDrivers].InitPluginEx5(showMsgBox);
+              end
+              else if (Drivers[NumDrivers].DUDIVersion = 6) then
+              begin
+                Drivers[NumDrivers].InitPlugin3(Percent,Language,dup5pth,Application.Handle,CurAOwner);
+                Drivers[NumDrivers].InitPluginEx5(showMsgBox);
+                Drivers[NumDrivers].InitPluginEx6(addEntryCB);
               end;
               Drivers[NumDrivers].FileName := ExtractFileName(sr.Name);
               Drivers[NumDrivers].Handle := Handle;
@@ -652,21 +626,6 @@ begin
 
   if IsConsole then
     writeln('Finished!');
-
-end;
-
-procedure TDrivers.DataBlocAdd(Name: String; Offset, Size: Int64; DataX, DataY: integer);
-var nouvFSE: FSE;
-begin
-
-  new(nouvFSE);
-  nouvFSE^.Name := Name;
-  nouvFSE^.Offset := Offset;
-  nouvFSE^.Size := Size;
-  nouvFSE^.DataX := DataX;
-  nouvFSE^.DataY := DataY;
-  nouvFSE^.suiv := DataBloc;
-  DataBloc := nouvFSE;
 
 end;
 
@@ -787,6 +746,7 @@ begin
         dup5Main.writeLogVerbose(1,ReplaceValue('%d',DLNGStr('LOG501'),Drivers[CurrentDriver].Info.Name));
 
         StartTime := Now;
+        entryListIndex := -1;
         try
           if (Drivers[CurrentDriver].DUDIVersion = 1) then
             NumElems := Drivers[CurrentDriver].OpenFile(pchar(pth),Percent,SmartOpen)
@@ -815,7 +775,7 @@ begin
 
         dup5Main.appendLogVerbose(2,inttostr(LoadTimeOpen)+'ms');
 
-        if NumElems > 0 then
+        if  NumElems > 0 then
         begin
 
           dup5Main.appendLog(DLNGStr('LOG511'));
@@ -832,78 +792,53 @@ begin
           DispNumElems := 0;
           y := 0;
 
-          dup5Main.writeLogVerbose(1,ReplaceValue('%x',DLNGStr('LOG502'),inttostr(NumElems)));
+          if (Drivers[CurrentDriver].DUDIVersion < 6) then
+          begin
 
-          Reg := TRegistry.Create;
-          Try
-            Reg.RootKey := HKEY_CURRENT_USER;
-            if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
-            begin
-              if Reg.ValueExists('Accept0Bytes') and Reg.ReadBool('Accept0Bytes') then
-                sizeTest := -1
-              else
-                sizeTest := 0;
-              Reg.CloseKey;
-            end;
-          Finally
-            FreeAndNil(Reg);
-          end;
+            dup5Main.writeLogVerbose(1,ReplaceValue('%x',DLNGStr('LOG502'),inttostr(NumElems)));
 
-          try
-            for y := 1 to NumElems do
-            begin
-              Test := Drivers[CurrentDriver].GetEntry();
-              if (Test.Offset >= 0) and (Test.Size > sizeTest) then
+            try
+              for y := 1 to NumElems do
               begin
-                Inc(DispNumElems);
-                DataBlocAdd(Test.FileName,Test.Offset,Test.Size,Test.DataX,Test.DataY);
-              end
-              else if (Test.Offset < 0) then
-                dup5Main.writeLogVerbose(2,ReplaceValue('%r',ReplaceValue('%f',DLNGstr('LOG505'),Test.FileName),DLNGstr('LOG507')))
-              else if (Test.Size = 0) then
-                dup5Main.writeLogVerbose(2,ReplaceValue('%r',ReplaceValue('%f',DLNGstr('LOG505'),Test.FileName),DLNGstr('LOG506')));
+                Test := Drivers[CurrentDriver].GetEntry();
+                AddEntry(Test.FileName,Test.Offset,Test.Size,Test.DataX,Test.DataY);
+              end;
+            except
+              on Ex:Exception do
+              begin  // New error dialog box
+                dup5Main.writeLog(ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].FileName));
+                dup5Main.colorLog(clRed);
+                dup5Main.writeLog(Ex.Message +' @ TDrivers.LoadFile:'+Drivers[CurrentDriver].FileName+'.GetEntry');
+                dup5Main.colorLog(clRed);
+                dup5Main.writeLog(ReplaceValue('%a',DLNGstr('ERRDR1'),Drivers[CurrentDriver].Info.Author));
+                dup5Main.colorLog(clRed);
+
+                frmError.PrepareError;
+                frmError.details.Add(DLNGStr('ERRCAL'));
+
+                frmError.details.Add('for y := 1 to '+inttostr(NumElems)+' do');
+                frmError.details.Add('begin');
+                frmError.details.Add('  Test := Drivers['+inttostr(CurrentDriver)+'].GetEntry();');
+                frmError.details.Add('  AddEntry('''+Test.FileName+''','+inttostr(Test.Offset)+','+inttostr(Test.Size)+','+inttostr(Test.DataX)+','+inttostr(Test.DataY)+');');
+                frmError.details.Add('end;');
+
+                frmError.details.Add('');
+                frmError.details.Add('y='+inttostr(y));
+                frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
+                frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Name='+Drivers[CurrentDriver].Info.Name);
+                frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Author='+Drivers[CurrentDriver].Info.Author);
+                frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Version='+Drivers[CurrentDriver].Info.Version);
+                frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Comment='+Drivers[CurrentDriver].Info.Comment);
+                frmError.FillTxtError(Ex,'TDrivers','LoadFile:'+Drivers[CurrentDriver].FileName+'.GetEntry');
+
+                NumElems := y-1;
+              end;
             end;
-          except
-            on Ex:Exception do
-            begin  // New error dialog box
-              dup5Main.writeLog(ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].FileName));
-              dup5Main.colorLog(clRed);
-              dup5Main.writeLog(Ex.Message +' @ TDrivers.LoadFile:'+Drivers[CurrentDriver].FileName+'.GetEntry');
-              dup5Main.colorLog(clRed);
-              dup5Main.writeLog(ReplaceValue('%a',DLNGstr('ERRDR1'),Drivers[CurrentDriver].Info.Author));
-              dup5Main.colorLog(clRed);
 
-              frmError.PrepareError;
-              frmError.details.Add(DLNGStr('ERRCAL'));
+            LoadTimeRetrieve := MilliSecondsBetween(Now, StartTime);
 
-              frmError.details.Add('for y := 1 to '+inttostr(NumElems)+' do');
-              frmError.details.Add('begin');
-              frmError.details.Add('  Test := Drivers['+inttostr(CurrentDriver)+'].GetEntry();');
-              frmError.details.Add('  if ('+inttostr(Test.Offset)+' >= 0) and ('+inttostr(Test.Size)+' > 0) then');
-              frmError.details.Add('  begin');
-              frmError.details.Add('    Inc(DispNumElems);');
-              frmError.details.Add('    DataBlocAdd('''+Test.FileName+''','+inttostr(Test.Offset)+','+inttostr(Test.Size)+','+inttostr(Test.DataX)+','+inttostr(Test.DataY)+');');
-              frmError.details.Add('  end;');
-              frmError.details.Add('end;');
-
-              frmError.details.Add('');
-              frmError.details.Add('y='+inttostr(y));
-              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Filename='+Drivers[CurrentDriver].FileName);
-              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Name='+Drivers[CurrentDriver].Info.Name);
-              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Author='+Drivers[CurrentDriver].Info.Author);
-              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Version='+Drivers[CurrentDriver].Info.Version);
-              frmError.details.Add('Drivers['+inttostr(CurrentDriver)+'].Info.Comment='+Drivers[CurrentDriver].Info.Comment);
-              frmError.FillTxtError(Ex,'TDrivers','LoadFile:'+Drivers[CurrentDriver].FileName+'.GetEntry');
-
-              NumElems := y-1;
-//            MessageDlg(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),ex.message),mtWarning,[mbOk],0);
-//            MessageDlg(ReplaceValue('%a',ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[x].FileName),Drivers[x].Info.Author),mtWarning,[mbOk],0);
-            end;
+            dup5Main.appendLogVerbose(2,inttostr(LoadTimeRetrieve)+'ms');
           end;
-
-          LoadTimeRetrieve := MilliSecondsBetween(Now, StartTime);
-
-          dup5Main.appendLogVerbose(2,inttostr(LoadTimeRetrieve)+'ms');
 
           SetTitle(DLNGstr('TLD003'));
           StartTime := Now;
@@ -915,16 +850,17 @@ begin
 
           dup5Main.writeLogVerbose(1,DLNGStr('LOG503'));
 
+          CurrentFileName := pth;
+
           if Sch <> '' then
-            ParseDirs(Sch, DataBloc, ExtractFileName(pth))
+            ParseEntriesForDirs
+//            ParseDirs(Sch, DataBloc, ExtractFileName(pth))
           else
             CreateRoot(ExtractFileName(pth));
 
           LoadTimeParse := MilliSecondsBetween(Now, StartTime);
 
           dup5Main.appendLogVerbose(2,inttostr(LoadTimeParse)+'ms');
-
-          CurrentFileName := pth;
 
           SetTitle(pth);
 
@@ -1008,8 +944,7 @@ begin
 
   if NumElems > 0 then
   begin
-    DataBlocFree;
-    if CurrentDriver <> -1 then
+    if CurrentDriver >= 0 then
       try
         CloseFile := Drivers[CurrentDriver].CloseFile;
       except
@@ -1029,34 +964,7 @@ begin
   if (CurrentDriver = -1) and (CurrentFile >= 0) then
     FileClose(CurrentFile);
 
-  CurrentDriver := 0;
-
-end;
-
-procedure TDrivers.DataBlocFree;
-begin
-
-  if DataBloc <> Nil then
-  begin
-    DataBlocFree_Aux(databloc);
-    DataBloc := Nil;
-    NumElems := 0;
-  end;
-
-end;
-
-procedure TDrivers.DataBlocFree_Aux(a: FSE);
-begin
-
-  if (a <> nil) then
-  begin
-
-    if (a^.suiv <> nil) then
-      DataBlocFree_Aux(a^.suiv);
-
-    dispose(a);
-
-  end;
+  CurrentDriver := -2;
 
 end;
 
@@ -1094,7 +1002,7 @@ begin
         ext := Copy(cache.getItem(x)^.Name,posext+1,length(cache.getItem(x)^.Name)-posext)
       else
         ext := '';}
-      listData[x].data := cache.getItem(x);
+//      listData[x].data := cache.getItem(x);
 //      listData[x].desc := DescFromExt(ext);
       listData[x].loaded := false;
 
@@ -1142,7 +1050,7 @@ begin
         ext := Copy(a^.Name,posext+1,length(a^.Name)-posext)
       else
         ext := '';}
-      listData[curData].data := a;
+//      listData[curData].data := a;
 //      listData[curData].desc := DescFromExt(ext);
       listData[curData].loaded := false;
 
@@ -1193,14 +1101,6 @@ begin
 
   dup5Main.Status.Panels.Items[1].Text := IntToStr(TotSize) + ' ' + DLNGStr('STAT20');
   dup5Main.Status.Panels.Items[0].Text := IntToStr(TotFiles) + ' ' + DLNGStr('STAT10');
-
-end;
-
-procedure TDrivers.FreeDir(cdir: string);
-begin
-
-  CDir := UpperCase(CDir);
-  FreeDirCache(CDir);
 
 end;
 
@@ -1353,7 +1253,7 @@ begin
 end;
 
 //procedure TDrivers.ExtractFile(entrynam, outfile: string; silent: boolean);
-procedure TDrivers.ExtractFile(entry: FSE; outfile: string; silent: boolean);
+procedure TDrivers.ExtractFile(entryIndex: integer; outfile: string; silent: boolean);
 var //Offset,Size: int64;
 //    DataX,DataY: integer;
     Save_Cursor:TCursor;
@@ -1364,11 +1264,11 @@ begin
   SaveTitle;
   SetTitle(DLNGStr('XTRCAP'));
   if not(silent) then
-    SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entry^.name));
+    SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entryList[entryIndex].Name));
   Screen.Cursor := crHourGlass;    { Affiche le curseur en forme de sablier }
   try
     //GetListElem(entrynam,Offset,Size,DataX,DataY);
-    ExtractFile_Alt(outfile,entry^.Name,entry^.Offset,entry^.Size,entry^.DataX,entry^.DataY,silent);
+    ExtractFile_Alt(outfile,entryList[entryIndex].Name,entryList[entryIndex].Offset,entryList[entryIndex].Size,entryList[entryIndex].DataX,entryList[entryIndex].DataY,silent);
   finally
     Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
     SetStatus('-');
@@ -1637,16 +1537,6 @@ begin
 
 end;
 
-procedure TDrivers.SetListElem(Name: string; Offset, Size: Int64; DataX,
-  DataY: integer);
-begin
-
-  DataBlocAdd(Name,Offset,Size,DataX,DataY);
-  Inc(NumElems);
-  DispNumElems := NumElems;
-
-end;
-
 procedure TDrivers.LoadHyperRipper(fil: String; filHandle: integer; loadTime: integer; subdirs: boolean);
 var starttime: TDateTime;
     zero64: int64;
@@ -1761,7 +1651,7 @@ begin
           ext := Copy(a^.Name,posext+1,length(a^.Name)-posext)
         else
           ext := '';
-        listData[curData].data := a;
+//        listData[curData].data := a;
         listData[curData].desc := DescFromExt(ext);
   //      listData[curData].ImageIndex := IconFromExt(ext);
         listData[curData].ImageIndex := icons.getIcon(a^.Name);
@@ -1870,7 +1760,7 @@ begin
             ext := Copy(a^.Name,posext+1,length(a^.Name)-posext)
           else
             ext := '';
-          listData[curData].data := a;
+//          listData[curData].data := a;
           listData[curData].desc := DescFromExt(ext);
           //listData[curData].ImageIndex := IconFromExt(ext);
           listData[curData].ImageIndex := icons.getIcon(a^.Name);
@@ -2393,7 +2283,7 @@ begin
 
 end;
 
-procedure TDrivers.ExtractFileToStream(entry: FSE; outstream: TStream; fallbacktempfile: string; silent: boolean);
+procedure TDrivers.ExtractFileToStream(entryIndex: integer; outstream: TStream; fallbacktempfile: string; silent: boolean);
 var Save_Cursor:TCursor;
     tmpStm: TFileStream;
 begin
@@ -2403,12 +2293,12 @@ begin
   SaveTitle;
   SetTitle(DLNGStr('XTRCAP'));
   if not(silent) then
-    SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entry^.name));
+    SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entryList[entryIndex].name));
   Screen.Cursor := crHourGlass;    { Affiche le curseur en forme de sablier }
   try
     if (CurrentDriver <> -1) and Drivers[CurrentDriver].GetDriver.ExtractInternal and (Drivers[CurrentDriver].DUDIVersion < 4) then
     begin
-      ExtractFile_Alt(fallbacktempfile,entry^.Name,entry^.Offset,entry^.Size,entry^.DataX,entry^.DataY,silent);
+      ExtractFile_Alt(fallbacktempfile,entryList[entryIndex].Name,entryList[entryIndex].Offset,entryList[entryIndex].Size,entryList[entryIndex].DataX,entryList[entryIndex].DataY,silent);
       tmpStm := TFileStream.Create(fallbacktempfile,fmOpenRead or fmShareDenyWrite);
       try
         outstream.CopyFrom(tmpStm,tmpStm.Size);
@@ -2417,7 +2307,7 @@ begin
       end;
     end
     else
-      ExtractFileToStream_Alt(outstream,entry^.Name,entry^.Offset,entry^.Size,entry^.DataX,entry^.DataY,silent);
+      ExtractFileToStream_Alt(outstream,entryList[entryIndex].Name,entryList[entryIndex].Offset,entryList[entryIndex].Size,entryList[entryIndex].DataX,entryList[entryIndex].DataY,silent);
   except
     on E: Exception do
     begin
@@ -2432,6 +2322,333 @@ begin
   Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
   SetStatus('-');
   RestoreTitle;
+
+end;
+
+procedure TDrivers.addEntry(entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
+begin
+
+  // Exclusion 0 bytes & negative offsets
+  if (Offset >= 0) and (Size > sizeTest) then
+  begin
+
+    // If the size of the dynamic array entryList is too small for the new entry
+    // we increase the size by 16
+    inc(entryListIndex);
+    if entryListIndex >= Length(entryList) then
+      setLength(entryList,Length(entryList)+16);
+
+    // Store the new entry
+    entryList[entryListIndex].Name := entryNam;
+    entryList[entryListIndex].Offset := offset;
+    entryList[entryListIndex].Size := size;
+    entryList[entryListIndex].DataX := datax;
+    entryList[entryListIndex].DataY := datay;
+
+  end
+  else if (Offset < 0) then
+    dup5Main.writeLogVerbose(2,ReplaceValue('%r',ReplaceValue('%f',DLNGstr('LOG505'),entrynam),DLNGstr('LOG507')))
+  else if (Size = 0) then
+    dup5Main.writeLogVerbose(2,ReplaceValue('%r',ReplaceValue('%f',DLNGstr('LOG505'),entrynam),DLNGstr('LOG506')));
+
+end;
+
+constructor TDrivers.Create();
+var Reg: TRegistry;
+begin
+
+  // Initialize the entryList to 16 entries
+  setLength(entryList,16);
+  entryListIndex := -1;
+
+  // Initialize Folder ID
+  currentFolderID := 0;
+
+  // Initialize the folder cache
+  entryListFolderCache := TList.Create;
+
+  // Initialize the value of sizeTest
+  sizeTest := 0;
+  Reg := TRegistry.Create;
+  Try
+    Reg.RootKey := HKEY_CURRENT_USER;
+    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+    begin
+      if Reg.ValueExists('Accept0Bytes') and Reg.ReadBool('Accept0Bytes') then
+        sizeTest := -1;
+      Reg.CloseKey;
+    end;
+  Finally
+    FreeAndNil(Reg);
+  end;
+
+end;
+
+destructor TDrivers.Destroy;
+begin
+
+  // Close file
+  CloseFile;
+
+  // Destroy the entryList dynamic array by setting size to 0
+  setLength(entryList,0);
+
+  // Free loaded drivers
+  FreeDrivers;
+  SetLength(Drivers,0);
+
+  // Destroy the folder cache
+  FreeAndNil(entryListFolderCache);
+
+  inherited Destroy();
+
+end;
+
+procedure TDrivers.parseEntriesForDirs();
+var Root, CachedVirtualNode: PVirtualNode;
+    NodeData, CachedNodeData: pvirtualIndexData;
+    parsedDir, previousDir, currentDir: string;
+    x, pslash: integer;
+    DataCache: TObject;
+    dirCache: TStringHashTrie;
+begin
+
+  // Reset the folder id
+  CurrentFolderID := 0;
+
+  // Create the root entry of the lstIndex by using the filename
+  Root := dup5Main.lstIndex.AddChild(nil);
+  NodeData := dup5Main.lstIndex.GetNodeData(Root);
+  NodeData.dirname := ExtractFilename(CurrentFileName);
+  NodeData.imageIndex := 2;
+  NodeData.selectedImageIndex := 2;
+
+  // Initialize the cache of directories
+  dirCache := TStringHashTrie.Create;
+
+  try
+    // For each entry retrieved
+    for x := 0 to entryListIndex do
+    begin
+
+      // Retrieve the last position of the search string (usually / or \)
+      pslash := posrev(sch, entryList[x].Name)-1;
+
+      // If the search string is found
+      if pslash > 0 then
+      begin
+
+        // Retrieve the directory of the current entry
+        currentDir := Copy(entryList[x].Name,1,pslash+1);
+
+        // Search it in the cache
+        // If it was found in the cache we retrieve the ID
+        if (dirCache.Find(currentDir,DataCache)) then
+        begin
+          CachedVirtualNode := Pointer(DataCache);
+          CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
+          entryList[x].FolderID := CachedNodeData.FolderID;
+        end
+        // If not we need to create it
+        else
+        begin
+
+          pslash := pos(sch,currentDir);
+          previousDir := '';
+          while pslash > 0 do
+          begin
+
+            // Directory without the search character
+            parsedDir := Copy(currentDir,1,pslash-1);
+
+            // Rest of the directory
+            currentDir := Copy(currentDir,pslash+1,length(currentDir)-pslash);
+
+            // If this is the root
+            if previousDir = '' then
+            begin
+
+              // If we don't find the directory in the cache
+              // Then we create it as a child of the Root node
+              // And add it to the cache
+              if not(dirCache.Find(parsedDir+Sch,DataCache)) then
+              begin
+                CachedVirtualNode := dup5Main.lstIndex.AddChild(Root);
+                CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
+                CachedNodeData.dirname := parsedDir;
+                CachedNodeData.imageIndex := 1;
+                CachedNodeData.selectedImageIndex := 0;
+                Inc(CurrentFolderID);
+                CachedNodeData.FolderID := CurrentFolderID;
+                dirCache.Add(parsedDir+Sch,Pointer(CachedVirtualNode));
+              end
+              // Else we retrieve the node from the cache
+              else
+                CachedVirtualNode := Pointer(DataCache);
+
+              previousDir := parsedDir+Sch;
+
+            end
+            else
+            begin
+
+              // If we don't find the directory in the cache
+              // Then we create it as a child of the current node
+              // And add it to the cache
+              if not(dirCache.Find(previousDir+parsedDir+Sch,DataCache)) then
+              begin
+
+                CachedVirtualNode := dup5Main.lstIndex.AddChild(CachedVirtualNode);
+                CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
+                CachedNodeData.dirname := parsedDir;
+                CachedNodeData.imageIndex := 1;
+                CachedNodeData.selectedImageIndex := 0;
+                Inc(CurrentFolderID);
+                CachedNodeData.FolderID := CurrentFolderID;
+                dirCache.Add(previousDir+parsedDir+Sch,Pointer(CachedVirtualNode));
+
+              end
+              // Else we retrieve the node from the cache
+              else
+                CachedVirtualNode := Pointer(DataCache);
+
+              previousDir := previousDir + parsedDir+Sch;
+
+            end;
+
+            SetLength(parsedDir,0);
+            pslash := pos(sch,currentDir);
+
+          end;
+
+          // After all folders & sub-folders are created we retrieve the folder ID
+          // of the last level for the entryList
+          CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
+          entryList[x].FolderID := CachedNodeData.FolderID;
+
+        end;
+      end;
+    end;
+  finally
+    // We don't need the directory cache anymore
+    FreeAndNil(dirCache);
+  end;
+
+  // Initilialize the folder cache to the size of the folder ID
+  entryListFolderCache.Capacity := CurrentFolderID;
+
+end;
+
+procedure TDrivers.BrowseDirFromID(CurrentDirID: integer);
+var TDir: string;
+    TDirPos: integer;
+    TotSize: int64;
+    TotFiles: longword;
+    curData, curSize, curIdx, per, perold, x: integer;
+    cache: TDirCache;
+begin
+
+  TotSize := 0;
+
+//  CDir := UpperCase(CDir);
+
+//  cache := GetDirCache(CDir);
+
+//  if cache <> nil then
+//  begin
+//    setLength(ListData,cache.getNumItems);
+//    totFiles := cache.getNumItems;
+//    TDirPos := cache.getTDirPos;
+//    for x := 0 to cache.getNumItems-1 do
+//    begin
+//      listData[x].tdirpos := TDirPos;
+//      listData[x].data := cache.getItem(x);
+//      listData[x].loaded := false;
+//      TotSize := TotSize + cache.getItem(x)^.Size;
+//    end;
+//  end
+//  else
+//  begin
+
+  curSize := 2000;
+  setLength(listData,curSize);
+
+  displayPercent(0);
+
+  curData := 0;
+  curIdx := 0;
+  perold := 0;
+
+
+  for x := 0 to entryListIndex do
+  begin
+
+    if entryList[x].FolderID = CurrentDirID then
+    begin
+
+      if Sch = '' then
+        TDirPos := 0
+      else
+        TDirPos := posrev(Sch, entryList[x].Name);
+
+      entryList[x].FileName := Copy(entryList[x].Name,TDirPos+1,Length(entryList[x].Name)-TDirPos);
+
+      listData[curData].tdirpos := TDirPos;
+      listData[curData].entryIndex := x;
+      listData[curData].loaded := false;
+
+      TotSize := TotSize + entryList[x].Size;
+      inc(curData);
+      if (curData = curSize) then
+      begin
+        inc(curSize,2000);
+        setLength(listData,curSize);
+      end;
+
+    end;
+
+    Inc(CurIdx);
+
+    per := round((CurIdx / entryListIndex) * 100);
+    if (per >= perold + 5) then
+    begin
+      DisplayPercent(per);
+      perold := per;
+    end;
+
+  end;
+
+  TotFiles := curData;
+
+//  end;
+
+//  showmessage(inttostr(millisecondsbetween(now,starttime)));
+
+  displayPercent(100);
+
+  if TotFiles > 0 then
+  begin
+    setLength(listData,TotFiles);
+
+    dup5Main.lstContent.RootNodeCount := 0;
+    dup5Main.lstContent.RootNodeCount := TotFiles;
+
+  end
+  else
+  begin
+    dup5Main.lstContent.RootNodeCount := 0;
+    setLength(listData,0);
+  end;
+
+  dup5Main.Status.Panels.Items[1].Text := IntToStr(TotSize) + ' ' + DLNGStr('STAT20');
+  dup5Main.Status.Panels.Items[0].Text := IntToStr(TotFiles) + ' ' + DLNGStr('STAT10');
+
+end;
+
+function TDrivers.getEntryList(Index: integer): FSEentry;
+begin
+
+  result := entryList[Index];
 
 end;
 

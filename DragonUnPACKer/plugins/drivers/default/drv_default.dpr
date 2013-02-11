@@ -192,7 +192,7 @@ type FSE = ^element;
                  Removed Avatar preliminary/experimental support (quite complex format actually)
     21140  56140 Added Ghostbusters: The Video Game .POD files support (slightly modified BloodRayne .POD format)
                  Added Ghostbusters: Sanctum of Slime .PAK files support (with LZMA decompression)
-    21230        Added preliminary The Witcher 2: Assassins of Kings .DZIP files support
+    21210        Added preliminary The Witcher 2: Assassins of Kings .DZIP files support
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -212,9 +212,9 @@ type FSE = ^element;
   //////////////////////////////////////////////////////////////////////////// }
 
 const
-  DUDI_VERSION = 5;
-  DUDI_VERSION_COMPATIBLE = 4;
-  DRIVER_VERSION = 21230;
+  DUDI_VERSION = 6;
+  DUDI_VERSION_COMPATIBLE = 6;
+  DRIVER_VERSION = 21210;
   DUP_VERSION = 56240;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
@@ -239,6 +239,7 @@ var DataBloc: FSE;
     AHandle : THandle;
     AOwner : TComponent;
     ShowMsgBox : TMsgBoxCallback;
+    AddEntry : TAddEntryCallback;
 
 // This function reverse a string
 //  Ex: "abcd" becomes "dcba"
@@ -440,6 +441,8 @@ begin
   nouvFSE^.DataY := DataY;
   nouvFSE^.suiv := DataBloc;
   DataBloc := nouvFSE;
+
+  AddEntry(Name,Offset,Size,DataX,DataY);
 
 end;
 
@@ -11021,7 +11024,7 @@ type DZIP_Header = packed record
 function ReadTheWitcher2DZIP(src: string): Integer;
 var HDR: DZIP_Header;
     ENT: DZIP_Entry;
-    NumE,x,cdir : integer;
+    NumE,NumErrors,x,cdir : integer;
     stmInput: THandleStream;
     strName: String;
 begin
@@ -15679,6 +15682,13 @@ begin
 
 end;
 
+procedure InitPluginEx6(AddEntryCB: TAddEntryCallback); stdcall;
+begin
+
+  addEntry := AddEntryCB;
+
+end;
+
 exports
   DUDIVersion,
   DUDIVersionEx,
@@ -15694,6 +15704,7 @@ exports
   AboutBox,
   InitPlugin,
   InitPluginEx5,
+  InitPluginEx6,
   IsFormat;
 
 begin

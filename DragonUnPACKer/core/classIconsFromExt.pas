@@ -31,9 +31,6 @@ type
   end;
 
 type TIconsFromExt = class
-    procedure init(icList: TImageList);
-    procedure close;
-    function getIcon(ext: TFilename): Integer;
   private
     iconList: TImageList;
     iconNum: TList;
@@ -45,6 +42,9 @@ type TIconsFromExt = class
     function useRegIcons(): boolean;
     function getWindowsSystemFolder(): string;
   public
+    destructor Destroy; override;
+    constructor Create(icList: TImageList);
+    function getIcon(ext: TFilename): Integer;
 
   end;
 
@@ -226,7 +226,7 @@ noassoc:
   end;
 end;
 
-procedure TIconsFromExt.init(icList: TImageList);
+constructor TIconsFromExt.Create(icList: TImageList);
 begin
 
   iconList := icList;
@@ -236,9 +236,10 @@ begin
 
 end;
 
-procedure TIconsFromExt.close;
+destructor TIconsFromExt.Destroy;
 var x: integer;
     tmpIcon: PIconNum;
+    tmpTIcon: TIcon;
 begin
 
   // TODO: Save Cache file
@@ -251,6 +252,9 @@ begin
 
   FreeAndNil(iconNum);
   iconList.Clear;
+  FreeAndNil(iconList);
+
+  inherited destroy();
 
 end;
 
@@ -278,6 +282,7 @@ begin
         tmpIcon := TIcon.Create;
         tmpIcon.Handle := sIcon;
         idxIcon := addIcon(ext,tmpIcon);
+        FreeAndNil(tmpIcon);
       end
       else
         idxIcon := -1;

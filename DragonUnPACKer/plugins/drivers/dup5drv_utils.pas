@@ -83,6 +83,8 @@ type
    TLanguageCallback = function (lngid: ShortString): ShortString;
    // Procedure to display a message box by using host application
    TMsgBoxCallback = procedure(const title, msg: AnsiString);
+   // Procedure to add entries in the host application
+   TAddEntryCallback = procedure (entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
 
 procedure addFormat(var drvInfo: DriverInfo; formatExts, formatName: string);
 

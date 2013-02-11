@@ -176,7 +176,6 @@ object dup5Main: Tdup5Main
     Align = alClient
     DragMode = dmAutomatic
     Header.AutoSizeIndex = -1
-    Header.DefaultHeight = 17
     Header.Font.Charset = DEFAULT_CHARSET
     Header.Font.Color = clWindowText
     Header.Font.Height = -11
@@ -192,6 +191,7 @@ object dup5Main: Tdup5Main
     OnClick = lstContentClick
     OnCompareNodes = lstContentCompareNodes
     OnContextPopup = lstContentContextPopup
+    OnFreeNode = lstContentFreeNode
     OnGetText = lstContentGetText
     OnGetImageIndex = lstContentGetImageIndex
     OnHeaderClick = lstContentHeaderClick
@@ -245,7 +245,6 @@ object dup5Main: Tdup5Main
     HelpContext = 12
     Align = alLeft
     Header.AutoSizeIndex = 0
-    Header.DefaultHeight = 17
     Header.Font.Charset = DEFAULT_CHARSET
     Header.Font.Color = clWindowText
     Header.Font.Height = -11
@@ -256,11 +255,13 @@ object dup5Main: Tdup5Main
     Images = imgIndex
     PopupMenu = Popup_Index
     TabOrder = 2
+    TreeOptions.AutoOptions = [toAutoDropExpand, toAutoScrollOnExpand, toAutoSort, toAutoTristateTracking, toAutoDeleteMovedNodes]
     TreeOptions.PaintOptions = [toHideSelection, toShowButtons, toShowDropmark, toShowRoot, toShowTreeLines, toThemeAware, toUseBlendedImages]
     TreeOptions.SelectionOptions = [toRightClickSelect]
     OnCompareNodes = lstIndexCompareNodes
     OnContextPopup = lstIndexContextPopup
     OnFocusChanged = lstIndexFocusChanged
+    OnFreeNode = lstIndexFreeNode
     OnGetText = lstIndexGetText
     OnGetImageIndex = lstIndexGetImageIndex
     Columns = <>

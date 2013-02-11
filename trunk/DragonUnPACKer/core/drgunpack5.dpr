@@ -69,7 +69,7 @@ uses
   lib_temptools in '..\common\lib_temptools.pas',
   cls_duplog in '..\common\cls_duplog.pas';
 
-const _DEBUGMODE = TRUE;
+const _DEBUGMODE = FALSE;
 
 var     dupLog: TDupLog;
 

@@ -18,6 +18,8 @@ library drv_default;
 
 uses
   FastMM4,
+  FastCode,
+  FastMove,
   Zlib,
   Classes,
   StrUtils,
@@ -193,6 +195,7 @@ type FSE = ^element;
     21140  56140 Added Ghostbusters: The Video Game .POD files support (slightly modified BloodRayne .POD format)
                  Added Ghostbusters: Sanctum of Slime .PAK files support (with LZMA decompression)
     21210        Added preliminary The Witcher 2: Assassins of Kings .DZIP files support
+    30010        Upgraded to new interface DUDI v6 (plugin is not backward compatible to v4/v5)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -214,8 +217,8 @@ type FSE = ^element;
 const
   DUDI_VERSION = 6;
   DUDI_VERSION_COMPATIBLE = 6;
-  DRIVER_VERSION = 21210;
-  DUP_VERSION = 56240;
+  DRIVER_VERSION = 30010;
+  DUP_VERSION = 57010;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
   BUFFER_SIZE = 8192;

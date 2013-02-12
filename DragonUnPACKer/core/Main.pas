@@ -2839,10 +2839,10 @@ begin
               foundCnv := (uppercase(CList.List[i].Info.ID) = 'BMP') or (uppercase(CList.List[i].Info.ID) = 'TGA32') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT1') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT3');
               if foundCnv then
               begin
-                cnvInfo := CPlug.getPluginInfo(i);
+                cnvInfo := CPlug.getPluginInfo(CList.List[i].Plugin);
                 dup5Main.appendLogVerbose(2,cnvInfo.Name+' v'+cnvInfo.Version);
                 stmSource.Seek(0,soBeginning);
-                if CPlug.Convert(i,stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true) then
+                if CPlug.Convert(CList.List[i].Plugin,stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true) then
                 begin
                   stmBitmap.Seek(0,soBeginning);
 

@@ -194,14 +194,18 @@ begin
     end;
   end
   else
-    result := (Plugins[pid].ConvertStream(src,dst,nam,fmt,cnv,Offset,DataX,DataY,Silent) = 0);
+    try
+      result := (Plugins[pid].ConvertStream(src,dst,nam,fmt,cnv,Offset,DataX,DataY,Silent) = 0);
+    except
+      on e: exception do result := false;
+    end;
 
   if result then
-    dup5Main.appendLog(DLNGStr('LOG510'))
+    dup5Main.appendLogVerbose(2,DLNGStr('LOG510'))
   else
   begin
-    dup5Main.colorLog(clRed);
-    dup5Main.appendLog(DLNGStr('LOG512'));
+    dup5Main.colorLogVerbose(0,clRed);
+    dup5Main.appendLogVerbose(0,DLNGStr('LOG512'));
   end;
 
 end;

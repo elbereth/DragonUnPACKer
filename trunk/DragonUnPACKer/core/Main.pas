@@ -3097,7 +3097,7 @@ end;
 procedure Tdup5Main.lstIndexFreeNode(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 var NodeData: pvirtualIndexData;
-    disp: string;
+//    disp: string;
 begin
 
   // Free the cache structure for the directory in FSE

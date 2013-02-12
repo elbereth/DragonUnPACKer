@@ -663,8 +663,7 @@ var x,y,i: integer;
     ErrList: TStringList;
     ErrStr: String;
     ErrNum, hTest: integer;
-    zero64, sizeTest: int64;
-    reg: TRegistry;
+    zero64: int64;
 begin
 
   SaveTitle;
@@ -940,13 +939,23 @@ end;
 function TDrivers.CloseFile: boolean;
 begin
 
-  CloseFile := True;
+  // By default everything was fine
+  result := True;
 
+  // The entryList is reset
+  entryListIndex := -1;
+  setLength(entryList,16);
+
+  // The current folder data is reset
+  dup5Main.lstContent.RootNodeCount := 0;
+  setLength(listData,0);
+
+  // In case we have some elements and an active driver we call the exported CloseFile function of the driver
   if NumElems > 0 then
   begin
     if CurrentDriver >= 0 then
       try
-        CloseFile := Drivers[CurrentDriver].CloseFile;
+        result := Drivers[CurrentDriver].CloseFile;
       except
         on E:Exception do
         begin
@@ -961,9 +970,11 @@ begin
       end;
   end;
 
+  // If HyperRipper driver and the file is still open we close it
   if (CurrentDriver = -1) and (CurrentFile >= 0) then
     FileClose(CurrentFile);
 
+  // Reset CurrentDriver to -2 (none)
   CurrentDriver := -2;
 
 end;
@@ -1362,7 +1373,7 @@ var dst: integer;
 begin
 
  try
-  if (CurrentDriver <> -1) and Drivers[CurrentDriver].GetDriver.ExtractInternal then
+  if (CurrentDriver > -1) and Drivers[CurrentDriver].GetDriver.ExtractInternal then
   begin
     if @Drivers[CurrentDriver].ExtractFile <> Nil then
     begin
@@ -1435,7 +1446,7 @@ procedure TDrivers.ExtractFileToStream_Alt(outstream: TStream; entrynam: string;
 begin
 
  try
-  if (CurrentDriver <> -1) and Drivers[CurrentDriver].GetDriver.ExtractInternal then
+  if (CurrentDriver > -1) and Drivers[CurrentDriver].GetDriver.ExtractInternal then
   begin
     if @Drivers[CurrentDriver].ExtractFileToStream <> Nil then
     begin
@@ -1485,7 +1496,7 @@ end;
 function TDrivers.CurrentDriverInfos: DriverInfo;
 begin
 
-  if CurrentDriver <> -1 then
+  if CurrentDriver > -1 then
     CurrentDriverInfos := Drivers[CurrentDriver].Info
   else
     CurrentDriverInfos := HRipInfo;
@@ -2296,7 +2307,7 @@ begin
     SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entryList[entryIndex].name));
   Screen.Cursor := crHourGlass;    { Affiche le curseur en forme de sablier }
   try
-    if (CurrentDriver <> -1) and Drivers[CurrentDriver].GetDriver.ExtractInternal and (Drivers[CurrentDriver].DUDIVersion < 4) then
+    if (CurrentDriver > -1) and Drivers[CurrentDriver].GetDriver.ExtractInternal and (Drivers[CurrentDriver].DUDIVersion < 4) then
     begin
       ExtractFile_Alt(fallbacktempfile,entryList[entryIndex].Name,entryList[entryIndex].Offset,entryList[entryIndex].Size,entryList[entryIndex].DataX,entryList[entryIndex].DataY,silent);
       tmpStm := TFileStream.Create(fallbacktempfile,fmOpenRead or fmShareDenyWrite);
@@ -2540,12 +2551,11 @@ begin
 end;
 
 procedure TDrivers.BrowseDirFromID(CurrentDirID: integer);
-var TDir: string;
-    TDirPos: integer;
+var TDirPos: integer;
     TotSize: int64;
     TotFiles: longword;
     curData, curSize, curIdx, per, perold, x: integer;
-    cache: TDirCache;
+//    cache: TDirCache;
 begin
 
   TotSize := 0;

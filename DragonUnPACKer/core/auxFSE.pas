@@ -134,7 +134,6 @@ var a: FSE;
     Root, Nod, NodAdd: PVirtualNode;
     NodeData: pvirtualIndexData;
     cache: TDirCache;
-    x: integer;
 //    StartTime: TDateTime;
 begin
 

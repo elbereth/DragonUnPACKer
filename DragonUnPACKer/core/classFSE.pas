@@ -839,6 +839,8 @@ begin
             dup5Main.appendLogVerbose(2,inttostr(LoadTimeRetrieve)+'ms');
           end;
 
+          DispNumElems := entryListIndex+1;
+
           SetTitle(DLNGstr('TLD003'));
           StartTime := Now;
 

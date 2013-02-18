@@ -1,6 +1,6 @@
 object frmExtTool: TfrmExtTool
-  Left = 455
-  Top = 723
+  Left = 223
+  Top = 737
   Width = 561
   Height = 365
   Caption = 'External Tools Convert Plugin v<version>'
@@ -12,6 +12,7 @@ object frmExtTool: TfrmExtTool
   Font.Style = []
   OldCreateOrder = False
   Position = poOwnerFormCenter
+  OnDestroy = FormDestroy
   PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
@@ -142,7 +143,7 @@ object frmExtTool: TfrmExtTool
     Hint = '"%i" for input file and "%o" for output file must be present'
     Brush.Color = clBtnFace
   end
-  object shToolResultTest: TShape
+  object shToolResultExt: TShape
     Left = 344
     Top = 158
     Width = 9
@@ -169,10 +170,12 @@ object frmExtTool: TfrmExtTool
         Caption = 'Tool'
         Width = 109
       end>
+    HideSelection = False
     ReadOnly = True
     TabOrder = 0
     ViewStyle = vsReport
     OnClick = lstToolsClick
+    OnSelectItem = lstToolsSelectItem
   end
   object txtToolname: TEdit
     Left = 240
@@ -180,6 +183,7 @@ object frmExtTool: TfrmExtTool
     Width = 209
     Height = 21
     TabOrder = 3
+    OnChange = txtToolnameChange
   end
   object txtToolAuthor: TEdit
     Left = 240
@@ -201,6 +205,7 @@ object frmExtTool: TfrmExtTool
     Width = 185
     Height = 21
     TabOrder = 7
+    OnChange = txtToolPathChange
   end
   object txtToolCommand: TEdit
     Left = 240
@@ -208,13 +213,15 @@ object frmExtTool: TfrmExtTool
     Width = 209
     Height = 21
     TabOrder = 8
+    OnChange = txtToolCommandChange
   end
-  object txtToolResultest: TEdit
+  object txtToolResultExt: TEdit
     Left = 272
     Top = 152
     Width = 65
     Height = 21
     TabOrder = 9
+    OnChange = txtToolResultExtChange
   end
   object rgrpResultTest: TRadioGroup
     Left = 144
@@ -239,6 +246,7 @@ object frmExtTool: TfrmExtTool
     Width = 89
     Height = 21
     TabOrder = 11
+    OnChange = txtToolResultValueChange
   end
   object lstExt: TListBox
     Left = 480
@@ -285,6 +293,7 @@ object frmExtTool: TfrmExtTool
     Height = 25
     Caption = 'New'
     TabOrder = 1
+    OnClick = butToolAddClick
   end
   object butExtRemove: TButton
     Left = 480
@@ -326,7 +335,9 @@ object frmExtTool: TfrmExtTool
     Width = 75
     Height = 25
     Caption = 'Save'
+    Enabled = False
     TabOrder = 16
+    OnClick = butToolSaveClick
   end
   object butToolReset: TButton
     Left = 328
@@ -335,5 +346,6 @@ object frmExtTool: TfrmExtTool
     Height = 17
     Caption = 'Reset'
     TabOrder = 17
+    OnClick = butToolResetClick
   end
 end

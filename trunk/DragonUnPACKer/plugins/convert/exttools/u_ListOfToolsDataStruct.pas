@@ -20,6 +20,7 @@ interface
 type
      TStrArray = array of string;
      TToolInfo = record
+       iniFileName: string;
        enabled: boolean;
        name: string;
        author: string;

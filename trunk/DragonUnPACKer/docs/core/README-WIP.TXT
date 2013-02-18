@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    12/02/2013
+by Alexande "Elbereth" Devilliers                                    18/02/2013
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -11,7 +11,7 @@ by Alexande "Elbereth" Devilliers                                    12/02/2013
 Main program version and versions history:
 
 Version 5.7.0.270
-SVN Release 638 [Unreleased]
+SVN Release 641 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
@@ -35,17 +35,21 @@ SVN Release 638 [Unreleased]
  i HyperRipper v5.6a:
    ! Fixed the sanity check on the BIK searching algorithm.
      Should avoid some false-positives.
- + External Tools Convertion plugin v0.1.0 Beta:
+ + External Tools Convertion plugin v0.2.0 Beta:
    i This plugin allows to use external command line tools to convert file
      formats (for example the excellent vgmstream tool for audio files).
 	 This first version works fine but is only configured for vgmstream and to
 	 trigger on .smp files of Ghostbusters.
-	 Configuration is completely done in the .INI file:
-	 data\convert\cnv_exttools.ini
+	 Configuration is completely done in .INI files (one for each tool):
+	 data\convert\cnv_exttools\*.ini
+	 data\convert\cnv_exttools\vgmstream.ini for ex.
 	 You will also need a working test.exe file from vgmstream in the following
 	 folder (along with needed dlls):
-     data\convert\tools\vgmstream
+     data\convert\cnv_exttools\vgmstream
      http://hcs64.com/vgmstream.html
+   i Edit or add new tools via the included configuration screen.
+     To get to it, just click on Configure button in the Convert plugin options
+	 screen of Dragon UnPACKer while cnv_exttools plugin is selected.
 
 Beta Developement Page:
 -----------------------

@@ -17,6 +17,8 @@ library cnv_exttools;
 
 uses
   FastMM4,
+  FastCode,
+  FastMove,
   Forms,
   ComCtrls,
   Windows,
@@ -73,8 +75,8 @@ var Percent: TPercentCallback;
 const
   DUCI_VERSION = 4;
   DUCI_VERSION_COMPATIBLE = 3;
-  DRIVER_VERSION = 01010;
-  DUP_VERSION = 56240;
+  DRIVER_VERSION = 02010;
+  DUP_VERSION = 57040;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
 
@@ -90,6 +92,11 @@ const
   *                         integer (from 0 to 2^31-1)
   *                        toolslist in the main section now indicate the
   *                         number of Tool sections
+  * v0.2.0 Beta  (02010): Changed again the configuration files:
+  *                        Each tool has his own ini file in the cnv_exttools
+  *                        sub-folder (in /data/convert/
+  *                        Same format as before but now only 1 [cnv_exttools]
+  *                        section containing all the info
   * }
 
 function Explode(var a: TStrArray; Border, S: string): Integer;
@@ -142,53 +149,44 @@ end;
 procedure reloadSettings();
 var iniFile: TMemIniFile;
     x, curnum, nbtools: integer;
+    sr: TSearchRec;
 begin
 
-  if fileexists(CurPath+'cnv_exttools.ini') then
+  // Reset the defined tools
+  nbtools := 0;
+  setlength(ListOfTools,nbtools);
+
+  // We retrieve all the INI files for external tools (each file is an external
+  // tool)
+  if FindFirst(CurPath+'cnv_exttools\*.ini', faAnyFile, sr) = 0 then
   begin
-    iniFile := TMemInifile.Create(CurPath+'cnv_exttools.ini');
-    try
-      if iniFile.SectionExists('cnv_exttools') and iniFile.ValueExists('cnv_exttools','toolslist') then
-      begin
-        nbtools := iniFile.ReadInteger('cnv_exttools','toolslist',-1);
-        if nbtools >= 0 then
+    repeat
+      iniFile := TMemInifile.Create(CurPath+'cnv_exttools\'+sr.Name);
+      try
+        if iniFile.SectionExists('cnv_exttools') then
         begin
+          inc(nbtools);
           setlength(ListOfTools,nbtools);
-          for x := 0 to (nbtools-1) do
-          begin
-            if iniFile.SectionExists('tool-'+inttostr(x)) then
-            begin
-              ListOfTools[x].enabled := iniFile.ReadBool('tool-'+inttostr(x),'enabled',false);
-              ListOfTools[x].name := iniFile.ReadString('tool-'+inttostr(x),'name','');
-              ListOfTools[x].author := iniFile.ReadString('tool-'+inttostr(x),'author','');
-              ListOfTools[x].url := iniFile.ReadString('tool-'+inttostr(x),'url','');
-              ListOfTools[x].comment := iniFile.ReadString('tool-'+inttostr(x),'comment','');
-              ListOfTools[x].path := iniFile.ReadString('tool-'+inttostr(x),'path','');
-              ListOfTools[x].command := iniFile.ReadString('tool-'+inttostr(x),'command','');
-              ListOfTools[x].resultext := iniFile.ReadString('tool-'+inttostr(x),'resultext','');
-              ListOfTools[x].resultoktest := iniFile.ReadInteger('tool-'+inttostr(x),'resultoktest',0);
-              ListOfTools[x].resultok := iniFile.ReadInteger('tool-'+inttostr(x),'resultok',0);
-              explode(ListOfTools[x].extensions,' ',iniFile.ReadString('tool-'+inttostr(x),'extensions',''));
-            end
-            else
-            begin
-              ListOfTools[x].enabled := false;
-              ListOfTools[x].name := '';
-              ListOfTools[x].author := '';
-              ListOfTools[x].url := '';
-              ListOfTools[x].comment := '';
-              ListOfTools[x].path := '';
-              ListOfTools[x].command := '';
-              ListOfTools[x].resultext := '';
-              ListOfTools[x].resultoktest := 0;
-              ListOfTools[x].resultok := 0;
-            end;
-          end;
+          ListOfTools[nbtools-1].iniFilename := sr.Name;
+          ListOfTools[nbtools-1].enabled := iniFile.ReadBool('cnv_exttools','enabled',false);
+          ListOfTools[nbtools-1].name := iniFile.ReadString('cnv_exttools','name','');
+          ListOfTools[nbtools-1].author := iniFile.ReadString('cnv_exttools','author','');
+          ListOfTools[nbtools-1].url := iniFile.ReadString('cnv_exttools','url','');
+          ListOfTools[nbtools-1].comment := iniFile.ReadString('cnv_exttools','comment','');
+          ListOfTools[nbtools-1].path := iniFile.ReadString('cnv_exttools','path','');
+          ListOfTools[nbtools-1].command := iniFile.ReadString('cnv_exttools','command','');
+          ListOfTools[nbtools-1].resultext := iniFile.ReadString('cnv_exttools','resultext','');
+          ListOfTools[nbtools-1].resultoktest := iniFile.ReadInteger('cnv_exttools','resultoktest',0);
+          ListOfTools[nbtools-1].resultok := iniFile.ReadInteger('cnv_exttools','resultok',0);
+          // Sanity checks (only enable if external tool is found and %o/%i are found in the parameters command
+          ListOfTools[nbtools-1].enabled := ListOfTools[nbtools-1].enabled and (FileExists(ListOfTools[nbtools-1].path) or FileExists(CurPath+'cnv_exttools\'+ListOfTools[nbtools-1].path))
+                                        and (Pos('%o',ListOfTools[nbtools-1].command) > 0) and (Pos('%i',ListOfTools[nbtools-1].command) > 0);
+          explode(ListOfTools[nbtools-1].extensions,' ',iniFile.ReadString('cnv_exttools','extensions',''));
         end;
+      finally
+        FreeAndNil(iniFile);
       end;
-    finally
-      FreeAndNil(iniFile);
-    end;
+    until FindNext(sr) <> 0;
   end;
 
 end;
@@ -274,7 +272,7 @@ begin
   toolnum := strtoint(cnv);
 
   if (toolnum >= low(ListOfTools)) and (toolnum <= high(ListOfTools))
-  and ListOfTools[toolnum].enabled and (FileExists(ListOfTools[toolnum].path) or FileExists(CurPath + ListOfTools[toolnum].path)) then
+  and ListOfTools[toolnum].enabled and (FileExists(ListOfTools[toolnum].path) or FileExists(CurPath +'cnv_exttools\'+ ListOfTools[toolnum].path)) then
   begin
     tmpFileName := getTemporaryDir+getTemporaryFilename('cnv_exttools_'+cnv+'_'+nam);
     tmpFileNameOut := changefileext(tmpFileName,'.'+ListOfTools[toolnum].resultext);
@@ -284,8 +282,8 @@ begin
     FreeAndNil(tmpfile);
     params := StringReplace(StringReplace(ListOfTools[toolnum].command,'%o',tmpFileNameOut,[]),'%i',tmpFileName,[]);
     if not(FileExists(ListOfTools[toolnum].path)) and
-           FileExists(CurPath + ListOfTools[toolnum].path) then
-      path := CurPath + ListOfTools[toolnum].path
+           FileExists(CurPath +'cnv_exttools\'+ ListOfTools[toolnum].path) then
+      path := CurPath +'cnv_exttools\'+ ListOfTools[toolnum].path
     else
       path := ListOfTools[toolnum].path;
     result := ShellExec(path,params,extractfilepath(path));
@@ -335,7 +333,7 @@ begin
 
 end;
 
-  // Obsolete Convert, so we wrap it to the ConvertStream version
+// Obsolete Convert, so we wrap it to the ConvertStream version
 function Convert(src, dst, nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer; stdcall;
 var src_stm, dst_stm: TFileStream;
 begin
@@ -409,7 +407,7 @@ begin
                  'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
                  'Driver Interface [DUCI] v'+inttostr(DUCI_VERSION)+' (v'+inttostr(DUCI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUCI)+']'+#10+
                  'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+
-                 'Based on CVS rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')'+#10;
+                 'Based on SVN rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')'+#10;
   end;
 
   showMsgBox('About Elbereth''s External Tools Convert Plugin...',aboutText);
@@ -428,6 +426,7 @@ begin
   Application.Handle := AHandle;
   frmExtConf := TfrmExtTool.Create(AOwner);
   try
+    frmExtConf.curPath := CurPath+'cnv_exttools\';
     frmExtConf.Caption := 'External Tools Convert Plugin v'+getVersion(DRIVER_VERSION)+' - Configuration';
     frmExtConf.lblExtra1.Caption := 'Created by Alexandre Devilliers (aka Elbereth/Piecito)';
     frmExtConf.lblExtra2.Caption := 'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION);
@@ -445,6 +444,8 @@ begin
     frmExtConf.Release;
   end;
   Application.Handle := OApp;
+
+  ReloadSettings;
 
 end;
 

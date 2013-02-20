@@ -33,7 +33,7 @@ UnitAliases=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=
 NamespacePrefix=
 SymbolDeprecated=1
 SymbolLibrary=1
-SymbolPlatform=1
+SymbolPlatform=0
 UnitLibrary=1
 UnitPlatform=1
 UnitDeprecated=1
@@ -109,9 +109,9 @@ DebugCWD=
 IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=3
-MinorVer=3
-Release=5
-Build=116
+MinorVer=4
+Release=0
+Build=131
 Debug=0
 PreRelease=0
 Special=0
@@ -122,12 +122,29 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElberethZone
 FileDescription=Duppi - The DUP5 Package Installer.
-FileVersion=3.3.5.116
+FileVersion=3.4.0.131
 InternalName=Duppi
 LegalCopyright=Mozilla Public License 1.1
 LegalTrademarks=Mozilla Public License 1.1
 OriginalFilename=duppi.exe
 ProductName=Duppi
-ProductVersion=3.3.5
+ProductVersion=3.4.0
 Comments=Duppi - The DUP5 Package Installer.
-
+[HistoryLists\hlConditionals]
+Count=2
+Item0=DUPPI
+Item1=DRGUNPACK
+[HistoryLists\hlUnitAliases]
+Count=1
+Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlSearchPath]
+Count=1
+Item0=E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
+[HistoryLists\hlUnitOutputDirectory]
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-dcu
+[HistoryLists\hlOutputDirectorry]
+Count=3
+Item0=E:\Developpement\dup-dev-5.1-compiled\utils
+Item1=E:\Developpement\dup-dev-5.1-compiled\data\convert
+Item2=E:\Developpement\dup-dev-5.1-compiled

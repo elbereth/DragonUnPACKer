@@ -28,8 +28,7 @@ uses
   ULZMADecoder,UBufferedFS,ULZMADec,
   // Hash (DCPCrypt2)
   DCPsha512,DCPsha256,DCPsha1,DCPmd5,DCPripemd160,DCPcrypt2,
-  // HTTP (cURL)
-  curlobj;
+  IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP;
 
 type
    TLogType = (Internet, Install);
@@ -97,6 +96,7 @@ type
     AutoCheckTimer: TTimer;
     RichEditInstall: TRichEdit;
     Progress: TProgressBar;
+    IdHTTP: TIdHTTP;
     procedure parseDUPP_version1to3(src: integer; version: integer);
     procedure parseDUPP_version4(src: integer);
     function infosDUPP_version1(src: integer): boolean;
@@ -134,9 +134,10 @@ type
     procedure chkShowUnstableClick(Sender: TObject);
     procedure lstUpdatesUnstableClick(Sender: TObject);
     procedure AutoCheckTimerTimer(Sender: TObject);
+    procedure IdHTTPWork(Sender: TObject; AWorkMode: TWorkMode;
+      const AWorkCount: Integer);
   private
     sha1Engine: TDCP_Hash;
-    curlObj: TCurl;
     DUS: TIniFile;
     Dup5Path: string;
     tmpFile: string;
@@ -176,7 +177,6 @@ type
       Style: TFontStyles);
     procedure styleLog(dest: TLogType; Style: TFontStyles);
     procedure writeLog(dest: TLogType; text: string);
-    procedure curlObjProgress (Sender:tObject; BytesTotal, BytesNow:longint; var bContinue:Boolean);
     procedure applyProxyValues();
     { Déclarations privées }
   public
@@ -194,7 +194,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 33540;
+  VERSION: Integer = 34040;
 
 implementation
 
@@ -239,6 +239,9 @@ begin
   tmpStream := TMemoryStream.Create;
   Hash_SHA256 := TDCP_sha256.Create(Self);
 
+  OffsetsOk := true;
+  NeededBlocks := 0;
+
   try
 
     srcStream.Seek(0,0);
@@ -267,9 +270,6 @@ begin
         tmpStream.Seek(SizeOf(DUP5PACK_Header_v4),0);
         SetLength(BlockOffsets,HDR.NumOffsets);
 
-        OffsetsOk := true;
-        NeededBlocks := 0;
-        
         for x := 0 to HDR.NumOffsets-1 do
         begin
           tmpStream.Read(BlockOffsets[x],SizeOf(DUP5PACK_Offsets_v4));
@@ -358,6 +358,7 @@ begin
   end;
 
   hashsize := Hash_Engine.GetHashSize div 8;
+  result := 0;
 
   try
     testValue := srcStream.Seek(fileid.RelOffset,0);
@@ -402,6 +403,8 @@ begin
       dstStream.copyFrom(tmpStream,tmpStream.size);
     end;
 
+    result := fileid.DSize;
+
     dstStream.Seek(0,0);
 
     Hash_Engine.Init;
@@ -442,6 +445,7 @@ begin
   srcStream := THandleStream.Create(src);
   tmpStream := TMemoryStream.Create;
   Hash_SHA256 := TDCP_sha256.Create(Self);
+  result := nil;
 
   try
     testValue := srcStream.Seek(BlockOffsets[id].Offset,0);
@@ -517,14 +521,14 @@ end;
 function TfrmInstaller.infosDUPP_version4(src: integer): boolean;
 var  Dup5Ver: integer;
     infoid, bannerid: integer;
-    tmpStream, srcStream: TStream;
+    tmpStream: TStream;
     NFO: DUP5PACK_Info_v4;
     isError, cont: boolean;
     imgTmp: tbitmap;
 begin
 
-  result := false;
   isError := false;
+  cont := false;
 
   if (length(BlockOffsets) > 0) or sanitycheckDUPP_version4(src) then
   begin
@@ -534,6 +538,7 @@ begin
 
     if infoid <> -1 then
     begin
+      tmpStream := nil;
 
       try
         tmpStream := getDUPP_version4_blockcontent(src,infoid);
@@ -549,7 +554,7 @@ begin
         end;
       end;
 
-      if not(isError) then
+      if (tmpStream <> nil) and not(isError) then
       begin
 
         tmpStream.Read(NFO,SizeOf(DUP5PACK_Info_v4));
@@ -761,8 +766,6 @@ begin
     else
       installFile := true;
 
-//    FileSeek(src,ENT.Size,1);
-
     if not(installFile) then
     begin
       writeLog(Install,filename+' ('+inttostr(Round(ENT.DSize/1024))+DLNGstr('PI0028')+')... '+DLNGstr('PI0027'));
@@ -776,6 +779,7 @@ begin
       GetMem(Buf,ENT.Size);
       try
         FileRead(src,buf^,ENT.Size);
+        calcCRC := 0;
 
         if (ENT.CompressionType = 1) then
         begin
@@ -791,16 +795,16 @@ begin
               OutputStream.Read(Size, SizeOf(Size));
               getMem(bufoutstr,Size);
               OutputStream.Read(bufoutstr^, Size);
+              if version = 3 then
+                calcCRC := GetBufCRC32(bufoutstr,ENT.DSize)
+              else
+                calcCRC := getStrCRC32(bufoutstr^);
             finally
               OutputStream.Free
             end
           finally
             InputStream.Free
           end;
-          if version = 3 then
-            calcCRC := GetBufCRC32(bufoutstr,ENT.DSize)
-          else
-            calcCRC := getStrCRC32(bufoutstr^);
         end
         else if ENT.CompressionType = 0 then
         begin
@@ -814,7 +818,6 @@ begin
         begin
           writelog(Install,ReplaceValue('%a',DLNGStr('PIE405'),inttostr(ENT.CompressionType))+chr(10)+chr(13)+FileName);
           colorLog(Install,clRed);
-//          MessageDlg(ReplaceValue('%f',DLNGstr('PI0020'),FileName),mtConfirmation,[mbOk],0);
           MessageDlg(ReplaceValue('%a',DLNGStr('PIE405'),inttostr(ENT.CompressionType))+chr(10)+chr(13)+FileName,mtConfirmation,[mbOk],0);
         end;
 
@@ -857,9 +860,6 @@ begin
       end;
     end;
 
-  //  ShowMessage(filename);
-
-
     Progress.Position := Round((x / NFO.NumFiles)*100);
 
   end;
@@ -881,11 +881,7 @@ end;
 procedure TfrmInstaller.parseDUPP_version4(src: integer);
 var DestDir, DuppiInstallNew: string;
     x, destVersion: integer;
-    Buf, bufoutstr: PChar;
-    InputStream: TMemoryStream;
-    OutputStream: TDeCompressionStream;
     installFile, isDeleteFile: boolean;
-    errCount: integer;
 
     entStream,namStream,datStream: TStream;
     entriesid, namesid, dataid,fileattrib: integer;
@@ -904,6 +900,7 @@ begin
 //  result := false;
   isError := false;
   duppiInstall := false;
+  entriesId := -1;
 
   if (length(BlockOffsets) > 0) or sanitycheckDUPP_version4(src) then
   begin
@@ -919,6 +916,7 @@ begin
 
       writelog(Install,ReplaceValue('%a',DLNGStr('PI0056'),DLNGStr('PI0057')));
 
+      entStream := nil;
       try
         entStream := getDUPP_version4_blockcontent(src,entriesid);
       except
@@ -934,6 +932,7 @@ begin
 
       writelog(Install,ReplaceValue('%a',DLNGStr('PI0056'),DLNGStr('PI0058')));
 
+      namStream := nil;
       try
         namStream := getDUPP_version4_blockcontent(src,namesid);
       except
@@ -949,6 +948,7 @@ begin
 
       writelog(Install,ReplaceValue('%a',DLNGStr('PI0056'),DLNGStr('PI0059')));
 
+      datStream := nil;
       try
         datStream := getDUPP_version4_blockcontent(src,dataid);
       except
@@ -962,7 +962,7 @@ begin
         end;
       end;
 
-      if not(isError) then
+      if (entStream <> nil) and (namStream <> nil) and (datStream <> nil) and not(isError) then
       begin
 
         SetLength(names,BlockOffsets[namesid].NumEntries);
@@ -1411,7 +1411,7 @@ begin
     @DUCIVer := GetProcAddress(Handle, 'DUCIVersion');
     @DUHIVer := GetProcAddress(Handle, 'DUHIVersion');
 
-    if ((@DUDIVer <> Nil) and ((DUDIVer = 1) or (DUDIVer = 2) or (DUDIVer = 3) or (DUDIVer = 4))) then
+    if ((@DUDIVer <> Nil) and (DUDIVer >= 1) and (DUDIVer <= 6)) then
     begin
 
       @GetNumVer := GetProcAddress(Handle, 'GetNumVersion');
@@ -1597,8 +1597,7 @@ begin
 
 //  lstInstalled.NodeDataSize := SizeOf(virtualTreeData);
 
-  curlObj:=tCurl.Create(self);
-  curlObj.UserAgent:='Duppi/'+getVersionFromInt(VERSION);
+  IdHTTP.Request.UserAgent := 'Duppi/'+getVersionFromInt(VERSION);
 
   sha1Engine := TDCP_sha1.Create(Self);
 
@@ -1611,45 +1610,60 @@ Var updList,updUnstableList: TStringList;
     lngList: TStringList;
     itm: TListItem;
     x, tmpVer, servid: integer;
-    butDl, butDlUnstable, coreUpdate, duppiUpdate, delFile, noUnstable: boolean;
+    butDl, butDlUnstable, coreUpdate, duppiUpdate, delFile, noUnstable, dlError: boolean;
     coreMessage, url, tmpFileName, tmpIniFile, testSHA: string;
-    errCode: string;
+    errCode, dusURL: string;
     Hash: array[0..19] of byte;
     stmTemp: TFileStream;
 begin
 
   butRefresh.Enabled := false;
+  tmpIniFile := getTempFile('.dus');
+  butDlUnstable := false;
+
   // Old URLs:
   // http://dus.dragonunpacker.com/dup5.dus
   // http://www.elberethzone.net/dup5.dus'     // 5.0/5.1 URL DUS v2.0
-  tmpIniFile := getTempFile('.dus');
-
-  writeLog(Internet,'curl v'+curlObj.LibraryVersion+' ('+curlObj.Machine+') '+curlObj.CurlVersion);
-
-  curlObj.URL := 'http://dragonunpacker.sourceforge.net/dus.php?installedbuild='+inttostr(corebuild)+'&duppiversion='+inttostr(VERSION);
-  curlObj.OutputFile := tmpIniFile;
-  curlObj.OnProgress := curlObjProgress;
-  curlObj.NoProgress := false;
-  curlObj.Verbose:=True;
-  curlObj.FollowLocation:=True;
+  // Current URLs:
+  dusURL := 'http://dragonunpacker.sourceforge.net/dus.php?installedbuild='+inttostr(corebuild)+'&duppiversion='+inttostr(VERSION);
+  writeLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),dusURL));
 
   curDL := 'dus.ini';
-  writeLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curlObj.URL));
-
-    ButRefresh.Enabled := true;
-    butDl := false;
-
-    if not(curlObj.Perform) then
+  refresh;
+  
+  stmTemp := TFileStream.Create(tmpIniFile,fmCreate);
+  try
+    IdHTTP.Get(dusURL,stmTemp);
+    dlError := false;
+  except
+    on e: EIdHTTPProtocolException do
     begin
-      writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
+      writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(e.ReplyErrorCode)),e.Message));
       colorLog(Internet,clRed);
-    end
-    else if curlObj.ContentType <> 'text/plain' then
+      dlError := true;
+    end;
+    on e: exception do
     begin
-      writeLog(Internet,'Invalid ContentType: '+curlObj.ContentType);
+      writeLog(Internet,'Unhandled: '+e.ClassName +' '+e.Message);
       colorLog(Internet,clRed);
-    end
-    else if fileexists(tmpIniFile) then
+      dlError := true;
+    end;
+  end;
+  stmTemp.Free;
+
+  ButRefresh.Enabled := true;
+  butDl := false;
+
+  if dlError then
+  begin
+    // Do nothing...
+  end
+  else if IdHTTP.Response.ContentType <> 'text/plain' then
+  begin
+    writeLog(Internet,'Invalid ContentType: '+IdHTTP.Response.ContentType);
+    colorLog(Internet,clRed);
+  end
+  else if fileexists(tmpIniFile) then
     begin
       dus := TIniFile.Create(tmpIniFile);
       try
@@ -1772,12 +1786,16 @@ begin
                 end;
               end;
 
+              noUnstable := true;
+
               if updUnstableList.Count = updList.Count then
               begin
-                noUnstable := true;
                 for x:=0 to updList.Count -1 do
                    noUnstable := noUnstable and (updUnstableList.IndexOf(updList.Strings[x]) <> -1);
               end;
+
+              FreeAndNil(updList);
+              FreeAndNil(updUnstableList);
 
               chkShowUnstable.Enabled := not(noUnstable);
 
@@ -1792,6 +1810,8 @@ begin
                 itm.SubItems.Add(lngList.Strings[x]);
 
               end;
+
+              FreeAndNil(lngList);
 
               butDownload.Enabled := (butDL and not(chkShowUnstable.Checked)) or (butDLUnstable and chkShowUnstable.Checked);
 
@@ -1848,25 +1868,38 @@ begin
                       raise Exception.Create(DLNGstr('PI0049'));
                     tmpFileName := dus.ReadString('Duppi','FileDL',extractfilename(getTempFile(extractfileext(url))));
                     tmpFile := dup5Path+'Download\'+tmpFileName;
-                    curlObj.URL:=url;
-                    curlObj.OutputFile := tmpFile;
                     CurDL := tmpFileName;
                     CurDLSize := dus.ReadInteger('Duppi','RealSize',1);
                     progressDL.Position := 0;
                     progressDL.Max := 100;
-                    delFile := false;
                     WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
-                    if not(curlObj.Perform) then
+                    stmTemp := TFileStream.Create(tmpFile,fmCreate);
+                    try
+                      IdHTTP.Get(url,stmTemp);
+                      dlError := false;
+                    except
+                      on e: EIdHTTPProtocolException do
+                      begin
+                        writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(e.ReplyErrorCode)),e.Message));
+                        colorLog(Internet,clRed);
+                        dlError := true;
+                      end;
+                      on e: exception do
+                      begin
+                        writeLog(Internet,'Unhandled: '+e.ClassName +' '+e.Message);
+                        colorLog(Internet,clRed);
+                        dlError := true;
+                      end;
+                    end;
+                    stmTemp.Free;
+                    if dlError then
                     begin
-                      writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
-                      colorLog(Internet,clRed);
-                      DelFile := true;
+                      // Do nothing
                     end
                     else if dus.ValueExists('Duppi','Realsize') and (GetFileSize(tmpFile) <> CurDLSize) then
                     begin
                       writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3002'),IntToStr(GetFileSize(tmpFile))),IntTostr(CurDLSize)));
                       colorLog(Internet,clRed);
-                      DelFile := true;
                     end
                     else
                     begin
@@ -1888,7 +1921,6 @@ begin
                         begin
                           writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3004'),testSHA),dus.ReadString('Duppi','Hash','')));
                           colorLog(Internet,clRed);
-                          DelFile := true;
                         end
                         else
                         begin
@@ -1901,7 +1933,6 @@ begin
                         begin
                           writeLog(Internet,ReplaceValue('%b',ReplaceValue('%a',DLNGstr('PI3004'),e.ClassName),e.Message));
                           colorLog(Internet,clRed);
-                          DelFile := true;
                         end;
                       end;
                     end;
@@ -1928,25 +1959,38 @@ begin
                       raise Exception.Create(DLNGstr('PI0051'));
                     tmpFileName := dus.ReadString('core','PackageFileDL',extractfilename(getTempFile(extractfileext(url))));
                     tmpFile := dup5Path+'Download\'+tmpFileName;
-                    curlObj.URL:=url;
-                    curlObj.OutputFile := tmpFile;
                     CurDL := tmpFileName;
                     CurDLSize := dus.ReadInteger('core','RealSize',1);
                     progressDL.Position := 0;
                     progressDL.Max := 100;
-                    delFile := false;
                     WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
-                    if not(curlObj.Perform) then
+                    stmTemp := TFileStream.Create(tmpFile,fmCreate);
+                    try
+                      IdHTTP.Get(url,stmTemp);
+                      dlError := false;
+                    except
+                      on e: EIdHTTPProtocolException do
+                      begin
+                        writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(e.ReplyErrorCode)),e.Message));
+                        colorLog(Internet,clRed);
+                        dlError := true;
+                      end;
+                      on e: exception do
+                      begin
+                        writeLog(Internet,'Unhandled: '+e.ClassName +' '+e.Message);
+                        colorLog(Internet,clRed);
+                        dlError := true;
+                      end;
+                    end;
+                    stmTemp.Free;
+                    if dlError then
                     begin
-                      writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
-                      colorLog(Internet,clRed);
-                      DelFile := true;
+                      // Do nothing
                     end
                     else if dus.ValueExists('core','Realsize') and (GetFileSize(tmpFile) <> CurDLSize) then
                     begin
                       writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3002'),IntToStr(GetFileSize(tmpFile))),IntTostr(CurDLSize)));
                       colorLog(Internet,clRed);
-                      DelFile := true;
                     end
                     else
                     begin
@@ -1968,7 +2012,6 @@ begin
                         begin
                           writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3004'),testSHA),dus.ReadString('core','Hash','')));
                           colorLog(Internet,clRed);
-                          DelFile := true;
                         end
                         else
                         begin
@@ -1981,39 +2024,47 @@ begin
                         begin
                           writeLog(Internet,ReplaceValue('%b',ReplaceValue('%a',DLNGstr('PI3004'),e.ClassName),e.Message));
                           colorLog(Internet,clRed);
-                          DelFile := true;
                         end;
                       end;
                     end;
 
                   end;
 
-{
                   url := dus.ReadString('core','PackageURL','');
                   if url = '' then
                     raise Exception.Create(DLNGstr('PI0051'));
                   tmpFileName := dus.ReadString('core','PackageFileDL',extractfilename(getTempFile(extractfileext(url))));
                   tmpFile := dup5Path+'Download\'+tmpFileName;
-                  curlObj.URL:=url;
-                  curlObj.OutputFile := tmpFile;
                   CurDL := tmpFileName;
                   CurDLSize := dus.ReadInteger('core','PackageSize',1)*1024;
                   inc(curDLSize);
                   progressDL.Position := 0;
                   progressDL.Max := 100;
-                  delFile := false;
                   WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
-                  if curlObj.Perform then
-                    lstUpd.Add(tmpFile)
-                  else
-                  begin
-                    writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
-                    colorLog(Internet,clRed);
-                    DelFile := true;
+                  stmTemp := TFileStream.Create(tmpFile,fmCreate);
+                  try
+                    IdHTTP.Get(url,stmTemp);
+                    dlError := false;
+                  except
+                    on e: EIdHTTPProtocolException do
+                    begin
+                      writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(e.ReplyErrorCode)),e.Message));
+                      colorLog(Internet,clRed);
+                      dlError := true;
+                    end;
+                    on e: exception do
+                    begin
+                      writeLog(Internet,'Unhandled: '+e.ClassName +' '+e.Message);
+                      colorLog(Internet,clRed);
+                      dlError := true;
+                    end;
                   end;
+                  stmTemp.Free;
+                  if not(dlError) then
+                    lstUpd.Add(tmpFile);
 
                   butDownload.Click;
-                  exit;}
+                  exit;
                 end
                 else
                 begin
@@ -2042,6 +2093,7 @@ begin
       end;
     end;
 
+
 end;
 
 function TfrmInstaller.getTempFile(ext: string): string;
@@ -2060,23 +2112,16 @@ end;
 procedure TfrmInstaller.FormDestroy(Sender: TObject);
 begin
 
-  curlObj.Free;
+  FreeAndNil(lstUpd);
 
-  sha1Engine.Free;
+  FreeAndNil(sha1Engine);
+
+  if (dus <> Nil) then
+    FreeAndNil(dus);
 
   if FileExists(tmpFile) then
     DeleteFile(tmpFile);
 
-end;
-
-procedure TfrmInstaller.curlObjProgress (Sender:tObject; BytesTotal, BytesNow:longint; var bContinue:Boolean);
-begin
-  infoLabel.Caption := ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII102'),curDL),IntToStr(BytesNow)+'/'+Inttostr(BytesTotal));
-  if BytesTotal <> 0 then
-    ProgressDL.Position := Round((BytesNow / BytesTotal)*100)
-  else
-    ProgressDL.Position := 0;
-  refresh;
 end;
 
 procedure TfrmInstaller.lstUpdatesClick(Sender: TObject);
@@ -2105,7 +2150,7 @@ end;
 procedure TfrmInstaller.butDownloadClick(Sender: TObject);
 var x, y, servid : integer;
     url, tmpfile, tmpFileName, testSHA : string;
-    delFile : boolean;
+    delFile, dlError : boolean;
     stmTemp : TFileStream;
     hash: array[0..19] of byte;
 begin
@@ -2141,20 +2186,33 @@ begin
                 url := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'URL'+inttostr(servid-1),'');
               tmpFileName := dus.ReadString(lstUpdates.Items.Item[x].SubItems[4],'FileDL',getTempFile(getTempFile(extractfileext(url))));
               tmpFile := dup5Path+'Download\'+tmpFileName;
-              curlObj.URL := url;
-              curlObj.OutputFile := tmpFile;
               CurDL := tmpFileName;
               CurDLSize := dus.ReadInteger(lstUpdates.Items.Item[x].SubItems[4],'RealSize',1);
               progressDL.Position := 0;
               progressDL.Max := 100;
-              delFile := false;
               WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
-              if not(curlObj.Perform) then
-              begin
-                writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
-                colorLog(Internet,clRed);
-                DelFile := true;
-              end
+              stmTemp := TFileStream.Create(tmpFile,fmCreate);
+              dlError := false;
+              try
+                IdHTTP.Get(url,stmTemp);
+              except
+                on e: EIdHTTPProtocolException do
+                begin
+                  writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(e.ReplyErrorCode)),e.Message));
+                  colorLog(Internet,clRed);
+                  dlError := true;
+                end;
+                on e: exception do
+                begin
+                  writeLog(Internet,'Unhandled: '+e.ClassName +' '+e.Message);
+                  colorLog(Internet,clRed);
+                  dlError := true;
+                end;
+              end;
+              stmTemp.Free;
+              DelFile := False;
+              if dlError then
+                DelFile := true
               else if dus.ValueExists(lstUpdates.Items.Item[x].SubItems[4],'Realsize') and (GetFileSize(tmpFile) <> CurDLSize) then
               begin
                 writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3002'),IntToStr(GetFileSize(tmpFile))),IntTostr(CurDLSize)));
@@ -2196,7 +2254,7 @@ begin
                     DelFile := true;
                   end;
                 end;
-              end;
+              end; 
               if DelFile and FileExists(tmpFile) then
                 DeleteFile(tmpFile);
             end;
@@ -2223,20 +2281,32 @@ begin
                 url := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'URL'+inttostr(servid-1),'');
               tmpFileName := dus.ReadString(lstUpdatesUnstable.Items.Item[x].SubItems[4],'FileDL',getTempFile(getTempFile(extractfileext(url))));
               tmpFile := dup5Path+'Download\'+tmpFileName;
-              curlObj.URL := url;
-              curlObj.OutputFile := tmpFile;
               CurDL := tmpFileName;
               CurDLSize := dus.ReadInteger(lstUpdatesUnstable.Items.Item[x].SubItems[4],'RealSize',1);
               progressDL.Position := 0;
               progressDL.Max := 100;
-              delFile := false;
               WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
-              if not(curlObj.Perform) then
-              begin
-                writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
-                colorLog(Internet,clRed);
-                DelFile := true;
-              end
+              stmTemp := TFileStream.Create(tmpFile,fmCreate);
+              dlError := false;
+              try
+                IdHTTP.Get(url,stmTemp);
+              except
+                on e: EIdHTTPProtocolException do
+                begin
+                  writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(e.ReplyErrorCode)),e.Message));
+                  colorLog(Internet,clRed);
+                  dlError := true;
+                end;
+                on e: exception do
+                begin
+                  writeLog(Internet,'Unhandled: '+e.ClassName +' '+e.Message);
+                  colorLog(Internet,clRed);
+                  dlError := true;
+                end;
+              end;
+              stmTemp.Free;
+              if dlError then
+                DelFile := true
               else if dus.ValueExists(lstUpdatesUnstable.Items.Item[x].SubItems[4],'Realsize') and (GetFileSize(tmpFile) <> CurDLSize) then
               begin
                 writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3002'),IntToStr(GetFileSize(tmpFile))),IntTostr(CurDLSize)));
@@ -2245,6 +2315,7 @@ begin
               end
               else
               begin
+                DelFile := false;
                 try
                   if dus.ValueExists(lstUpdatesUnstable.Items.Item[x].SubItems[4],'Hash') then
                   begin
@@ -2304,20 +2375,32 @@ begin
               url := dus.ReadString(lstTranslations.Items.Item[x].SubItems[3],'URL'+inttostr(servid-1),'');
             tmpFileName := dus.ReadString(lstTranslations.Items.Item[x].SubItems[3],'FileDL',getTempFile(getTempFile(extractfileext(url))));
             tmpFile := dup5Path+'Download\'+tmpFileName;
-            curlObj.URL := url;
-            curlObj.OutputFile := tmpFile;
             CurDL := tmpFileName;
             CurDLSize := dus.ReadInteger(lstTranslations.Items.Item[x].SubItems[3],'RealSize',1);
             progressDL.Position := 0;
             progressDL.Max := 100;
-            delFile := false;
             WriteLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),curDL));
-            if not(curlObj.Perform) then
-            begin
-              writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(curlObj.HttpCode)),curlObj.ErrorString));
-              colorLog(Internet,clRed);
-              DelFile := true;
-            end
+            stmTemp := TFileStream.Create(tmpFile,fmCreate);
+            dlError := false;
+            try
+              IdHTTP.Get(url,stmTemp);
+            except
+              on e: EIdHTTPProtocolException do
+              begin
+                writeLog(Internet,ReplaceValue('%d',ReplaceValue('%c',DLNGstr('PII104'),IntToStr(e.ReplyErrorCode)),e.Message));
+                colorLog(Internet,clRed);
+                dlError := true;
+              end;
+              on e: exception do
+              begin
+                writeLog(Internet,'Unhandled: '+e.ClassName +' '+e.Message);
+                colorLog(Internet,clRed);
+                dlError := true;
+              end;
+            end;
+            stmTemp.Free;
+            if dlError then
+              DelFile := true
             else if dus.ValueExists(lstTranslations.Items.Item[x].SubItems[3],'Realsize') and (GetFileSize(tmpFile) <> CurDLSize) then
             begin
               writeLog(Internet,ReplaceValue('%a',ReplaceValue('%b',DLNGstr('PI3002'),IntToStr(GetFileSize(tmpFile))),IntTostr(CurDLSize)));
@@ -2484,13 +2567,21 @@ end;
 procedure TfrmInstaller.applyProxyValues;
 begin
 
-  curlObj.Proxy := proxy;
-  if (proxyPort > '') then
-    curlObj.ProxyPort := strtoint(proxyPort);
-  if proxyUserPass then
-  begin
-    curlObj.ProxyUserPwd := proxyuser+':'+proxypass;
-  end;
+ IdHttp.ProxyParams.ProxyServer := proxy;
+ if (proxyPort > '') then
+ begin
+   try
+     IdHttp.ProxyParams.ProxyPort := strtoint(proxyPort);
+   except
+     IdHttp.ProxyParams.ProxyPort := 8080;
+   end;
+ end;
+ IdHttp.ProxyParams.BasicAuthentication := proxyUserPass;
+ if proxyUserPass then
+ begin
+   IdHttp.ProxyParams.ProxyUsername := proxyuser;
+   IdHttp.ProxyParams.ProxyPassword := proxypass;
+ end;
 
 end;
 
@@ -2726,11 +2817,9 @@ function TfrmInstaller.infosDUPP_version2(src: integer): boolean;
 var cont: boolean;
     Dup5Ver: integer;
     imgTmp: tbitmap;
-  //  previewfile: string;
     stmTmp: TMemoryStream;
     InputStream: TMemoryStream;
     DStream: TDecompressionStream;
-    FinalSize: integer;
     Buffer: PByteArray;
 begin
 
@@ -2795,7 +2884,7 @@ begin
 
             DStream := TDecompressionStream.Create(InputStream);
             try
-              FinalSize := stmTmp.CopyFrom(DStream,NFO.PictureSize);
+              stmTmp.CopyFrom(DStream,NFO.PictureSize);
             finally
               DStream.Free;
             end;
@@ -2958,6 +3047,23 @@ begin
 
   AutoCheckTimer.Enabled := false;
   CmdNext.Click;
+
+end;
+
+procedure TfrmInstaller.IdHTTPWork(Sender: TObject; AWorkMode: TWorkMode;
+  const AWorkCount: Integer);
+var
+  ContentLength: Int64;
+begin
+
+  ContentLength := IdHttp.Response.ContentLength;
+  infoLabel.Caption := ReplaceValue('%b',ReplaceValue('%f',DLNGstr('PII102'),curDL),IntToStr(AWorkCount)+'/'+Inttostr(ContentLength));
+
+  if (ContentLength > 0) then
+    ProgressDL.Position := 100*AWorkCount div ContentLength
+  else
+    ProgressDL.Position := 0;
+  refresh;
 
 end;
 

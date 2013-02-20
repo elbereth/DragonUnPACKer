@@ -18,8 +18,12 @@ program duppi;
 //
 
 {$DEFINE DUPPI}
+{$WARN SYMBOL_PLATFORM OFF}
 
 uses
+  FastMM4,
+  FastCode,
+  FastMove,
   Forms,
   Installer in 'Installer.pas' {frmInstaller},
   Proxy in 'Proxy.pas' {frmProxy},

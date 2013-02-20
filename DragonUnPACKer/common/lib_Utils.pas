@@ -76,10 +76,11 @@ function CheckRegistryHR(prefix: string; ID: integer): Boolean;
 procedure SetRegistryHR(prefix: string; ID: integer; value: boolean);
 function GetAllSystemInfo(): TOSInfo;
 function getPlugVersion(version: integer): string;
+function GetFileSize(fileName : String) : Int64;
 
 implementation
 
-uses SysUtils, lib_language, Windows, registry, forms, lib_BinUtils;
+uses lib_language, Windows, registry, forms, lib_BinUtils, SysUtils;
 
 function PadRight(Data: string; PadWidth: integer) : string;
 begin
@@ -754,6 +755,18 @@ begin
 
   result := TrimRight(IntToStr(majVer)+'.'+IntToStr(minVer)+'.'+IntToStr(revVer)+' '+typStr+ ' '+valStr);
 
+end;
+
+// returns file size in bytes or -1 if not found.
+function GetFileSize(fileName : String) : Int64;
+var srt : TSearchRec;
+begin
+  if FindFirst(fileName, faAnyFile, srt ) = 0 then
+    result := Int64(srt.FindData.nFileSizeHigh) shl Int64(32) + Int64(srt.FindData.nFileSizeLow)
+  else
+    result := -1;
+
+  FindClose(srt) ;
 end;
 
 end.

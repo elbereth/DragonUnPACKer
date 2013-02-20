@@ -1,5 +1,5 @@
-Dragon UnPACKer 5.6.1 "Exedra-Benton" Source Code               MPL open source
-by Alexande "Elbereth" Devilliers                                    05/04/2011
+Dragon UnPACKer 5.7.0 Beta Source Code                          MPL open source
+by Alexande "Elbereth" Devilliers                                    20/02/2013
 ===============================================================================
 
 This source code can be used and modified if following the Mozilla Public
@@ -20,8 +20,10 @@ You obviously also need some Delphi programming skills. :P
 Lazarus/FPC compilation can be tried, some plugins can be compiled for ex.
 
 Needed libraries:
-- CurlPas                         http://curlpas.sourceforge.net/curlpas/
-- DCPcrypt v2 Beta 3          http://www.cityinthesky.co.uk/opensource/DCPcrypt
+- Indy 9 (latest DevSnapshot)     
+  http://www.indyproject.org/Sockets/Download/Files/Indy9.EN.aspx
+- DCPcrypt v2 Beta 3          
+  http://www.cityinthesky.co.uk/opensource/DCPcrypt
 - Drag&Drop Component Suite 5.1   http://melander.dk/
 - FastMM v4.97                    http://fastmm.sf.net
 - LZMA SDK v4.42b Pascal Port     http://www.birtles.org.uk/programming/

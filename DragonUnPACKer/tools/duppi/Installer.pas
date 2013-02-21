@@ -136,6 +136,9 @@ type
     procedure AutoCheckTimerTimer(Sender: TObject);
     procedure IdHTTPWork(Sender: TObject; AWorkMode: TWorkMode;
       const AWorkCount: Integer);
+    procedure IdHTTPConnected(Sender: TObject);
+    procedure IdHTTPStatus(ASender: TObject; const AStatus: TIdStatus;
+      const AStatusText: String);
   private
     sha1Engine: TDCP_Hash;
     DUS: TIniFile;
@@ -1684,6 +1687,7 @@ begin
             else
             begin
               writeLog(Internet,dus.ReadString('ID','Description',DLNGstr('PII105')));
+              styleLog(Internet,[fsBold]);
 
               if (dus.ReadString('ID','Result','ERR') <> 'OK') then
               begin
@@ -3063,6 +3067,25 @@ begin
     ProgressDL.Position := 100*AWorkCount div ContentLength
   else
     ProgressDL.Position := 0;
+  refresh;
+
+end;
+
+procedure TfrmInstaller.IdHTTPConnected(Sender: TObject);
+begin
+
+  writeLog(Internet,DLNGstr('PII105'));
+  colorLog(Internet,clGreen);
+  refresh;
+
+end;
+
+procedure TfrmInstaller.IdHTTPStatus(ASender: TObject;
+  const AStatus: TIdStatus; const AStatusText: String);
+begin
+
+  writeLog(Internet,AStatusText);
+  colorLog(Internet,clLtGray);
   refresh;
 
 end;

@@ -242,7 +242,7 @@ type TDrivers = class
     listData: array of virtualTreeData;
     entryList: array of FSEentry;
     entryListIndex: integer;
-    entryListFolderCache: TList;
+    entryListFolderCache: array of array of integer;
     LoadTimeOpen: Int64;
     LoadTimeRetrieve: Int64;
     LoadTimeParse: Int64;
@@ -855,7 +855,6 @@ begin
 
           if Sch <> '' then
             ParseEntriesForDirs
-//            ParseDirs(Sch, DataBloc, ExtractFileName(pth))
           else
             CreateRoot(ExtractFileName(pth));
 
@@ -2377,9 +2376,6 @@ begin
   // Initialize Folder ID
   currentFolderID := 0;
 
-  // Initialize the folder cache
-  entryListFolderCache := TList.Create;
-
   // Initialize the value of sizeTest
   sizeTest := 0;
   Reg := TRegistry.Create;
@@ -2398,6 +2394,7 @@ begin
 end;
 
 destructor TDrivers.Destroy;
+var x: integer;
 begin
 
   // Close file
@@ -2411,7 +2408,9 @@ begin
   SetLength(Drivers,0);
 
   // Destroy the folder cache
-  FreeAndNil(entryListFolderCache);
+  For x:=Low(entryListFolderCache) to High(entryListFolderCache) do
+    SetLength(entryListFolderCache[x],0);
+  SetLength(entryListFolderCache,0);
 
   inherited Destroy();
 
@@ -2424,10 +2423,16 @@ var Root, CachedVirtualNode: PVirtualNode;
     x, pslash: integer;
     DataCache: TObject;
     dirCache: TStringHashTrie;
+    Percent, OldPercent: integer;
 begin
 
   // Reset the folder id
   CurrentFolderID := 0;
+
+  // Show that we are starting to do something 0% progress
+  percent := 0;
+  oldPercent := 0;
+  DisplayPercent(percent);
 
   // Create the root entry of the lstIndex by using the filename
   Root := dup5Main.lstIndex.AddChild(nil);
@@ -2435,6 +2440,10 @@ begin
   NodeData.dirname := ExtractFilename(CurrentFileName);
   NodeData.imageIndex := 2;
   NodeData.selectedImageIndex := 2;
+  NodeData.FolderID := 0;
+
+  // Initilialize the cache for the root
+  setLength(entryListFolderCache,1);
 
   // Initialize the cache of directories
   dirCache := TStringHashTrie.Create;
@@ -2461,6 +2470,8 @@ begin
           CachedVirtualNode := Pointer(DataCache);
           CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
           entryList[x].FolderID := CachedNodeData.FolderID;
+          setLength(entryListFolderCache[entryList[x].FolderID],Length(entryListFolderCache[entryList[x].FolderID])+1);
+          entryListFolderCache[ entryList[x].FolderID , High(entryListFolderCache[entryList[x].FolderID]) ] := x;
         end
         // If not we need to create it
         else
@@ -2494,6 +2505,9 @@ begin
                 Inc(CurrentFolderID);
                 CachedNodeData.FolderID := CurrentFolderID;
                 dirCache.Add(parsedDir+Sch,Pointer(CachedVirtualNode));
+
+                // Increase entryListFolderCache by the current number of folders + root
+                setLength(entryListFolderCache,CurrentFolderID+1);
               end
               // Else we retrieve the node from the cache
               else
@@ -2520,6 +2534,8 @@ begin
                 CachedNodeData.FolderID := CurrentFolderID;
                 dirCache.Add(previousDir+parsedDir+Sch,Pointer(CachedVirtualNode));
 
+                // Increase entryListFolderCache by the current number of folders + root
+                setLength(entryListFolderCache,CurrentFolderID+1);
               end
               // Else we retrieve the node from the cache
               else
@@ -2538,17 +2554,33 @@ begin
           // of the last level for the entryList
           CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
           entryList[x].FolderID := CachedNodeData.FolderID;
+          setLength(entryListFolderCache[entryList[x].FolderID],Length(entryListFolderCache[entryList[x].FolderID])+1);
+          entryListFolderCache[ entryList[x].FolderID , High(entryListFolderCache[entryList[x].FolderID]) ] := x;
 
         end;
+      end
+      // If no search string is found (this is an entry in the root)
+      else
+      begin
+        entryList[x].FolderID := 0;
+        setLength(entryListFolderCache[entryList[x].FolderID],Length(entryListFolderCache[entryList[x].FolderID])+1);
+        entryListFolderCache[ entryList[x].FolderID , High(entryListFolderCache[entryList[x].FolderID]) ] := x;
       end;
+
+      // Refresh the progress everytime we did 5% more
+      percent := round((x / entryListIndex) * 100);
+      if percent = oldpercent + 5 then
+      begin
+        DisplayPercent(percent);
+        oldPercent := percent;
+        dup5main.Refresh;
+      end;
+
     end;
   finally
     // We don't need the directory cache anymore
     FreeAndNil(dirCache);
   end;
-
-  // Initilialize the folder cache to the size of the folder ID
-  entryListFolderCache.Capacity := CurrentFolderID;
 
 end;
 
@@ -2556,7 +2588,7 @@ procedure TDrivers.BrowseDirFromID(CurrentDirID: integer);
 var TDirPos: integer;
     TotSize: int64;
     TotFiles: longword;
-    curData, curSize, curIdx, per, perold, x: integer;
+    curData, curSize, curIdx, per, perold, x, y, fullSizeCache: integer;
 //    cache: TDirCache;
 begin
 
@@ -2590,38 +2622,33 @@ begin
   curData := 0;
   curIdx := 0;
   perold := 0;
+  fullSizeCache := length(entryListFolderCache[CurrentDirID]);
 
-
-  for x := 0 to entryListIndex do
+  for y := Low(entryListFolderCache[CurrentDirID]) to High(entryListFolderCache[CurrentDirID]) do
   begin
 
-    if entryList[x].FolderID = CurrentDirID then
+    x:= entryListFolderCache[CurrentDirID][y];
+
+    if Sch = '' then
+      TDirPos := 0
+    else
+      TDirPos := posrev(Sch, entryList[x].Name);
+
+    entryList[x].FileName := Copy(entryList[x].Name,TDirPos+1,Length(entryList[x].Name)-TDirPos);
+
+    listData[curData].tdirpos := TDirPos;
+    listData[curData].entryIndex := x;
+    listData[curData].loaded := false;
+
+    TotSize := TotSize + entryList[x].Size;
+    inc(curData);
+    if (curData = curSize) then
     begin
-
-      if Sch = '' then
-        TDirPos := 0
-      else
-        TDirPos := posrev(Sch, entryList[x].Name);
-
-      entryList[x].FileName := Copy(entryList[x].Name,TDirPos+1,Length(entryList[x].Name)-TDirPos);
-
-      listData[curData].tdirpos := TDirPos;
-      listData[curData].entryIndex := x;
-      listData[curData].loaded := false;
-
-      TotSize := TotSize + entryList[x].Size;
-      inc(curData);
-      if (curData = curSize) then
-      begin
-        inc(curSize,2000);
-        setLength(listData,curSize);
-      end;
-
+      inc(curSize,2000);
+      setLength(listData,curSize);
     end;
 
-    Inc(CurIdx);
-
-    per := round((CurIdx / entryListIndex) * 100);
+    per := round((y / fullSizeCache) * 100);
     if (per >= perold + 5) then
     begin
       DisplayPercent(per);

@@ -1797,8 +1797,10 @@ object frmInstaller: TfrmInstaller
     Top = 328
   end
   object IdHTTP: TIdHTTP
+    OnStatus = IdHTTPStatus
     MaxLineAction = maException
     OnWork = IdHTTPWork
+    OnConnected = IdHTTPConnected
     AllowCookies = True
     HandleRedirects = True
     ProxyParams.BasicAuthentication = False

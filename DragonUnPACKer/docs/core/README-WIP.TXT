@@ -10,8 +10,8 @@ by Alexande "Elbereth" Devilliers                                    18/02/2013
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.7.0.270
-SVN Release 641 [Unreleased]
+Version 5.7.0.271
+SVN Release 643 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
@@ -22,19 +22,21 @@ SVN Release 641 [Unreleased]
    needs to be added. This is completly different than DUDI v5.
    Both the old DUDI v1-v5 & v6 methods will be supported by Dragon UnPACKer
    5.7.0+.
+   New directory cache should be as fast (if not faster) than the old one.
    Note 1: Current version of Dragon UnPACKer might not work correctly as
            not everything was adapted with the new changes.
    Note 2: Only main driver was adapted to DUDI v6.
-   Note 3: Directory cache is not implemented in this version so full entries
-           scan is needed everytime you click on a folder. Cache should be
-		   less needed than in previous method (due to indexing on integer
-		   value of the folder) but I would like to add it anyway.
  + Added FastCode & FastMove.
    http://fastcode.sourceforge.net/
  ! Fixed support for multiple convert plugins during preview.
  i HyperRipper v5.6a:
    ! Fixed the sanity check on the BIK searching algorithm.
      Should avoid some false-positives.
+ * Duppi v3.4.0:
+   i Updated to work with Indy 9 instead of Curl.
+     This means a full Delphi implementation with no need for DLLs.
+	 It is also compatible with Lazarus (Indy 9 & 10 were ported to Lazarus).
+   i Now compiled with FastMM4, FastCode & FastMove.
  + External Tools Convertion plugin v0.2.0 Beta:
    i This plugin allows to use external command line tools to convert file
      formats (for example the excellent vgmstream tool for audio files).

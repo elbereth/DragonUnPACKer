@@ -25,6 +25,9 @@ const
   CurVersion: String = '5.7.0';
   CurEdit: String = 'Beta';
   CurURL: String = 'http://www.dragonunpacker.com';
+  CurSVNRevision: String = '$Rev$';
+  CurSVNDate: String = '$Date$';
+
 
 implementation
 

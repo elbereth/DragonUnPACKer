@@ -64,7 +64,6 @@ type TDirCache = class
   end;
 
 //procedure ParseDirs(ASlash: Boolean; Databloc: FSE; Fname: String);
-procedure ParseDirs(Sch: string; Databloc: FSE; Fname: String);
 function ConvertSlash(st: String): String;
 procedure CreateRoot(Fname: string);
 procedure CreateRootHR(Fname: string; subdirs: boolean);
@@ -122,112 +121,6 @@ begin
   end
   else
     result := nil;
-
-end;
-
-procedure ParseDirs(Sch: string; Databloc: FSE; Fname: String);
-var a: FSE;
-    pslash: integer;
-    CurDir, CurDirCache, Parse, Before: String;
-    Dupe: Boolean;
-    Data, DataCache: TObject;
-    Root, Nod, NodAdd: PVirtualNode;
-    NodeData: pvirtualIndexData;
-    cache: TDirCache;
-//    StartTime: TDateTime;
-begin
-
-//  StartTime := Now;
-
-  Root := dup5Main.lstIndex.AddChild(nil);
-  NodeData := dup5Main.lstIndex.GetNodeData(Root);
-  NodeData.dirname := FName;
-  NodeData.imageIndex := 2;
-  NodeData.selectedImageIndex := 2;
-
-  ht := TStringHashTrie.Create;
-  dirCache := TStringHashTrie.Create;
-
-  a := DataBloc;
-//  nbdir := 0;
-
-  while a <> NIL do
-  begin
-    pslash := posrev(sch, a^.Name)-1;
-    if pslash > 0 then
-    begin
-      curdir := Copy(a^.Name,1,pslash+1);
-      curdircache := uppercase(Copy(curdir,1,pslash));
-      DataCache := nil;
-      dirCache.Find(curdircache,DataCache);
-      cache := Pointer(DataCache);
-      if (cache = nil) then
-      begin
-        cache := TDirCache.Create(sch);
-        cache.addItem(a);
-        dirCache.Add(curDirCache,Pointer(cache));
-        curDirCache := '';
-        //showmessage(curDirCache);
-      end
-      else
-      begin
-        cache.addItem(a);
-      end;
-      pslash := pos(sch,curdir);
-      Before := '';
-      while pslash > 0 do
-      begin
-        parse := Copy(curdir,1,pslash-1);
-        curdir := Copy(curdir,pslash+1,length(curdir)-pslash);
-        if before = '' then
-        begin
-          Dupe := ht.Find(parse+'\',Data);
-          if not(Dupe) then
-          begin
-            Nod := dup5Main.lstIndex.AddChild(Root);
-            NodeData := dup5Main.lstIndex.GetNodeData(Nod);
-            NodeData.dirname := parse;
-            NodeData.imageIndex := 1;
-            NodeData.selectedImageIndex := 0;
-            ht.Add(parse+'\',Pointer(Nod));
-          end
-          else
-            Nod := Pointer(Data);
-          before := parse+'\';
-        end
-        else
-        begin
-          Dupe := ht.Find(before+parse+'\',Data);
-          if not(Dupe) then
-          begin
-            NodAdd := dup5Main.lstIndex.AddChild(Nod);
-            NodeData := dup5Main.lstIndex.GetNodeData(NodAdd);
-            NodeData.dirname := parse;
-            NodeData.imageIndex := 1;
-            NodeData.selectedImageIndex := 0;
-            ht.Add(before+parse+'\',Pointer(NodAdd));
-            Nod := NodAdd;
-          end
-          else
-            Nod := Pointer(Data);
-          before := before + parse+'\';
-          //ShowMessage(a^.Name+#10+parse+#10+curdir+#10+before+#10+BoolToStr(Dupe));
-        end;
-        SetLength(parse,0);
-        pslash := pos(sch,curdir);
-      end;
-    end;
-    a := a^.suiv;
-
-  end;
-
-  SetLength(before,0);
-
-//  ShowMessage(inttostr(nbdir)+#10+inttostr(MilliSecondsBetween(Now,StartTime)));
-  FreeAndNil(ht);
-  dup5Main.lstIndex.RootNodeCount := 1;
-  dup5Main.lstIndex.FocusedNode := Root;
-  dup5Main.lstIndex.SortTree(1,sdAscending);
 
 end;
 

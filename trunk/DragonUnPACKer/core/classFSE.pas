@@ -246,7 +246,6 @@ type TDrivers = class
     LoadTimeOpen: Int64;
     LoadTimeRetrieve: Int64;
     LoadTimeParse: Int64;
-    DataBloc: FSE;
     NumElems: Integer;
     DispNumElems: Integer;
     TView: TTreeView;
@@ -294,7 +293,6 @@ type TDrivers = class
     function DriverID: string;
     function GetFileTypes: string;
     function GetAllFileTypes(Partitionned: boolean): ExtensionsResult;
-    procedure BrowseDir(cdir: string);
     procedure BrowseDirFromID(CurrentDirID: integer);
     function BrowseDirToList(cdir: string; SubDirs: Boolean): TList;
     procedure SetTreeView(a: TTreeView);
@@ -395,7 +393,7 @@ end;
 function TDrivers.IsListEmpty: Boolean;
 begin
 
-  IsListEmpty := DataBloc = NIL;
+  IsListEmpty := entryListIndex = -1;
 
 end;
 
@@ -980,142 +978,6 @@ begin
 
 end;
 
-procedure TDrivers.BrowseDir(cdir: string);
-var a: FSE;
-    TDir: string;
-    TDirPos: integer;
-    TotSize: int64;
-    TotFiles: longword;
-    curData, curSize, curIdx, per, perold, x: integer;
-    cache: TDirCache;
-//    starttime: TDateTime;
-begin
-
-//  starttime := now;
-
-  TotSize := 0;
-
-  CDir := UpperCase(CDir);
-
-  cache := GetDirCache(CDir);
-
-  if cache <> nil then
-  begin
-    setLength(ListData,cache.getNumItems);
-    totFiles := cache.getNumItems;
-//    if cache.getNumItems > 0 then
-//      TDirPos := posrev(sch, cache.getItem(1)^.name);
-    TDirPos := cache.getTDirPos;
-    for x := 0 to cache.getNumItems-1 do
-    begin
-      listData[x].tdirpos := TDirPos;
-{      posext := posrev('.',cache.getItem(x)^.Name);
-      if posext > 0 then
-        ext := Copy(cache.getItem(x)^.Name,posext+1,length(cache.getItem(x)^.Name)-posext)
-      else
-        ext := '';}
-//      listData[x].data := cache.getItem(x);
-//      listData[x].desc := DescFromExt(ext);
-      listData[x].loaded := false;
-
-//      listData[curData].ImageIndex := IconFromExt(ext);
-{      listData[x].ImageIndex := icons.getIcon(cache.getItem(x)^.Name);}
-      TotSize := TotSize + cache.getItem(x)^.Size;
-    end;
-  end
-  else
-  begin
-
-  curSize := 2000;
-  setLength(listData,curSize);
-
-  displayPercent(0);
-
-  a := DataBloc;
-  curData := 0;
-  curIdx := 0;
-  perold := 0;
-
-  while a <> NIL do
-  begin
-
-    if sch = '' then
-    begin
-      TDir := '';
-      TDirPos := 0;
-    end
-    else
-    begin
-      TDirPos := posrev(sch, a^.Name);
-      if TDirPos >0 then
-        TDir := Uppercase(Copy(a^.Name,1,TDirPos-1))
-      else
-        TDir := '';
-    end;
-
-    if TDir = CDir then
-    begin
-//      listData[curData].fileName := Copy(a^.Name,TDirPos+1,Length(a^.Name)-TDirPos);
-      listData[curData].tdirpos := TDirPos;
-{      posext := posrev('.',a^.Name);
-      if posext > 0 then
-        ext := Copy(a^.Name,posext+1,length(a^.Name)-posext)
-      else
-        ext := '';}
-//      listData[curData].data := a;
-//      listData[curData].desc := DescFromExt(ext);
-      listData[curData].loaded := false;
-
-//      listData[curData].ImageIndex := IconFromExt(ext);
-{      listData[curData].ImageIndex := icons.getIcon(a^.Name); }
-      TotSize := TotSize + a^.Size;
-      inc(curData);
-      if (a^.suiv <> nil) and (curData = curSize) then
-      begin
-        inc(curSize,2000);
-        setLength(listData,curSize);
-      end
-    end;
-
-    Inc(CurIdx);
-
-    per := round((CurIdx / NumElems) * 100);
-    if (per >= perold + 5) then
-    begin
-      DisplayPercent(per);
-      perold := per;
-    end;
-    a := a^.suiv;
-
-  end;
-
-  TotFiles := curData;
-
-  end;
-
-//  showmessage(inttostr(millisecondsbetween(now,starttime)));
-
-  displayPercent(100);
-
-  if TotFiles > 0 then
-  begin
-    setLength(listData,TotFiles);
-
-    dup5Main.lstContent.RootNodeCount := 0;
-    dup5Main.lstContent.RootNodeCount := TotFiles;
-
-  end
-  else
-  begin
-    dup5Main.lstContent.RootNodeCount := 0;
-    setLength(listData,0);
-  end;
-
-  dup5Main.Status.Panels.Items[1].Text := IntToStr(TotSize) + ' ' + DLNGStr('STAT20');
-  dup5Main.Status.Panels.Items[0].Text := IntToStr(TotFiles) + ' ' + DLNGStr('STAT10');
-
-end;
-
 function TDrivers.SlashMode: string;
 begin
 
@@ -1290,9 +1152,8 @@ begin
 end;
 
 procedure TDrivers.ExtractDir(cdir, outpath: string);
-var a: FSE;
-    TDir,cfil,cfilcnv: string;
-    totfiles,curfiles,lencdir: integer;
+var TDir,cfil,cfilcnv: string;
+    totfiles,curfiles,lencdir,x: integer;
     Save_Cursor:TCursor;
     perc,numper: integer;
 begin
@@ -1305,7 +1166,6 @@ begin
   Screen.Cursor := crHourGlass;    { Affiche le curseur en forme de sablier }
   try
 
-    a := DataBloc;
     totfiles := CalculateNumberOfFiles(cdir);
     curfiles := 0;
     perc := 0;
@@ -1321,11 +1181,11 @@ begin
 
     CDir := UpperCase(CDir);
 
-    while a <> NIL do
+    for x:=0 to entryListIndex do
     begin
 
-      if Length(a^.Name) >= LenCDir then
-        TDir := Copy(a^.Name,1,lenCDir)
+      if Length(entryList[x].Name) >= LenCDir then
+        TDir := Copy(entryList[x].Name,1,lenCDir)
       else
         TDir := '';
 
@@ -1340,8 +1200,8 @@ begin
           CurFiles := 0;
         end;
 
-        SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),a^.Name));
-        cfil := Copy(a^.Name,length(TDir)+1,Length(a^.Name)-length(TDir));
+        SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entryList[x].Name));
+        cfil := Copy(entryList[x].Name,length(TDir)+1,Length(entryList[x].Name)-length(TDir));
         if Copy(cfil,1,1) = sch then
           cfil := Copy(cfil,2,length(cfil)-1);
 
@@ -1350,12 +1210,10 @@ begin
         else
           cfilcnv := cfil;
 
-        ExtractFile_Alt(outpath+cfilcnv,a^.Name,a^.Offset,a^.Size,a^.DataX,a^.DataY,false);
+        ExtractFile_Alt(outpath+cfilcnv,entryList[x].Name,entryList[x].Offset,entryList[x].Size,entryList[x].DataX,entryList[x].DataY,true);
 //      MessageDlg(DLNGStr('ERR102')+ ' '+cfil,mtError,[mbOk],0);
 
       end;
-
-      a := a^.suiv;
 
     end;
   finally
@@ -1515,12 +1373,10 @@ begin
 end;
 
 function TDrivers.CalculateNumberOfFiles(cdir: string): Integer;
-var a: FSE;
-    TDir: string;
-    res,lencdir: integer;
+var TDir: string;
+    res,lencdir,x: integer;
 begin
 
-  a := DataBloc;
   res := 0;
 
   LenCDir := Length(CDir);
@@ -1530,18 +1386,16 @@ begin
     LenCDir := LenCDir + 1;
   end;
 
-  while a <> NIL do
+  for x := 0 to entryListIndex do
   begin
 
-    if Length(a^.Name) >= LenCDir then
-      TDir := Copy(a^.Name,1,lenCDir)
+    if Length(entryList[x].Name) >= LenCDir then
+      TDir := Copy(entryList[x].Name,1,lenCDir)
     else
       TDir := '';
 
     if TDir = CDir then
       Inc(res);
-
-    a := a^.suiv;
 
   end;
 
@@ -1560,9 +1414,10 @@ begin
     Sch := '';
 
   CurrentDriverID := 'HRIP';
+  CurrentFilename := fil;
   StartTime := Now;
   if subdirs then
-    ParseDirs(Sch, DataBloc, ExtractFileName(fil))
+    parseEntriesForDirs
   else
     CreateRootHR(ExtractFileName(fil),subdirs);
   LoadTimeParse := MilliSecondsBetween(Now, StartTime);
@@ -1577,7 +1432,7 @@ begin
 //  Dup5Main.TDup5Edit.Visible := true;
   dup5Main.menuEdit.Visible := True;
   dup5Main.menuTools.Visible := True;
-  dup5Main.Status.Panels.Items[3].Text := 'HRIP';
+  dup5Main.Status.Panels.Items[3].Text := CurrentDriverID;
   loadTimeOpen := loadTime;
 //  loadTimeParse := 0;
 
@@ -1602,8 +1457,7 @@ end;
 
 function TDrivers.SearchAll(searchst: string; CaseSensible: Boolean): integer;
 var ext: String;
-    testpos,posext: integer;
-    a: FSE;
+    testpos,posext,x: integer;
     TotSize: int64;
     CurData, TotFiles: integer;
 begin
@@ -1611,20 +1465,16 @@ begin
   TotSize := 0;
   TotFiles := 0;
 
-  a := DataBloc;
-
-  while a <> NIL do
+  for x := 0 to entryListIndex do
   begin
 
     if CaseSensible then
-      testpos := Pos(searchst,a^.Name)
+      testpos := Pos(searchst,entryList[x].Name)
     else
-      testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(a^.Name));
+      testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(entryList[x].Name));
 
     if testpos > 0 then
       Inc(TotFiles);
-
-    a := a^.suiv;
 
   end;
 
@@ -1632,46 +1482,34 @@ begin
   begin
     setLength(listData,TotFiles);
 
-    a := DataBloc;
     curData := 0;
 
-    while a <> NIL do
+    for x := 0 to entryListIndex do
     begin
 
       if CaseSensible then
-        testpos := Pos(searchst,a^.Name)
+        testpos := Pos(searchst,entryList[x].Name)
       else
-        testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(a^.Name));
+        testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(entryList[x].Name));
 
       if testpos > 0 then
       begin
         if (sch = '') then
-//          outp := a^.name
           listData[curData].tdirpos := 0
         else
         begin
-          listData[curData].tdirpos := posrev(sch,a^.Name);
-{          tmpi := posrev(sch,a^.Name);
-          if tmpi > 0 then
-            outp := Copy(a^.Name, tmpi+1,length(a^.Name)-tmpi)
-          else
-            outp := a^.Name;}
+          listData[curData].tdirpos := posrev(sch,entryList[x].Name);
         end;
-//        listData[curData].fileName := outp;
-        posext := posrev('.',a^.Name);
+        posext := posrev('.',entryList[x].Name);
         if posext > 0 then
-          ext := Copy(a^.Name,posext+1,length(a^.Name)-posext)
+          ext := Copy(entryList[x].Name,posext+1,length(entryList[x].Name)-posext)
         else
           ext := '';
-//        listData[curData].data := a;
         listData[curData].desc := DescFromExt(ext);
-  //      listData[curData].ImageIndex := IconFromExt(ext);
-        listData[curData].ImageIndex := icons.getIcon(a^.Name);
-        TotSize := TotSize + a^.Size;
+        listData[curData].ImageIndex := icons.getIcon(entryList[x].Name);
+        TotSize := TotSize + entryList[x].Size;
         inc(curData);
       end;
-
-      a := a^.suiv;
 
     end;
     dup5Main.lstContent.RootNodeCount := 0;
@@ -1692,39 +1530,34 @@ function TDrivers.SearchDir(searchst, cdir: string;
   CaseSensible: Boolean): integer;
 var ext,TDir: String;
     TDirPos,testpos,posext,tmpi: integer;
-    a: FSE;
     TotSize: int64;
-    CurData, TotFiles: integer;
+    CurData, TotFiles, x: integer;
 begin
 
   TotSize := 0;
   TotFiles := 0;
 
-  a := DataBloc;
-
-  while a <> NIL do
+  for x := 0 to entryListIndex do
   begin
 
     if (sch = '') then
       TDirPos := 0
     else
-      TDirPos := posrev(sch, a^.Name);
+      TDirPos := posrev(sch, entryList[x].Name);
     if TDirPos >0 then
-      TDir := Copy(a^.Name,1,TDirPos-1)
+      TDir := Copy(entryList[x].Name,1,TDirPos-1)
     else
       TDir := '';
 
     if TDir = CDir then
     begin
       if CaseSensible then
-        testpos := Pos(searchst,a^.Name)
+        testpos := Pos(searchst,entryList[x].Name)
       else
-        testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(a^.Name));
+        testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(entryList[x].Name));
       if testpos > 0 then
         Inc(TotFiles);
     end;
-
-    a := a^.suiv;
 
   end;
 
@@ -1732,18 +1565,17 @@ begin
   begin
     setLength(listData,TotFiles);
 
-    a := DataBloc;
     curData := 0;
 
-    while a <> NIL do
+    for x := 0 to entryListIndex do
     begin
 
       if (sch = '') then
         TDirPos := 0
       else
-        TDirPos := posrev(sch, a^.Name);
+        TDirPos := posrev(sch, entryList[x].Name);
       if TDirPos >0 then
-        TDir := Copy(a^.Name,1,TDirPos-1)
+        TDir := Copy(entryList[x].Name,1,TDirPos-1)
       else
         TDir := '';
 
@@ -1751,38 +1583,29 @@ begin
       begin
 
         if CaseSensible then
-          testpos := Pos(searchst,a^.Name)
+          testpos := Pos(searchst,entryList[x].Name)
         else
-          testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(a^.Name));
+          testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(entryList[x].Name));
 
         if testpos > 0 then
         begin
           if (sch = '') then
             tmpi := 0
           else
-            tmpi := posrev(sch,a^.Name);
-{          if tmpi > 0 then
-            outp := Copy(a^.Name, tmpi+1,length(a^.Name)-tmpi)
-          else
-            outp := a^.Name;
-          listData[curData].fileName := outp;}
+            tmpi := posrev(sch,entryList[x].Name);
           listData[curData].tdirpos := tmpi;
-          posext := posrev('.',a^.Name);
+          posext := posrev('.',entryList[x].Name);
           if posext > 0 then
-            ext := Copy(a^.Name,posext+1,length(a^.Name)-posext)
+            ext := Copy(entryList[x].Name,posext+1,length(entryList[x].Name)-posext)
           else
             ext := '';
-//          listData[curData].data := a;
           listData[curData].desc := DescFromExt(ext);
-          //listData[curData].ImageIndex := IconFromExt(ext);
-          listData[curData].ImageIndex := icons.getIcon(a^.Name);
-          TotSize := TotSize + a^.Size;
+          listData[curData].ImageIndex := icons.getIcon(entryList[x].Name);
+          TotSize := TotSize + entryList[x].Size;
           inc(curData);
         end;
 
       end;
-
-      a := a^.suiv;
 
     end;
 
@@ -1826,9 +1649,8 @@ var hHRF: integer;
     HDR: HRF3_Header;
     NFO: HRF3_Info;
     ENT: HRF3_Index;
-    x: integer;
+    x, y: integer;
     cstr: string;
-    a: FSE;
 begin
 
   hHRF := FileCreate(filename);
@@ -1870,17 +1692,14 @@ begin
         FileWrite(hHRF,NFO,SizeOf(NFO));
       end;
 
-      a := DataBloc;
-
-      while a <> NIL do
+      for y := 0 to entryListIndex do
       begin
         FillChar(ENT.Filename,255,0);
-        for x := 1 to length(a^.Name) do
-          ENT.Filename[x] := a^.Name[x];
-        ENT.Offset := a^.Offset;
-        ENT.Size := a^.Size;
+        for x := 1 to length(entryList[y].Name) do
+          ENT.Filename[x] := entryList[y].Name[x];
+        ENT.Offset := entryList[y].Offset;
+        ENT.Size := entryList[y].Size;
         FileWrite(hHRF,ENT,SizeOf(ENT));
-        a := a^.suiv;
       end;
 
     finally
@@ -1896,9 +1715,8 @@ var hHRF: integer;
     NFO: HRF_Infos_v0;
     NFO1: HRF_Infos_v1;
     ENT: HRF_Index_v2;
-    x: integer;
+    x, y: integer;
     cstr: string;
-    a: FSE;
 begin
 
   hHRF := FileCreate(filename);
@@ -1939,19 +1757,16 @@ begin
         FileWrite(hHRF,NFO,SizeOf(HRF_Infos_v0));
       end;
 
-      a := DataBloc;
-
-      while a <> NIL do
+      for y := 0 to entryListIndex do
       begin
         FillChar(ENT.Filename,64,0);
-        for x := 0 to length(a^.Name)-1 do
-          ENT.Filename[x] := a^.Name[x+1];
-        ENT.Offset := a^.Offset+1;
-        ENT.Size := a^.Size;
+        for x := 0 to length(entryList[y].Name)-1 do
+          ENT.Filename[x] := entryList[y].Name[x+1];
+        ENT.Offset := entryList[y].Offset+1;
+        ENT.Size := entryList[y].Size;
         ENT.FileType := 199;
         Fillchar(ENT.Security,16,0);
         FileWrite(hHRF,ENT,SizeOf(ENT));
-        a := a^.suiv;
       end;
 
     finally
@@ -1965,9 +1780,8 @@ procedure TDrivers.saveHRF_v1(srcfil, filename: string; srcsize: int64;
 var hHRF: integer;
     HDR: HRF_Header;
     ENT: HRF_Index_v1;
-    x: integer;
+    x, y: integer;
     cstr: string;
-    a: FSE;
 begin
 
   hHRF := FileCreate(filename);
@@ -1985,18 +1799,15 @@ begin
       HDR.Filesize := srcsize;
       FileWrite(hHRF,HDR,SizeOf(HRF_Header));
 
-      a := DataBloc;
-
-      while a <> NIL do
+      for y := 0 to entryListIndex do
       begin
         FillChar(ENT.Filename,32,0);
-        for x := 0 to length(a^.Name)-1 do
-          ENT.Filename[x] := a^.Name[x+1];
-        ENT.Offset := a^.Offset+1;
-        ENT.Size := a^.Size;
+        for x := 0 to length(entryList[y].Name)-1 do
+          ENT.Filename[x] := entryList[y].Name[x+1];
+        ENT.Offset := entryList[y].Offset+1;
+        ENT.Size := entryList[y].Size;
         ENT.FileType := 199;
         FileWrite(hHRF,ENT,SizeOf(ENT));
-        a := a^.suiv;
       end;
 
     finally
@@ -2013,9 +1824,8 @@ end;
 //         Returns : TList with EntRec entries for each corresponding entry in
 //                   file.
 function TDrivers.BrowseDirToList(cdir: string; subdirs: boolean): TList;
-var a: FSE;
-    TDir: string;
-    TDirPos: integer;
+var TDir: string;
+    TDirPos,x: integer;
     EntRec: PEntList;
 begin
 
@@ -2029,11 +1839,8 @@ begin
   // Convert cdir to uppercase (for comparison without case sensitivity)
   CDir := UpperCase(CDir);
 
-  // First entry in the pointer chain for currently opened file
-  a := DataBloc;
-
-  // Loop while current pointer isn't NIL
-  while a <> NIL do
+  // Go through all entries
+  for x:=0 to entryListIndex do
   begin
 
     // If the is no directory separation in currently opened file
@@ -2055,15 +1862,15 @@ begin
         // else search for the position of the first directory separator
         // starting at the index of the size of the cdir string
         else
-          TDirPos := posex(sch,a^.Name,Length(cdir));
+          TDirPos := posex(sch,entryList[x].Name,Length(cdir));
       end
       // Else if no subdirs then the position is last occurence of the directory
       // separator
       else
-        TDirPos := posrev(sch, a^.Name);
+        TDirPos := posrev(sch, entryList[x].Name);
       // Returns in TDir the directory we will compare with CDir
       if TDirPos >0 then
-        TDir := Uppercase(Copy(a^.Name,1,TDirPos-1))
+        TDir := Uppercase(Copy(entryList[x].Name,1,TDirPos-1))
       else
         TDir := '';
     end;
@@ -2075,16 +1882,13 @@ begin
       // Then we allocate new entry record, fill it with data and add it to the
       // result list
       New(EntRec);
-      EntRec^.FileName := a^.Name;
-      EntRec^.Offset := a^.Offset;
-      EntRec^.Size := a^.Size;
-      EntRec^.DataX := a^.DataX;
-      EntRec^.DataY := a^.DataY;
+      EntRec^.FileName := entryList[x].Name;
+      EntRec^.Offset := entryList[x].Offset;
+      EntRec^.Size := entryList[x].Size;
+      EntRec^.DataX := entryList[x].DataX;
+      EntRec^.DataY := entryList[x].DataY;
       Result.Add(EntRec);
     end;
-
-    // Check next entry in the chain
-    a := a^.suiv;
 
   end;
 
@@ -2420,7 +2224,7 @@ procedure TDrivers.parseEntriesForDirs();
 var Root, CachedVirtualNode: PVirtualNode;
     NodeData, CachedNodeData: pvirtualIndexData;
     parsedDir, previousDir, currentDir: string;
-    x, pslash: integer;
+    x, pslash, tdirpos: integer;
     DataCache: TObject;
     dirCache: TStringHashTrie;
     Percent, OldPercent: integer;
@@ -2455,6 +2259,7 @@ begin
 
       // Retrieve the last position of the search string (usually / or \)
       pslash := posrev(sch, entryList[x].Name)-1;
+      tdirpos := pslash+1;
 
       // If the search string is found
       if pslash > 0 then
@@ -2462,6 +2267,9 @@ begin
 
         // Retrieve the directory of the current entry
         currentDir := Copy(entryList[x].Name,1,pslash+1);
+
+        // Save the filename
+        entryList[x].FileName := Copy(entryList[x].Name,tdirpos+1,Length(entryList[x].Name)-tdirpos);
 
         // Search it in the cache
         // If it was found in the cache we retrieve the ID
@@ -2563,6 +2371,7 @@ begin
       else
       begin
         entryList[x].FolderID := 0;
+        entryList[x].FileName := entryList[x].Name;
         setLength(entryListFolderCache[entryList[x].FolderID],Length(entryListFolderCache[entryList[x].FolderID])+1);
         entryListFolderCache[ entryList[x].FolderID , High(entryListFolderCache[entryList[x].FolderID]) ] := x;
       end;
@@ -2633,8 +2442,6 @@ begin
       TDirPos := 0
     else
       TDirPos := posrev(Sch, entryList[x].Name);
-
-    entryList[x].FileName := Copy(entryList[x].Name,TDirPos+1,Length(entryList[x].Name)-TDirPos);
 
     listData[curData].tdirpos := TDirPos;
     listData[curData].entryIndex := x;

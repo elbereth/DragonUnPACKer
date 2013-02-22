@@ -27,7 +27,7 @@ uses
   // Vampyre Imaging Library
   ImagingTypes, Imaging, ImagingClasses, ImagingComponents, ImagingCanvases,
   ImagingFormats, ImagingUtility, dwTaskbarComponents,
-  lib_crc, lib_temptools;
+  lib_crc, lib_temptools, lib_version;
 
 type
   Tdup5Main = class(TForm)
@@ -706,7 +706,7 @@ begin
   frmAbout.Top := dup5Main.Top + ((Height - frmAbout.Height) div 2) ;
   frmAbout.Left := dup5Main.Left + ((Width - frmAbout.Width) div 2) ;
 
-  frmAbout.lblCompDate.Caption := DateToStr(compileTime)+ ' '+TimeToStr(compileTime);
+  frmAbout.lblCompDate.Caption := 'SVN rev '+getSVNRevision(CurSVNRevision)+' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime);
 
   if (pos('WIP',Uppercase(CurEdit)) > 0) or (pos('BETA',Uppercase(CurEdit)) > 0)
   or (pos('ALPHA',Uppercase(CurEdit)) > 0) then

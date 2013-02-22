@@ -67,7 +67,8 @@ uses
   MsgBox in 'MsgBox.pas' {frmMsgBox},
   classConvertExport in 'classConvertExport.pas',
   lib_temptools in '..\common\lib_temptools.pas',
-  cls_duplog in '..\common\cls_duplog.pas';
+  cls_duplog in '..\common\cls_duplog.pas',
+  lib_version in '..\common\lib_version.pas';
 
 const _DEBUGMODE = FALSE;
 

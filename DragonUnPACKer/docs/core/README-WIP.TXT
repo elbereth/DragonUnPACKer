@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    22/02/2013
+by Alexande "Elbereth" Devilliers                                    13/03/2013
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,8 +10,8 @@ by Alexande "Elbereth" Devilliers                                    22/02/2013
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.7.0.272
-SVN Release 644 [Unreleased]
+Version 5.7.0.273
+SVN Release 647 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
@@ -23,8 +23,8 @@ SVN Release 644 [Unreleased]
    Both the old DUDI v1-v5 & v6 methods will be supported by Dragon UnPACKer
    5.7.0+.
    New directory cache should be as fast (if not faster) than the old one.
-   
    Note: Only main driver was adapted to DUDI v6.
+   ! SVN 646: Fixed files without directories not working in previous SVN 644.
  + Added FastCode & FastMove.
    http://fastcode.sourceforge.net/
  ! Fixed support for multiple convert plugins during preview.

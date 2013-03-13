@@ -273,7 +273,7 @@ type TDrivers = class
     function getDriverPriority(drivername: string): integer;
     procedure quickSortDrivers(lowerPos, upperPos: integer);
     function getBufferSize(): integer;
-    procedure parseEntriesForDirs();
+    procedure parseEntries(withDirectories: boolean);
     function getEntryList(index: integer): FSEentry;
   public
     Drivers: array of Driver;
@@ -851,10 +851,9 @@ begin
 
           CurrentFileName := pth;
 
-          if Sch <> '' then
-            ParseEntriesForDirs
-          else
-            CreateRoot(ExtractFileName(pth));
+          // Prepare lstIndex root node and parse directories (create sub-nodes) if needed
+          // Also fill the entry cache
+          ParseEntries((Sch <> ''));
 
           LoadTimeParse := MilliSecondsBetween(Now, StartTime);
 
@@ -1416,10 +1415,7 @@ begin
   CurrentDriverID := 'HRIP';
   CurrentFilename := fil;
   StartTime := Now;
-  if subdirs then
-    parseEntriesForDirs
-  else
-    CreateRootHR(ExtractFileName(fil),subdirs);
+  parseEntries(subdirs);
   LoadTimeParse := MilliSecondsBetween(Now, StartTime);
   CurrentDriver := -1;
   CurrentFile := filHandle;
@@ -2220,7 +2216,7 @@ begin
 
 end;
 
-procedure TDrivers.parseEntriesForDirs();
+procedure TDrivers.parseEntries(withDirectories: boolean);
 var Root, CachedVirtualNode: PVirtualNode;
     NodeData, CachedNodeData: pvirtualIndexData;
     parsedDir, previousDir, currentDir: string;
@@ -2249,147 +2245,184 @@ begin
   // Initilialize the cache for the root
   setLength(entryListFolderCache,1);
 
-  // Initialize the cache of directories
-  dirCache := TStringHashTrie.Create;
+  // If there are no sub-directories
+  if not(withDirectories) then
+  begin
 
-  try
-    // For each entry retrieved
+    // The cache for the root node will have all entries
+    setLength(entryListFolderCache[0],entryListIndex+1);
+
+    // Simply add all entries to the cache
     for x := 0 to entryListIndex do
     begin
 
-      // Retrieve the last position of the search string (usually / or \)
-      pslash := posrev(sch, entryList[x].Name)-1;
-      tdirpos := pslash+1;
+      // Save the filename
+      entryList[x].FileName := entryList[x].Name;
 
-      // If the search string is found
-      if pslash > 0 then
-      begin
+      // Add the entry to the cache
+      entryListFolderCache[0,x] := x;
 
-        // Retrieve the directory of the current entry
-        currentDir := Copy(entryList[x].Name,1,pslash+1);
-
-        // Save the filename
-        entryList[x].FileName := Copy(entryList[x].Name,tdirpos+1,Length(entryList[x].Name)-tdirpos);
-
-        // Search it in the cache
-        // If it was found in the cache we retrieve the ID
-        if (dirCache.Find(currentDir,DataCache)) then
-        begin
-          CachedVirtualNode := Pointer(DataCache);
-          CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
-          entryList[x].FolderID := CachedNodeData.FolderID;
-          setLength(entryListFolderCache[entryList[x].FolderID],Length(entryListFolderCache[entryList[x].FolderID])+1);
-          entryListFolderCache[ entryList[x].FolderID , High(entryListFolderCache[entryList[x].FolderID]) ] := x;
-        end
-        // If not we need to create it
-        else
-        begin
-
-          pslash := pos(sch,currentDir);
-          previousDir := '';
-          while pslash > 0 do
-          begin
-
-            // Directory without the search character
-            parsedDir := Copy(currentDir,1,pslash-1);
-
-            // Rest of the directory
-            currentDir := Copy(currentDir,pslash+1,length(currentDir)-pslash);
-
-            // If this is the root
-            if previousDir = '' then
-            begin
-
-              // If we don't find the directory in the cache
-              // Then we create it as a child of the Root node
-              // And add it to the cache
-              if not(dirCache.Find(parsedDir+Sch,DataCache)) then
-              begin
-                CachedVirtualNode := dup5Main.lstIndex.AddChild(Root);
-                CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
-                CachedNodeData.dirname := parsedDir;
-                CachedNodeData.imageIndex := 1;
-                CachedNodeData.selectedImageIndex := 0;
-                Inc(CurrentFolderID);
-                CachedNodeData.FolderID := CurrentFolderID;
-                dirCache.Add(parsedDir+Sch,Pointer(CachedVirtualNode));
-
-                // Increase entryListFolderCache by the current number of folders + root
-                setLength(entryListFolderCache,CurrentFolderID+1);
-              end
-              // Else we retrieve the node from the cache
-              else
-                CachedVirtualNode := Pointer(DataCache);
-
-              previousDir := parsedDir+Sch;
-
-            end
-            else
-            begin
-
-              // If we don't find the directory in the cache
-              // Then we create it as a child of the current node
-              // And add it to the cache
-              if not(dirCache.Find(previousDir+parsedDir+Sch,DataCache)) then
-              begin
-
-                CachedVirtualNode := dup5Main.lstIndex.AddChild(CachedVirtualNode);
-                CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
-                CachedNodeData.dirname := parsedDir;
-                CachedNodeData.imageIndex := 1;
-                CachedNodeData.selectedImageIndex := 0;
-                Inc(CurrentFolderID);
-                CachedNodeData.FolderID := CurrentFolderID;
-                dirCache.Add(previousDir+parsedDir+Sch,Pointer(CachedVirtualNode));
-
-                // Increase entryListFolderCache by the current number of folders + root
-                setLength(entryListFolderCache,CurrentFolderID+1);
-              end
-              // Else we retrieve the node from the cache
-              else
-                CachedVirtualNode := Pointer(DataCache);
-
-              previousDir := previousDir + parsedDir+Sch;
-
-            end;
-
-            SetLength(parsedDir,0);
-            pslash := pos(sch,currentDir);
-
-          end;
-
-          // After all folders & sub-folders are created we retrieve the folder ID
-          // of the last level for the entryList
-          CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
-          entryList[x].FolderID := CachedNodeData.FolderID;
-          setLength(entryListFolderCache[entryList[x].FolderID],Length(entryListFolderCache[entryList[x].FolderID])+1);
-          entryListFolderCache[ entryList[x].FolderID , High(entryListFolderCache[entryList[x].FolderID]) ] := x;
-
-        end;
-      end
-      // If no search string is found (this is an entry in the root)
-      else
-      begin
-        entryList[x].FolderID := 0;
-        entryList[x].FileName := entryList[x].Name;
-        setLength(entryListFolderCache[entryList[x].FolderID],Length(entryListFolderCache[entryList[x].FolderID])+1);
-        entryListFolderCache[ entryList[x].FolderID , High(entryListFolderCache[entryList[x].FolderID]) ] := x;
-      end;
-
-      // Refresh the progress everytime we did 5% more
+      // Refresh the progress everytime we did 10% more
       percent := round((x / entryListIndex) * 100);
-      if percent = oldpercent + 5 then
+      if percent = oldpercent + 10 then
       begin
         DisplayPercent(percent);
         oldPercent := percent;
         dup5main.Refresh;
       end;
-
+      
     end;
-  finally
-    // We don't need the directory cache anymore
-    FreeAndNil(dirCache);
+    
+  end
+  else
+  begin
+
+    // Initialize the cache of directories
+    dirCache := TStringHashTrie.Create;
+
+    try
+      // For each entry retrieved
+      for x := 0 to entryListIndex do
+      begin
+
+        // Retrieve the last position of the search string (usually / or \)
+        pslash := posrev(sch, entryList[x].Name)-1;
+        tdirpos := pslash+1;
+
+        // If the search string is found
+        if pslash > 0 then
+        begin
+
+          // Retrieve the directory of the current entry
+          currentDir := Copy(entryList[x].Name,1,pslash+1);
+
+          // Save the filename
+          entryList[x].FileName := Copy(entryList[x].Name,tdirpos+1,Length(entryList[x].Name)-tdirpos);
+
+          // Search it in the cache
+          // If it was found in the cache we retrieve the ID
+          if (dirCache.Find(currentDir,DataCache)) then
+          begin
+            CachedVirtualNode := Pointer(DataCache);
+            CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
+            entryList[x].FolderID := CachedNodeData.FolderID;
+            setLength(entryListFolderCache[entryList[x].FolderID],Length(entryListFolderCache[entryList[x].FolderID])+1);
+            entryListFolderCache[ entryList[x].FolderID , High(entryListFolderCache[entryList[x].FolderID]) ] := x;
+          end
+          // If not we need to create it
+          else
+          begin
+
+            pslash := pos(sch,currentDir);
+            previousDir := '';
+            while pslash > 0 do
+            begin
+
+              // Directory without the search character
+              parsedDir := Copy(currentDir,1,pslash-1);
+
+              // Rest of the directory
+              currentDir := Copy(currentDir,pslash+1,length(currentDir)-pslash);
+
+              // If this is the root
+              if previousDir = '' then
+              begin
+
+                // If we don't find the directory in the cache
+                // Then we create it as a child of the Root node
+                // And add it to the cache
+                if not(dirCache.Find(parsedDir+Sch,DataCache)) then
+                begin
+                  CachedVirtualNode := dup5Main.lstIndex.AddChild(Root);
+                  CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
+                  CachedNodeData.dirname := parsedDir;
+                  CachedNodeData.imageIndex := 1;
+                  CachedNodeData.selectedImageIndex := 0;
+                  Inc(CurrentFolderID);
+                  CachedNodeData.FolderID := CurrentFolderID;
+                  dirCache.Add(parsedDir+Sch,Pointer(CachedVirtualNode));
+
+                  // Increase entryListFolderCache by the current number of folders + root
+                  setLength(entryListFolderCache,CurrentFolderID+1);
+                end
+                // Else we retrieve the node from the cache
+                else
+                  CachedVirtualNode := Pointer(DataCache);
+
+                previousDir := parsedDir+Sch;
+
+              end
+              else
+              begin
+
+                // If we don't find the directory in the cache
+                // Then we create it as a child of the current node
+                // And add it to the cache
+                if not(dirCache.Find(previousDir+parsedDir+Sch,DataCache)) then
+                begin
+
+                  CachedVirtualNode := dup5Main.lstIndex.AddChild(CachedVirtualNode);
+                  CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
+                  CachedNodeData.dirname := parsedDir;
+                  CachedNodeData.imageIndex := 1;
+                  CachedNodeData.selectedImageIndex := 0;
+                  Inc(CurrentFolderID);
+                  CachedNodeData.FolderID := CurrentFolderID;
+                  dirCache.Add(previousDir+parsedDir+Sch,Pointer(CachedVirtualNode));
+
+                  // Increase entryListFolderCache by the current number of folders + root
+                  setLength(entryListFolderCache,CurrentFolderID+1);
+                end
+                // Else we retrieve the node from the cache
+                else
+                  CachedVirtualNode := Pointer(DataCache);
+
+                previousDir := previousDir + parsedDir+Sch;
+
+              end;
+
+              SetLength(parsedDir,0);
+              pslash := pos(sch,currentDir);
+
+            end;
+
+            // After all folders & sub-folders are created we retrieve the folder ID
+            // of the last level for the entryList
+            CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
+            entryList[x].FolderID := CachedNodeData.FolderID;
+            setLength(entryListFolderCache[entryList[x].FolderID],Length(entryListFolderCache[entryList[x].FolderID])+1);
+            entryListFolderCache[ entryList[x].FolderID , High(entryListFolderCache[entryList[x].FolderID]) ] := x;
+
+          end;
+        end
+        // If no search string is found (this is an entry in the root)
+        else
+        begin
+          entryList[x].FolderID := 0;
+          entryList[x].FileName := entryList[x].Name;
+          setLength(entryListFolderCache[entryList[x].FolderID],Length(entryListFolderCache[entryList[x].FolderID])+1);
+          entryListFolderCache[ entryList[x].FolderID , High(entryListFolderCache[entryList[x].FolderID]) ] := x;
+        end;
+
+        // Refresh the progress everytime we did 5% more
+        percent := round((x / entryListIndex) * 100);
+        if percent = oldpercent + 5 then
+        begin
+          DisplayPercent(percent);
+          oldPercent := percent;
+          dup5main.Refresh;
+        end;
+
+      end;
+    finally
+      // We don't need the directory cache anymore
+      FreeAndNil(dirCache);
+    end;
   end;
+
+  // Focus the root node (to force display of directory content)
+  dup5Main.lstIndex.RootNodeCount := 1;
+  dup5Main.lstIndex.FocusedNode := Root;
 
 end;
 

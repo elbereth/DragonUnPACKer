@@ -65,8 +65,6 @@ type TDirCache = class
 
 //procedure ParseDirs(ASlash: Boolean; Databloc: FSE; Fname: String);
 function ConvertSlash(st: String): String;
-procedure CreateRoot(Fname: string);
-procedure CreateRootHR(Fname: string; subdirs: boolean);
 procedure SetStatus(st: ShortString);
 procedure RestoreTitle;
 procedure SaveTitle;
@@ -121,76 +119,6 @@ begin
   end
   else
     result := nil;
-
-end;
-
-procedure CreateRoot(Fname: string);
-//var Nod: TTreeNode;
-var Nod: PVirtualNode;
-    NodeData: pvirtualIndexData;
-begin
-
-  dup5Main.lstIndex.RootNodeCount := 0;
-  dup5Main.lstIndex.Clear;
-
-  Nod := dup5Main.lstIndex.AddChild(nil);
-  NodeData := dup5Main.lstIndex.GetNodeData(Nod);
-  NodeData.dirname := FName;
-  NodeData.selectedImageIndex := 2;
-  NodeData.imageIndex := 2;
-
-  dup5Main.lstIndex.RootNodeCount := 1;
-  dup5Main.lstIndex.FocusedNode := Nod;
-//  dup5Main.lstIndexFocusChanged(dup5Main.lstIndex,Nod,-1);
-
-end;
-
-procedure CreateRootHR(Fname: string; subdirs: boolean);
-var Nod, Nod2: PVirtualNode;
-    NodeData: pvirtualIndexData;
-begin
-
-  dup5Main.lstIndex.RootNodeCount := 0;
-  dup5Main.lstIndex.Clear;
-
-  Nod := dup5Main.lstIndex.AddChild(nil);
-  NodeData := dup5Main.lstIndex.GetNodeData(Nod);
-  NodeData.dirname := FName;
-  NodeData.selectedImageIndex := 2;
-  NodeData.imageIndex := 2;
-
-  if (subdirs) then
-  begin
-
-    Nod2 := dup5Main.lstIndex.AddChild(Nod);
-    NodeData := dup5Main.lstIndex.GetNodeData(Nod2);
-    NodeData.dirname := 'Audio';
-    NodeData.selectedImageIndex := 0;
-    NodeData.imageIndex := 1;
-
-    Nod2 := dup5Main.lstIndex.AddChild(Nod);
-    NodeData := dup5Main.lstIndex.GetNodeData(Nod2);
-    NodeData.dirname := 'Video';
-    NodeData.selectedImageIndex := 0;
-    NodeData.imageIndex := 1;
-
-    Nod2 := dup5Main.lstIndex.AddChild(Nod);
-    NodeData := dup5Main.lstIndex.GetNodeData(Nod2);
-    NodeData.dirname := 'Image';
-    NodeData.selectedImageIndex := 0;
-    NodeData.imageIndex := 1;
-
-    Nod2 := dup5Main.lstIndex.AddChild(Nod);
-    NodeData := dup5Main.lstIndex.GetNodeData(Nod2);
-    NodeData.dirname := 'Unknown';
-    NodeData.selectedImageIndex := 0;
-    NodeData.imageIndex := 1;
-
-  end;
-
-  dup5Main.lstIndex.RootNodeCount := 1;
-  dup5Main.lstIndex.FocusedNode := Nod;
-//  dup5Main.lstIndexFocusChanged(dup5Main.lstIndex,Nod,-1);
 
 end;
 

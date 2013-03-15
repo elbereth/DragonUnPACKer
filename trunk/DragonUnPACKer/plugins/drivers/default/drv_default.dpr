@@ -6975,7 +6975,7 @@ begin
       case HDR.Version of
         3: begin
              FileSeek(CHandle,0,0);
-             FileRead(Chandle,HDR3,SizeOf(HDR3));
+             FileRead(Chandle,HDR3,SizeOf(HRF3_Header));
 
              cfil := TrimRight(Strip0(HDR3.Filename));
              cfil := ExtractFilePath(src) + cfil;
@@ -6988,6 +6988,14 @@ begin
                ErrInfo.Format := 'HRF3';
                ErrInfo.Games := TrimRight(Strip0(HDR3.Filename));
              end
+             else if HDR3.NumEntries <= 0 then
+             begin
+               FileClose(Chandle);
+               FHandle := 0;
+               ReadHyperRipperHRF := -3;
+               ErrInfo.Format := 'HRF';
+               ErrInfo.Games := 'Dragon UnPACKer HyperRipper';
+             end
              else
              begin
 
@@ -6999,7 +7007,7 @@ begin
                  FHandle := 0;
                  ReadHyperRipperHRF := -4;
                  ErrInfo.Format := 'HRF3';
-                 ErrInfo.Games := TrimRight(HDR.Filename);
+                 ErrInfo.Games := TrimRight(Strip0(HDR3.Filename));
                end
                else
                begin

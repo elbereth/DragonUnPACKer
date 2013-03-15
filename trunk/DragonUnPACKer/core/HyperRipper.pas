@@ -51,6 +51,8 @@ unit HyperRipper;
   *       Added support for Exif JPEG files (APP1 marker instead of APP0)
   * 56040 Removed unstable status for Dragon UnPACKer v5.6.0 release
   * 56041 Fixed the BIK sanity check
+  * 56042 Removed use of TBufferedFS
+  *       THandleStream is freed after use (no more memory leak)
   * }
 
 interface
@@ -59,14 +61,14 @@ uses
   Windows, Messages, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, declFSE, lib_language, Registry, Math, spec_DDS,
   ExtCtrls, lib_utils, classFSE, spec_HRF, DateUtils, translation, U_IntList,
-  UBufferedFS, StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar, ImgList, SysUtils;
+  StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar, ImgList, SysUtils;
 
 const MP_FRAMES_FLAG = 1;
       MP_BYTES_FLAG = 2;
       MP_TOC_FLAG = 4;
       MP_VBR_SCALE_FLAG = 8;
 
-      HR_VERSION = 56041;	// HyperRipper version
+      HR_VERSION = 56042;	// HyperRipper version
 
 type FormatsListElem = record
        GenType: Integer;
@@ -1119,7 +1121,8 @@ var hSRC, x: integer;
     iNumOffset: Integer;
     tmpspeedcalc: single;
     itmX: Pointer;
-    sSRC: TBufferedFS;
+    sSRC: THandleStream;
+    sSRChandle: integer;
 begin
 
   cancel := false;
@@ -1182,7 +1185,16 @@ begin
   hrip.lblNumThreads.Caption := inttostr(numThreads);
 
   try
-    sSRC := TBufferedFS.Create(filename,fmOpenRead or fmShareExclusive);
+
+    // Open the file
+    sSRChandle := FileOpen(filename, fmOpenRead or fmShareDenyWrite);
+
+    // If there was an error opening the file raise and error
+    if sSRChandle = -1 then
+        raise Exception.Create('FileOpen error');
+
+    // Create the THandleStream object from the FileOpen handle
+    sSRC := THandleStream.Create(sSRChandle);
 
     hrip.LastResult(ReplaceValue('%f',DLNGstr('HRLG03'),ExtractFileName(filename))+' '+DLNGstr('HRLG04'));
     hrip.AddResult(DLNGstr('HRLG05'));
@@ -1400,8 +1412,7 @@ begin
       hrip.AddResult(DLNGstr('HRLG15'));
       hrip.Refresh;
       loadTime := getTickCount - startTime;
-      FSE.LoadHyperRipper(filename,sSRC.Handle,loadTime,hrip.chkMakeDirs.Checked);
-      //FSE.BrowseDir('');
+      FSE.LoadHyperRipper(filename,sSRChandle,loadTime,hrip.chkMakeDirs.Checked);
       hrip.LastResult(DLNGstr('HRLG15')+' '+DLNGstr('HRLG04'));
       if (FSE.GetNumEntries > 0) and (hrip.chkAutoClose.Checked) then
       begin
@@ -1424,8 +1435,8 @@ begin
           Dispose(flisttot.Items[x]);
         FreeAndNil(flisttot);
       end;
-//      if sSRC <> nil then
-//        FreeAndNil(sSRC);
+      if sSRC <> nil then
+        FreeAndNil(sSRC);
       freemem(Buffer);
 //      FileClose(hSRC);
       hrip.LastResult(DLNGstr('HRLG17')+' '+DLNGstr('HRLG04'));

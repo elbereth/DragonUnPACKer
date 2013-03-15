@@ -18,6 +18,9 @@ program dpackc;
 //
 
 uses
+  FastMM4,
+  FastCode,
+  FastMove,
   Forms,
   Main in 'Main.pas' {frmMain},
   lib_bincopy in '..\..\common\lib_bincopy.pas',

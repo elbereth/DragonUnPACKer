@@ -935,6 +935,7 @@ begin
 end;
 
 function TDrivers.CloseFile: boolean;
+var x: integer;
 begin
 
   // By default everything was fine
@@ -947,6 +948,11 @@ begin
   // The current folder data is reset
   dup5Main.lstContent.RootNodeCount := 0;
   setLength(listData,0);
+
+  // Clear the cache
+  for x := Low(entryListFolderCache) to High(entryListFolderCache) do
+    SetLength(entryListFolderCache[x],0);
+  SetLength(entryListFolderCache,0);
 
   // In case we have some elements and an active driver we call the exported CloseFile function of the driver
   if NumElems > 0 then
@@ -1419,6 +1425,7 @@ begin
   LoadTimeParse := MilliSecondsBetween(Now, StartTime);
   CurrentDriver := -1;
   CurrentFile := filHandle;
+  DispNumElems := entryListIndex+1;
   zero64 := 0;
   CurrentFileSize := FileSeek(filHandle,zero64,2);
   dup5Main.Caption := 'Dragon UnPACKer v' + CurVersion + ' ' + CurEdit+ ' - '+fil;
@@ -1657,45 +1664,40 @@ begin
       HDR.MinorVersion := 0;
       HDR.PrgVersion := prgver;
       HDR.PrgID := prgid;
-      HDR.OffsetIndex := sizeOf(HDR);
+      HDR.OffsetIndex := sizeOf(HRF3_Header);
       if info then
       begin
         HDR.Attribs := 1;
-        inc(HDR.OffsetIndex, sizeOf(NFO));
+        inc(HDR.OffsetIndex, sizeOf(HRF3_Info));
       end
       else
         HDR.Attribs := 0;
 
       FillChar(HDR.Filename, 255,0);
       cstr := ExtractFileName(srcfil);
-      for x := 1 to length(cstr) do
-        HDR.Filename[x] := cstr[x];
+      Move(cstr[1],HDR.Filename,length(cstr));
       HDR.Filesize := srcsize;
-      HDR.NumEntries := NumElems;
-      FileWrite(hHRF,HDR,SizeOf(HDR));
+      HDR.NumEntries := entryListIndex+1;
+      FileWrite(hHRF,HDR,SizeOf(HRF3_Header));
       if info then
       begin
         NFO.InfoType := 0;
         FillChar(NFO.Author,64,0);
-        for x := 1 to length(author) do
-          NFO.Author[x] := author[x];
+        Move(Author[1],NFO.Author,length(Author));
         FillChar(NFO.URL,128,0);
-        for x := 1 to length(url) do
-          NFO.URL[x] := url[x];
+        Move(url[1],NFO.URL,length(url));
         FillChar(NFO.Title,64,0);
-        for x := 1 to length(title) do
-          NFO.Title[x] := title[x];
-        FileWrite(hHRF,NFO,SizeOf(NFO));
+        Move(title[1],NFO.Title,length(title));
+        FileWrite(hHRF,NFO,SizeOf(HRF3_Info));
       end;
 
       for y := 0 to entryListIndex do
       begin
         FillChar(ENT.Filename,255,0);
-        for x := 1 to length(entryList[y].Name) do
-          ENT.Filename[x] := entryList[y].Name[x];
+        Move(entryList[y].Name[1],ENT.Filename,length(entryList[y].Name));
         ENT.Offset := entryList[y].Offset;
         ENT.Size := entryList[y].Size;
-        FileWrite(hHRF,ENT,SizeOf(ENT));
+        FileWrite(hHRF,ENT,SizeOf(HRF3_Index));
       end;
 
     finally
@@ -1722,7 +1724,7 @@ begin
       HDR.Version := 2;
       HDR.HRipVer.Major := Trunc(prgver/10000);
       HDR.HRipVer.Minor := Trunc(((prgver/10000)-Trunc(prgver/10000))*10);
-      HDR.Dirnum := NumElems;
+      HDR.Dirnum := entryListIndex+1;
       FillChar(HDR.Filename, 98,0);
       cstr := ExtractFileName(srcfil);
       for x := 0 to length(cstr)-1 do
@@ -1787,7 +1789,7 @@ begin
       HDR.Version := 1;
       HDR.HRipVer.Major := Trunc(prgver/10000);
       HDR.HRipVer.Minor := Trunc(((prgver/10000)-Trunc(prgver/10000))*10);
-      HDR.Dirnum := NumElems;
+      HDR.Dirnum := entryListIndex+1;
       FillChar(HDR.Filename, 98,0);
       cstr := ExtractFileName(srcfil);
       for x := 0 to length(cstr)-1 do

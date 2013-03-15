@@ -306,7 +306,7 @@ implementation
 uses Compile, Config;
 
 const DPSVERSION = 5;
-      VERSION: integer = 36140;
+      VERSION: integer = 34040;
 
 {$R *.dfm}
 

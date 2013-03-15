@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    13/03/2013
+by Alexande "Elbereth" Devilliers                                    15/03/2013
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,8 +10,8 @@ by Alexande "Elbereth" Devilliers                                    13/03/2013
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.7.0.273
-SVN Release 647 [Unreleased]
+Version 5.7.0.274
+SVN Release 648 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
@@ -25,12 +25,17 @@ SVN Release 647 [Unreleased]
    New directory cache should be as fast (if not faster) than the old one.
    Note: Only main driver was adapted to DUDI v6.
    ! SVN 646: Fixed files without directories not working in previous SVN 644.
+   ! SVN 648: Fixed folder cache never cleared when closing files. This was
+              resulting in duplicate files when loading HRF files for ex.
  + Added FastCode & FastMove.
    http://fastcode.sourceforge.net/
  ! Fixed support for multiple convert plugins during preview.
- i HyperRipper v5.6a:
+ i HyperRipper v5.6b:
    ! Fixed the sanity check on the BIK searching algorithm.
      Should avoid some false-positives.
+   ! Fixed the memory leak for not freing the TBufferedFS component:
+     Switched back to using THandleStream instead of TBufferedFS.
+	 Free THandleStream but keep handle open and pass it to TDrivers.
  * Duppi v3.4.0:
    i Updated to work with Indy 9 instead of Curl.
      This means a full Delphi implementation with no need for DLLs.

@@ -196,6 +196,7 @@ type FSE = ^element;
                  Added Ghostbusters: Sanctum of Slime .PAK files support (with LZMA decompression)
     21210        Added preliminary The Witcher 2: Assassins of Kings .DZIP files support
     30010        Upgraded to new interface DUDI v6 (plugin is not backward compatible to v4/v5)
+                 Added Aliens vs Predator (2010) .ASR (Asura & AsuraZlb) support 
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -306,6 +307,7 @@ begin
   addFormat(result,'*.007','James Bond 007: NightFire (*.007)');
   addFormat(result,'*.ARCH00','F.E.A.R. (*.ARCH00)');
   addFormat(result,'*.ART','Blood (*.ART)');
+  addFormat(result,'*.ASR','Aliens vs. Predator (*.ASR)');
   addFormat(result,'*.AWF','Qui veut gagner des millions (*.AWF)|Who wants to be a millionaire (*.AWF)');
   addFormat(result,'*.BAG;*.RFH','Emperor: Battle for Dune (*.BAG;*.RFH)');
   addFormat(result,'*.BAR','Age of Mythology (*.BAR)|Age of Empires 3 (*.BAR)');
@@ -325,7 +327,7 @@ begin
   addFormat(result,'*.DTA','Hidden & Dangerous (*.DTA)');
   addFormat(result,'*.ERF','Dragon Age: Origins (*.ERF)');
   addFormat(result,'*.FAR','The Sims (*.FAR)');
-  addFormat(result,'*.FFL','Alien vs Predator (*.FFL)');
+  addFormat(result,'*.FFL','Aliens vs Predator (*.FFL)');
   addFormat(result,'*.FPK','Sid Meier''s Civilization 4 (*.FPK)|Sid Meier''s Civilization V (*.FPK)');
   addFormat(result,'*.GOB','Dark Forces (*.GOB)|Indiana Jones 3D (*.GOB)|Jedi Knight: Dark Forces 2 (*.GOB)');
   addFormat(result,'*.GRP;*.ART','Duke Nukem 3D (*.GRP;*.ART)|Shadow Warrior (*.GRP;*.ART)');
@@ -355,7 +357,7 @@ begin
   addFormat(result,'*.POD','Terminal Velocity (*.POD)|BloodRayne (*.POD)|Nocturne (*.POD)|Ghostbusters: The Video Game (*.POD)');
   addFormat(result,'*.RCF','Prototype (*.RCF)|Scarface (*.RCF)');
   addFormat(result,'*.RES','Electranoid (*.RES)|Evil Islands (*.RES)|Fuzzy''s World of Miniature Space Golf (*.RES)|Laser Light (*.RES)|Rage of Mages 2 (*.RES)|Xatax (*.RES)');
-  addFormat(result,'*.REZ','Alien vs Predator 2 (*.REZ)|No One Lives Forever (*.REZ)|No One Lives Forever 2 (*.REZ)|Sanity Aiken''s Artifact (*.REZ)|Shogo: Mobile Armor Division (*.REZ)|Purge (*.REZ)|Tron 2.0 (*.REZ)');
+  addFormat(result,'*.REZ','Aliens vs Predator 2 (*.REZ)|No One Lives Forever (*.REZ)|No One Lives Forever 2 (*.REZ)|Sanity Aiken''s Artifact (*.REZ)|Shogo: Mobile Armor Division (*.REZ)|Purge (*.REZ)|Tron 2.0 (*.REZ)');
   addFormat(result,'*.RFA','Battlefield 1942 (*.RFA)');
   addFormat(result,'*.SAD','Black & White (*.SAD)');
   addFormat(result,'*.SAK','Postal (*.SAK)');
@@ -626,7 +628,7 @@ var HDR: N007Header;
     ENTL: PN007List;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -892,7 +894,7 @@ var HDR: DRSHeader;
     BufTest: array[0..3] of Char;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -1155,7 +1157,7 @@ var HDR: SFLHeader;
     nameStr: string;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -1266,6 +1268,358 @@ begin
 end;
 
 // -------------------------------------------------------------------------- //
+// Aliens vs. Predator .ASR support ========================================= //
+// -------------------------------------------------------------------------- //
+
+// Structure of an uncompressed ASR file:
+//    AsuraMagic
+//    Blocks
+//       Block 1 Header
+//       Block 1 Content
+//         ..
+//       Final block header (filled with 0x00)
+
+// Structure of an compressed ASR file:
+//    AsuraZlbMagic
+//    EmptyBytes : integer (= 0)
+//    CompressedSize : integer
+//    UncompressedSize : integer
+//    Zlib compressed Asura file (see structure of uncompressed ASR file)
+
+// Known (parsed) block types
+//   ASTS - Contains all streaming sounds (Music/Ambient sounds)
+//          NumberOfEntries : Integer;
+//          Entries format:
+//            Filename : Get0;
+//            FilenamePadding = 4 - (length(Filename) mod 4) - 1;
+//            FileSize : integer;
+//            AbsoluteFileOffset : integer;
+//          Data
+//   RCSF - Contains a unique resource file
+//          TypeOfResource : Integer;       // 2 = Texture  3 = Sound
+//          Unknown : Integer;
+//          FileSize : integer;
+//          FileName : Get0;
+//          FilenamePadding = 4 - (length(Filename) mod 4) - 1;
+//          FileData : array[1..FileSize] of byte;
+//   RSFL - Contains a list of resources with offsets relative to the RSFL block
+//          NumberOfEntries : Integer;
+//          Entries format:
+//            Filename : Get0;
+//            FilenamePadding = 4 - (length(Filename) mod 4) - 1;
+//            FileSize : integer;
+//            Unknown : integer;
+//            RelativeFileOffset : integer;
+//          Data
+
+// Unknown block types (probably not complete):
+//   apas
+//   DLEV
+//   FAAN
+//   FACE
+//   FNFO
+//   FONT
+//   FSX2
+//   FXET
+//   FXPT
+//   FXST
+//   HANM
+//   HMPT
+//   hpas
+//   HSBB
+//   HSKL
+//   HSKN
+//   HSND
+//   MARE
+//   MTRL
+//   ppas
+//   SDEV
+//   SDSM
+//   TXAN
+
+const AsuraMagic = 'Asura   ';
+const AsuraZlbMagic = 'AsuraZlb';
+type AsuraBlockHeader = packed record
+       BlockID: array[0..3] of Char;
+       BlockSize: cardinal;          // Including header
+       Unknown1: integer;
+       Unknown2: integer;
+     end;
+
+function ReadAvpAsuraStm(src: TStream; FileTotSize: int64; Compressed: Byte): integer;
+var BlockHDR: AsuraBlockHeader;
+    CurPos: int64;
+    SeekResult, NumberOfEntries, TotalNumberOfEntries, x, NSize: integer;
+    Offset, Size: cardinal;
+    disp: string;
+    OldPercent, SavedOldPercent: integer;
+begin
+
+  TotalNumberOfEntries := 0;
+  SavedOldPercent := 0;
+  OldPercent := -1;
+
+  repeat
+
+    // Store current position in stream
+    CurPos := Src.Seek(0,soFromCurrent);
+
+    // Read the block header
+    Src.ReadBuffer(BlockHDR,SizeOf(AsuraBlockHeader));
+
+    // This is a sound entries block
+    if (BlockHDR.BlockID = 'ASTS') then
+    begin
+
+      // Retrieve the number of entries
+      Src.ReadBuffer(NumberOfEntries,4);
+
+      SavedOldPercent := OldPer;
+      OldPercent := -1;
+
+      // For each entry
+      for x:= 1 to NumberOfEntries do
+      begin
+
+        // Percentage done display
+        Per := ROund(((x / NumberOfEntries)*100));
+        if (Per >= (OldPercent+1)) then
+        begin
+          SetPercent(Per);
+          OldPercent := Per;
+        end;
+
+        // Get the entry name (0x00 ended)
+        disp := Strip0(Get0(Src));
+
+        // Calculate how many extra 0x00 are at the end of the entry
+        // Seek to the new position if needed
+        NSize := 4 - (length(disp) mod 4);
+        if NSize > 0 then
+          Src.Seek(NSize,soFromCurrent);
+
+        // Read the Size
+        Src.ReadBuffer(Size,4);
+
+        // Read the Offset
+        Src.ReadBuffer(Offset,4);
+
+        // Add entry
+        FSE_Add(disp,Offset,Size,Nsize,0);
+
+      end;
+
+      inc(TotalNumberOfEntries,NumberOfEntries);
+      OldPercent := SavedOldPercent;
+
+    end
+    // RSFL - This is a ressource file list
+    else if (BlockHDR.BlockID = 'RSFL') then
+    begin
+
+      // Retrieve the number of entries
+      Src.ReadBuffer(NumberOfEntries,4);
+
+      SavedOldPercent := OldPercent;
+      OldPercent := -1;
+
+      // For each entry
+      for x:= 1 to NumberOfEntries do
+      begin
+
+        // Percentage done display
+        Per := ROund(((x / NumberOfEntries)*100));
+        if (Per >= (OldPercent+1)) then
+        begin
+          SetPercent(Per);
+          OldPercent := Per;
+        end;
+
+        // Get the entry name (0x00 ended)
+        disp := Strip0(Get0(Src));
+
+        // Calculate how many extra 0x00 are at the end of the entry
+        // Seek to the new position if needed
+        NSize := 4 - (length(disp) mod 4) - 1;
+        if NSize > 0 then
+          Src.Seek(NSize,soFromCurrent);
+
+        // Read the Offset
+        Src.ReadBuffer(Offset,4);
+
+        // Read the Size
+        Src.ReadBuffer(Size,4);
+
+        // Read unknown
+        Src.ReadBuffer(NSize,4);
+
+        // Add entry
+        FSE_Add(disp,Offset+BlockHDR.BlockSize,Size,NSize,Compressed);
+
+      end;
+
+      inc(TotalNumberOfEntries,NumberOfEntries);
+      OldPercent := SavedOldPercent;
+
+    end
+    // RSCF - This is a ressource file block
+    else if (BlockHDR.BlockID = 'RSCF') then
+    begin
+
+      // Percentage parsed display
+      Per := ROund(((CurPos / FileTotSize)*100));
+      if (Per >= (OldPer+1)) then
+      begin
+        SetPercent(Per);
+        OldPer := Per;
+      end;
+
+      // Bypass the 8 bytes we don't use
+      Src.Seek(8,soFromCurrent);
+
+      // Read the Size
+      Src.ReadBuffer(Size,4);
+
+      // Get the entry name (0x00 ended)
+      disp := Strip0(Get0(Src));
+
+      // Calculate how many extra 0x00 are at the end of the entry
+      // Seek to the new position if needed
+      NSize := 4 - (length(disp) mod 4) - 1;
+      if NSize > 0 then
+        Src.Seek(NSize,soFromCurrent);
+
+      // Get the offset
+      Offset := Src.Seek(0,soFromCurrent);
+
+      // Add entry
+      if leftstr(disp,1) = '\' then
+        disp := RightStr(disp,length(disp)-1);
+
+      FSE_Add(disp,Offset,Size,Nsize,Compressed);
+
+      inc(TotalNumberOfEntries);
+
+    end;
+
+    // Go to next block
+    SeekResult := Src.Seek(CurPos+BlockHDR.BlockSize,SoFromBeginning);
+
+  // Stop when any of the following is true: the block is empty
+  //                                         the block size is empty
+  //                                         the new position after the current block is past the end of file
+  //                                         the last seek action failed
+  until ((BlockHDR.BlockID = chr(0)+chr(0)+chr(0)+chr(0))
+      or (BlockHDR.BlockSize = 0)
+      or ((BlockHDR.BlockSize + CurPos + SizeOf(AsuraBlockHeader)) >= FileTotSize)
+      or (SeekResult = -1)
+      or (SeekResult = FileTotSize));
+
+  result := TotalNumberOfEntries;
+
+end;
+
+function ReadAvpAsura(src: string): integer;
+var ID: array[0..7] of char;
+    CompSize, DecompSize, checkVal: cardinal;
+    decStm: TDecompressionStream;
+    srcStm: THandleStream;
+    dstStm: TFileStream;
+    FileTotSize: Int64;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
+
+  if FHandle > 0 then
+  begin
+
+    FileTotSize := FileSeek(Fhandle,0,2);
+    FileSeek(Fhandle,0,0);
+    FileRead(FHandle,ID,8);
+
+    // There are 2 Asura formats
+    // The first one is not compressed
+    // So we pass it directly to ReadAvpAsuraStm() as a THandleStream
+    if ID = AsuraMagic then
+    begin
+      srcStm := THandleStream.Create(FHandle);
+      try
+        result := ReadAvpAsuraStm(srcStm,FileTotSize,0);
+      finally
+        FreeAndNil(srcStm);
+      end;
+
+      DrvInfo.ID := 'Asura';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+    end
+    // The second one is Zlib compressed
+    // So we pass it to ReadAvpAsuraStm() as a TDecompressionStream
+    else if ID = AsuraZlbMagic then
+    begin
+      srcStm := THandleStream.Create(FHandle);
+      try
+        srcStm.ReadBuffer(CheckVal,4);
+        srcStm.ReadBuffer(CompSize,4);
+        srcStm.ReadBuffer(DecompSize,4);
+        if (CheckVal <> 0) or ((CompSize+20) > FileTotSize) then
+        begin
+          FileClose(Fhandle);
+          FHandle := 0;
+          Result := -3;
+          ErrInfo.Format := 'AsuraZ';
+          ErrInfo.Games := 'Alien vs Predator';
+        end
+        else
+        begin
+          decStm := TDecompressionStream.Create(srcStm);
+          try
+            decStm.ReadBuffer(ID,8);
+            if (ID <> AsuraMagic) then
+            begin
+              FileClose(Fhandle);
+              FHandle := 0;
+              Result := -3;
+              ErrInfo.Format := 'AsuraZ';
+              ErrInfo.Games := 'Alien vs Predator';
+            end
+            else
+            begin
+              result := ReadAvpAsuraStm(decStm,DecompSize-4,1);
+              DrvInfo.ID := 'AsuraZ';
+              DrvInfo.Sch := '\';
+              DrvInfo.FileHandle := FHandle;
+              DrvInfo.ExtractInternal := True;
+            end;
+          except
+            FreeAndNil(decStm);
+            FileClose(Fhandle);
+            FHandle := 0;
+            Result := -3;
+            ErrInfo.Format := 'AsuraZ';
+            ErrInfo.Games := 'Alien vs Predator';
+          end;
+        end;
+      finally
+        FreeAndNil(srcStm);
+      end;
+    end
+    else
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'Asura';
+      ErrInfo.Games := 'Alien vs Predator';
+    end;
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
 // Alien vs Predator .FFL support =========================================== //
 // -------------------------------------------------------------------------- //
 
@@ -1336,7 +1690,7 @@ var HDR: RFFLHeader;
     NSize: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -1425,7 +1779,7 @@ var ID: CPRID;
     NumE, x, smallerOffset, res, lastOffset: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -1501,7 +1855,7 @@ var entryList: array of Integer;
     numEntries, TotSize, x: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -1658,7 +2012,7 @@ var HDR: FORGEHeader;
     NumE, x: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -1819,7 +2173,7 @@ var ENT: RFA_Entry;
     IsRetail, IsComp: boolean;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
   IsComp := false;
 
   if FHandle > 0 then
@@ -2052,7 +2406,7 @@ var HDR: LUG_Chunk;
     StoredOffsets: TIntList;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -2486,7 +2840,7 @@ var HDR: FPKHeader;
     OldPer: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -2786,7 +3140,7 @@ var ENT: PCKEntry;
     disp: string;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -2943,7 +3297,7 @@ var ENT: BIN_Entry;
     TotFSize: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -3087,7 +3441,7 @@ var filnam: string;
     //filesize: Cardinal;
 begin
 
-  FHandle := FileOpen(src, fmOpenRead);
+  FHandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -3291,7 +3645,7 @@ var HDR: HOG2Header;
     PerInfo: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -3399,7 +3753,7 @@ var HDR: HDRDragonAgeOriginsERF;
     disp: ansistring;
 begin
 
-  Fhandle := FileOpen(filename, fmOpenRead);
+  Fhandle := FileOpen(filename, fmOpenRead or fmShareDenyWrite);
 
   if (FHandle > 0) then
   begin
@@ -3592,7 +3946,7 @@ var HDR: ARTHeader;
     PicAnm: array of integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -3679,7 +4033,7 @@ var HDR: GRPHeader;
     Offset: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -3761,7 +4115,7 @@ var ENT: RFH_Entry;
     IsError: Boolean;
 begin
 
-  Hhandle := FileOpen(src, fmOpenRead);
+  Hhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if Hhandle >= 0 then
   begin
@@ -3780,7 +4134,7 @@ begin
     else if FileExists(cfil) then
     begin
       FileClose(Hhandle);
-      Fhandle := FileOpen(dfil, fmOpenRead);
+      Fhandle := FileOpen(dfil, fmOpenRead or fmShareDenyWrite);
 
       if Fhandle < 0 then
       begin
@@ -3792,7 +4146,7 @@ begin
       else
       begin
 
-        Chandle := FileOpen(cfil, fmOpenRead);
+        Chandle := FileOpen(cfil, fmOpenRead or fmShareDenyWrite);
 
         if Chandle < 0 then
         begin
@@ -3866,7 +4220,7 @@ begin
     end
     else
     begin
-      Fhandle := FileOpen(dfil, fmOpenRead);
+      Fhandle := FileOpen(dfil, fmOpenRead or fmShareDenyWrite);
 
       EndSize := FileSeek(FHandle, 0,2);
       FileSeek(FHandle, 0, 0);
@@ -3950,7 +4304,7 @@ var HDR: BAGHeader;
     IsIDX: Boolean;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -4015,7 +4369,7 @@ begin
     else if IsIDX then
     begin
       FileSeek(Fhandle, 0, 0);
-      hIDX := FileOpen(ChangeFileExt(src,'.idx'),fmOpenRead);
+      hIDX := FileOpen(ChangeFileExt(src,'.idx'),fmOpenRead or fmShareDenyWrite);
 
       FileSeek(hIDX, 0, 0);
       FileRead(hIDX, HDR.ID, 4);
@@ -4183,7 +4537,7 @@ var ENT: SDTIndex;
     Offset: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -4365,7 +4719,7 @@ var HDR: SSAHeader;
     disp: string;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -4506,7 +4860,7 @@ var HDR: MOSChunk;
     isWave: boolean;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -4876,7 +5230,7 @@ var ID: array[0..3] of char;
     disp: string;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -5422,7 +5776,7 @@ var HDR: ARCH00_Header;
     filStream: THandleStream;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -5675,7 +6029,7 @@ var HDR: VPHeader;
     NumE, x: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -5744,7 +6098,7 @@ function ReadGTA3ADF(src: string): Integer;
 var test: byte;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -5955,7 +6309,7 @@ var HDR: GZPHeader;
     NumE, x, Per, PerOld: integer;
 begin
 
-  FHandle := FileOpen(src, fmOpenRead);
+  FHandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -6101,8 +6455,8 @@ begin
   end
   else
   begin
-    DHandle := FileOpen(dirfile, fmOpenRead);
-    FHandle := FileOpen(imgfile, fmOpenRead);
+    DHandle := FileOpen(dirfile, fmOpenRead or fmShareDenyWrite);
+    FHandle := FileOpen(imgfile, fmOpenRead or fmShareDenyWrite);
 
     if (DHandle > 0) and (FHandle > 0) then
     begin
@@ -6294,7 +6648,7 @@ var NumE: integer;
     limitOffset: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -6357,7 +6711,7 @@ var HDR: NRMHeader;
     nam: string;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -6427,7 +6781,7 @@ var ENT: H3SND_Index;
     next: boolean;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -6524,7 +6878,7 @@ var HDR: H4R_Header;
     nam, dir: string;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -6607,7 +6961,7 @@ var HDR: DTA_CNT_Header;
     ID: array[0..3] of char;
 begin
 
-  FHandle := FileOpen(src, fmOpenRead);
+  FHandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -6638,7 +6992,7 @@ begin
       end
       else
       begin
-        Chandle := FileOpen(cfil, fmOpenRead);
+        Chandle := FileOpen(cfil, fmOpenRead or fmShareDenyWrite);
 
         FileRead(CHandle,HDR.ID,8);
         FileRead(CHandle,HDR.DTASize,4);
@@ -6708,7 +7062,7 @@ var HDR: PRMHeader;
     offsets: array of cardinal;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -6790,7 +7144,7 @@ var HDR: TEX_Header;
     offsets: array of cardinal;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -6955,7 +7309,7 @@ var HDR: HRF_Header;
     Chandle: integer;
 begin
 
-  Chandle := FileOpen(src, fmOpenRead);
+  Chandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if CHandle > 0 then
   begin
@@ -6999,7 +7353,7 @@ begin
              else
              begin
 
-               Fhandle := FileOpen(cfil, fmOpenRead);
+               Fhandle := FileOpen(cfil, fmOpenRead or fmShareDenyWrite);
 
                if FHandle <= 0 then
                begin
@@ -7054,7 +7408,7 @@ begin
         else
         begin
 
-          Fhandle := FileOpen(cfil, fmOpenRead);
+          Fhandle := FileOpen(cfil, fmOpenRead or fmShareDenyWrite);
 
           if FHandle <= 0 then
           begin
@@ -7245,7 +7599,7 @@ var HDR: ZFSHeader;
     Offset: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -7329,7 +7683,7 @@ var HDR: SLFHeader;
     x, DirOffset: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -7681,7 +8035,7 @@ var HDR: JAM2Header;
     unkVal: word;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -7835,7 +8189,7 @@ var HDR: LEMBOXHeader;
     EList: TStringList;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -8001,7 +8355,7 @@ var HDR: REZHeader;
     NumE: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -8070,7 +8424,7 @@ var HDR: MDK1Header;
     NumE, x: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -8152,7 +8506,7 @@ var HDR: BUNHeader;
     Size: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -8229,7 +8583,7 @@ var HDR: APUKHeader;
     NumE,x: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -8297,7 +8651,7 @@ var ENT: BKF_Entry;
     NumE,x, DirNum: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -8386,7 +8740,7 @@ var HDR: M4BHeader;
     tInt: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -8520,7 +8874,7 @@ var HDR: SYN_Header;
     NumE,x : integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -8672,7 +9026,7 @@ var HDR: PFFHeader;
     NumE, x: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -8739,7 +9093,7 @@ var ENT: array[1..2000] of PBO_Entry;
     SlashMode: boolean;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -9015,7 +9369,7 @@ begin
 
   SetPercent(0);
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -9095,7 +9449,7 @@ var HDR: SAK_Header;
     ENT: PPostalList;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -9224,7 +9578,7 @@ var HDR: RCFHeader;
     compressedEntries: boolean;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -9494,7 +9848,7 @@ var ENT: AWFEntry;
     nam: string;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -9695,7 +10049,7 @@ function ReadRealMystDNI(src: string): Integer;
 var HDR: DNIHeader;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -9757,7 +10111,7 @@ var HDR: SINHeader;
     NumE, x: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -10028,7 +10382,7 @@ var HDR: OPKHeader;
 begin
 
   // Open the file for reading
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -10374,7 +10728,7 @@ var HDR: TES4BSAHeader;
     SHandle: THandleStream;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -10965,7 +11319,7 @@ var HDR: FARHeader;
     NumE, x: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -11040,7 +11394,7 @@ var HDR: DZIP_Header;
     strName: String;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -11126,7 +11480,7 @@ var HDR: PKR_Header;
     DList: array[0..1000] of Integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -11314,7 +11668,7 @@ var HDR: HPIHeader;
     BufMem: TMemoryStream;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -11711,7 +12065,7 @@ var HDR: VFSHeader;
     RootOffset, StartOffset, x, numFSE: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -11908,7 +12262,7 @@ var HDR: CBFHeader;
     TotSize: int64;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -12103,7 +12457,7 @@ var HDR: CBFHeader;
     Entry: TMemoryStream;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -12185,7 +12539,7 @@ var HDR: XCR_Header;
     nam: string;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -12494,7 +12848,7 @@ begin
 
     try
 
-      XCCDATFile := TFileStream.Create(CurPath+'global mix database.dat',fmOpenRead);
+      XCCDATFile := TFileStream.Create(CurPath+'global mix database.dat',fmOpenRead or fmShareDenyWrite);
       Buffer := TMemoryStream.Create;
 
       Buffer.CopyFrom(XCCDATFile,XCCDATFile.Size);
@@ -12572,7 +12926,7 @@ begin
       if FileExists(CurPath+'drv_default_mix.dbs') then
       begin
 
-        DATFile := TFileStream.Create(CurPath+'drv_default_mix.dbs',fmOpenRead);
+        DATFile := TFileStream.Create(CurPath+'drv_default_mix.dbs',fmOpenRead or fmShareDenyWrite);
 
         Buffer.CopyFrom(DATFile,DATFile.Size);
         FreeAndNil(DATFile);
@@ -12655,7 +13009,7 @@ begin
       if not(CreateHashDB) then
       begin
 
-        DATFile := TFileStream.Create(CurPath+'drv_default_mix.db1',fmOpenRead);
+        DATFile := TFileStream.Create(CurPath+'drv_default_mix.db1',fmOpenRead or fmShareDenyWrite);
 
         Buffer.CopyFrom(DATFile,DATFile.Size);
         Buffer.Seek(0,0);
@@ -12732,7 +13086,7 @@ begin
       if not(CreateHashDB) then
       begin
 
-        DATFile := TFileStream.Create(CurPath+'drv_default_mix.db2',fmOpenRead);
+        DATFile := TFileStream.Create(CurPath+'drv_default_mix.db2',fmOpenRead or fmShareDenyWrite);
 
         Buffer.CopyFrom(DATFile,DATFile.Size);
         Buffer.Seek(0,0);
@@ -12946,7 +13300,7 @@ var HDR: WestwoodMIX_Header;
     disp: string;
 begin
 
-  Fhandle := FileOpen(fil, fmOpenRead);
+  Fhandle := FileOpen(fil, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -13083,7 +13437,7 @@ var HDR: WADIR_Header;
     NumE: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -13203,7 +13557,7 @@ var ID: array[0..3] of char;
     res: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -13234,7 +13588,7 @@ var ID: array[0..3] of char;
     res: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -13268,7 +13622,7 @@ var ID: array[0..7] of char;
     test4,test5: word;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -13337,7 +13691,7 @@ var ID: array[0..3] of char;
     res: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -13371,7 +13725,7 @@ var ID: array[0..3] of char;
     res: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -13413,7 +13767,7 @@ var ID: array[0..3] of char;
     mixtest2,mixtest3: cardinal;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -13497,7 +13851,7 @@ var ID: array[0..3] of char;
     res: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -13530,7 +13884,7 @@ var ID64: array[0..63] of char;
     res: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -13576,7 +13930,7 @@ var ID: array[0..3] of char;
     res: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -13609,7 +13963,7 @@ var ID: array[0..3] of char;
     res: integer;
 begin
 
-  Fhandle := FileOpen(src, fmOpenRead);
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
 
   if FHandle > 0 then
   begin
@@ -13673,7 +14027,7 @@ begin
   if Deeper then
   begin
 
-    FHandle := FileOpen(fil, fmOpenRead);
+    FHandle := FileOpen(fil, fmOpenRead or fmShareDenyWrite);
 
     if FHandle > 0 then
     begin
@@ -13714,6 +14068,12 @@ begin
       begin
         FileClose(Fhandle);
         Result := ReadMystIVRevelationM4B(fil);
+      end
+      // Alien vs Predator .ASR
+      else if (ID8 = AsuraMagic) or (ID8 = AsuraZlbMagic) then
+      begin
+        FileClose(Fhandle);
+        Result := ReadAvpAsura(fil);
       end
       // Black & White 2 .STUFF file (Everything.stuff)
       else if (ID127[0] = #1) and (ID127[1] = #0) and (ID127[2] = #0) and (ID127[3] = #0)
@@ -14071,6 +14431,9 @@ begin
       ReadFormat := ReadNightFire007(fil)
     else if ext = 'ADF' then
       ReadFormat := ReadGTA3ADF(fil)
+    // Alien vs Predator .ASR
+    else if ext = 'ASR' then
+      Result := ReadAvpAsura(fil)
     else if ext = 'AWF' then
       ReadFormat := ReadQuiVeutGagnerDesMillionsAWF(fil)
     else if ext = 'ARCH00' then
@@ -14121,7 +14484,7 @@ begin
       Result := ReadCivilization4FPK(fil)
     else if ext = 'GL' then
     begin
-      FHandle := FileOpen(fil, fmOpenRead);
+      FHandle := FileOpen(fil, fmOpenRead or fmShareDenyWrite);
       ReadFormat := ReadStarCrusaderPAK(true);
     end
     else if ext = 'GRP' then
@@ -14149,7 +14512,7 @@ begin
     // The Fifth Element .MRC
     else if ext = 'MRC' then
     begin
-      FHandle := FileOpen(fil, fmOpenRead);
+      FHandle := FileOpen(fil, fmOpenRead or fmShareDenyWrite);
       Result := ReadTheFifthElementMRC;
     end
     else if ext = 'MTF' then
@@ -14324,7 +14687,7 @@ begin
 
   Result := False;
 
-  TestFile := FileOpen(fil, fmOpenRead);
+  TestFile := FileOpen(fil, fmOpenRead or fmShareDenyWrite);
 
   ext := ExtractFileExt(fil);
 
@@ -14366,6 +14729,9 @@ begin
         and (ID23[4] = 'U') and (ID23[5] = 'B') and (ID23[6] = 'I') and (ID23[7] = '_')
         and (ID23[8] = 'B') and (ID23[9] = 'F') and (ID23[10] = '_') and (ID23[11] = 'S')
         and (ID23[12] = 'I') and (ID23[13] = 'G') and (ID23[14] = #0) then
+      Result := true
+    // Alien vs Predator .ASR
+    else if (ID8 = AsuraMagic) or (ID8 = AsuraZlbMagic) then
       Result := true
     // Black & White 2 .STUFF file (Everything.stuff)
     else if (ID127[0] = #1) and (ID127[1] = #0) and (ID127[2] = #0) and (ID127[3] = #0)
@@ -14596,6 +14962,8 @@ begin
     else if ext = '007' then
       IsFormat := True
     else if ext = 'ADF' then
+      IsFormat := True
+    else if ext = 'ASR' then     // Alien vs Predator
       IsFormat := True
     else if ext = 'AWF' then
       IsFormat := True
@@ -15306,6 +15674,33 @@ begin
 
 End;
 
+function DecompressAzuraZToStream(FHandle: integer; OutputStream: TStream; Offset, Size: Int64) : Boolean;
+var
+  InputStream: THandleStream;
+  DStream: TDecompressionStream;
+  FinalSize: integer;
+begin
+
+  InputStream := THandleStream.Create(Fhandle);
+  try
+    InputStream.Seek(20, soBeginning);
+
+    DStream := TDecompressionStream.Create(InputStream);
+    try
+      DStream.Seek(Offset,soFromBeginning);
+      FinalSize := OutputStream.CopyFrom(DStream,Size);
+    finally
+      FreeAndNil(DStream);
+    end
+
+  finally
+    FreeAndNil(InputStream);
+  end;
+
+  Result := FinalSize = Size;
+
+End;
+
 function DecompressRCFToStream(outputstream: TStream; offset,size: int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback): boolean;
 var HDR: RCFFileHeader;
 begin
@@ -15411,6 +15806,12 @@ var ENT: MTFCompress;
     Buf: PByteArray;
     BufEnd: PByteArray;
 begin
+
+  if DrvInfo.ID = 'AsuraZ' then
+  begin
+    result := DecompressAzuraZToStream(FHandle,outputstream,offset,Size);
+    exit;
+  end;
 
   FileSeek(FHandle,Offset,0);
 

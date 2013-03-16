@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    15/03/2013
+by Alexande "Elbereth" Devilliers                                    16/03/2013
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -11,7 +11,7 @@ by Alexande "Elbereth" Devilliers                                    15/03/2013
 Main program version and versions history:
 
 Version 5.7.0.274
-SVN Release 648 [Unreleased]
+SVN Release 649 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
@@ -19,7 +19,8 @@ SVN Release 648 [Unreleased]
  * Refactoring the TDrivers class to stop using pointers replaced by dynamic
    arrays. Will be easier to maintain and hopefully not slower.
    Also introduced DUDI v6 that uses a callback function everytime an entry
-   needs to be added. This is completly different than DUDI v5.
+   needs to be added. This is completly different than DUDI v5 were the core
+   program calls the plugin function for all found entries.
    Both the old DUDI v1-v5 & v6 methods will be supported by Dragon UnPACKer
    5.7.0+.
    New directory cache should be as fast (if not faster) than the old one.
@@ -27,6 +28,8 @@ SVN Release 648 [Unreleased]
    ! SVN 646: Fixed files without directories not working in previous SVN 644.
    ! SVN 648: Fixed folder cache never cleared when closing files. This was
               resulting in duplicate files when loading HRF files for ex.
+   ! SVN 649: Fixed DUDI v6 plugin internal extraction not working.
+              Fixed exception when there was only 1 entry in the input file.
  + Added FastCode & FastMove.
    http://fastcode.sourceforge.net/
  ! Fixed support for multiple convert plugins during preview.
@@ -36,6 +39,18 @@ SVN Release 648 [Unreleased]
    ! Fixed the memory leak for not freing the TBufferedFS component:
      Switched back to using THandleStream instead of TBufferedFS.
 	 Free THandleStream but keep handle open and pass it to TDrivers.
+ * Elbereth's Main Driver plugin v3.0.0:
+   * Updated to new DUDI v6. This means as of this version the plugin
+     requires Dragon UnPACKer v5.7.0 or more. It won't work with older Dragon
+	 UnPACKer versions.
+   + Added support for Aliens vs. Predator (2010) .ASR file format.
+     Actually support for both uncompressed & compressed Asura files.
+	 Almost all files in the game use those formats (.EN/.GUI/etc..).
+	 If you have smart format activated (which you should) it will load them
+	 automatically.
+	 Please note the compressed Asura files are slow to load & to extract from
+	 but there is nothing I can do (the format is not foreseen for random read
+	 access).
  * Duppi v3.4.0:
    i Updated to work with Indy 9 instead of Curl.
      This means a full Delphi implementation with no need for DLLs.

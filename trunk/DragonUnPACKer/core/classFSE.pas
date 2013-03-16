@@ -504,14 +504,12 @@ begin
             @Drivers[NumDrivers].ShowConfigBox3 := GetProcAddress(Handle, 'ConfigBox');
             @Drivers[NumDrivers].OpenFile2 := GetProcAddress(Handle, 'ReadFormat');
             @Drivers[NumDrivers].InitPlugin3 := GetProcAddress(Handle, 'InitPlugin');
+            if (Drivers[NumDrivers].DUDIVersion >= 4) then
+              @Drivers[NumDrivers].ExtractFileToStream := GetProcAddress(Handle, 'ExtractFileToStream');
             if (Drivers[NumDrivers].DUDIVersion >= 5) then
               @Drivers[NumDrivers].InitPluginEx5 := GetProcAddress(Handle, 'InitPluginEx5');
             if (Drivers[NumDrivers].DUDIVersion >= 6) then
               @Drivers[NumDrivers].InitPluginEx6 := GetProcAddress(Handle, 'InitPluginEx6');
-            if (Drivers[NumDrivers].DUDIVersion = 4) or (Drivers[NumDrivers].DUDIVersion = 5) then
-            begin
-              @Drivers[NumDrivers].ExtractFileToStream := GetProcAddress(Handle, 'ExtractFileToStream');
-            end;
           end;
 
           if ((Drivers[NumDrivers].DUDIVersion = 1) and (@Drivers[NumDrivers].OpenFile = Nil))
@@ -524,8 +522,8 @@ begin
           or (@Drivers[NumDrivers].CanOpen = Nil)
           or (@Drivers[NumDrivers].GetError = Nil)
           or ((Drivers[NumDrivers].DUDIVersion = 2) and (@Drivers[NumDrivers].InitPlugin = Nil))
-          or (((Drivers[NumDrivers].DUDIVersion = 3) or (Drivers[NumDrivers].DUDIVersion = 4) or (Drivers[NumDrivers].DUDIVersion = 5)) and (@Drivers[NumDrivers].InitPlugin3 = Nil))
-          or (((Drivers[NumDrivers].DUDIVersion = 4) or (Drivers[NumDrivers].DUDIVersion = 5)) and (@Drivers[NumDrivers].ExtractFileToStream = Nil))
+          or ((Drivers[NumDrivers].DUDIVersion >= 3) and (@Drivers[NumDrivers].InitPlugin3 = Nil))
+          or ((Drivers[NumDrivers].DUDIVersion >= 4) and (@Drivers[NumDrivers].ExtractFileToStream = Nil))
           or ((Drivers[NumDrivers].DUDIVersion = 5) and (@Drivers[NumDrivers].InitPluginEx5 = Nil))
           or ((Drivers[NumDrivers].DUDIVersion = 6) and (@Drivers[NumDrivers].InitPluginEx6 = Nil))
           then
@@ -2265,12 +2263,15 @@ begin
       entryListFolderCache[0,x] := x;
 
       // Refresh the progress everytime we did 10% more
-      percent := round((x / entryListIndex) * 100);
-      if percent = oldpercent + 10 then
+      if (entryListIndex > 0) then
       begin
-        DisplayPercent(percent);
-        oldPercent := percent;
-        dup5main.Refresh;
+        percent := round((x / entryListIndex) * 100);
+        if percent = oldpercent + 10 then
+        begin
+          DisplayPercent(percent);
+          oldPercent := percent;
+          dup5main.Refresh;
+        end;
       end;
       
     end;
@@ -2407,12 +2408,15 @@ begin
         end;
 
         // Refresh the progress everytime we did 5% more
-        percent := round((x / entryListIndex) * 100);
-        if percent = oldpercent + 5 then
+        if (entryListIndex > 0) then
         begin
-          DisplayPercent(percent);
-          oldPercent := percent;
-          dup5main.Refresh;
+          percent := round((x / entryListIndex) * 100);
+          if percent = oldpercent + 5 then
+          begin
+            DisplayPercent(percent);
+            oldPercent := percent;
+            dup5main.Refresh;
+          end;
         end;
 
       end;

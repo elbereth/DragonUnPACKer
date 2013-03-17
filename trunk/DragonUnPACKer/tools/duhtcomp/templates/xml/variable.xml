@@ -1,9 +1,0 @@
-    <entry>
-      <file>$$FILE$$</file>
-      <file0>$$FILE0$$</file0>
-      <fileext>$$FILEEXT$$</fileext>
-      <directory>$$DIRECTORY$$</directory>
-      <desc>$$DESC$$</desc>
-      <offset>$$OFFSET$$</offset>
-      <size>$$SIZE$$</size>
-    </entry>

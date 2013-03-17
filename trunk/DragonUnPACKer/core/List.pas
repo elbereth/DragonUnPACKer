@@ -376,7 +376,6 @@ begin
           begin
             Data := dup5Main.lstContent.GetNodeData(Node);
 
-
             New(EntRec);
             EntRec^.FileName := FSE.Items[Data.entryIndex].FileName;
             EntRec^.Offset := FSE.Items[Data.entryIndex].Offset ;
@@ -457,7 +456,6 @@ begin
 
       OutBuf.WriteString(macroTotals(header,TotSize,SortList.Count));
 
-      TotSize := 0;
       perold := 0;
 
       perstr := ReplaceValue('%v',DLNGStr('LST506'),inttostr(SortList.Count));
@@ -638,31 +636,52 @@ var i: integer;
 begin
 
   src := StringReplace(src,'$$FILENAME$$',ExtractFilename(FSE.GetFileName), [rfReplaceAll]);
+  src := StringReplace(src,'$$filename$$',ExtractFilename(FSE.GetFileName), [rfReplaceAll]);
   src := StringReplace(src,'$$DIRECTORY$$',cdir, [rfReplaceAll]);
+  src := StringReplace(src,'$$directory$$',cdir, [rfReplaceAll]);
   src := StringReplace(src,'$$FILE$$',ExtractFilename(fnam), [rfReplaceAll]);
+  src := StringReplace(src,'$$file$$',ExtractFilename(fnam), [rfReplaceAll]);
   src := StringReplace(src,'$$FILE0$$',ChangeFileExt(ExtractFilename(fnam),''), [rfReplaceAll]);
+  src := StringReplace(src,'$$file0$$',ChangeFileExt(ExtractFilename(fnam),''), [rfReplaceAll]);
   tmp := ExtractFileExt(fnam);
   if length(tmp) > 1 then
     tmp := RightStr(tmp,Length(tmp)-1)
   else if length(tmp) = 1 then
     tmp := '';
   src := StringReplace(src,'$$FILEEXT$$',tmp, [rfReplaceAll]);
+  src := StringReplace(src,'$$fileext$$',tmp, [rfReplaceAll]);
   src := StringReplace(src,'$$DESC$$',desc, [rfReplaceAll]);
+  src := StringReplace(src,'$$desc$$',desc, [rfReplaceAll]);
   src := StringReplace(src,'$$SIZE$$',inttostr(size), [rfReplaceAll]);
+  src := StringReplace(src,'$$size$$',inttostr(size), [rfReplaceAll]);
   tmpFloat := size;
   src := StringReplace(src,'$$FSIZE$$',Format('%.0n',[tmpFloat]), [rfReplaceAll]);
+  src := StringReplace(src,'$$fsize$$',Format('%.0n',[tmpFloat]), [rfReplaceAll]);
   if (size > High(Cardinal)) then
-    src := StringReplace(src,'$$HSIZE$$',inttohex(size,16), [rfReplaceAll])
+  begin
+    src := StringReplace(src,'$$hsize$$',inttohex(size,16), [rfReplaceAll]);
+    src := StringReplace(src,'$$hsize$$',inttohex(size,16), [rfReplaceAll]);
+  end
   else
+  begin
     src := StringReplace(src,'$$HSIZE$$',inttohex(size,8), [rfReplaceAll]);
+    src := StringReplace(src,'$$hsize$$',inttohex(size,8), [rfReplaceAll]);
+  end;
   src := StringReplace(src,'$$OFFSET$$',inttostr(offset), [rfReplaceAll]);
+  src := StringReplace(src,'$$offset$$',inttostr(offset), [rfReplaceAll]);
   tmpFloat := offset;
   src := StringReplace(src,'$$FOFFSET$$',Format('%.0n',[tmpFloat]), [rfReplaceAll]);
+  src := StringReplace(src,'$$foffset$$',Format('%.0n',[tmpFloat]), [rfReplaceAll]);
   src := StringReplace(src,'$$HOFFSET$$',inttohex(offset,16), [rfReplaceAll]);
+  src := StringReplace(src,'$$hoffset$$',inttohex(offset,16), [rfReplaceAll]);
   src := StringReplace(src,'$$DATAX$$',inttostr(datax), [rfReplaceAll]);
+  src := StringReplace(src,'$$datax$$',inttostr(datax), [rfReplaceAll]);
   src := StringReplace(src,'$$DATAY$$',inttostr(datay), [rfReplaceAll]);
+  src := StringReplace(src,'$$datay$$',inttostr(datay), [rfReplaceAll]);
   src := StringReplace(src,'$$HDATAX$$',inttohex(datax,8), [rfReplaceAll]);
+  src := StringReplace(src,'$$hdatax$$',inttohex(datax,8), [rfReplaceAll]);
   src := StringReplace(src,'$$HDATAY$$',inttohex(datay,8), [rfReplaceAll]);
+  src := StringReplace(src,'$$hdatay$$',inttohex(datay,8), [rfReplaceAll]);
 
   result := src;
 

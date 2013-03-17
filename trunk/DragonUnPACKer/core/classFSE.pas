@@ -266,7 +266,7 @@ type TDrivers = class
     function CalculateNumberOfFiles(cdir: string): Integer;
     function GetRegistryBool(key: string; value: string; default: boolean = false): boolean;
     function SearchAll(searchst: string; CaseSensible: Boolean): integer;
-    function SearchDir(searchst, cdir: string; CaseSensible: Boolean): integer;
+    function SearchDir(searchst: string; CurrentDirID: integer; CaseSensible: Boolean): integer;
     procedure saveHRF_v1(srcfil, filename: string; srcsize: int64; prgver: integer);
     procedure saveHRF_v2(srcfil, filename: string; srcsize: int64; prgver: integer; info: boolean; title,author, url: string);
     procedure saveHRF_v3(srcfil, filename: string; srcsize: int64; prgver: integer; prgid: byte; info: boolean; title,author, url: string);
@@ -302,7 +302,7 @@ type TDrivers = class
     function LoadFile(pth: String; Silent: boolean): TDriverLoadResult;
     procedure LoadHyperRipper(fil: String; filHandle: integer; loadTime: integer; subdirs: boolean);
     function CloseFile(): boolean;
-    function Search(searchst: string; CaseSensible: Boolean; cdir: string; sdir: boolean): integer;
+    function Search(searchst: string; CaseSensible: Boolean; cdiridx: integer; sdir: boolean): integer;
     function getListData(n: integer): virtualTreeData;
     function getListNum(): integer;
     procedure PrepareHyperRipper(Info: DriverInfo);
@@ -1365,11 +1365,11 @@ begin
 
 end;
 
-function TDrivers.Search(searchst: string; CaseSensible: Boolean; cdir: string; sdir: boolean): integer;
+function TDrivers.Search(searchst: string; CaseSensible: Boolean; cdiridx: integer; sdir: boolean): integer;
 begin
 
   if SDir then
-    Search := SearchDir(searchst,cdir,CaseSensible)
+    Search := SearchDir(searchst,cdiridx,CaseSensible)
   else
     Search := SearchAll(searchst, CaseSensible);
 
@@ -1458,67 +1458,62 @@ end;
 
 function TDrivers.SearchAll(searchst: string; CaseSensible: Boolean): integer;
 var ext: String;
-    testpos,posext,x: integer;
+    testpos,posext,x,TDirPos,per,perold: integer;
     TotSize: int64;
-    CurData, TotFiles: integer;
+    CurData, CurSize, TotFiles: integer;
 begin
 
   TotSize := 0;
   TotFiles := 0;
 
+  dup5Main.lstContent.RootNodeCount := 0;
+  CurSize := 2000;
+  setLength(listData,CurSize);
+  perold := 0;
+  DisplayPercent(0);
+
   for x := 0 to entryListIndex do
   begin
 
     if CaseSensible then
-      testpos := Pos(searchst,entryList[x].Name)
+      testpos := Pos(searchst,entryList[x].FileName)
     else
-      testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(entryList[x].Name));
+      testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(entryList[x].FileName));
 
     if testpos > 0 then
-      Inc(TotFiles);
-
-  end;
-
-  if (TotFiles > 0) then
-  begin
-    setLength(listData,TotFiles);
-
-    curData := 0;
-
-    for x := 0 to entryListIndex do
     begin
-
-      if CaseSensible then
-        testpos := Pos(searchst,entryList[x].Name)
+      if Sch = '' then
+        TDirPos := 0
       else
-        testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(entryList[x].Name));
+        TDirPos := posrev(Sch, entryList[x].Name);
 
-      if testpos > 0 then
+      listData[TotFiles].tdirpos := TDirPos;
+      listData[TotFiles].entryIndex := x;
+      listData[TotFiles].loaded := false;
+
+      TotSize := TotSize + entryList[x].Size;
+      inc(TotFiles);
+      if (TotFiles = curSize) then
       begin
-        if (sch = '') then
-          listData[curData].tdirpos := 0
-        else
-        begin
-          listData[curData].tdirpos := posrev(sch,entryList[x].Name);
-        end;
-        posext := posrev('.',entryList[x].Name);
-        if posext > 0 then
-          ext := Copy(entryList[x].Name,posext+1,length(entryList[x].Name)-posext)
-        else
-          ext := '';
-        listData[curData].desc := DescFromExt(ext);
-        listData[curData].ImageIndex := icons.getIcon(entryList[x].Name);
-        TotSize := TotSize + entryList[x].Size;
-        inc(curData);
+        inc(curSize,2000);
+        setLength(listData,curSize);
+      end;
+
+      per := round((x / entryListIndex) * 100);
+      if (per >= perold + 5) then
+      begin
+        DisplayPercent(per);
+        perold := per;
       end;
 
     end;
-    dup5Main.lstContent.RootNodeCount := 0;
-    dup5Main.lstContent.RootNodeCount := TotFiles;
 
-  end
-  else
-    dup5Main.lstContent.RootNodeCount := 0;
+  end;
+
+  DisplayPercent(100);
+  setLength(listData,TotFiles);
+
+  dup5Main.lstContent.RootNodeCount := TotFiles;
 
   dup5Main.Status.Panels.Items[1].Text := IntToStr(TotSize) + ' ' + DLNGStr('STAT20');
   dup5Main.Status.Panels.Items[0].Text := IntToStr(TotFiles) + ' ' + DLNGStr('STAT10');
@@ -1527,100 +1522,108 @@ begin
 
 end;
 
-function TDrivers.SearchDir(searchst, cdir: string;
-  CaseSensible: Boolean): integer;
+function TDrivers.SearchDir(searchst: string; CurrentDirID: integer; CaseSensible: Boolean): integer;
 var ext,TDir: String;
-    TDirPos,testpos,posext,tmpi: integer;
+    TDirPos,testpos,posext,tmpi, per, perold: integer;
     TotSize: int64;
-    CurData, TotFiles, x: integer;
+    CurData, CurSize, TotFiles, x, y, fullSizeCache: integer;
 begin
 
-  TotSize := 0;
-  TotFiles := 0;
+  // Initialize listData to 2000 (to avoid increasing the size 1 by 1)
+  curSize := 2000;
+  setLength(listData,curSize);
 
-  for x := 0 to entryListIndex do
+  // Initialize variables
+  TotSize := 0;
+  curData := 0;
+  perold := 0;
+
+  // Indicate via the progress bar we are at 0%
+  displayPercent(0);
+
+  // Get the size of the currently selected folders (in number of entries)
+  fullSizeCache := length(entryListFolderCache[CurrentDirID]);
+
+  // Go through the cache for the current folder
+  for y := Low(entryListFolderCache[CurrentDirID]) to High(entryListFolderCache[CurrentDirID]) do
   begin
 
-    if (sch = '') then
-      TDirPos := 0
-    else
-      TDirPos := posrev(sch, entryList[x].Name);
-    if TDirPos >0 then
-      TDir := Copy(entryList[x].Name,1,TDirPos-1)
-    else
-      TDir := '';
+    // Get the index in the entryList array from the current cache entry
+    x:= entryListFolderCache[CurrentDirID][y];
 
-    if TDir = CDir then
+    // Search for the string in the name of the entry
+    if CaseSensible then
+      testpos := Pos(searchst,entryList[x].FileName)
+    else
+      testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(entryList[x].FileName));
+
+    // If the string was found
+    if testpos > 0 then
     begin
-      if CaseSensible then
-        testpos := Pos(searchst,entryList[x].Name)
+      // Retrieve the full folder path position
+      if Sch = '' then
+        TDirPos := 0
       else
-        testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(entryList[x].Name));
-      if testpos > 0 then
-        Inc(TotFiles);
+        TDirPos := posrev(Sch, entryList[x].Name);
+
+      // Fill listData with required values
+      listData[curData].tdirpos := TDirPos;
+      listData[curData].entryIndex := x;
+      listData[curData].loaded := false;
+
+      // Increase the Total Size of the folder with the entry size
+      TotSize := TotSize + entryList[x].Size;
+
+      // Increment the future index
+      // If it is bigger than the current size of listData array we increase the
+      // array by 2000
+      inc(curData);
+      if (curData = curSize) then
+      begin
+        inc(curSize,2000);
+        setLength(listData,curSize);
+      end;
+    end;
+
+    // Display the percent processed
+    per := round((y / fullSizeCache) * 100);
+    if (per >= perold + 5) then
+    begin
+      DisplayPercent(per);
+      perold := per;
     end;
 
   end;
 
-  if (TotFiles > 0) then
+  // Number of files found correspond to the future curData index
+  TotFiles := curData;
+
+  // Be sure to display 100%
+  displayPercent(100);
+
+  // Reset the number of entries to 0
+  dup5Main.lstContent.RootNodeCount := 0;
+
+  // If something was found
+  if TotFiles > 0 then
   begin
+
+    // Crop the listData array to the true number of entries
     setLength(listData,TotFiles);
 
-    curData := 0;
-
-    for x := 0 to entryListIndex do
-    begin
-
-      if (sch = '') then
-        TDirPos := 0
-      else
-        TDirPos := posrev(sch, entryList[x].Name);
-      if TDirPos >0 then
-        TDir := Copy(entryList[x].Name,1,TDirPos-1)
-      else
-        TDir := '';
-
-      if TDir = CDir then
-      begin
-
-        if CaseSensible then
-          testpos := Pos(searchst,entryList[x].Name)
-        else
-          testpos := Pos(AnsiUpperCase(searchst),AnsiUpperCase(entryList[x].Name));
-
-        if testpos > 0 then
-        begin
-          if (sch = '') then
-            tmpi := 0
-          else
-            tmpi := posrev(sch,entryList[x].Name);
-          listData[curData].tdirpos := tmpi;
-          posext := posrev('.',entryList[x].Name);
-          if posext > 0 then
-            ext := Copy(entryList[x].Name,posext+1,length(entryList[x].Name)-posext)
-          else
-            ext := '';
-          listData[curData].desc := DescFromExt(ext);
-          listData[curData].ImageIndex := icons.getIcon(entryList[x].Name);
-          TotSize := TotSize + entryList[x].Size;
-          inc(curData);
-        end;
-
-      end;
-
-    end;
-
-    dup5Main.lstContent.RootNodeCount := 0;
+    // Set the number of entries to display to the number of entries found
     dup5Main.lstContent.RootNodeCount := TotFiles;
 
   end
+  // Nothing was found we empty the listData array
   else
-    dup5Main.lstContent.RootNodeCount := 0;
+    setLength(listData,0);
 
+  // Display what was found & displayed
   dup5Main.Status.Panels.Items[1].Text := IntToStr(TotSize) + ' ' + DLNGStr('STAT20');
   dup5Main.Status.Panels.Items[0].Text := IntToStr(TotFiles) + ' ' + DLNGStr('STAT10');
 
-  SearchDir := TotFiles;
+  result := TotFiles;
 
 end;
 
@@ -2436,57 +2439,48 @@ procedure TDrivers.BrowseDirFromID(CurrentDirID: integer);
 var TDirPos: integer;
     TotSize: int64;
     TotFiles: longword;
-    curData, curSize, curIdx, per, perold, x, y, fullSizeCache: integer;
-//    cache: TDirCache;
+    curData, curSize, per, perold, x, y, fullSizeCache: integer;
 begin
 
-  TotSize := 0;
-
-//  CDir := UpperCase(CDir);
-
-//  cache := GetDirCache(CDir);
-
-//  if cache <> nil then
-//  begin
-//    setLength(ListData,cache.getNumItems);
-//    totFiles := cache.getNumItems;
-//    TDirPos := cache.getTDirPos;
-//    for x := 0 to cache.getNumItems-1 do
-//    begin
-//      listData[x].tdirpos := TDirPos;
-//      listData[x].data := cache.getItem(x);
-//      listData[x].loaded := false;
-//      TotSize := TotSize + cache.getItem(x)^.Size;
-//    end;
-//  end
-//  else
-//  begin
-
+  // Initialize listData to 2000 (to avoid increasing the size 1 by 1)
   curSize := 2000;
   setLength(listData,curSize);
 
+  // Initialize variables
+  TotSize := 0;
+  curData := 0;
+  perold := 0;
+
+  // Indicate via the progress bar we are at 0%
   displayPercent(0);
 
-  curData := 0;
-  curIdx := 0;
-  perold := 0;
+  // Get the size of the currently selected folders (in number of entries)
   fullSizeCache := length(entryListFolderCache[CurrentDirID]);
 
+  // Go through the cache for the current folder
   for y := Low(entryListFolderCache[CurrentDirID]) to High(entryListFolderCache[CurrentDirID]) do
   begin
 
+    // Get the index in the entryList array from the current cache entry
     x:= entryListFolderCache[CurrentDirID][y];
 
+    // Retrieve the full folder path position
     if Sch = '' then
       TDirPos := 0
     else
       TDirPos := posrev(Sch, entryList[x].Name);
 
+    // Fill listData with required values
     listData[curData].tdirpos := TDirPos;
     listData[curData].entryIndex := x;
     listData[curData].loaded := false;
 
+    // Increase the Total Size of the folder with the entry size
     TotSize := TotSize + entryList[x].Size;
+
+    // Increment the future index
+    // If it is bigger than the current size of listData array we increase the
+    // array by 2000
     inc(curData);
     if (curData = curSize) then
     begin
@@ -2494,6 +2488,7 @@ begin
       setLength(listData,curSize);
     end;
 
+    // Display the percent processed
     per := round((y / fullSizeCache) * 100);
     if (per >= perold + 5) then
     begin
@@ -2503,28 +2498,31 @@ begin
 
   end;
 
+  // Number of files found correspond to the future curData index
   TotFiles := curData;
 
-//  end;
-
-//  showmessage(inttostr(millisecondsbetween(now,starttime)));
-
+  // Be sure to display 100%
   displayPercent(100);
 
+  // Reset the number of entries to 0
+  dup5Main.lstContent.RootNodeCount := 0;
+
+  // If something was found
   if TotFiles > 0 then
   begin
+
+    // Crop the listData array to the true number of entries
     setLength(listData,TotFiles);
 
-    dup5Main.lstContent.RootNodeCount := 0;
+    // Set the number of entries to display to the number of entries found
     dup5Main.lstContent.RootNodeCount := TotFiles;
 
   end
+  // Nothing was found we empty the listData array
   else
-  begin
-    dup5Main.lstContent.RootNodeCount := 0;
     setLength(listData,0);
-  end;
 
+  // Display what was found & displayed
   dup5Main.Status.Panels.Items[1].Text := IntToStr(TotSize) + ' ' + DLNGStr('STAT20');
   dup5Main.Status.Panels.Items[0].Text := IntToStr(TotFiles) + ' ' + DLNGStr('STAT10');
 

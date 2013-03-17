@@ -298,21 +298,24 @@ var ToolInfo: PToolInfo;
     x: integer;
 begin
 
-  ToolInfo := Item.Data;
+  if (Selected) then
+  begin
+    ToolInfo := Item.Data;
 
-  txtToolname.Text := ToolInfo^.name;
-  txtToolauthor.Text := ToolInfo^.author;
-  txtToolURL.Text := ToolInfo^.URL;
-  txtToolcomment.Text := ToolInfo^.comment;
-  txtToolpath.Text := ToolInfo^.path;
-  txtToolcommand.Text := ToolInfo^.command;
-  txtToolresultExt.Text := ToolInfo^.resultext;
-  rgrpResultTest.ItemIndex := ToolInfo^.resultoktest;
-  txtToolResultValue.Text := inttostr(ToolInfo^.resultok);
+    txtToolname.Text := ToolInfo^.name;
+    txtToolauthor.Text := ToolInfo^.author;
+    txtToolURL.Text := ToolInfo^.URL;
+    txtToolcomment.Text := ToolInfo^.comment;
+    txtToolpath.Text := ToolInfo^.path;
+    txtToolcommand.Text := ToolInfo^.command;
+    txtToolresultExt.Text := ToolInfo^.resultext;
+    rgrpResultTest.ItemIndex := ToolInfo^.resultoktest;
+    txtToolResultValue.Text := inttostr(ToolInfo^.resultok);
 
-  lstExt.Clear;
-  for x := Low(ToolInfo^.extensions) to High(ToolInfo^.extensions) do
-    lstExt.Items.Add(ToolInfo^.extensions[x]);
+    lstExt.Clear;
+    for x := Low(ToolInfo^.extensions) to High(ToolInfo^.extensions) do
+      lstExt.Items.Add(ToolInfo^.extensions[x]);
+  end;
 
 end;
 

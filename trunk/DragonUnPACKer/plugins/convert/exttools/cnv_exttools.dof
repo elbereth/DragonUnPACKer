@@ -110,8 +110,8 @@ IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=0
 MinorVer=2
-Release=0
-Build=6
+Release=1
+Build=7
 Debug=0
 PreRelease=1
 Special=0
@@ -122,7 +122,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=DUP5 - External Tools Convert Plugin
-FileVersion=0.2.0.6
+FileVersion=0.2.1.7
 InternalName=cnv_exttools
 LegalCopyright=Created by Alexandre Devilliers (aka Elbereth/Piecito)
 LegalTrademarks=Mozilla Public License 1.1
@@ -137,8 +137,9 @@ Item0=DRGUNPACK
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlSearchPath]
-Count=1
-Item0=E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
+Count=2
+Item0=$(DELPHI)\Lib\Debug;C:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;P:\Programs\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
+Item1=E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
 [HistoryLists\hlUnitOutputDirectory]
 Count=1
 Item0=E:\Developpement\dup-dev-5.1-dcu

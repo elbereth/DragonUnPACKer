@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    16/03/2013
+by Alexande "Elbereth" Devilliers                                    17/03/2013
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -11,11 +11,14 @@ by Alexande "Elbereth" Devilliers                                    16/03/2013
 Main program version and versions history:
 
 Version 5.7.0.274
-SVN Release 649 [Unreleased]
+SVN Release 652 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
  ! Fixed many memory leaks (thanks to FastMM!).
+ ! Fixed create list feature (macros can be uppercase or lowercase).
+ * Changed macros in the DUP4 HTML template (v1.2) for lists to uppercase
+   anyway to be consistent.
  * Refactoring the TDrivers class to stop using pointers replaced by dynamic
    arrays. Will be easier to maintain and hopefully not slower.
    Also introduced DUDI v6 that uses a callback function everytime an entry
@@ -30,6 +33,7 @@ SVN Release 649 [Unreleased]
               resulting in duplicate files when loading HRF files for ex.
    ! SVN 649: Fixed DUDI v6 plugin internal extraction not working.
               Fixed exception when there was only 1 entry in the input file.
+   ! SVN 652: Fixed search functions.
  + Added FastCode & FastMove.
    http://fastcode.sourceforge.net/
  ! Fixed support for multiple convert plugins during preview.
@@ -56,7 +60,7 @@ SVN Release 649 [Unreleased]
      This means a full Delphi implementation with no need for DLLs.
 	 It is also compatible with Lazarus (Indy 9 & 10 were ported to Lazarus).
    i Now compiled with FastMM4, FastCode & FastMove.
- + External Tools Convertion plugin v0.2.0 Beta:
+ + External Tools Convertion plugin v0.2.1 Beta:
    i This plugin allows to use external command line tools to convert file
      formats (for example the excellent vgmstream tool for audio files).
 	 This first version works fine but is only configured for vgmstream and to
@@ -71,6 +75,10 @@ SVN Release 649 [Unreleased]
    i Edit or add new tools via the included configuration screen.
      To get to it, just click on Configure button in the Convert plugin options
 	 screen of Dragon UnPACKer while cnv_exttools plugin is selected.
+   ! Fixed EAccessViolation exception when the entry clicked in Dragon UnPACKer
+     has no extension.
+   ! Fixed exception when clicking on the close configuration box of the plugin
+     while an entry was selected.
 
 Beta Developement Page:
 -----------------------

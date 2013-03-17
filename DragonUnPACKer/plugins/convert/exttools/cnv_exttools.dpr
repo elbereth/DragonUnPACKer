@@ -66,7 +66,6 @@ var Percent: TPercentCallback;
     DLNGStr: TLanguageCallback;
     CurPath: ShortString;
     SupportedDUCI: byte = 0;
-    palfil: string;
     AHandle: THandle;
     AOwner: TComponent;
     ShowMsgBox : TMsgBoxCallback;
@@ -75,7 +74,7 @@ var Percent: TPercentCallback;
 const
   DUCI_VERSION = 4;
   DUCI_VERSION_COMPATIBLE = 3;
-  DRIVER_VERSION = 02010;
+  DRIVER_VERSION = 02110;
   DUP_VERSION = 57040;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
@@ -97,6 +96,12 @@ const
   *                        sub-folder (in /data/convert/
   *                        Same format as before but now only 1 [cnv_exttools]
   *                        section containing all the info
+  * v0.2.1 Beta  (02110): Fixed EAccessViolation exception when filename without
+  *                        extension was passed to ConvertFile
+  *                       Implemented IsFileCompatible()
+  *                       Fixed exception when closing the configuration box of
+  *                        the plugin while an external tool was selected on
+  *                        lstTools.
   * }
 
 function Explode(var a: TStrArray; Border, S: string): Integer;
@@ -148,7 +153,7 @@ end;
 
 procedure reloadSettings();
 var iniFile: TMemIniFile;
-    x, curnum, nbtools: integer;
+    nbtools: integer;
     sr: TSearchRec;
 begin
 
@@ -225,9 +230,29 @@ begin
 end;
 
 function IsFileCompatible(nam: ShortString; Offset, Size: Int64; fmt: ShortString; DataX, DataY: Integer): boolean; stdcall;
+var ext: string;
+    x, e: integer;
 begin
 
-  result := true;
+  ext := lowercase(extractfileext(nam));
+  if (length(ext) > 0) and (ext[1] = '.') then
+    ext := rightstr(ext,length(ext)-1);
+  result := false;
+
+  for x := low(ListOfTools) to high(ListOfTools) do
+  begin
+    if (ListOfTools[x].enabled) then
+    begin
+      for e := low(ListOfTools[x].extensions) to high(ListOfTools[x].extensions) do
+      begin
+        if (ext = ListOfTools[x].extensions[e]) then
+        begin
+          result := true;
+          break;
+        end;
+      end;
+    end;
+  end;
 
 end;
 
@@ -237,7 +262,7 @@ var ext: string;
 begin
 
   ext := lowercase(extractfileext(nam));
-  if (ext[1] = '.') then
+  if (length(ext) > 0) and (ext[1] = '.') then
     ext := rightstr(ext,length(ext)-1);
   result.NumFormats := 0;
 
@@ -262,8 +287,7 @@ begin
 end;
 
 function ConvertStream(src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): integer; stdcall;
-var Size: int64;
-    tmpFile: TFileStream;
+var tmpFile: TFileStream;
     toolnum: integer;
     tmpFileName, tmpFileNameOut, params, path: String;
 begin

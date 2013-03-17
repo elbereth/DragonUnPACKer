@@ -68,7 +68,7 @@ begin
     FreeAndNil(Reg);
   end;
 
-  StatusBar.Panels.Items[0].Text := IntToStr(FSE.Search(txtSearch.Text,CheckCase.Checked,CurrentDir,RadioDirOnly.Checked))+' '+DLNGStr('STAT10');
+  StatusBar.Panels.Items[0].Text := IntToStr(FSE.Search(txtSearch.Text,CheckCase.Checked,CurrentDirIdx,RadioDirOnly.Checked))+' '+DLNGStr('STAT10');
 
 end;
 

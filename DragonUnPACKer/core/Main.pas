@@ -289,6 +289,7 @@ var
   dup5Main: Tdup5Main;
   CurFile: integer = 0;
   CurrentDir: string;
+  CurrentDirIdx: integer;
   SortMode: integer;
   SortOrder: boolean = true;
   debugDrop: boolean = true;
@@ -2428,6 +2429,7 @@ begin
   VirtualNodeData := lstIndex.GetNodeData(Node);
   FSE.BrowseDirFromID(VirtualNodeData.FolderID);
   CurrentDir := disp;
+  CurrentDirIdx := VirtualNodeData.FolderID;
   appendLogVerbose(1,ReplaceValue('%e',DLNGStr('LOG301'),inttostr(lstContent.TotalCount)));
 
 end;

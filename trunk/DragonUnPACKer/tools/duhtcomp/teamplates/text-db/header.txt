@@ -1,0 +1,32 @@
+// Dragon UnPACKer 5 Text Database v1
+// ----------------------------------
+// [Made by Dragon UnPACKer v$$DUPVER$$ $$DUPEDIT$$]
+// <$$DUPURL$$>
+//
+// Format is:
+// One entry per line
+// Lines starting with // are comments
+//                with /$ are special commands
+// Every other line is as follow:
+// Directory|Filename|Offset|Size|Description
+//
+//   Directory=Directory in opened file
+//    Filename=Filename of entry (without directory)
+//      Offset=Position in file of the entry
+//        Size=Uncompressed size in file of the entry
+// Description=Description of the entry
+
+// This can be used to check the database format
+// The /$ID command must be present and the first special command of the file
+//                  (before anything else except comments)
+// The /$VERSION command should be present, if present just after the /$ID
+//                   command (you can put comments line between both commands)
+// For ID = DUP5TDB you must check for VERSION, current specs are only for v1
+/$ID DUP5TDB
+/$VERSION 1
+
+// Informations about the file described by this database
+/$FILE $$FILENAME$$
+/$FORMAT $$FORMAT$$
+
+// List of entries follows:

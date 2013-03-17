@@ -1,0 +1,1 @@
+$$DIRECTORY$$|$$FILE$$|$$OFFSET$$|$$SIZE$$|$$DESC$$

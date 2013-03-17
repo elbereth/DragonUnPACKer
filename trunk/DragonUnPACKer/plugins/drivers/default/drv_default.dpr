@@ -196,7 +196,8 @@ type FSE = ^element;
                  Added Ghostbusters: Sanctum of Slime .PAK files support (with LZMA decompression)
     21210        Added preliminary The Witcher 2: Assassins of Kings .DZIP files support
     30010        Upgraded to new interface DUDI v6 (plugin is not backward compatible to v4/v5)
-                 Added Aliens vs Predator (2010) .ASR (Asura & AsuraZlb) support 
+                 Added Aliens vs Predator (2010) .ASR (Asura & AsuraZlb) support
+                 Added Star Wars Starfighter .PAK support
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -347,7 +348,7 @@ begin
   addFormat(result,'*.MTF','Darkstone (*.MTF)');
   addFormat(result,'*.OPK','Sinking Island (*.OPK)|L''Ile Noyée (*.OPK)');
   // Avatar: The Game (*.PAK)
-  addFormat(result,'*.PAK','Battleforge (*.PAK)|Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)|Ghostbusters: Sanctum of Slime (*.PAK)');
+  addFormat(result,'*.PAK','Battleforge (*.PAK)|Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)|Ghostbusters: Sanctum of Slime (*.PAK)|Star Wars Starfighter (*.PAK)');
   addFormat(result,'*.PAK;*.TLK','Hands of Fate (*.PAK;*.TLK)|Lands of Lore (*.PAK;*.TLK)');
   addFormat(result,'*.PAK;*.WAD','Quake (*.PAK;*.WAD)|Quake 2 (*.PAK;*.WAD)|Half-Life (*.PAK;*.WAD)|Heretic 2 (*.PAK;*.WAD)');
   addFormat(result,'*.PBO','Operation Flashpoint (*.PBO)');
@@ -1345,6 +1346,33 @@ type AsuraBlockHeader = packed record
        Unknown1: integer;
        Unknown2: integer;
      end;
+
+function DecompressAzuraZToStream(FHandle: integer; OutputStream: TStream; Offset, Size: Int64) : Boolean;
+var
+  InputStream: THandleStream;
+  DStream: TDecompressionStream;
+  FinalSize: integer;
+begin
+
+  InputStream := THandleStream.Create(Fhandle);
+  try
+    InputStream.Seek(20, soBeginning);
+
+    DStream := TDecompressionStream.Create(InputStream);
+    try
+      DStream.Seek(Offset,soFromBeginning);
+      FinalSize := OutputStream.CopyFrom(DStream,Size);
+    finally
+      FreeAndNil(DStream);
+    end
+
+  finally
+    FreeAndNil(InputStream);
+  end;
+
+  Result := FinalSize = Size;
+
+End;
 
 function ReadAvpAsuraStm(src: TStream; FileTotSize: int64; Compressed: Byte): integer;
 var BlockHDR: AsuraBlockHeader;
@@ -10456,6 +10484,102 @@ begin
 end;
 
 // -------------------------------------------------------------------------- //
+// Star Wars Starfighter .PAK support ======================================= //
+// -------------------------------------------------------------------------- //
+
+const StarWarsStarfighterMagicID = 'Europa Packfile';
+type EuropaPackfile_Header = packed record
+       ID: array[0..14] of char;  // 'Europa Packfile'
+       ID0: byte;
+       Unknown1: integer;
+       Unknown2: byte;
+       OffsetToEntriesBlock: integer;
+       SizeOfEntriesBlock: integer;
+       NumberOfEntries: integer;
+     end;
+//   Name: Get8 (0x00 terminated)
+type EuropaPackfile_Entry = packed record
+       Offset: integer;
+       Size: integer;
+       Unknown: integer;
+     end;
+
+function ReadStarWarsStarfighterPAK: Integer;
+var HDR: EuropaPackfile_Header;
+    ENT: EuropaPackfile_Entry;
+    // The buffer will hold the entries block
+    EntriesBlock: TMemoryStream;
+    // In order to work with the TMemoryStreams the source file is to be wrapped
+    // into a THandleStream.
+    FileSource: THandleStream;
+    MaxOffset, Offset, Size: Integer;
+    NumE,x: integer;
+    disp: string;
+begin
+
+  // Wrap the source file in the THandleStream
+  FileSource := THandleStream.Create(FHandle);
+  FileSource.Seek(0,soFromBeginning);
+
+  // Create the TMemoryStream buffer
+  EntriesBlock := TMemoryStream.Create;
+
+  // try finally to always free the 3 objects, if something goes wrong
+  try
+
+    // Read the header
+    FileSource.ReadBuffer(HDR, SizeOf(EuropaPackfile_Header));
+
+    if (HDR.ID <> StarWarsStarfighterMagicID)
+    or (HDR.ID0 <> 0)
+    or ((HDR.OffsetToEntriesBlock+HDR.SizeOfEntriesBlock) > FileSource.Size) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'Europa';
+      ErrInfo.Games := 'Star Wars Starfighter';
+    end
+    else
+    begin
+
+      // Seek to entries block
+      FileSource.Seek(HDR.OffsetToEntriesBlock,soBeginning);
+
+      // Copy the block to the buffer
+      EntriesBlock.CopyFrom(FileSource,HDR.SizeOfEntriesBlock);
+      EntriesBlock.Seek(0,soFromBeginning);
+
+      // Parse the entries
+      for x := 1 to HDR.NumberOfEntries do
+      begin
+
+        // Retrieve filename from first buffer
+        disp := strip0(get8(EntriesBlock));
+
+        // Retrieve the rest of the entry
+        EntriesBlock.ReadBuffer(ENT,SizeOf(EuropaPackfile_Entry));
+
+        // Add the entry to FSE
+        FSE_Add(disp,ENT.Offset,ENT.Size,ENT.Unknown,0);
+
+      end;
+
+      // Retrieved NumE entries for the format
+      Result := HDR.NumberOfEntries;
+      DrvInfo.ID := 'Europa';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+    end;
+  finally
+    FreeAndNil(FileSource);
+    FreeAndNil(EntriesBlock);
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
 // Starsiege: Tribes .VOL support =========================================== //
 // -------------------------------------------------------------------------- //
 
@@ -13758,6 +13882,7 @@ end;
 function ReadHubPAK(src: String): Integer;
 var ID: array[0..3] of char;
     ID12: array[0..11] of char;
+    ID15: array[0..14] of char;
     ID18: array[0..17] of char;
     ID21P4: array[0..20] of char;
     res,Test1,Test3,testpko,FSize: integer;
@@ -13778,6 +13903,8 @@ begin
     // Check if Dreamfall: TLJ .PAK
     FileSeek(Fhandle,0,0);
     FileRead(FHandle,ID12,12);
+    FileSeek(Fhandle,0,0);
+    FileRead(FHandle,ID15,15);
     FileSeek(Fhandle,0,0);
     FileRead(FHandle,ID18,18);
     FileSeek(FHandle,0,0);
@@ -13803,6 +13930,8 @@ begin
       res := ReadDreamfallTLJPAK(src)
     else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
       res := ReadSpellforcePAK
+    else if (ID15 = StarWarsStarfighterMagicID) then
+      res := ReadStarWarsStarfighterPAK
     else if (ID18 = 'tongas_pack_v30000') then
       res := ReadGhostbustersSoSPAK
     else if ((mixtest1 = 0) and ((mixtest3 = $20000) or (mixtest3 = $30000)))
@@ -15671,33 +15800,6 @@ begin
   end;
 
   Result := FinalSize = OSize;
-
-End;
-
-function DecompressAzuraZToStream(FHandle: integer; OutputStream: TStream; Offset, Size: Int64) : Boolean;
-var
-  InputStream: THandleStream;
-  DStream: TDecompressionStream;
-  FinalSize: integer;
-begin
-
-  InputStream := THandleStream.Create(Fhandle);
-  try
-    InputStream.Seek(20, soBeginning);
-
-    DStream := TDecompressionStream.Create(InputStream);
-    try
-      DStream.Seek(Offset,soFromBeginning);
-      FinalSize := OutputStream.CopyFrom(DStream,Size);
-    finally
-      FreeAndNil(DStream);
-    end
-
-  finally
-    FreeAndNil(InputStream);
-  end;
-
-  Result := FinalSize = Size;
 
 End;
 

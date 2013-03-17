@@ -111,7 +111,7 @@ AutoIncBuild=1
 MajorVer=3
 MinorVer=0
 Release=0
-Build=946
+Build=947
 Debug=0
 PreRelease=0
 Special=0
@@ -122,7 +122,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=Elbereth's Main Driver plugin for Dragon UnPACKer 5
-FileVersion=3.0.0.946
+FileVersion=3.0.0.947
 InternalName=drv_default
 LegalCopyright=Created by Alexandre Devilliers (aka Elbereth/Piecito)
 LegalTrademarks=Mozilla Public License 1.1
@@ -130,22 +130,20 @@ OriginalFilename=drv_default.d5d
 ProductName=Dragon UnPACKer 5
 ProductVersion=5.7.0
 [HistoryLists\hlConditionals]
-Count=2
-Item0=DUPPI
-Item1=DRGUNPACK
+Count=1
+Item0=DRGUNPACK
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlSearchPath]
 Count=2
-Item0=P:\Programs\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
+Item0=$(DELPHI)\Lib\Debug;C:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;P:\Programs\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
 Item1=E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
 [HistoryLists\hlUnitOutputDirectory]
 Count=1
 Item0=E:\Developpement\dup-dev-5.1-dcu
 [HistoryLists\hlOutputDirectorry]
-Count=4
+Count=3
 Item0=E:\Developpement\dup-dev-5.1-compiled\data\drivers
-Item1=E:\Developpement\dup-dev-5.1-compiled\utils
+Item1=E:\Developpement\dup-dev-5.1-compiled\data\convert
 Item2=E:\Developpement\dup-dev-5.1-compiled
-Item3=E:\Developpement\dup-dev-5.1-compiled\data\convert

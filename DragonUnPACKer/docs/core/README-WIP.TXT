@@ -55,6 +55,8 @@ SVN Release 652 [Unreleased]
 	 Please note the compressed Asura files are slow to load & to extract from
 	 but there is nothing I can do (the format is not foreseen for random read
 	 access).
+   + Added support for Star Wars Starfighter .PAK file format.
+     Feature request #89 by James Krayenhagen.
  * Duppi v3.4.0:
    i Updated to work with Indy 9 instead of Curl.
      This means a full Delphi implementation with no need for DLLs.

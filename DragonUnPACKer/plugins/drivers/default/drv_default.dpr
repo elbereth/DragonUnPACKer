@@ -25,7 +25,8 @@ uses
   StrUtils,
   Windows,
   SysUtils,
-  ULZMADecoder, ULZMACommon,
+  ULZMADecoder,
+  ULZMACommon,
   U_IntList in '..\..\..\common\U_IntList.pas',
   spec_DDS in '..\..\..\common\spec_DDS.pas',
   spec_HRF in '..\..\..\common\spec_HRF.pas',
@@ -35,7 +36,8 @@ uses
   class_decompressRA in 'class_decompressRA.pas'},
   lib_unlzw in '..\..\..\common\lib_unlzw.pas',
   lib_crc in '..\..\..\common\lib_crc.pas',
-  dup5drv_utils in '..\dup5drv_utils.pas';
+  dup5drv_utils in '..\dup5drv_utils.pas',
+  spec_DUDI in '..\..\..\common\spec_DUDI.pas';
 
 {$E d5d}
 
@@ -390,6 +392,19 @@ begin
   addFormat(result,'*.PAXX.NRM','Heath: The Unchosen Path (*.PAXX.NRM)');
   addFormat(result,'*.H4R','Heroes of Might & Magic 4 (*.H4R)');
 {ENDIF}
+
+end;
+
+// Returns information about the driver creation capabilities (supported formats)
+// Exported
+function GetDriverModifInfo: DriverModifInfo; stdcall;
+begin
+
+  // Initialize output to 0 filled
+  FillChar(result,SizeOf(DriverModifInfo),0);
+
+  // Supported file formats
+  addModifFormat(result,'*.PAK','Quake (*.PAK)');
 
 end;
 
@@ -16212,6 +16227,7 @@ exports
   CloseFormat,
   GetEntry,
   GetDriverInfo,
+  GetDriverModifInfo,
   GetNumVersion,
   GetCurrentDriverInfo,
   GetErrorInfo,

@@ -924,107 +924,6 @@ object frmConfig: TfrmConfig
       OnClick = lstTypesClick
     end
   end
-  object tabLook: TPanel
-    Left = 184
-    Top = 8
-    Width = 449
-    Height = 281
-    BevelOuter = bvNone
-    TabOrder = 2
-    object strLookList: TLabel
-      Left = 0
-      Top = 0
-      Width = 425
-      Height = 13
-      AutoSize = False
-      Caption = 'Fichiers de Look:'
-    end
-    object lstLook: TListBox
-      Left = 0
-      Top = 16
-      Width = 441
-      Height = 121
-      ItemHeight = 13
-      TabOrder = 0
-      OnClick = lstLookClick
-      OnKeyDown = FormKeyDown
-    end
-    object grpLookInfo: TGroupBox
-      Left = 0
-      Top = 144
-      Width = 441
-      Height = 137
-      Caption = 'Information'
-      TabOrder = 1
-      object strLookName: TLabel
-        Left = 8
-        Top = 16
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'Nom:'
-      end
-      object strLookAuthor: TLabel
-        Left = 8
-        Top = 32
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'Auteur:'
-      end
-      object strLookEmail: TLabel
-        Left = 8
-        Top = 48
-        Width = 49
-        Height = 13
-        AutoSize = False
-        Caption = 'E-mail:'
-      end
-      object lblLookName: TLabel
-        Left = 64
-        Top = 16
-        Width = 369
-        Height = 13
-        AutoSize = False
-      end
-      object lblLookAuthor: TLabel
-        Left = 64
-        Top = 32
-        Width = 369
-        Height = 13
-        AutoSize = False
-      end
-      object lblLookEmail: TLabel
-        Left = 64
-        Top = 48
-        Width = 369
-        Height = 13
-        AutoSize = False
-      end
-      object strLookComment: TLabel
-        Left = 8
-        Top = 64
-        Width = 57
-        Height = 13
-        AutoSize = False
-        Caption = 'Comment:'
-      end
-      object Panel2: TPanel
-        Left = 64
-        Top = 64
-        Width = 369
-        Height = 65
-        BevelOuter = bvLowered
-        TabOrder = 0
-        object lblLookComment: TLabel
-          Left = 1
-          Top = 1
-          Width = 3
-          Height = 13
-        end
-      end
-    end
-  end
   object tabPluginsInfos: TPanel
     Left = 184
     Top = 8
@@ -1346,6 +1245,107 @@ object frmConfig: TfrmConfig
       07000000FFFFFFFFFFFFFFFF00000000000000000C4173736F63696174696F6E
       73200000001100000011000000FFFFFFFFFFFFFFFF0000000000000000075072
       6576696577}
+  end
+  object tabLook: TPanel
+    Left = 184
+    Top = 8
+    Width = 449
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 2
+    object strLookList: TLabel
+      Left = 0
+      Top = 0
+      Width = 425
+      Height = 13
+      AutoSize = False
+      Caption = 'Fichiers de Look:'
+    end
+    object lstLook: TListBox
+      Left = 0
+      Top = 16
+      Width = 441
+      Height = 121
+      ItemHeight = 13
+      TabOrder = 0
+      OnClick = lstLookClick
+      OnKeyDown = FormKeyDown
+    end
+    object grpLookInfo: TGroupBox
+      Left = 0
+      Top = 144
+      Width = 441
+      Height = 137
+      Caption = 'Information'
+      TabOrder = 1
+      object strLookName: TLabel
+        Left = 8
+        Top = 16
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'Nom:'
+      end
+      object strLookAuthor: TLabel
+        Left = 8
+        Top = 32
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'Auteur:'
+      end
+      object strLookEmail: TLabel
+        Left = 8
+        Top = 48
+        Width = 49
+        Height = 13
+        AutoSize = False
+        Caption = 'E-mail:'
+      end
+      object lblLookName: TLabel
+        Left = 64
+        Top = 16
+        Width = 369
+        Height = 13
+        AutoSize = False
+      end
+      object lblLookAuthor: TLabel
+        Left = 64
+        Top = 32
+        Width = 369
+        Height = 13
+        AutoSize = False
+      end
+      object lblLookEmail: TLabel
+        Left = 64
+        Top = 48
+        Width = 369
+        Height = 13
+        AutoSize = False
+      end
+      object strLookComment: TLabel
+        Left = 8
+        Top = 64
+        Width = 57
+        Height = 13
+        AutoSize = False
+        Caption = 'Comment:'
+      end
+      object Panel2: TPanel
+        Left = 64
+        Top = 64
+        Width = 369
+        Height = 65
+        BevelOuter = bvLowered
+        TabOrder = 0
+        object lblLookComment: TLabel
+          Left = 1
+          Top = 1
+          Width = 3
+          Height = 13
+        end
+      end
+    end
   end
   object imgLstLangue: TImageList
     BlendColor = clBlack

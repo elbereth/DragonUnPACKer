@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    17/03/2013
+by Alexande "Elbereth" Devilliers                                    10/07/2013
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,8 +10,8 @@ by Alexande "Elbereth" Devilliers                                    17/03/2013
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.7.0.274
-SVN Release 652 [Unreleased]
+Version 5.7.0.279
+SVN Release 656 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
@@ -43,6 +43,11 @@ SVN Release 652 [Unreleased]
    ! Fixed the memory leak for not freing the TBufferedFS component:
      Switched back to using THandleStream instead of TBufferedFS.
 	 Free THandleStream but keep handle open and pass it to TDrivers.
+ + Revamped the old "Look" functionnality to a much easier to maintain and
+   modify "Theme" (files in a folder for the moment).
+   Current SVN version is transitional and the new folder structure does not
+   exists (which means the Nightly build will be icon less for the menu,
+   popups and toolbar).
  * Elbereth's Main Driver plugin v3.0.0:
    * Updated to new DUDI v6. This means as of this version the plugin
      requires Dragon UnPACKer v5.7.0 or more. It won't work with older Dragon

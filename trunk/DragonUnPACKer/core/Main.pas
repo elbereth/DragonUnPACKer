@@ -27,28 +27,24 @@ uses
   // Vampyre Imaging Library
   ImagingTypes, Imaging, ImagingClasses, ImagingComponents, ImagingCanvases,
   ImagingFormats, ImagingUtility, dwTaskbarComponents,
-  lib_crc, lib_temptools, lib_version;
+  lib_crc, lib_temptools, lib_version, IniFiles;
 
 type
+  TdupThemeInfo = record
+    ValidTheme: Boolean;
+    Name: String;
+    Author: String;
+    Email: String;
+    Comment: String;
+  end;
   Tdup5Main = class(TForm)
     Splitter: TSplitter;
-    ctrlBar: TControlBar;
-    Percent: TdwProgressBar;
-    ToolBar: TToolBar;
-    Bouton_Ouvrir: TToolButton;
     OpenDialog: TOpenDialog;
     SaveDialog: TSaveDialog;
     imgContents: TImageList;
-    imgIndex: TImageList;
-    imgLook: TImageList;
-    Bouton_Fermer: TToolButton;
-    Separateur_1: TToolButton;
-    Bouton_Options: TToolButton;
     imgContentsBig: TImageList;
     lstContent: TVirtualStringTree;
     DropFileSource: TDropFileSource;
-    imgPopup1: TImageList;
-    imgPopup2: TImageList;
     XPManifest: TXPManifest;
     mainMenu: TMainMenu;
     menuFichier: TMenuItem;
@@ -129,6 +125,21 @@ type
     N5: TMenuItem;
     menuLog_CopyClipboard: TMenuItem;
     menuIndex_ExtractDirsNamedFolder: TMenuItem;
+    panTop: TPanel;
+    ToolBar: TToolBar;
+    Bouton_Nouveau: TToolButton;
+    Bouton_Ouvrir: TToolButton;
+    Bouton_Fermer: TToolButton;
+    Separateur_1: TToolButton;
+    Bouton_Options: TToolButton;
+    Separateur_2: TToolButton;
+    menuFichier_Nouveau: TMenuItem;
+    Bouton_Ajouter: TToolButton;
+    Bouton_Remplacer: TToolButton;
+    Bouton_Supprimer: TToolButton;
+    Percent: TdwProgressBar;
+    imgTheme32: TImageList;
+    imgTheme16: TImageList;
     procedure FormResize(Sender: TObject);
     procedure menuFichier_QuitterClick(Sender: TObject);
     procedure menuAbout_AboutClick(Sender: TObject);
@@ -263,6 +274,9 @@ type
     function LoadFilterIndex(hash: integer): integer;
     procedure CreateDirs(Nod: PVirtualNode; Pth: String);
     procedure InitOptions();
+    procedure drawError16(Bitmap: TBitmap);
+    procedure drawError32(Bitmap: TBitmap);
+    procedure addImageToList(file16, file32: string);
   public
     TempFiles: TStrings;
     isPreviewLimit: boolean;
@@ -282,6 +296,8 @@ type
     function getPreviewLimitInBytes(value: integer): integer;
     function messageDlgTitle(const Title: String; const Msg: string; Buttons: TMsgDlgButtons; HelpCtx: Longint): Integer;
     procedure addEntry(entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
+    procedure loadTheme(themename: string);
+    function getThemeInfo(themename: string): TdupThemeInfo;
     { Déclarations publiques }
   end;
 
@@ -819,11 +835,14 @@ procedure Tdup5Main.menuRecentClick(Sender: TObject);
 var itmX: TMenuItem;
 begin
 
-  CloseCurrent;
   itmX := TMenuItem(Sender);
-  open_HUB(RecentFiles[itmX.Tag]);
-  if (itmX.Tag > 0) then
-    dup5main.RecentFiles_Decal(itmX.Tag);
+  if (itmX.Tag <> -1) then
+  begin
+    CloseCurrent;
+    open_HUB(RecentFiles[itmX.Tag]);
+    if (itmX.Tag > 0) then
+      dup5main.RecentFiles_Decal(itmX.Tag);
+  end;
 
 end;
 
@@ -1421,8 +1440,8 @@ begin
     1: CellText := IntToStr(FSE.Items[Data.entryIndex].size);
     2: CellText := IntToStr(FSE.Items[Data.entryIndex].offset);
     3: CellText := Data.desc;
-    4: CellText := IntToStr(FSE.Items[Data.entryIndex].DataX);
-    5: CellText := IntToStr(FSE.Items[Data.entryIndex].DataY);
+    5: CellText := IntToStr(FSE.Items[Data.entryIndex].DataX);
+    6: CellText := IntToStr(FSE.Items[Data.entryIndex].DataY);
   else
     CellText := '';
   end;
@@ -1432,7 +1451,7 @@ end;
 procedure Tdup5Main.FormCreate(Sender: TObject);
 var Reg: TRegistry;
     tmpi: integer;
-    clng,clook: string;
+    clng,currentTheme: string;
     DoSetRegistryDUP5: boolean;
 begin
 
@@ -1523,9 +1542,16 @@ begin
         verboseLevel := 1;
 
       if Reg.ValueExists('Look') then
-        clook := Reg.ReadString('Look')
+        Reg.DeleteValue('Look');
+
+      if Reg.ValueExists('CurrentTheme') then
+        currentTheme := Reg.ReadString('CurrentTheme')
       else
-        clook := 'default.dulk';
+        currentTheme := 'Default';
+
+      if Reg.ValueExists('Look') then
+        Reg.DeleteValue('Look');
+
 {      if Reg.ValueExists('XPStyle') then
         XPMenu.Active := Reg.ReadBool('XPStyle')
       else
@@ -1618,6 +1644,24 @@ begin
         if tmpi > 0 then
           lstContent.Header.Columns.Items[3].Width := tmpi;
       end;
+      if Reg.ValueExists('lstContent_4') then
+      begin
+        tmpi := Reg.ReadInteger('lstContent_4');
+        if tmpi > 0 then
+          lstContent.Header.Columns.Items[4].Width := tmpi;
+      end;
+      if Reg.ValueExists('lstContent_5') then
+      begin
+        tmpi := Reg.ReadInteger('lstContent_5');
+        if tmpi > 0 then
+          lstContent.Header.Columns.Items[5].Width := tmpi;
+      end;
+      if Reg.ValueExists('lstContent_6') then
+      begin
+        tmpi := Reg.ReadInteger('lstContent_6');
+        if tmpi > 0 then
+          lstContent.Header.Columns.Items[6].Width := tmpi;
+      end;
       if Reg.ValueExists('toolBar_T') then
       begin
         tmpi := Reg.ReadInteger('toolBar_T');
@@ -1654,9 +1698,8 @@ begin
   end;
 
   TranslateMain;
-  LoadLook('default.dulk');
-  if clook <> 'default.dulk' then
-    LoadLook(clook);
+
+  LoadTheme(currentTheme);
 
   application.Title := dup5Main.Caption;
   lstContent_displayHiddenHeader;
@@ -2594,7 +2637,7 @@ begin
   richLog.Visible := false;
   SplitterBottom.Visible := false;
   bottomHeight := panBottom.Height;
-  panBottom.Height := status.Height;
+  panBottom.Height := status.Height+Percent.Height;
 
 end;
 
@@ -3181,6 +3224,9 @@ begin
       Reg.WriteInteger('lstContent_1',lstContent.Header.Columns.Items[1].Width);
       Reg.WriteInteger('lstContent_2',lstContent.Header.Columns.Items[2].Width);
       Reg.WriteInteger('lstContent_3',lstContent.Header.Columns.Items[3].Width);
+      Reg.WriteInteger('lstContent_4',lstContent.Header.Columns.Items[4].Width);
+      Reg.WriteInteger('lstContent_5',lstContent.Header.Columns.Items[5].Width);
+      Reg.WriteInteger('lstContent_6',lstContent.Header.Columns.Items[6].Width);
       Reg.WriteInteger('toolBar_T',toolBar.Top);
       Reg.WriteInteger('toolBar_L',ToolBar.Left);
       Reg.WriteInteger('Percent_T',Percent.Top);
@@ -3262,13 +3308,13 @@ begin
     end;
     if ShowHidden then
     begin
-      lstContent.Header.Columns.Items[4].Options := lstContent.Header.Columns.Items[4].Options + [coVisible];
       lstContent.Header.Columns.Items[5].Options := lstContent.Header.Columns.Items[5].Options + [coVisible];
+      lstContent.Header.Columns.Items[6].Options := lstContent.Header.Columns.Items[6].Options + [coVisible];
     end
     else
     begin
-      lstContent.Header.Columns.Items[4].Options := lstContent.Header.Columns.Items[4].Options - [coVisible];
       lstContent.Header.Columns.Items[5].Options := lstContent.Header.Columns.Items[5].Options - [coVisible];
+      lstContent.Header.Columns.Items[6].Options := lstContent.Header.Columns.Items[6].Options - [coVisible];
     end;
   Finally
     FreeAndNil(Reg);
@@ -3296,6 +3342,340 @@ procedure Tdup5Main.addEntry(entrynam: ShortString; Offset: Int64; Size: Int64; 
 begin
 
   FSE.addEntry(entrynam,offset,size,datax,datay)
+
+end;
+
+// Draw the error 16x16 default icon into the TBitmap
+procedure Tdup5Main.drawError16(Bitmap: TBitmap);
+begin
+
+    with Bitmap do
+    begin
+      Monochrome := false;
+      PixelFormat := pf24bit;
+      SetSize(16,16);
+      TransparentColor := clBlack;
+      with Canvas do
+      begin
+        Brush.Color := clRed;
+        Pen.Color := clRed;
+        PenPos := Point(0,15);
+        LineTo(7,0);
+        LineTo(15,15);
+        LineTo(0,15);
+        FloodFill(8,8,clRed,fsBorder);
+        Pen.Color := clDkGray;
+        LineTo(7,0);
+        LineTo(15,15);
+        LineTo(0,15);
+        Font.Name := 'Arial';
+        Font.Style := [fsBold];
+        Font.Color := clYellow;
+        Font.Size := 6;
+        TextOut(7,5,'!');
+      end;
+    end;
+
+end;
+
+// Draw the error 32x32 default icon into the TBitmap
+procedure Tdup5Main.drawError32(Bitmap: TBitmap);
+begin
+
+    with Bitmap do
+    begin
+      Monochrome := false;
+      PixelFormat := pf24bit;
+      SetSize(32,32);
+      TransparentColor := clBlack;
+      with Canvas do
+      begin
+        Brush.Color := clRed;
+        Pen.Color := clRed;
+        PenPos := Point(0,31);
+        LineTo(16,0);
+        LineTo(31,31);
+        LineTo(0,31);
+        FloodFill(16,16,clRed,fsBorder);
+        Pen.Color := clDkGray;
+        LineTo(16,0);
+        LineTo(31,31);
+        LineTo(0,31);
+        Font.Name := 'Arial';
+        Font.Style := [fsBold];
+        Font.Color := clYellow;
+        Font.Size := 14;
+        TextOut(14,8,'!');
+      end;
+    end;
+
+end;
+
+// Add the images to the ImageList (both 16x16 & 32x32)
+// If the file do not exists or an exception is thrown during loading
+// a default error image is used instead
+procedure Tdup5Main.addImageToList(file16, file32: string);
+var Image: TSingleImage;
+    Bitmap: TBitmap;
+begin
+
+
+  // Check the 16x16 image exists
+  if (file16 <> '') and fileexists(file16) then
+  begin
+    // Load the image
+    Image := TSingleImage.Create;
+    // Create empty bitmap
+    Bitmap := TBitmap.Create;
+    try
+      // Load the image from the file
+      Image.LoadFromFile(file16);
+
+      // Convert Imaging Image to Bitmap
+      ConvertImageToBitmap(Image,Bitmap);
+    except
+      on e: exception do
+      begin
+        drawError16(Bitmap);
+      end;
+    end;
+    // Add to the theme holder for 16x16 images
+    imgTheme16.AddMasked(Bitmap,BitMap.TransparentColor);
+
+    // Free the Bitmap & the Image
+    FreeAndNil(Bitmap);
+    FreeAndNil(Image);
+  end
+  else
+  begin
+    // Create error bitmap
+    Bitmap := TBitmap.Create;
+    drawError16(Bitmap);
+    appendLogVerbose(2,' [16x16 - MISSING]');
+
+    // Add to the theme holder for 16x16 images
+    imgTheme16.AddMasked(Bitmap,BitMap.TransparentColor);
+
+    // Free the Bitmap
+    FreeAndNil(Bitmap);
+  end;
+
+  // Check the 32x32 image exists
+  if (file32 <> '') and fileexists(file32) then
+  begin
+    // Load the image
+    Image := TSingleImage.Create;
+    // Create empty bitmap
+    Bitmap := TBitmap.Create;
+    try
+      // Load the image from the file
+      Image.LoadFromFile(file32);
+
+      // Convert Imaging Image to Bitmap
+      ConvertImageToBitmap(Image,Bitmap);
+    except
+      on e: exception do
+      begin
+        drawError32(Bitmap);
+      end;
+    end;
+    // Add to the theme holder for 32x32 images
+    imgTheme32.AddMasked(Bitmap,BitMap.TransparentColor);
+
+    // Free the Bitmap & the Image
+    FreeAndNil(Bitmap);
+    FreeAndNil(Image);
+  end
+  else
+  begin
+    // Create error bitmap
+    Bitmap := TBitmap.Create;
+    drawError32(Bitmap);
+    appendLogVerbose(2,' [32x32 - MISSING]');
+
+    // Add to the theme holder for 32x32 images
+    imgTheme32.Add(Bitmap,Bitmap);
+
+    // Free the Bitmap
+    FreeAndNil(Bitmap);
+  end;
+
+end;
+
+// Load the theme (icons)
+procedure Tdup5Main.loadTheme(themename: string);
+var themepath, themefile16, themefile32: String;
+    Rec : TSearchRec;
+    themefiles16, themefiles32: TStringList;
+    imgidx, x: integer;
+    ThemeInfo: TdupThemeInfo;
+begin
+
+  writeLogVerbose(1,'Loading theme: '+themename);
+
+  // Get Theme info (and validity)
+  ThemeInfo := GetThemeInfo(themename);
+
+  // Only load if it is a valid theme
+  if ThemeInfo.ValidTheme then
+  begin
+    // Path to the theme
+    themepath := ExtractFilePath(Application.ExeName)+'Data\Themes\'+themename+'\';
+
+    // Reset the theme ImageList holders
+    imgTheme16.Clear;
+    imgTheme32.Clear;
+
+    // Initialize list of files
+    themefiles16 := TStringList.Create;
+    themefiles32 := TStringList.Create;
+    try
+
+      // Retrieve all 16x16 images in the theme folder
+      if FindFirst(themepath + '16x16\*-*.*', faAnyFile - faDirectory, Rec) = 0 then
+      try
+        repeat
+          themefiles16.Add(Rec.Name);
+          writeLogVerbose(2,'16x16 Candidate Found ('+Rec.name+')');
+        until FindNext(Rec) <> 0;
+      finally
+        FindClose(Rec) ;
+      end;
+
+      // Sort the list for faster processing afterwards
+      themefiles16.Sort;
+
+      // Retrieve all 32x32 images in the theme folder
+      if FindFirst(themepath + '32x32\*-*.*', faAnyFile - faDirectory, Rec) = 0 then
+      try
+        repeat
+          themefiles32.Add(Rec.Name);
+          writeLogVerbose(2,'32x32 Candidate Found ('+Rec.name+')');
+        until FindNext(Rec) <> 0;
+      finally
+        FindClose(Rec) ;
+      end;
+
+      // Sort the list for faster processing afterwards
+      themefiles32.Sort;
+
+      // For each image index, find the matching file in each theme sub-folder
+      // Image index is the value before the first '-' in the filename
+      for imgidx := 0 to 30 do
+      begin
+
+        writeLogVerbose(2,'-- Icon '+inttostr(imgidx));
+
+        // By default consider there is no file
+        themefile16 := '';
+
+        // Go through the list of files in the 16x16 folder
+        for x:=0 to themefiles16.count-1 do
+        begin
+          try
+            if strtoint(leftstr(themefiles16.Strings[x],pos('-',themefiles16.Strings[x])-1)) = imgidx then
+            begin
+              appendlogVerbose(2,' [16x16 = '+themefiles16.Strings[x]+']');
+              themefile16 := themepath+'16x16\'+themefiles16.Strings[x];
+              themefiles16.Delete(x);
+              break;
+            end;
+          except
+            // If the part before the '-' cannot be converted to an integer
+            // then this file is not correct and cannot be used in any image
+            // index, remove it from the list to avoid further errors
+            on e: EConvertError do
+            begin
+              themefiles16.Delete(x);
+              if x >= (themefiles16.count-1) then
+                break;
+            end;
+          end;
+        end;
+
+        // By default consider there is no file
+        themefile32 := '';
+
+        // Go through the list of files in the 32x32 folder
+        for x:=0 to themefiles32.count-1 do
+        begin
+
+          try
+            if strtoint(leftstr(themefiles32.Strings[x],pos('-',themefiles32.Strings[x])-1)) = imgidx then
+            begin
+              appendlogVerbose(2,' [32x32 = '+themefiles32.Strings[x]+']');
+              themefile32 := themepath+'32x32\'+themefiles32.Strings[x];
+              themefiles32.Delete(x);
+              break;
+            end;
+          except
+            // If the part before the '-' cannot be converted to an integer
+            // then this file is not correct and cannot be used in any image
+            // index, remove it from the list to avoid further errors
+            on e: EConvertError do
+            begin
+              themefiles32.Delete(x);
+              if x >= (themefiles32.count-1) then
+                break;
+            end;
+          end;
+
+        end;
+
+        // Add both image files to the image list for current index
+        addImageToList(themefile16,themefile32);
+
+      end;
+    finally
+      FreeAndNil(themefiles16);
+      FreeAndNil(themefiles32);
+    end;
+
+    appendLogVerbose(1,'= Done ('+ThemeInfo.Name+')');
+  end;
+
+end;
+
+function Tdup5Main.getThemeInfo(themename: string): TdupThemeInfo;
+var themepath: string;
+    ini: TInifile;
+begin
+
+  result.ValidTheme := false;
+
+  themepath := ExtractFilePath(Application.ExeName)+'Data\Themes\'+themename+'\';
+  if not(DirectoryExists(themepath)) then
+  begin
+    writeLogVerbose(2,'Theme not found ('+themename+') in '+themepath);
+  end
+  else if not(FileExists(themepath+'duptheme.ini')) then
+  begin
+    writeLogVerbose(2,'Theme incomplete (missing duptheme.ini) in '+themepath);
+  end
+  else if not(DirectoryExists(themepath+'16x16\')) then
+  begin
+    writeLogVerbose(2,'Theme incomplete (missing 16x16 sub-folder) in '+themepath);
+  end
+  else if not(DirectoryExists(themepath+'32x32\')) then
+  begin
+    writeLogVerbose(2,'Theme incomplete (missing 32x32 sub-folder) in '+themepath);
+  end
+  else
+  begin
+    result.ValidTheme := true;
+    Ini := TIniFile.Create(themepath+'duptheme.ini');
+    try
+      if Ini.SectionExists('Dragon UnPACKer 5 Theme') then
+      begin
+        result.Name := Ini.ReadString('Dragon UnPACKer 5 Theme','name',themename);
+        result.Author := Ini.ReadString('Dragon UnPACKer 5 Theme','author','');
+        result.Email := Ini.ReadString('Dragon UnPACKer 5 Theme','email','');
+        result.Comment := Ini.ReadString('Dragon UnPACKer 5 Theme','comment','');
+      end;
+    finally
+      FreeAndNil(Ini);
+    end;
+  end;
 
 end;
 

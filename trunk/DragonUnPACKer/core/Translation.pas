@@ -100,8 +100,9 @@ begin
     lstContent.Header.Columns.Items[1].Text := DLNGStr('LSTCP2');
     lstContent.Header.Columns.Items[2].Text := DLNGStr('LSTCP3');
     lstContent.Header.Columns.Items[3].Text := DLNGStr('LSTCP4');
-    lstContent.Header.Columns.Items[4].Text := DLNGStr('LSTCP5');
-    lstContent.Header.Columns.Items[5].Text := DLNGStr('LSTCP6');
+    lstContent.Header.Columns.Items[4].Text := DLNGStr('LSTCPM');
+    lstContent.Header.Columns.Items[5].Text := DLNGStr('LSTCP5');
+    lstContent.Header.Columns.Items[6].Text := DLNGStr('LSTCP6');
 
     Status.Panels.Items[0].Text := copy(dup5Main.Status.Panels.Items[0].Text,1,pos(' ',dup5Main.Status.Panels.Items[0].Text))+DLNGStr('STAT10');
     Status.Panels.Items[1].Text := copy(dup5Main.Status.Panels.Items[1].Text,1,pos(' ',dup5Main.Status.Panels.Items[1].Text))+DLNGStr('STAT20');

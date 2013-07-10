@@ -215,6 +215,7 @@ type
     procedure chkKeepFilterIndexClick(Sender: TObject);
     procedure chkAccept0BytesClick(Sender: TObject);
     procedure chkDisplayXYClick(Sender: TObject);
+    procedure ThemeList();
   private
     { Déclarations privées }
   public
@@ -222,8 +223,6 @@ type
     procedure updateAssocIcon;
     { Déclarations publiques }
   end;
-
-  procedure LOOKList();
 
 var
   frmConfig: TfrmConfig;
@@ -343,16 +342,14 @@ begin
   for x := 1 to FSE.NumDrivers do
   begin
     itmx := frmConfig.lstDrivers2.Items.Add;
-    itmx.Caption := inttostr(FSE.Drivers[x].Priority);
-    itmx.SubItems.Add(FSE.Drivers[x].Info.Name);
-    itmx.SubItems.Add(FSE.Drivers[x].Info.Version);
-    itmx.SubItems.Add(ChangeFileExt(FSE.Drivers[x].FileName,''));
+    itmx.Caption := inttostr(FSE.GetDriverInfo(x).Priority);
+    itmx.SubItems.Add(FSE.GetDriverInfo(x).DriverInfo.Name);
+    itmx.SubItems.Add(FSE.GetDriverInfo(x).DriverInfo.Version);
+    itmx.SubItems.Add(ChangeFileExt(FSE.GetDriverInfo(x).FileName,''));
   end;
 
   if FSE.NumDrivers > 0 then
-  begin
     frmConfig.lstDrivers2.ItemIndex := 0;
-  end;
 
 end;
 
@@ -565,11 +562,11 @@ begin
 
   CONVList;
   DRVList;
-  LOOKList;
+  ThemeList;
   frmConfig.lstLookClick(Self);
   TYPEList;
 
-  treeConfig.Images := dup5Main.imgLook;
+  treeConfig.Images := dup5Main.imgTheme16;
 
   Loading := False;
 
@@ -616,39 +613,14 @@ begin
 }
 end;
 
-procedure GetLOOKInfos(fil: string);
-var Hin: Integer;
-    HDR: DULK_Header;
-begin
-
-  if FileExists(ExtractFilePath(Application.ExeName)+'Data\'+fil) then
-  begin
-    Hin := FileOpen(ExtractFilePath(Application.ExeName)+'Data\'+fil,fmOpenRead);
-    if Hin > 0 then
-    begin
-      FileRead(hin,HDR,SizeOf(HDR));
-      if (HDR.ID = 'DULK'+#26) and (HDR.Version = DULK_Version) and (HDR.IndexNum = DULK_IndexNum) then
-      begin
-
-         frmConfig.lblLookName.Caption := Get8(Hin);
-         frmConfig.lblLookAuthor.Caption := Get8(Hin);
-         frmConfig.lblLookEmail.Caption := Get8(Hin);
-         frmConfig.lblLookComment.Caption := Get8(Hin);
-
-      end;
-      FileClose(Hin);
-    end;
-  end;
-
-end;
-
-procedure LOOKList();
+procedure TfrmConfig.ThemeList();
 var sr: TSearchRec;
     Hin: Integer;
     HDR: DULK_Header;
     Reg: TRegistry;
-    CFil: string;
-    CFilIdx: integer;
+    CurrentTheme: string;
+    CurrentThemeIdx: integer;
+    ThemeInfo: TdupThemeInfo;
 begin
 
   Reg := TRegistry.Create;
@@ -656,44 +628,36 @@ begin
     Reg.RootKey := HKEY_CURRENT_USER;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
     begin
-      if Reg.ValueExists('Look') then
-         cfil := Reg.ReadString('Look')
+      if Reg.ValueExists('CurrentTheme') then
+        CurrentTheme := Reg.ReadString('CurrentTheme')
       else
-        cfil := 'default.dulk';
+        CurrentTheme := 'Default';
       Reg.CloseKey;
     end;
   Finally
     FreeAndNil(Reg);
   end;
 
-  CFilIdx := -1;
+  CurrentThemeIdx := -1;
 
   frmConfig.lstLook.Clear;
 
-  if FindFirst(ExtractFilePath(Application.ExeName)+'Data\*.dulk',faAnyFile,sr) = 0 then
+  if FindFirst(ExtractFilePath(Application.ExeName)+'Data\Themes\*',faDirectory,sr) = 0 then
   begin
     repeat
-      if (sr.Attr and faDirectory) <> faDirectory then
+      ThemeInfo := dup5Main.getThemeInfo(Sr.Name);
+      if ThemeInfo.ValidTheme then
       begin
-        Hin := FileOpen(ExtractFilePath(Application.ExeName)+'Data\'+sr.Name,fmOpenRead);
-        if Hin > 0 then
-        begin
-          FileRead(hin,HDR,SizeOf(HDR));
-          if (HDR.ID = 'DULK'+#26) and (HDR.Version = DULK_Version) and (HDR.IndexNum = DULK_IndexNum) then
-          begin
-            frmConfig.lstLook.Items.Add(Get8(Hin) + ' ('+sr.Name+')');
-            if UpperCase(Sr.name) = UpperCase(CFil) then
-              CFilIdx := frmConfig.lstLook.Count-1;
-          end;
-          FileClose(Hin);
-        end;
+        frmConfig.lstLook.Items.Add(sr.Name);
+        if UpperCase(Sr.name) = UpperCase(CurrentTheme) then
+          CurrentThemeIdx := frmConfig.lstLook.Count-1;
       end;
     until FindNext(sr) <>0;
     FindClose(sr);
   end;
 
-  if CFilIdx > -1 then
-    frmConfig.lstLook.ItemIndex := CFilIdx
+  if CurrentThemeIdx > -1 then
+    frmConfig.lstLook.ItemIndex := CurrentThemeIdx
   else
     if frmConfig.lstLook.Count > 0 then
       frmConfig.lstLook.ItemIndex := 0;
@@ -724,20 +688,23 @@ begin
 end;
 
 procedure TfrmConfig.lstLookClick(Sender: TObject);
-var st,fil: string;
+var themename: string;
     parpos: integer;
     Reg: TRegistry;
+    ThemeInfo: TdupThemeInfo;
 begin
 
   if (lstLook.ItemIndex > -1) then
   begin
-    st := lstLook.Items[lstLook.ItemIndex];
-    parpos := posrev('(',st);
+    themename := lstLook.Items[lstLook.ItemIndex];
 
-    fil := Copy(st,parpos+1,length(st)-parpos-1);
+    ThemeInfo := dup5Main.getThemeInfo(themename);
+    frmConfig.lblLookName.Caption := ThemeInfo.Name;
+    frmConfig.lblLookAuthor.Caption := ThemeInfo.Author;
+    frmConfig.lblLookEmail.Caption := ThemeInfo.Email;
+    frmConfig.lblLookComment.Caption := ThemeInfo.Comment;
 
-    GetLOOKInfos(fil);
-    LoadLook(fil);
+    dup5Main.loadTheme(themename);
 
     if Not(Loading) then
     begin
@@ -746,7 +713,7 @@ begin
         Reg.RootKey := HKEY_CURRENT_USER;
         if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
         begin
-          Reg.WriteString('Look',fil);
+          Reg.WriteString('CurrentTheme',themename);
           Reg.CloseKey;
         end;
       Finally
@@ -968,17 +935,17 @@ begin
   if (Change = ctState)
   and (lstDrivers2.ItemIndex > -1) then
   begin
-    lblDrvInfoAuthor.Caption := FSE.Drivers[lstDrivers2.ItemIndex+1].Info.Author;
-    lblDrvInfoVersion.Caption := FSE.Drivers[lstDrivers2.ItemIndex+1].Info.Version;
-    lblDrvInfoComments.Caption := FSE.Drivers[lstDrivers2.ItemIndex+1].Info.Comment;
+    lblDrvInfoAuthor.Caption := FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).DriverInfo.Author;
+    lblDrvInfoVersion.Caption := FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).DriverInfo.Version;
+    lblDrvInfoComments.Caption := FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).DriverInfo.Comment;
 
-    cmdDrvAbout.Enabled := FSE.Drivers[lstDrivers2.ItemIndex+1].IsAboutBox;
-    cmdDrvSetup.Enabled := FSE.Drivers[lstDrivers2.ItemIndex+1].IsConfigBox;
+    cmdDrvAbout.Enabled := FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).IsAboutBox;
+    cmdDrvSetup.Enabled := FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).IsConfigBox;
 
-    txtDUDI.Caption := 'v'+inttostr(FSE.Drivers[lstDrivers2.ItemIndex+1].DUDIVersion);
-    txtIntVer.Caption := inttostr(FSE.Drivers[lstDrivers2.ItemIndex+1].GetVersion);
+    txtDUDI.Caption := 'v'+inttostr(FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).DUDIVersion);
+    txtIntVer.Caption := inttostr(FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).InternalVersion);
 
-    trkPriority.Position := FSE.Drivers[lstDrivers2.ItemIndex+1].Priority;
+    trkPriority.Position := FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).Priority;
   end;
 
 end;
@@ -987,8 +954,9 @@ procedure TfrmConfig.trkPriorityChange(Sender: TObject);
 begin
 
   txtPriority.Caption := inttostr(trkPriority.Position);
-  if FSE.Drivers[lstDrivers2.ItemIndex + 1].Priority <> trkPriority.Position then
-    FSE.setDriverPriority(lstDrivers2.ItemIndex + 1, trkPriority.Position);
+  lstDrivers2.Selected.Caption := inttostr(trkPriority.Position);
+  if FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).Priority <> trkPriority.Position then
+    FSE.setDriverPriority(lstDrivers2.ItemIndex+1, trkPriority.Position);
 
 end;
 

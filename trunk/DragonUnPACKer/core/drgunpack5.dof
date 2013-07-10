@@ -94,7 +94,7 @@ OutputDir=E:\Developpement\dup-dev-5.1-compiled
 UnitOutputDir=E:\Developpement\dup-dev-5.1-dcu
 PackageDLLOutputDir=
 PackageDCPOutputDir=
-SearchPath=P:\Programs\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
+SearchPath=$(DELPHI)\Lib\Debug;C:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;P:\Programs\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
 Packages=vcl;rtl;vclx;indy;inet;xmlrtl;vclie;inetdbbde;inetdbxpress;dbrtl;dsnap;dsnapcon;vcldb;soaprtl;VclSmp;dbexpress;dbxcds;inetdb;bdertl;vcldbx;webdsnap;websnap;adortl;ibxpress;teeui;teedb;tee;dss;visualclx;visualdbclx;vclactnband;vclshlctrls;dclOfficeXP;DJcl;JVCL200_R70;qrpt;VirtualTreesD7;IcsDel70
 Conditionals=DRGUNPACK
 DebugSourceDirs=
@@ -111,7 +111,7 @@ AutoIncBuild=1
 MajorVer=5
 MinorVer=7
 Release=0
-Build=274
+Build=279
 Debug=0
 PreRelease=1
 Special=0
@@ -122,7 +122,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElbererhZone
 FileDescription=Dragon UnPACKer 5
-FileVersion=5.7.0.274
+FileVersion=5.7.0.279
 InternalName=DrgUnPack5
 LegalCopyright=Created by Alexandre "Elbereth" Devilliers under Mozilla Public License 1.1
 LegalTrademarks=
@@ -131,22 +131,19 @@ ProductName=Dragon UnPACKer 5
 ProductVersion=5.7.0 Beta
 Comments=Universal game ripper/Ripper universel de jeux
 [HistoryLists\hlConditionals]
-Count=2
-Item0=DUPPI
-Item1=DRGUNPACK
+Count=1
+Item0=DRGUNPACK
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlSearchPath]
 Count=2
-Item0=P:\Programs\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
+Item0=$(DELPHI)\Lib\Debug;C:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;P:\Programs\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
 Item1=E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
 [HistoryLists\hlUnitOutputDirectory]
 Count=1
 Item0=E:\Developpement\dup-dev-5.1-dcu
 [HistoryLists\hlOutputDirectorry]
-Count=4
-Item0=E:\Developpement\dup-dev-5.1-compiled\data\drivers
-Item1=E:\Developpement\dup-dev-5.1-compiled\utils
-Item2=E:\Developpement\dup-dev-5.1-compiled
-Item3=E:\Developpement\dup-dev-5.1-compiled\data\convert
+Count=2
+Item0=E:\Developpement\dup-dev-5.1-compiled\data\convert
+Item1=E:\Developpement\dup-dev-5.1-compiled

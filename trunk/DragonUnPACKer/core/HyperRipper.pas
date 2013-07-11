@@ -61,7 +61,8 @@ uses
   Windows, Messages, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, declFSE, lib_language, Registry, Math, spec_DDS,
   ExtCtrls, lib_utils, classFSE, spec_HRF, DateUtils, translation, U_IntList,
-  StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar, ImgList, SysUtils;
+  StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar, ImgList, SysUtils,
+  Spec_DUDI;
 
 const MP_FRAMES_FLAG = 1;
       MP_BYTES_FLAG = 2;

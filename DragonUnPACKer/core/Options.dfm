@@ -1308,6 +1308,7 @@ object frmConfig: TfrmConfig
         Width = 369
         Height = 13
         AutoSize = False
+        ShowAccelChar = False
       end
       object lblLookAuthor: TLabel
         Left = 64
@@ -1315,6 +1316,7 @@ object frmConfig: TfrmConfig
         Width = 369
         Height = 13
         AutoSize = False
+        ShowAccelChar = False
       end
       object lblLookEmail: TLabel
         Left = 64
@@ -1322,6 +1324,7 @@ object frmConfig: TfrmConfig
         Width = 369
         Height = 13
         AutoSize = False
+        ShowAccelChar = False
       end
       object strLookComment: TLabel
         Left = 8

@@ -27,7 +27,7 @@ uses
   // Vampyre Imaging Library
   ImagingTypes, Imaging, ImagingClasses, ImagingComponents, ImagingCanvases,
   ImagingFormats, ImagingUtility, dwTaskbarComponents,
-  lib_crc, lib_temptools, lib_version, IniFiles;
+  lib_crc, lib_temptools, lib_version, IniFiles, cls_duplog;
 
 type
   TdupThemeInfo = record
@@ -97,7 +97,6 @@ type
     Status: TStatusBar;
     N3: TMenuItem;
     menuLog_Clear: TMenuItem;
-    richLog: TRichEdit;
     SplitterPreview: TSplitter;
     panPreview: TPanel;
     menuOptions_Advanced: TMenuItem;
@@ -140,6 +139,7 @@ type
     Percent: TdwProgressBar;
     imgTheme32: TImageList;
     imgTheme16: TImageList;
+    richLog: TRichEdit;
     procedure FormResize(Sender: TObject);
     procedure menuFichier_QuitterClick(Sender: TObject);
     procedure menuAbout_AboutClick(Sender: TObject);
@@ -281,6 +281,7 @@ type
     TempFiles: TStrings;
     isPreviewLimit: boolean;
     previewLimitValue: integer;
+    globalLogFacility: TDupLog;
     function getVerboseLevel(): integer;
     procedure setVerboseLevel(verbLevel: integer);
     procedure writeLog(text: string);
@@ -298,6 +299,7 @@ type
     procedure addEntry(entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
     procedure loadTheme(themename: string);
     function getThemeInfo(themename: string): TdupThemeInfo;
+    procedure setLogFacility(LogFacility: TDupLog);
     { Déclarations publiques }
   end;
 
@@ -3676,6 +3678,14 @@ begin
       FreeAndNil(Ini);
     end;
   end;
+
+end;
+
+procedure Tdup5Main.setLogFacility(LogFacility: TDupLog);
+begin
+
+  globalLogFacility := LogFacility;
+  globalLogFacility.enableLogIntoRichEdit(richLog);
 
 end;
 

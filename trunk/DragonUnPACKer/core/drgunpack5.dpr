@@ -68,7 +68,8 @@ uses
   classConvertExport in 'classConvertExport.pas',
   lib_temptools in '..\common\lib_temptools.pas',
   cls_duplog in '..\common\cls_duplog.pas',
-  lib_version in '..\common\lib_version.pas';
+  lib_version in '..\common\lib_version.pas',
+  ComCtrls;
 
 const _DEBUGMODE = FALSE;
 
@@ -274,8 +275,12 @@ var hwnd : word = 0;
 //    hProcess: THandle;
 begin
 
+  dupLog := TDupLog.Create();
+
   if _DEBUGMODE then
-    dupLog := TDupLog.Create(Application.ExeName+'.debug.'+FormatDateTime('yyyymmddhhnnsszzz',Now)+'.log');
+  begin
+    dupLog.enableLogIntoFile(Application.ExeName+'.debug.'+FormatDateTime('yyyymmddhhnnsszzz',Now)+'.log');
+  end;
 
   { Removed because I fixed the root of the problem in the thread execution stuff
   // Set CPU affinity to first processor only
@@ -405,6 +410,7 @@ begin
         if _DEBUGMODE then
           dupLog.AddMessage('Application.CreateForm(Tdup5Main, dup5Main)');
         Application.CreateForm(Tdup5Main, dup5Main);
+        dup5Main.setLogFacility(dupLog);
         if _DEBUGMODE then
           dupLog.AddMessage('Application.CreateForm(TfrmAbout, frmAbout)');
   Application.CreateForm(TfrmAbout, frmAbout);
@@ -456,7 +462,7 @@ begin
       // Execute application
       Application.Run;
 
-      if _DEBUGMODE then
+      if Assigned(dupLog) then
         dupLog.Free;
 
     end;

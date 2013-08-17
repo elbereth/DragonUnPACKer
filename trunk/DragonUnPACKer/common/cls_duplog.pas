@@ -1,8 +1,5 @@
 unit cls_duplog;
 
-// $Id: Main.pas 632 2013-01-29 18:50:13Z elbereth $
-// $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/Main.pas,v $
-//
 // The contents of this file are subject to the Mozilla Public License
 // Version 1.1 (the "License"); you may not use this file except in compliance
 // with the License. You may obtain a copy of the License at http://www.mozilla.org/MPL/
@@ -18,10 +15,12 @@ unit cls_duplog;
 
 interface
 
-uses Controls, Graphics, SysUtils;
+uses Controls, Graphics, SysUtils, StdCtrls, ComCtrls, ShellApi;
 
+// Enum type for the message severity
 type TDupLogMessageSeverity = (sevDebug=0, sevHigh=1, sevMedium=2, sevLow=3);
 
+// The class that stores the message
 type TDupLogMessage = class(TObject)
      private
        _Date: TDateTime;
@@ -38,6 +37,7 @@ type TDupLogMessage = class(TObject)
        constructor Create(Message : String; Level: TDupLogMessageSeverity = sevMedium);
      end;
 
+// The class for the actual logging facility
 type TDupLog = class(TObject)
      private
        _Messages: array of TDupLogMessage;
@@ -46,20 +46,29 @@ type TDupLog = class(TObject)
        _FlushAfter: integer;
        _FlushAtClose: boolean;
        _FlushedIndex: integer;
+       _LogIntoFile: boolean;
+       _LogIntoMemo: boolean;
+       _LogIntoRichEdit: boolean;
        _LogFilename: String;
        _LogFile: TextFile;
+       _LogMemo: TMemo;
+       _LogRichEdit: TRichEdit;
        function getNumMessages(): integer;
      public
        property Count: Integer read getNumMessages;
      published
-       constructor Create(Filename : String);
+       constructor Create();
        destructor Destroy; override;
-       procedure addMessage(Message: String);
+       procedure enableLogIntoFile(Filename: string);
+       procedure enableLogIntoMemo(Memo: TMemo);
+       procedure enableLogIntoRichEdit(RichEdit: TRichEdit);
+       procedure addMessage(Message: String; Level: TDupLogMessageSeverity = sevMedium);
        procedure flushMessages;
      end;
 
 implementation
 
+// Create a Log Message, by default uses todays date and if level is not specified it will have sevMedium level
 constructor TDupLogMessage.create(Message : String; Level: TDupLogMessageSeverity = sevMedium);
 begin
 
@@ -70,6 +79,7 @@ begin
 
 end;
 
+// Returns the severity level as a displayable char
 function TDupLogMessage.getLevelHR: Char;
 begin
 
@@ -88,17 +98,39 @@ begin
 
 end;
 
+// Flush the messages into the respective logging destinations (file, TRichEdit, TMemo, ..)
 procedure TDupLog.flushMessages;
 var x: integer;
+    dateMsg: string;
 begin
 
   for x := _FlushedIndex+1 to _MessageIndex do
-    WriteLn(_LogFile,FormatDateTime('yyyy/mm/dd" "hh:nn:ss"."zzz',_Messages[x].Date)+' ['+_Messages[x].LevelHR+'] '+_Messages[x].Message);
+  begin
+
+    dateMsg := FormatDateTime('yyyy/mm/dd" "hh:nn:ss"."zzz',_Messages[x].Date);
+
+    if _LogIntoFile then
+      WriteLn(_LogFile,dateMsg+' ['+_Messages[x].LevelHR+'] '+_Messages[x].Message);
+
+    if _LogIntoRichEdit then
+    begin
+      if _LogRichEdit.Lines.Count >= 32760 then
+      _LogRichEdit.Lines.Delete(0);
+
+      _LogRichEdit.Lines.Add(dateMsg+' ['+_Messages[x].LevelHR+'] '+_Messages[x].Message);
+      _LogRichEdit.SelStart := _LogRichEdit.GetTextLen;
+      _LogRichEdit.SelLength := 0;
+      _LogRichEdit.ScrollBy(0,_LogRichEdit.Lines.Count);
+      _LogRichEdit.Refresh;
+//      _LogRichEdit.Perform(EM_LINESCROLL,0,1);
+    end;
+  end;
 
   _FlushedIndex := _MessageIndex;
 
 end;
 
+// This will return the current number of messages in the log facility
 function TDupLog.getNumMessages(): integer;
 begin
 
@@ -106,7 +138,8 @@ begin
 
 end;
 
-constructor TDupLog.create(Filename: string);
+// Creation of the logging facility (by default no logging destinations)
+constructor TDupLog.create();
 begin
 
   _FlushAfter := 1;
@@ -115,16 +148,14 @@ begin
   _BlockSize := 100;
   _MessageIndex := -1;
   SetLength(_Messages,_BlockSize);
-  _LogFilename := Filename;
 
-  AssignFile(_LogFile, _LogFilename);
-  if FileExists(_LogFilename) then
-    Append(_LogFile)
-  else
-    Rewrite(_LogFile);
+  _LogIntoFile := false;
+  _LogIntoMemo := false;
+  _LogIntoRichEdit := false;
 
 end;
 
+// Destruction of the logging facility
 destructor TDupLog.Destroy;
 var x: integer;
 begin
@@ -132,7 +163,8 @@ begin
   if _FlushAtClose then
     flushMessages;
 
-  CloseFile(_LogFile);
+  if (_LogIntoFile) then
+    CloseFile(_LogFile);
 
   if _Messages <> nil then
   begin
@@ -144,16 +176,59 @@ begin
 
 end;
 
-procedure TDupLog.addMessage(Message: String);
+// Add a message to the logging facility, by default uses sevMedium level
+procedure TDupLog.addMessage(Message: String; Level: TDupLogMessageSeverity = sevMedium);
 begin
 
   Inc(_MessageIndex);
   if (_MessageIndex > High(_Messages)) then
     SetLength(_Messages,Length(_Messages)+_BlockSize);
-  _Messages[_MessageIndex] := TDupLogMessage.Create(Message,sevDebug);
+  _Messages[_MessageIndex] := TDupLogMessage.Create(Message,Level);
 
   if (_MessageIndex - _FlushedIndex) >= _FlushAfter then
     FlushMessages;
+
+end;
+
+// Enable the file logging destination
+procedure TDupLog.enableLogIntoFile(Filename: String);
+begin
+
+  _LogFilename := Filename;
+
+  AssignFile(_LogFile, _LogFilename);
+  if FileExists(_LogFilename) then
+    Append(_LogFile)
+  else
+    Rewrite(_LogFile);
+
+  _LogIntoFile := true;
+
+end;
+
+// Enable the TRichEdit logging destination
+// TODO Find replacement for Lazarus
+procedure TDupLog.enableLogIntoRichEdit(RichEdit: TRichEdit);
+begin
+
+  if Assigned(RichEdit) then
+  begin
+    _LogRichEdit := RichEdit;
+    _LogIntoRichEdit := true;
+  end;
+
+end;
+
+// Enable the TMemo logging destination
+// Fallback from TRichEdit for a possible switch to Lazarus
+procedure TDupLog.enableLogIntoMemo(Memo: TMemo);
+begin
+
+  if Assigned(Memo) then
+  begin
+    _LogMemo := Memo;
+    _LogIntoMemo := true;
+  end;
 
 end;
 

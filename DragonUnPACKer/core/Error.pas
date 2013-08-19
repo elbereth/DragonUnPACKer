@@ -21,7 +21,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, DateUtils, lib_utils,
-  Main, prg_ver,
+  prg_ver,
   ExtCtrls, lib_language, translation, ShellApi;
 
 type

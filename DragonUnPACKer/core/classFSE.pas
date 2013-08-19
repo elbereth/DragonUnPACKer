@@ -28,9 +28,9 @@ unit classFSE;
 interface
 
 uses auxFSE, Classes, Comctrls, Controls, DateUtils, Dialogs, Forms,
-     lib_binCopy, lib_binutils, lib_language, lib_utils, Main, prg_ver, Registry,
-     spec_HRF, strutils, Windows, SysUtils, Error, Graphics, commonTypes, virtualtrees,
-     HashTrie, spec_DUDI;
+     lib_binCopy, lib_binutils, lib_language, lib_utils, prg_ver, Registry,
+     spec_HRF, strutils, Windows, SysUtils, Graphics, commonTypes, virtualtrees,
+     HashTrie, spec_DUDI, cls_duplog, cls_dupcommands, MsgBox, Error;
 
 { Record declaration }
 
@@ -192,24 +192,23 @@ type TDUDEntryFunctions = record
      Infos : TDUDEntryInfos;
    end;
 
- pvirtualTreeData = ^virtualTreeData;
- virtualTreeData = record
-   ImageIndex: Integer;
-   tdirpos: integer;
-   entryIndex: integer;
-   loaded: boolean;
-   desc: String;
- end;
+  pvirtualTreeData = ^virtualTreeData;
+  virtualTreeData = record
+    ImageIndex: Integer;
+    tdirpos: integer;
+    entryIndex: integer;
+    loaded: boolean;
+    desc: String;
+  end;
 
- pvirtualIndexData = ^virtualIndexData;
- virtualIndexData = record
-   dirname: String;
-   imageIndex: integer;
-   selectedImageIndex: integer;
-   FolderID: integer;
- end;
+  pvirtualIndexData = ^virtualIndexData;
+  virtualIndexData = record
+    dirname: String;
+    imageIndex: integer;
+    selectedImageIndex: integer;
+    FolderID: integer;
+  end;
 
-type
   PEntList = ^EntList;
   EntList = record
     FileName: string;
@@ -218,6 +217,8 @@ type
     DataX: integer;
     DataY: integer;
   end;
+
+  EDupFSECanOpenError = Exception;
 
 type TDrivers = class
   private
@@ -247,6 +248,8 @@ type TDrivers = class
     CurAOwner: TComponent;
     Drivers: array[1..16] of TDUDEntry;
     DriversSorted: array[1..16] of integer;
+    _LogFacility: TDupLog;
+    _CommandsFacility: TDupCommands;
     function ParseFileTypes(names: string; ext: string): string;
     procedure ExtractFile_Alt(outfile,entrynam: string; offset: int64; size: int64; datax: integer; datay: integer; silent: boolean);
     procedure ExtractFileToStream_Alt(outstream: TStream; entrynam: string; offset: int64; size: int64; datax: integer; datay: integer; silent: boolean);
@@ -303,7 +306,7 @@ type TDrivers = class
     procedure setDriverPriority(index, priority: integer);
     procedure sortDriversByPriority;
     procedure addEntry(entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
-    constructor Create();
+    constructor Create(LogFacility: TDupLog; CommandsFacility: TDupCommands);
     destructor Destroy(); override;
     property Items[Index : integer] : FSEentry read getEntryList;
 end;
@@ -311,20 +314,6 @@ end;
 implementation
 
 { TDrivers }
-
-procedure showMsgBox(const title, msg: AnsiString);
-begin
-
-  dup5Main.messageDlgTitle(title,msg,[mbOk],0);
-
-end;
-
-procedure addEntryCB(entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
-begin
-
-  dup5Main.addEntry(entrynam,offset,size,datax,datay);
-
-end;
 
 function TDrivers.GetFileSize(): Int64;
 begin
@@ -436,7 +425,7 @@ begin
       if IsConsole then
         write(sr.name+ ' ')
       else
-        dup5Main.writeLogVerbose(1,' + '+sr.Name+' :');
+        _LogFacility.addMessage(' + '+sr.Name+' :',sevHigh);
       Handle := LoadLibrary(PChar(pth + sr.name));
       if Handle <> 0 then
       begin
@@ -463,7 +452,7 @@ begin
           if IsConsole then
             write('IsDUDI... ')
           else
-            dup5Main.appendLogVerbose(2,'DUDI v'+inttostr(Drivers[NumDrivers].Infos.DUDIVersion)+' -');
+            _LogFacility.appendMessage('DUDI v'+inttostr(Drivers[NumDrivers].Infos.DUDIVersion)+' -');
 
           @Drivers[NumDrivers].Functions.CloseFile := GetProcAddress(Handle, 'CloseFormat');
           @Drivers[NumDrivers].Functions.GetEntry := GetProcAddress(Handle, 'GetEntry');
@@ -519,15 +508,7 @@ begin
           or ((Drivers[NumDrivers].Infos.DUDIVersion >= 6) and ((@Drivers[NumDrivers].Functions.InitPluginEx6 = Nil) or (@Drivers[NumDrivers].Functions.GetInfoModif = Nil)))
           then
           begin
-            if IsConsole then
-              writeln('Malformed!')
-            else
-            begin
-              if dup5Main.getVerboseLevel = 0 then
-                dup5Main.writeLog(' + '+sr.Name+' :');
-              dup5Main.appendLog(DLNGstr('ERRD02'));
-              dup5Main.colorLog(clRed);
-            end;
+            _LogFacility.addMessage(' + '+sr.Name+' : '+DLNGstr('ERRD02'),sevError);
             dec(NumDrivers);
             FreeLibrary(handle);
           end
@@ -547,13 +528,13 @@ begin
               else if (Drivers[NumDrivers].Infos.DUDIVersion = 5) then
               begin
                 Drivers[NumDrivers].Functions.InitPlugin3(Percent,Language,dup5pth,Application.Handle,CurAOwner);
-                Drivers[NumDrivers].Functions.InitPluginEx5(showMsgBox);
+                Drivers[NumDrivers].Functions.InitPluginEx5(MsgBoxCallback);
               end
               else if (Drivers[NumDrivers].Infos.DUDIVersion >= 6) then
               begin
                 Drivers[NumDrivers].Functions.InitPlugin3(Percent,Language,dup5pth,Application.Handle,CurAOwner);
-                Drivers[NumDrivers].Functions.InitPluginEx5(showMsgBox);
-                Drivers[NumDrivers].Functions.InitPluginEx6(addEntryCB);
+                Drivers[NumDrivers].Functions.InitPluginEx5(MsgBoxCallback);
+                Drivers[NumDrivers].Functions.InitPluginEx6(AddEntryCallback);
                 Drivers[NumDrivers].Infos.ModifCapabilities := Drivers[NumDrivers].Functions.GetInfoModif;
               end;
               Drivers[NumDrivers].Infos.DriverInfo := Drivers[NumDrivers].Functions.GetInfo;
@@ -564,7 +545,7 @@ begin
               Drivers[NumDrivers].Infos.IsConfigBox := not(@Drivers[NumDrivers].Functions.ShowConfigBox = nil) or not(@Drivers[NumDrivers].Functions.ShowConfigBox2 = nil) or not(@Drivers[NumDrivers].Functions.ShowConfigBox3 = nil);
               Drivers[NumDrivers].Infos.Priority := getDriverPriority(ExtractFileName(sr.Name));
               DriversSorted[NumDrivers] := NumDrivers;
-              dup5Main.appendLogVerbose(1,Drivers[NumDrivers].Functions.GetInfo.Name+' v'+Drivers[NumDrivers].Functions.GetInfo.Version)
+              _LogFacility.appendMessage(Drivers[NumDrivers].Functions.GetInfo.Name+' v'+Drivers[NumDrivers].Functions.GetInfo.Version);
             except
               on E:Exception do
               begin
@@ -575,28 +556,13 @@ begin
         end
         else
         begin
-          if IsConsole then
-            writeln('Bad DUDI')
-          else
-          begin
-            if dup5Main.getVerboseLevel = 0 then
-            begin
-              dup5Main.writeLog(' + '+sr.Name+' :');
-            end;
-            dup5Main.appendLog(DLNGstr('ERRD01'));
-            dup5Main.colorLog(clRed);
-          end;
+          _LogFacility.addMessage(' + '+sr.Name+' : '+DLNGstr('ERRD01'),sevError);
           FreeLibrary(handle);
         end;
       end
       else
       begin
-        if dup5Main.getVerboseLevel = 0 then
-        begin
-          dup5Main.writeLog(' + '+sr.Name+' :');
-        end;
-        dup5Main.appendLog(DLNGstr('ERRD01'));
-        dup5Main.colorLog(clRed);
+          _LogFacility.addMessage(' + '+sr.Name+' : '+DLNGstr('ERRD01'),sevError);
       end;
 
     until FindNext(sr) <> 0;
@@ -650,8 +616,8 @@ var x,y,i: integer;
     zero64: int64;
 begin
 
-  SaveTitle;
-  SetTitle(ReplaceValue('%f',DLNGstr('TLD001'),ExtractFilename(pth)));
+  _CommandsFacility.SaveTitle;
+  _CommandsFacility.SetTitle(ReplaceValue('%f',DLNGstr('TLD001'),ExtractFilename(pth)));
   //result := dlError;
 
   if (FileExists(pth)) then
@@ -663,7 +629,7 @@ begin
     begin
       result := dlFileNotFound;
       MessageDlg(ReplaceValue('%f',DLNGstr('ERRIO'),pth),mtWarning,[mbOk],0);
-      restoreTitle;
+      _CommandsFacility.RestoreTitle;
       exit;
     end;
 
@@ -671,7 +637,7 @@ begin
 
     SmartOpen := GetRegistryBool('StartUp','SmartOpen',True);
     if SmartOpen then
-      dup5Main.writeLogVerbose(1,DLNGStr('LOG400'));
+      _LogFacility.addMessage(DLNGStr('LOG400'),sevHigh);
 
     x := 1 ;
     NumCanOpen := 0;
@@ -685,7 +651,7 @@ begin
       try
         if Drivers[DriversSorted[x]].Functions.CanOpen(pchar(pth),SmartOpen) then
         begin
-          dup5Main.writeLogVerbose(1,ReplaceValue('%d',DLNGStr('LOG500'),Drivers[DriversSorted[x]].Infos.DriverInfo.Name));
+          _LogFacility.addMessage(ReplaceValue('%d',DLNGStr('LOG500'),Drivers[DriversSorted[x]].Infos.DriverInfo.Name),sevHigh);
           CanOpen[NumCanOpen] := DriversSorted[x];
           Inc(NumCanOpen);
         end;
@@ -712,7 +678,7 @@ begin
     begin
       if not(silent) then
         MessageDlg(DLNGstr('ERRUNK'),mtInformation,[mbOk],0);
-      RestoreTitle;
+      _CommandsFacility.RestoreTitle;
       res := dlCouldNotLoad;
     end
     else
@@ -727,7 +693,7 @@ begin
         CurrentFileSize := FileSeek(i,zero64,2);
         FileClose(i);
 
-        dup5Main.writeLogVerbose(1,ReplaceValue('%d',DLNGStr('LOG501'),Drivers[CurrentDriver].Infos.DriverInfo.Name));
+        _LogFacility.addMessage(ReplaceValue('%d',DLNGStr('LOG501'),Drivers[CurrentDriver].Infos.DriverInfo.Name),sevHigh);
 
         StartTime := Now;
         entryListIndex := -1;
@@ -757,14 +723,14 @@ begin
         end;
         LoadTimeOpen := MilliSecondsBetween(Now, StartTime);
 
-        dup5Main.appendLogVerbose(2,inttostr(LoadTimeOpen)+'ms');
+        _LogFacility.appendMessage(inttostr(LoadTimeOpen)+'ms');
 
         if  NumElems > 0 then
         begin
 
-          dup5Main.appendLog(DLNGStr('LOG511'));
+          _LogFacility.appendMessage(DLNGStr('LOG511'));
 
-          SetTitle(DLNGstr('TLD002'));
+          _CommandsFacility.SetTitle(DLNGstr('TLD002'));
           StartTime := Now;
 
           DrvInfo := Drivers[CurrentDriver].Functions.GetDriver;
@@ -779,7 +745,7 @@ begin
           if (Drivers[CurrentDriver].Infos.DUDIVersion < 6) then
           begin
 
-            dup5Main.writeLogVerbose(1,ReplaceValue('%x',DLNGStr('LOG502'),inttostr(NumElems)));
+            _LogFacility.addMessage(ReplaceValue('%x',DLNGStr('LOG502'),inttostr(NumElems)),sevHigh);
 
             try
               for y := 1 to NumElems do
@@ -790,12 +756,9 @@ begin
             except
               on Ex:Exception do
               begin  // New error dialog box
-                dup5Main.writeLog(ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].Infos.FileName));
-                dup5Main.colorLog(clRed);
-                dup5Main.writeLog(Ex.Message +' @ TDrivers.LoadFile:'+Drivers[CurrentDriver].Infos.FileName+'.GetEntry');
-                dup5Main.colorLog(clRed);
-                dup5Main.writeLog(ReplaceValue('%a',DLNGstr('ERRDR1'),Drivers[CurrentDriver].Infos.DriverInfo.Author));
-                dup5Main.colorLog(clRed);
+                _LogFacility.addMessage(ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].Infos.FileName),sevError);
+                _LogFacility.addMessage(Ex.Message +' @ TDrivers.LoadFile:'+Drivers[CurrentDriver].Infos.FileName+'.GetEntry',sevError);
+                _LogFacility.addMessage(ReplaceValue('%a',DLNGstr('ERRDR1'),Drivers[CurrentDriver].Infos.DriverInfo.Author),sevError);
 
                 frmError.PrepareError;
                 frmError.details.Add(DLNGStr('ERRCAL'));
@@ -821,12 +784,12 @@ begin
 
             LoadTimeRetrieve := MilliSecondsBetween(Now, StartTime);
 
-            dup5Main.appendLogVerbose(2,inttostr(LoadTimeRetrieve)+'ms');
+            _LogFacility.appendMessageIf(inttostr(LoadTimeRetrieve)+'ms',sevMedium);
           end;
 
           DispNumElems := entryListIndex+1;
 
-          SetTitle(DLNGstr('TLD003'));
+          _CommandsFacility.SetTitle(DLNGstr('TLD003'));
           StartTime := Now;
 
           SCh := DrvInfo.Sch;
@@ -834,7 +797,7 @@ begin
           InternalExtract := DrvInfo.ExtractInternal;
           CurrentFile := DrvInfo.FileHandle;
 
-          dup5Main.writeLogVerbose(1,DLNGStr('LOG503'));
+          _LogFacility.addMessage(DLNGStr('LOG503'),sevLow);
 
           CurrentFileName := pth;
 
@@ -844,20 +807,20 @@ begin
 
           LoadTimeParse := MilliSecondsBetween(Now, StartTime);
 
-          dup5Main.appendLogVerbose(2,inttostr(LoadTimeParse)+'ms');
+          _LogFacility.appendMessageIf(inttostr(LoadTimeParse)+'ms',sevMedium);
 
-          SetTitle(pth);
+          _CommandsFacility.SetTitle(pth);
 
           res := dlOK;
 
-          dup5Main.writeLogVerbose(1,ReplaceValue('%p',ReplaceValue('%f',DLNGStr('LOG504'),DriverID),Drivers[CurrentDriver].Infos.DriverInfo.Name));
+          _LogFacility.addMessage(ReplaceValue('%p',ReplaceValue('%f',DLNGStr('LOG504'),DriverID),Drivers[CurrentDriver].Infos.DriverInfo.Name),sevMedium);
 
           break;
 
         end
         else if NumElems = 0 then
         begin
-          dup5Main.appendLog(DLNGStr('LOG512'));
+          _LogFacility.appendMessage(DLNGStr('LOG512'));
           inc(ErrNum);
           DrvInfo := Drivers[CurrentDriver].Functions.GetDriver;
           Drivers[CurrentDriver].Functions.CloseFile;
@@ -869,7 +832,7 @@ begin
         end
         else
         begin
-          dup5Main.appendLog(DLNGStr('LOG513'));
+          _LogFacility.appendMessage(DLNGStr('LOG513'));
           inc(ErrNum);
           case NumElems of
             -4: begin
@@ -901,9 +864,9 @@ begin
             else
               ErrStr := ErrList.Strings[x];
         end;
-        dup5Main.writeLog(ErrStr);
+        _LogFacility.addMessage(ErrStr);
         MessageDlg(ErrStr,mtInformation,[mbOk],0);
-        RestoreTitle;
+        _CommandsFacility.RestoreTitle;
       end;
 
     end;
@@ -916,7 +879,7 @@ begin
   begin
     result := dlFileNotFound;
     MessageDlg(ReplaceValue('%f',DLNGstr('ERRIO'),pth),mtWarning,[mbOk],0);
-    RestoreTitle;
+    _CommandsFacility.RestoreTitle;
   end;
 
 end;
@@ -933,7 +896,7 @@ begin
   setLength(entryList,16);
 
   // The current folder data is reset
-  dup5Main.lstContent.RootNodeCount := 0;
+  _CommandsFacility.SetLstContentRootNodeCount(0);
   setLength(listData,0);
 
   // Clear the cache
@@ -950,12 +913,9 @@ begin
       except
         on E:Exception do
         begin
-          dup5Main.writeLog(ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].Infos.FileName));
-          dup5Main.colorLog(clRed);
-          dup5Main.writeLog(E.Message +' @ TDrivers.CloseFile');
-          dup5Main.colorLog(clRed);
-          dup5Main.writeLog(ReplaceValue('%a',DLNGstr('ERRDR1'),Drivers[CurrentDriver].Infos.DriverInfo.Author));
-          dup5Main.colorLog(clRed);
+          _LogFacility.addMessage(ReplaceValue('%d',DLNGstr('ERRDRV'),Drivers[CurrentDriver].Infos.FileName),sevError);
+          _LogFacility.addMessage(E.Message +' @ TDrivers.CloseFile',sevError);
+          _LogFacility.addMessage(ReplaceValue('%a',DLNGstr('ERRDR1'),Drivers[CurrentDriver].Infos.DriverInfo.Author),sevError);
           CloseFile := false;
         end;
       end;
@@ -1140,20 +1100,20 @@ var //Offset,Size: int64;
     Save_Cursor:TCursor;
 begin
 
-  SetStatus('E');
+  _CommandsFacility.SetStatus('E');
   Save_Cursor := Screen.Cursor;
-  SaveTitle;
-  SetTitle(DLNGStr('XTRCAP'));
+  _CommandsFacility.SaveTitle;
+  _CommandsFacility.SetTitle(DLNGStr('XTRCAP'));
   if not(silent) then
-    SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entryList[entryIndex].Name));
+    _LogFacility.addMessage(ReplaceValue('%f',DLNGStr('XTRSTA'),entryList[entryIndex].Name));
   Screen.Cursor := crHourGlass;    { Affiche le curseur en forme de sablier }
   try
     //GetListElem(entrynam,Offset,Size,DataX,DataY);
     ExtractFile_Alt(outfile,entryList[entryIndex].Name,entryList[entryIndex].Offset,entryList[entryIndex].Size,entryList[entryIndex].DataX,entryList[entryIndex].DataY,silent);
   finally
     Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
-    SetStatus('-');
-    RestoreTitle;
+    _CommandsFacility.SetStatus('-');
+    _CommandsFacility.RestoreTitle;
   end;
 
 end;
@@ -1165,10 +1125,10 @@ var TDir,cfil,cfilcnv: string;
     perc,numper: integer;
 begin
 
-  SetStatus('E');
+  _CommandsFacility.SetStatus('E');
   Save_Cursor := Screen.Cursor;
-  SaveTitle;
-  SetTitle(DLNGStr('XTRCAP'));
+  _CommandsFacility.SaveTitle;
+  _CommandsFacility.SetTitle(DLNGStr('XTRCAP'));
 //  ShowPanelEx;
   Screen.Cursor := crHourGlass;    { Affiche le curseur en forme de sablier }
   try
@@ -1203,11 +1163,11 @@ begin
         if (CurFiles >= numper) then
         begin
           perc := perc + 5;
-          DisplayPercent(perc);
+          _CommandsFacility.DisplayPercent(perc);
           CurFiles := 0;
         end;
 
-        SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entryList[x].Name));
+        _LogFacility.addMessage(ReplaceValue('%f',DLNGStr('XTRSTA'),entryList[x].Name));
         cfil := Copy(entryList[x].Name,length(TDir)+1,Length(entryList[x].Name)-length(TDir));
         if Copy(cfil,1,1) = sch then
           cfil := Copy(cfil,2,length(cfil)-1);
@@ -1225,9 +1185,9 @@ begin
     end;
   finally
     Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
-    SetStatus('-');
+    _CommandsFacility.SetStatus('-');
 //    HidePanelEx;
-    RestoreTitle;
+    _CommandsFacility.RestoreTitle;
   end;
 
 end;
@@ -1245,14 +1205,12 @@ begin
     begin
       Drivers[CurrentDriver].Functions.ExtractFile(outfile,entrynam,offset,size,datax,datay,silent);
       if not(silent) then
-        dup5Main.appendLog(DLNGStr('LOG510'));
+        _LogFacility.appendMessage(DLNGStr('LOG510'));
     end
     else
     begin
-      dup5Main.appendLog(DLNGStr('LOG512'));
-      dup5Main.colorLog(clRed);
-      dup5Main.writeLog(ReplaceValue('%f',DLNGStr('ERR900'),'ExtractFile()'));
-      dup5Main.colorLog(clRed);
+      _LogFacility.appendMessage(DLNGStr('LOG512'));
+      _LogFacility.addMessage(ReplaceValue('%f',DLNGStr('ERR900'),'ExtractFile()'),sevError);
     end;
   end
   else
@@ -1269,23 +1227,19 @@ begin
       end;
       FileClose(dst);
       if not(silent) then
-        dup5Main.appendLog(DLNGStr('LOG510'));
+        _LogFacility.appendMessage(DLNGStr('LOG510'));
     end
     else if not(silent) then
     begin
-      dup5Main.appendLog(DLNGStr('LOG512'));
-      dup5Main.colorLog(clRed);
+      _LogFacility.appendMessage(DLNGStr('LOG512'));
     end;
   end;
  except
   on E: Exception do
   begin  // New error dialog box
-    dup5Main.writeLog(ReplaceValue(DLNGstr('ERRDRV'),'%d',Drivers[CurrentDriver].Infos.FileName));
-    dup5Main.colorLog(clRed);
-    dup5Main.writeLog(E.Message +' @ TDrivers.ExtractFile_Alt:'+Drivers[CurrentDriver].Infos.FileName);
-    dup5Main.colorLog(clRed);
-    dup5Main.writeLog(ReplaceValue(DLNGstr('ERRDR1'),'%a',Drivers[CurrentDriver].Infos.DriverInfo.Author));
-    dup5Main.colorLog(clRed);
+    _LogFacility.addMessage(ReplaceValue(DLNGstr('ERRDRV'),'%d',Drivers[CurrentDriver].Infos.FileName),sevError);
+    _LogFacility.addMessage(E.Message +' @ TDrivers.ExtractFile_Alt:'+Drivers[CurrentDriver].Infos.FileName,sevError);
+    _LogFacility.addMessage(ReplaceValue(DLNGstr('ERRDR1'),'%a',Drivers[CurrentDriver].Infos.DriverInfo.Author),sevError);
 
     frmError.PrepareError;
     frmError.details.Add(ReplaceValue('%f',DLNGStr('ERREXT'),Drivers[CurrentDriver].Infos.FileName));
@@ -1318,14 +1272,12 @@ begin
     begin
       Drivers[CurrentDriver].Functions.ExtractFileToStream(outstream,entrynam,offset,size,datax,datay,silent);
       if not(silent) then
-        dup5Main.appendLog(DLNGStr('LOG510'));
+        _LogFacility.appendMessage(DLNGStr('LOG510'));
     end
     else
     begin
-      dup5Main.appendLog(DLNGStr('LOG512'));
-      dup5Main.colorLog(clRed);
-      dup5Main.writeLog(ReplaceValue('%f',DLNGStr('ERR900'),'ExtractFileToStream()'));
-      dup5Main.colorLog(clRed);
+      _LogFacility.appendMessage(DLNGStr('LOG512'));
+      _LogFacility.addMessage(ReplaceValue('%f',DLNGStr('ERR900'),'ExtractFileToStream()'),sevError);
     end;
   end
   else
@@ -1333,13 +1285,12 @@ begin
     if (Size > 0) then
       BinCopyToStream(CurrentFile,outstream,Offset,Size,0,getBufferSize(),silent,percent);
     if not(silent) then
-      dup5Main.appendLog(DLNGStr('LOG510'));
+      _LogFacility.appendMessage(DLNGStr('LOG510'));
   end;
  except
   on E: Exception do
   begin  // New error dialog box
-    dup5Main.appendLog(DLNGStr('LOG513'));
-    dup5Main.colorLog(clRed);
+    _LogFacility.appendMessage(DLNGStr('LOG513'));
     frmError.PrepareError;
     frmError.details.Add(ReplaceValue('%f',DLNGStr('ERRSTM'),Drivers[CurrentDriver].Infos.FileName));
     frmError.details.Add('');
@@ -1431,16 +1382,9 @@ begin
   DispNumElems := entryListIndex+1;
   zero64 := 0;
   CurrentFileSize := FileSeek(filHandle,zero64,2);
-  dup5Main.Caption := 'Dragon UnPACKer v' + CurVersion + ' ' + CurEdit+ ' - '+fil;
-//  Dup5main.TDup5FileClose.Enabled := True;
-  Dup5Main.menuFichier_Fermer.Enabled := True;
-  dup5Main.Bouton_Fermer.Enabled := True;
-//  Dup5Main.TDup5Edit.Visible := true;
-  dup5Main.menuEdit.Visible := True;
-  dup5Main.menuTools.Visible := True;
-  dup5Main.Status.Panels.Items[3].Text := CurrentDriverID;
+  _CommandsFacility.SetTitle(fil);
+  _CommandsFacility.SetFormat(CurrentDriverID);
   loadTimeOpen := loadTime;
-//  loadTimeParse := 0;
 
   loadTimeRetrieve := 0;
 
@@ -1471,11 +1415,11 @@ begin
   TotSize := 0;
   TotFiles := 0;
 
-  dup5Main.lstContent.RootNodeCount := 0;
+  _CommandsFacility.SetLstContentRootNodeCount(0);
   CurSize := 2000;
   setLength(listData,CurSize);
   perold := 0;
-  DisplayPercent(0);
+  _CommandsFacility.DisplayPercent(0);
 
   for x := 0 to entryListIndex do
   begin
@@ -1507,7 +1451,7 @@ begin
       per := round((x / entryListIndex) * 100);
       if (per >= perold + 5) then
       begin
-        DisplayPercent(per);
+        _CommandsFacility.DisplayPercent(per);
         perold := per;
       end;
 
@@ -1515,13 +1459,13 @@ begin
 
   end;
 
-  DisplayPercent(100);
+  _CommandsFacility.DisplayPercent(100);
   setLength(listData,TotFiles);
 
-  dup5Main.lstContent.RootNodeCount := TotFiles;
+  _CommandsFacility.SetLstContentRootNodeCount(TotFiles);
 
-  dup5Main.Status.Panels.Items[1].Text := IntToStr(TotSize) + ' ' + DLNGStr('STAT20');
-  dup5Main.Status.Panels.Items[0].Text := IntToStr(TotFiles) + ' ' + DLNGStr('STAT10');
+  _CommandsFacility.SetFilesSizes(TotSize);
+  _CommandsFacility.SetFilesNumber(TotFiles);
 
   SearchAll := TotFiles;
 
@@ -1544,7 +1488,7 @@ begin
   perold := 0;
 
   // Indicate via the progress bar we are at 0%
-  displayPercent(0);
+  _CommandsFacility.DisplayPercent(0);
 
   // Get the size of the currently selected folders (in number of entries)
   fullSizeCache := length(entryListFolderCache[CurrentDirID]);
@@ -1594,7 +1538,7 @@ begin
     per := round((y / fullSizeCache) * 100);
     if (per >= perold + 5) then
     begin
-      DisplayPercent(per);
+      _CommandsFacility.DisplayPercent(per);
       perold := per;
     end;
 
@@ -1604,10 +1548,10 @@ begin
   TotFiles := curData;
 
   // Be sure to display 100%
-  displayPercent(100);
+  _CommandsFacility.displayPercent(100);
 
   // Reset the number of entries to 0
-  dup5Main.lstContent.RootNodeCount := 0;
+  _CommandsFacility.SetLstContentRootNodeCount(0);
 
   // If something was found
   if TotFiles > 0 then
@@ -1617,7 +1561,7 @@ begin
     setLength(listData,TotFiles);
 
     // Set the number of entries to display to the number of entries found
-    dup5Main.lstContent.RootNodeCount := TotFiles;
+    _CommandsFacility.SetLstContentRootNodeCount(TotFiles);
 
   end
   // Nothing was found we empty the listData array
@@ -1625,8 +1569,8 @@ begin
     setLength(listData,0);
 
   // Display what was found & displayed
-  dup5Main.Status.Panels.Items[1].Text := IntToStr(TotSize) + ' ' + DLNGStr('STAT20');
-  dup5Main.Status.Panels.Items[0].Text := IntToStr(TotFiles) + ' ' + DLNGStr('STAT10');
+  _CommandsFacility.SetFilesNumber(TotFiles);
+  _CommandsFacility.SetFilesSizes(TotSize);
 
   result := TotFiles;
 
@@ -1636,7 +1580,6 @@ procedure TDrivers.PrepareHyperRipper(info: DriverInfo);
 begin
 
   HRipInfo := info;
-  dup5main.closeCurrent;
 
 end;
 
@@ -2108,12 +2051,12 @@ var Save_Cursor:TCursor;
     tmpStm: TFileStream;
 begin
 
-  SetStatus('E');
+  _CommandsFacility.SetStatus('E');
   Save_Cursor := Screen.Cursor;
-  SaveTitle;
-  SetTitle(DLNGStr('XTRCAP'));
+  _CommandsFacility.SaveTitle;
+  _CommandsFacility.SetTitle(DLNGStr('XTRCAP'));
   if not(silent) then
-    SetPanelEx(ReplaceValue('%f',DLNGStr('XTRSTA'),entryList[entryIndex].name));
+    _LogFacility.addMessage(ReplaceValue('%f',DLNGStr('XTRSTA'),entryList[entryIndex].name));
   Screen.Cursor := crHourGlass;    { Affiche le curseur en forme de sablier }
   try
     if (CurrentDriver > -1) and Drivers[CurrentDriver].Functions.GetDriver.ExtractInternal and (Drivers[CurrentDriver].Infos.DUDIVersion < 4) then
@@ -2131,17 +2074,14 @@ begin
   except
     on E: Exception do
     begin
-      dup5Main.writeLogVerbose(0,DLNGStr('ERR101'));
-      dup5Main.colorLogVerbose(0,clRed);
-      dup5Main.writeLogVerbose(2,DLNGStr('ERR202')+' '+E.ClassName);
-      dup5Main.colorLogVerbose(2,clRed);
-      dup5Main.writeLogVerbose(2,DLNGStr('ERR203')+' '+E.Message);
-      dup5Main.colorLogVerbose(2,clRed);
+      _LogFacility.addMessage(DLNGStr('ERR101'),sevError);
+      _LogFacility.addMessage(DLNGStr('ERR202')+' '+E.ClassName,sevError);
+      _LogFacility.addMessage(DLNGStr('ERR203')+' '+E.Message,sevError);
     end;
   end;
   Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
-  SetStatus('-');
-  RestoreTitle;
+  _CommandsFacility.SetStatus('-');
+  _CommandsFacility.RestoreTitle;
 
 end;
 
@@ -2167,15 +2107,19 @@ begin
 
   end
   else if (Offset < 0) then
-    dup5Main.writeLogVerbose(2,ReplaceValue('%r',ReplaceValue('%f',DLNGstr('LOG505'),entrynam),DLNGstr('LOG507')))
+    _LogFacility.addMessage(ReplaceValue('%r',ReplaceValue('%f',DLNGstr('LOG505'),entrynam),DLNGstr('LOG507')),sevHigh)
   else if (Size = 0) then
-    dup5Main.writeLogVerbose(2,ReplaceValue('%r',ReplaceValue('%f',DLNGstr('LOG505'),entrynam),DLNGstr('LOG506')));
+    _LogFacility.addMessage(ReplaceValue('%r',ReplaceValue('%f',DLNGstr('LOG505'),entrynam),DLNGstr('LOG506')),sevHigh);
 
 end;
 
-constructor TDrivers.Create();
+constructor TDrivers.Create(LogFacility: TDupLog; CommandsFacility: TDupCommands);
 var Reg: TRegistry;
 begin
+
+  // Store the facilities
+  _LogFacility := LogFacility;
+  _CommandsFacility := CommandsFacility;
 
   // Initialize the entryList to 16 entries
   setLength(entryList,16);
@@ -2239,11 +2183,11 @@ begin
   // Show that we are starting to do something 0% progress
   percent := 0;
   oldPercent := 0;
-  DisplayPercent(percent);
+  _CommandsFacility.DisplayPercent(percent);
 
   // Create the root entry of the lstIndex by using the filename
-  Root := dup5Main.lstIndex.AddChild(nil);
-  NodeData := dup5Main.lstIndex.GetNodeData(Root);
+  Root := _CommandsFacility.LstIndexAddChild(nil);
+  NodeData := _CommandsFacility.LstIndexGetNodeData(Root);
   NodeData.dirname := ExtractFilename(CurrentFileName);
   NodeData.imageIndex := 20;
   NodeData.selectedImageIndex := 20;
@@ -2275,9 +2219,8 @@ begin
         percent := round((x / entryListIndex) * 100);
         if percent = oldpercent + 10 then
         begin
-          DisplayPercent(percent);
+          _CommandsFacility.DisplayPercent(percent);
           oldPercent := percent;
-          dup5main.Refresh;
         end;
       end;
       
@@ -2314,7 +2257,7 @@ begin
           if (dirCache.Find(currentDir,DataCache)) then
           begin
             CachedVirtualNode := Pointer(DataCache);
-            CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
+            CachedNodeData := _CommandsFacility.LstIndexGetNodeData(CachedVirtualNode);
             entryList[x].FolderID := CachedNodeData.FolderID;
             setLength(entryListFolderCache[entryList[x].FolderID],Length(entryListFolderCache[entryList[x].FolderID])+1);
             entryListFolderCache[ entryList[x].FolderID , High(entryListFolderCache[entryList[x].FolderID]) ] := x;
@@ -2343,8 +2286,8 @@ begin
                 // And add it to the cache
                 if not(dirCache.Find(parsedDir+Sch,DataCache)) then
                 begin
-                  CachedVirtualNode := dup5Main.lstIndex.AddChild(Root);
-                  CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
+                  CachedVirtualNode := _CommandsFacility.LstIndexAddChild(Root);
+                  CachedNodeData := _CommandsFacility.LstIndexGetNodeData(CachedVirtualNode);
                   CachedNodeData.dirname := parsedDir;
                   CachedNodeData.imageIndex := 19;
                   CachedNodeData.selectedImageIndex := 18;
@@ -2371,8 +2314,8 @@ begin
                 if not(dirCache.Find(previousDir+parsedDir+Sch,DataCache)) then
                 begin
 
-                  CachedVirtualNode := dup5Main.lstIndex.AddChild(CachedVirtualNode);
-                  CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
+                  CachedVirtualNode := _CommandsFacility.LstIndexAddChild(CachedVirtualNode);
+                  CachedNodeData := _CommandsFacility.LstIndexGetNodeData(CachedVirtualNode);
                   CachedNodeData.dirname := parsedDir;
                   CachedNodeData.imageIndex := 19;
                   CachedNodeData.selectedImageIndex := 18;
@@ -2398,7 +2341,7 @@ begin
 
             // After all folders & sub-folders are created we retrieve the folder ID
             // of the last level for the entryList
-            CachedNodeData := dup5Main.lstIndex.GetNodeData(CachedVirtualNode);
+            CachedNodeData := _CommandsFacility.LstIndexGetNodeData(CachedVirtualNode);
             entryList[x].FolderID := CachedNodeData.FolderID;
             setLength(entryListFolderCache[entryList[x].FolderID],Length(entryListFolderCache[entryList[x].FolderID])+1);
             entryListFolderCache[ entryList[x].FolderID , High(entryListFolderCache[entryList[x].FolderID]) ] := x;
@@ -2420,9 +2363,8 @@ begin
           percent := round((x / entryListIndex) * 100);
           if percent = oldpercent + 5 then
           begin
-            DisplayPercent(percent);
+            _CommandsFacility.DisplayPercent(percent);
             oldPercent := percent;
-            dup5main.Refresh;
           end;
         end;
 
@@ -2434,8 +2376,7 @@ begin
   end;
 
   // Focus the root node (to force display of directory content)
-  dup5Main.lstIndex.RootNodeCount := 1;
-  dup5Main.lstIndex.FocusedNode := Root;
+  _CommandsFacility.LstIndexFocusRootNode(Root);
 
 end;
 
@@ -2456,7 +2397,7 @@ begin
   perold := 0;
 
   // Indicate via the progress bar we are at 0%
-  displayPercent(0);
+  _CommandsFacility.displayPercent(0);
 
   // Get the size of the currently selected folders (in number of entries)
   fullSizeCache := length(entryListFolderCache[CurrentDirID]);
@@ -2496,7 +2437,7 @@ begin
     per := round((y / fullSizeCache) * 100);
     if (per >= perold + 5) then
     begin
-      DisplayPercent(per);
+      _CommandsFacility.DisplayPercent(per);
       perold := per;
     end;
 
@@ -2506,10 +2447,10 @@ begin
   TotFiles := curData;
 
   // Be sure to display 100%
-  displayPercent(100);
+  _CommandsFacility.DisplayPercent(100);
 
   // Reset the number of entries to 0
-  dup5Main.lstContent.RootNodeCount := 0;
+  _CommandsFacility.SetLstContentRootNodeCount(0);
 
   // If something was found
   if TotFiles > 0 then
@@ -2519,7 +2460,7 @@ begin
     setLength(listData,TotFiles);
 
     // Set the number of entries to display to the number of entries found
-    dup5Main.lstContent.RootNodeCount := TotFiles;
+    _CommandsFacility.SetLstContentRootNodeCount(TotFiles);
 
   end
   // Nothing was found we empty the listData array
@@ -2527,8 +2468,8 @@ begin
     setLength(listData,0);
 
   // Display what was found & displayed
-  dup5Main.Status.Panels.Items[1].Text := IntToStr(TotSize) + ' ' + DLNGStr('STAT20');
-  dup5Main.Status.Panels.Items[0].Text := IntToStr(TotFiles) + ' ' + DLNGStr('STAT10');
+  _CommandsFacility.SetFilesNumber(TotFiles);
+  _CommandsFacility.SetFilesSizes(TotSize);
 
 end;
 

@@ -20,7 +20,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ComCtrls, lib_language, declFSE;
+  Dialogs, StdCtrls, ComCtrls, lib_language;
 
 type
   TfrmSearch = class(TForm)
@@ -68,7 +68,7 @@ begin
     FreeAndNil(Reg);
   end;
 
-  StatusBar.Panels.Items[0].Text := IntToStr(FSE.Search(txtSearch.Text,CheckCase.Checked,CurrentDirIdx,RadioDirOnly.Checked))+' '+DLNGStr('STAT10');
+  StatusBar.Panels.Items[0].Text := IntToStr(Dup5Main.FSE.Search(txtSearch.Text,CheckCase.Checked,CurrentDirIdx,RadioDirOnly.Checked))+' '+DLNGStr('STAT10');
 
 end;
 

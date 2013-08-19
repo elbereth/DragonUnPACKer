@@ -20,10 +20,12 @@ interface
 uses SysUtils, Windows, Forms, lib_binutils, StrUtils;
 
 function curBuild:integer;
+function curVersion:string;
+function curEdit:string;
 
 const
-  CurVersion: String = '5.7.0';
-  CurEdit: String = 'Beta';
+//  CurVersion: String = '5.7.0';
+//  CurEdit: String = 'Beta';
   CurURL: String = 'http://www.dragonunpacker.com';
   CurSVNRevision: String = '$Rev$';
   CurSVNDate: String = '$Date$';
@@ -31,15 +33,30 @@ const
 
 implementation
 
-function LectureVersion: string;
+var
+  fileVersion: String;
+  productVersionCache: String;
+  isFileVersionRetrieved: Boolean = False;
+
+function LectureVersion(out productVersion: string): string;
 var
     S        : string;
     Taille  : DWord;
     Buffer  : PChar;
-    VersionPC : PChar;
+    VersionPC, ProductVersionPC : PChar;
     VersionL    : DWord;
 
 begin
+
+  if isFileVersionRetrieved then
+  begin
+
+    result := fileVersion;
+    productVersion := productVersionCache;
+
+  end
+  else
+  begin
 
     Result:='';
     {--- on demande la taille des informations sur l'application ---}
@@ -56,19 +73,44 @@ begin
         {--- Recherche de l'information de version ---}
         if VerQueryValue(Buffer, PChar('\StringFileInfo\040C04E4\FileVersion'), Pointer(VersionPC), VersionL)
             then Result:=VersionPC;
+        if VerQueryValue(Buffer, PChar('\StringFileInfo\040C04E4\ProductVersion'), Pointer(ProductVersionPC), VersionL)
+            then productVersion:=ProductVersionPC;
+        isFileVersionRetrieved := true;
+        fileVersion := result;
+        productVersionCache := ProductVersionPC;
       finally
         FreeMem(Buffer, Taille);
       end;
     end;
 
+  end;
+
 end;
 
 function curBuild:integer;
-var lv : string;
+var lv, editinfo : string;
 begin
 
-  lv := lectureVersion;
+  lv := lectureVersion(editInfo);
   result := strtoint(rightstr(lv, length(lv) - posrev('.',lv)));
+
+end;
+
+function curVersion:string;
+var lv, editinfo : string;
+begin
+
+  lv := lectureVersion(editInfo);
+  result := leftstr(lv,posrev('.',lv)-1);
+
+end;
+
+function curEdit:string;
+var lv, editinfo : string;
+begin
+
+  lv := lectureVersion(editInfo);
+  result := editInfo;
 
 end;
 

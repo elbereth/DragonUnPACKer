@@ -28,7 +28,7 @@ procedure TranslateSearch();
 
 implementation
 
-uses Main,About,DrvInfo,Error,Options,Search,HyperRipper, lib_language,declFSE,List;
+uses Main,About,DrvInfo,Error,Options,Search,HyperRipper, lib_language,List;
 
 procedure TranslateMain();
 begin

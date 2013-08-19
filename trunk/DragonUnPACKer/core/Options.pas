@@ -20,7 +20,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ComCtrls, ImgList, StdCtrls, ExtCtrls, Registry, declFSE,
+  Dialogs, ComCtrls, ImgList, StdCtrls, ExtCtrls, Registry, 
   CheckLst, Main, lib_look, ShellApi, BrowseForFolderU,classConvertExport;
 
 type
@@ -339,16 +339,16 @@ var x : integer;
 begin
 
   frmConfig.lstDrivers2.Clear;
-  for x := 1 to FSE.NumDrivers do
+  for x := 1 to Dup5Main.FSE.NumDrivers do
   begin
     itmx := frmConfig.lstDrivers2.Items.Add;
-    itmx.Caption := inttostr(FSE.GetDriverInfo(x).Priority);
-    itmx.SubItems.Add(FSE.GetDriverInfo(x).DriverInfo.Name);
-    itmx.SubItems.Add(FSE.GetDriverInfo(x).DriverInfo.Version);
-    itmx.SubItems.Add(ChangeFileExt(FSE.GetDriverInfo(x).FileName,''));
+    itmx.Caption := inttostr(Dup5Main.FSE.GetDriverInfo(x).Priority);
+    itmx.SubItems.Add(Dup5Main.FSE.GetDriverInfo(x).DriverInfo.Name);
+    itmx.SubItems.Add(Dup5Main.FSE.GetDriverInfo(x).DriverInfo.Version);
+    itmx.SubItems.Add(ChangeFileExt(Dup5Main.FSE.GetDriverInfo(x).FileName,''));
   end;
 
-  if FSE.NumDrivers > 0 then
+  if Dup5Main.FSE.NumDrivers > 0 then
     frmConfig.lstDrivers2.ItemIndex := 0;
 
 end;
@@ -360,16 +360,16 @@ var x : integer;
 begin
 
   frmConfig.lstConvert2.Clear;
-  for x := 1 to CPlug.getNumPlugins() do
+  for x := 1 to dup5Main.CPlug.getNumPlugins() do
   begin
     itmx := frmConfig.lstConvert2.Items.Add;
-    info := CPlug.getPluginInfo(x);
+    info := dup5Main.CPlug.getPluginInfo(x);
     itmx.Caption := info.Name;
     itmx.SubItems.Add(info.Version);
     itmx.SubItems.Add(ChangeFileExt(info.FileName,''));
   end;
 
-  if CPlug.getNumPlugins() > 0 then
+  if dup5Main.CPlug.getNumPlugins() > 0 then
   begin
     frmConfig.lstConvert2.ItemIndex := 0;
   end;
@@ -394,7 +394,7 @@ var str,tmp: string;
     x: integer;
 begin
 
-  str := FSE.GetAllFileTypes(False).Lists[1];
+  str := Dup5Main.FSE.GetAllFileTypes(False).Lists[1];
 
   frmConfig.lstTypes.Clear;
 
@@ -815,7 +815,7 @@ end;
 procedure TfrmConfig.cmdDrvAboutClick(Sender: TObject);
 begin
 
-  FSE.showAboutBox(Application.Handle,lstDrivers2.ItemIndex+1);
+  Dup5Main.FSE.showAboutBox(Application.Handle,lstDrivers2.ItemIndex+1);
 
 end;
 
@@ -883,21 +883,21 @@ end;
 procedure TfrmConfig.cmdDrvSetupClick(Sender: TObject);
 begin
 
-  FSE.showConfigBox(Application.Handle,lstDrivers2.ItemIndex+1);
+  Dup5Main.FSE.showConfigBox(Application.Handle,lstDrivers2.ItemIndex+1);
 
 end;
 
 procedure TfrmConfig.cmdCnvAboutClick(Sender: TObject);
 begin
 
-  CPlug.showAboutBox(Application.Handle,lstConvert2.ItemIndex+1);
+  dup5Main.CPlug.showAboutBox(Application.Handle,lstConvert2.ItemIndex+1);
 
 end;
 
 procedure TfrmConfig.cmdCnvSetupClick(Sender: TObject);
 begin
 
-  CPlug.showConfigBox(Application.Handle,lstConvert2.ItemIndex+1);
+  dup5Main.CPlug.showConfigBox(Application.Handle,lstConvert2.ItemIndex+1);
 
 end;
 
@@ -935,17 +935,17 @@ begin
   if (Change = ctState)
   and (lstDrivers2.ItemIndex > -1) then
   begin
-    lblDrvInfoAuthor.Caption := FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).DriverInfo.Author;
-    lblDrvInfoVersion.Caption := FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).DriverInfo.Version;
-    lblDrvInfoComments.Caption := FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).DriverInfo.Comment;
+    lblDrvInfoAuthor.Caption := Dup5Main.FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).DriverInfo.Author;
+    lblDrvInfoVersion.Caption := Dup5Main.FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).DriverInfo.Version;
+    lblDrvInfoComments.Caption := Dup5Main.FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).DriverInfo.Comment;
 
-    cmdDrvAbout.Enabled := FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).IsAboutBox;
-    cmdDrvSetup.Enabled := FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).IsConfigBox;
+    cmdDrvAbout.Enabled := Dup5Main.FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).IsAboutBox;
+    cmdDrvSetup.Enabled := Dup5Main.FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).IsConfigBox;
 
-    txtDUDI.Caption := 'v'+inttostr(FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).DUDIVersion);
-    txtIntVer.Caption := inttostr(FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).InternalVersion);
+    txtDUDI.Caption := 'v'+inttostr(Dup5Main.FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).DUDIVersion);
+    txtIntVer.Caption := inttostr(Dup5Main.FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).InternalVersion);
 
-    trkPriority.Position := FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).Priority;
+    trkPriority.Position := Dup5Main.FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).Priority;
   end;
 
 end;
@@ -955,15 +955,15 @@ begin
 
   txtPriority.Caption := inttostr(trkPriority.Position);
   lstDrivers2.Selected.Caption := inttostr(trkPriority.Position);
-  if FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).Priority <> trkPriority.Position then
-    FSE.setDriverPriority(lstDrivers2.ItemIndex+1, trkPriority.Position);
+  if Dup5Main.FSE.GetDriverInfo(lstDrivers2.ItemIndex+1).Priority <> trkPriority.Position then
+    Dup5Main.FSE.setDriverPriority(lstDrivers2.ItemIndex+1, trkPriority.Position);
 
 end;
 
 procedure TfrmConfig.butRefreshClick(Sender: TObject);
 begin
 
-  FSE.sortDriversByPriority;
+  Dup5Main.FSE.sortDriversByPriority;
   DRVlist;
 
 end;
@@ -977,7 +977,7 @@ begin
   and (lstConvert2.ItemIndex > -1) then
   begin
 
-    info := CPlug.getPluginInfo(lstConvert2.ItemIndex+1);
+    info := dup5Main.CPlug.getPluginInfo(lstConvert2.ItemIndex+1);
     lblCnvInfoAuthor.Caption := info.Author;
     lblCnvInfoVersion.Caption := info.Version;
     lblCnvInfoComments.Caption := info.Comment;

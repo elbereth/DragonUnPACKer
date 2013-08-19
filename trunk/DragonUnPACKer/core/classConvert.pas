@@ -35,9 +35,11 @@ uses
   Dialogs,
   Windows,
   Classes,
-  Main,
+  MsgBox,
   Graphics,
-  SysUtils;
+  SysUtils,
+  cls_duplog,
+  cls_dupcommands;
 
 type ConvertListElem = record
        Display: ShortString;
@@ -120,6 +122,8 @@ type plugin = record
     procedure showAboutBox(hwnd: integer; drvnum: integer);
     procedure showConfigBox(hwnd: integer; drvnum: integer);
   private
+    _LogFacility: TDupLog;
+    _CommandsFacility: TDupCommands;
     Percent: TPercentCallback;
     Language: TLanguageCallback;
     DUP5Path: ShortString;
@@ -128,6 +132,8 @@ type plugin = record
     Plugins: array of Plugin;
     NumPlugins: Integer;
   public
+    constructor Create(LogFacility: TDupLog; CommandsFacility: TDupCommands);
+    destructor Destroy(); override;
     function getNumPlugins(): integer;
     function getPluginInfo(pid: integer): ConvertInfoEx;
     function convert(pid: integer; src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): boolean;
@@ -140,14 +146,9 @@ const
 
 implementation
 
-procedure showMsgBox(const title, msg: AnsiString);
-begin
+uses auxFSE;
 
-  dup5Main.messageDlgTitle(title,msg,[mbOk],0);
-
-end;
-
-{ TDrivers }
+{ TPlugins }
 
 function TPlugins.convert(pid: integer; src, dst: TStream; nam, fmt, cnv: ShortString; Offset: Int64; DataX, DataY: Integer; Silent: Boolean): boolean;
 var stmFile: TFileStream;
@@ -183,14 +184,14 @@ begin
         if FileExists(tmpfil2) then
           DeleteFile(tmpfil2);
       except
-        dup5Main.tempFiles.Add(tmpfil2);
+        _CommandsFacility.AddTempFile(tmpfil2);
       end;
     end;
     try
       if FileExists(tmpfil) then
         DeleteFile(tmpfil);
     except
-      dup5Main.tempFiles.Add(tmpfil);
+      _CommandsFacility.AddTempFile(tmpfil);
     end;
   end
   else
@@ -201,12 +202,9 @@ begin
     end;
 
   if result then
-    dup5Main.appendLogVerbose(2,DLNGStr('LOG510'))
+    _LogFacility.appendMessageIf(DLNGStr('LOG510'),sevMedium)
   else
-  begin
-    dup5Main.colorLogVerbose(0,clRed);
-    dup5Main.appendLogVerbose(0,DLNGStr('LOG512'));
-  end;
+    _LogFacility.addMessage(DLNGStr('LOG512'),sevError);
 
 end;
 
@@ -304,7 +302,7 @@ begin
       if IsConsole then
         write(sr.name+ ' ')
       else
-        dup5Main.writeLogVerbose(1,' + '+sr.Name+' :');
+        _LogFacility.addMessage(' + '+sr.Name+' :',sevLow);
       Handle := LoadLibrary(PChar(pth + sr.name));
       if Handle <> 0 then
       begin
@@ -322,7 +320,7 @@ begin
             Plugins[NumPlugins-1].DUCIVersion := DUCIVerExVal
           else
             Plugins[NumPlugins-1].DUCIVersion := DUCIVerVal;
-          dup5Main.appendLogVerbose(2,'DUCI v'+inttostr(Plugins[NumPlugins-1].DUCIVersion)+' -');
+          _LogFacility.appendMessage('DUCI v'+inttostr(Plugins[NumPlugins-1].DUCIVersion)+' -');
 
           @Plugins[NumPlugins-1].TestFile := GetProcAddress(Handle, 'IsFileCompatible');
           @Plugins[NumPlugins-1].GetList := GetProcAddress(Handle, 'GetFileConvert');
@@ -371,10 +369,7 @@ begin
           or ((Plugins[NumPlugins-1].DUCIVersion >= 4) and (Plugins[NumPlugins-1].DUCIVersion <= DUCIVERSION) and (@Plugins[NumPlugins-1].Version2 = Nil) and (@Plugins[NumPlugins-1].InitEx4 = Nil))
           then
           begin
-            if dup5Main.getVerboseLevel = 0 then
-              dup5Main.writeLog(' + '+sr.Name+' :');
-            dup5Main.appendLog(DLNGstr('ERRC02'));
-            dup5Main.colorLog(clRed);
+            _LogFacility.addMessage(DLNGstr('ERRC02'),sevError);
             //MessageDlg(DLNGstr('ERRC02')+#10+sr.Name,mtWarning,[mbOk],0);
             dec(NumPlugins);
             FreeLibrary(handle);
@@ -396,20 +391,17 @@ begin
               Plugins[NumPlugins-1].IsConfigBox := not(@Plugins[NumPlugins-1].ShowConfigBox2 = nil);
             end;
             if (Plugins[NumPlugins-1].DUCIVersion <= 3) then
-              dup5Main.appendLogVerbose(1,Plugins[NumPlugins-1].Version.Name +' v'+Plugins[NumPlugins-1].Version.Version)
+              _LogFacility.appendMessage(Plugins[NumPlugins-1].Version.Name +' v'+Plugins[NumPlugins-1].Version.Version)
             else
             begin
-              dup5Main.appendLogVerbose(1,Plugins[NumPlugins-1].Version2.Name +' v'+Plugins[NumPlugins-1].Version2.Version);
-              Plugins[NumPlugins-1].InitEx4(showMsgBox);
+              _LogFacility.appendMessage(Plugins[NumPlugins-1].Version2.Name +' v'+Plugins[NumPlugins-1].Version2.Version);
+              Plugins[NumPlugins-1].InitEx4(MsgBoxCallback);
             end;
           end;
         end
         else
         begin
-          if dup5Main.getVerboseLevel = 0 then
-            dup5Main.writeLog(' + '+sr.Name+' :');
-          dup5Main.appendLog(DLNGstr('ERRC01'));
-          dup5Main.colorLog(clRed);
+          _LogFacility.addMessage(DLNGstr('ERRC01'),sevError);
           //MessageDlg(DLNGstr('ERRC01')+#10+sr.Name,mtWarning,[mbOk],0);
           FreeLibrary(handle);
         end;
@@ -496,6 +488,23 @@ begin
 
 end;
 
+constructor TPlugins.Create(LogFacility: TDupLog; CommandsFacility: TDupCommands);
+begin
 
+  // Store the facilities
+  _LogFacility := LogFacility;
+  _CommandsFacility := CommandsFacility;
+
+end;
+
+destructor TPlugins.Destroy;
+begin
+
+  // Free loaded drivers
+  FreePlugins;
+
+  inherited Destroy();
+
+end;
 
 end.

@@ -59,7 +59,7 @@ interface
 
 uses
   Windows, Messages, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ComCtrls, declFSE, lib_language, Registry, Math, spec_DDS,
+  Dialogs, StdCtrls, ComCtrls, lib_language, Registry, Math, spec_DDS,
   ExtCtrls, lib_utils, classFSE, spec_HRF, DateUtils, translation, U_IntList,
   StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar, ImgList, SysUtils,
   Spec_DUDI;
@@ -1208,7 +1208,8 @@ begin
     BufSize := MAXSIZE;
     try
      try
-      FSE.PrepareHyperRipper(frmHyperRipper.getInfo);
+      dup5main.closeCurrent;
+      Dup5Main.FSE.PrepareHyperRipper(frmHyperRipper.getInfo);
       CurPos := 0;
       lastTimer := now;
       hrip.LastResult(DLNGstr('HRLG05')+' '+DLNGstr('HRLG04'));
@@ -1339,7 +1340,7 @@ begin
               //\ Feature request 1216790 //\
               resprefix := ReplaceValue('%n',resprefix,Fill0(inttostr(numFound)));
 
-              FSE.addEntry(predir+resprefix+'.'+Found.Ext,Found.Offset,Found.Size,0,0);
+              Dup5Main.FSE.addEntry(predir+resprefix+'.'+Found.Ext,Found.Offset,Found.Size,0,0);
               curPos := Found.Offset+Found.Size;
               SomethingFound := true;
               LastOffset := curPos;
@@ -1407,15 +1408,19 @@ begin
           hrfver := 2
         else
           hrfver := 1;
-        FSE.saveHRF(filename, hrip.txtHRF.Text, TotSize, prgver, prgid, hrfver, hrip.chkHRFInfo.Checked,hrip.txtHRFTitle.Text,hrip.txtHRFAuthor.text,hrip.txtHRFURL.Text);
+        Dup5Main.FSE.saveHRF(filename, hrip.txtHRF.Text, TotSize, prgver, prgid, hrfver, hrip.chkHRFInfo.Checked,hrip.txtHRFTitle.Text,hrip.txtHRFAuthor.text,hrip.txtHRFURL.Text);
         hrip.lastResult(DLNGstr('HRLG14')+' '+DLNGstr('HRLG04'));
       end;
       hrip.AddResult(DLNGstr('HRLG15'));
       hrip.Refresh;
       loadTime := getTickCount - startTime;
-      FSE.LoadHyperRipper(filename,sSRChandle,loadTime,hrip.chkMakeDirs.Checked);
+      Dup5Main.FSE.LoadHyperRipper(filename,sSRChandle,loadTime,hrip.chkMakeDirs.Checked);
+  Dup5Main.menuFichier_Fermer.Enabled := True;
+  dup5Main.Bouton_Fermer.Enabled := True;
+  dup5Main.menuEdit.Visible := True;
+  dup5Main.menuTools.Visible := True;
       hrip.LastResult(DLNGstr('HRLG15')+' '+DLNGstr('HRLG04'));
-      if (FSE.GetNumEntries > 0) and (hrip.chkAutoClose.Checked) then
+      if (Dup5Main.FSE.GetNumEntries > 0) and (hrip.chkAutoClose.Checked) then
       begin
         hrip.Close;
       end;

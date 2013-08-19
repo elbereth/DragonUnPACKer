@@ -376,7 +376,7 @@ object dup5Main: Tdup5Main
         Visible = False
       end
     end
-    object Percent: TdwProgressBar
+    object Percent: TProgressBar
       Left = 392
       Top = 16
       Width = 274
@@ -384,9 +384,6 @@ object dup5Main: Tdup5Main
       HelpContext = 5
       Smooth = True
       TabOrder = 1
-      DoubleBuffered = False
-      MarqueeEnabled = True
-      MarqueeInterval = 50
     end
   end
   object OpenDialog: TOpenDialog

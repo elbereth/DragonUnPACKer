@@ -20,7 +20,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls, StdCtrls, ComCtrls, jpeg, spec_DUHT, StrUtils, declFSE, prg_ver,
+  Dialogs, ExtCtrls, StdCtrls, ComCtrls, jpeg, spec_DUHT, StrUtils, prg_ver,
   lib_language, class_duht, classFSE, VirtualTrees, lib_binUtils, lib_utils, Registry;
 
 const MAX_DUHT = 256;
@@ -366,7 +366,7 @@ begin
 
           rep := dup5Main.GetNodePath(dup5Main.lstIndex.FocusedNode);
           if length(rep) > 0 then
-            rep := rep + FSE.SlashMode;
+            rep := rep + Dup5Main.FSE.SlashMode;
 
           header := macroHeader(header, rep);
 
@@ -377,9 +377,9 @@ begin
             Data := dup5Main.lstContent.GetNodeData(Node);
 
             New(EntRec);
-            EntRec^.FileName := FSE.Items[Data.entryIndex].FileName;
-            EntRec^.Offset := FSE.Items[Data.entryIndex].Offset ;
-            EntRec^.Size := FSE.Items[Data.entryIndex].Size;
+            EntRec^.FileName := Dup5Main.FSE.Items[Data.entryIndex].FileName;
+            EntRec^.Offset := Dup5Main.FSE.Items[Data.entryIndex].Offset ;
+            EntRec^.Size := Dup5Main.FSE.Items[Data.entryIndex].Size;
             SortList.Add(EntRec);
 
             Node := dup5Main.lstContent.GetNextSelected(Node);
@@ -391,11 +391,11 @@ begin
 
         rep := dup5Main.GetNodePath(dup5Main.lstIndex.FocusedNode);
         if length(rep) > 0 then
-          rep := rep + FSE.SlashMode;
+          rep := rep + Dup5Main.FSE.SlashMode;
 
         header := macroHeader(header, rep);
 
-        SortList := FSE.BrowseDirToList(rep,chkSubDirs.Checked);
+        SortList := Dup5Main.FSE.BrowseDirToList(rep,chkSubDirs.Checked);
 
       end
       else
@@ -403,7 +403,7 @@ begin
 
         header := macroHeader(header, '');
 
-        SortList := FSE.BrowseDirToList('',true);
+        SortList := Dup5Main.FSE.BrowseDirToList('',true);
 
       end;
 
@@ -471,7 +471,7 @@ begin
         end;
 
         EntRec := SortList.Items[x];
-        posrep := posrev(FSE.SlashMode,EntRec^.FileName);
+        posrep := posrev(Dup5Main.FSE.SlashMode,EntRec^.FileName);
         if posrep = (length(EntRec^.FileName)+1) then
         begin
           rep := '';
@@ -539,7 +539,7 @@ begin
     i := PosEx('$$FILENAME$$',uppercase(src),i+1);
     if i > 0 then
     begin
-      src := LeftStr(src,i-1)+ExtractFilename(FSE.GetFileName)+RightStr(src,Length(src)-(i+11));
+      src := LeftStr(src,i-1)+ExtractFilename(Dup5Main.FSE.GetFileName)+RightStr(src,Length(src)-(i+11));
     end;
   until i = 0;
 
@@ -584,7 +584,7 @@ begin
     i := PosEx('$$FORMAT$$',uppercase(src),i+1);
     if i > 0 then
     begin
-      src := LeftStr(src,i-1)+FSE.DriverID+RightStr(src,Length(src)-(i+9));
+      src := LeftStr(src,i-1)+Dup5Main.FSE.DriverID+RightStr(src,Length(src)-(i+9));
     end;
   until i = 0;
 
@@ -635,8 +635,8 @@ var i: integer;
     tmpFloat: Real;
 begin
 
-  src := StringReplace(src,'$$FILENAME$$',ExtractFilename(FSE.GetFileName), [rfReplaceAll]);
-  src := StringReplace(src,'$$filename$$',ExtractFilename(FSE.GetFileName), [rfReplaceAll]);
+  src := StringReplace(src,'$$FILENAME$$',ExtractFilename(Dup5Main.FSE.GetFileName), [rfReplaceAll]);
+  src := StringReplace(src,'$$filename$$',ExtractFilename(Dup5Main.FSE.GetFileName), [rfReplaceAll]);
   src := StringReplace(src,'$$DIRECTORY$$',cdir, [rfReplaceAll]);
   src := StringReplace(src,'$$directory$$',cdir, [rfReplaceAll]);
   src := StringReplace(src,'$$FILE$$',ExtractFilename(fnam), [rfReplaceAll]);

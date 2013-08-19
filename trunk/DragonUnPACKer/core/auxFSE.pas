@@ -18,7 +18,7 @@ unit auxFSE;
 
 interface
 
-uses Main, VirtualTrees, ComCtrls, Dialogs, lib_Language, lib_utils, SysUtils, DateUtils, Classes, prg_ver;
+//uses VirtualTrees, ComCtrls, Dialogs, lib_Language, lib_utils, SysUtils, DateUtils, Classes;
 
 type FSE = ^element;
   element = record
@@ -48,39 +48,32 @@ end;
    FolderID: integer;
  end;
 
-type TDirCache = class
-    constructor Create(dirSep: string);
-    destructor Free();
-    procedure addItem(itm: FSE);
-    function getItem(idx: integer): FSE;
-    function getNumItems: integer;
-    function getTDirPos: integer;
-  private
-    data: array of FSE;
-    numData: integer;
-    maxData: integer;
-    tdirpos: integer;
-    sch: string;
-  end;
-
 //procedure ParseDirs(ASlash: Boolean; Databloc: FSE; Fname: String);
 function ConvertSlash(st: String): String;
-procedure SetStatus(st: ShortString);
+function PosRev(substr, str: string): integer;
+{procedure SetStatus(st: ShortString);
 procedure RestoreTitle;
 procedure SaveTitle;
 procedure SetTitle(st: String);
 procedure SetTitleDefault();
 procedure SetPanelEx(st: string);
 procedure DisplayPercent(value: integer);
-function GetDirCache(CurDir: string): TDirCache;
+function GetDirCache(CurDir: string): TDirCache;}
+
+
+procedure MsgBoxCallback(const title, msg: AnsiString);
+procedure AddEntryCallback(entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
 
 implementation
 
-uses HashTrie;
+uses Classes, Main, MsgBox, HashTrie, SysUtils;
 
-var SavedTitle: String;
-    ht: TStringHashTrie;
-    dirCache: TStringHashTrie;
+{procedure showMsgBox(const title, msg: AnsiString);
+begin
+
+  dup5Main.messageDlgTitle(title,msg,[mbOk],0);
+
+end;}
 
 function PosRev(substr, str: string): integer;
 var res,x : integer;
@@ -103,7 +96,7 @@ begin
 
 end;
 
-function GetDirCache(CurDir: string): TDirCache;
+{function GetDirCache(CurDir: string): TDirCache;
 var Data: TObject;
 begin
 
@@ -120,7 +113,7 @@ begin
   else
     result := nil;
 
-end;
+end;}
 
 function ConvertSlash(st: String): String;
 var x: integer;
@@ -133,7 +126,7 @@ begin
   ConvertSlash := st;
 
 end;
-
+{
 procedure SetStatus(st: ShortString);
 begin
 
@@ -180,72 +173,28 @@ begin
   dup5Main.Refresh;
 
 end;
+}
 
-procedure DisplayPercent(value: integer);
+
+procedure MsgBoxCallback(const title, msg: AnsiString);
+var tmpStm: TMemoryStream;
 begin
 
-  if value < 0 then
-    value := 0;
-  if value > 100 then
-    value := 100;
-  dup5Main.Percent.Position := value;
-  dup5Main.Percent.Refresh;
+  tmpStm := TMemoryStream.Create;
+  tmpStm.WriteBuffer(Msg[1],Length(Msg));
+  tmpStm.Seek(0,soBeginning);
+  frmMsgBox.richText.Clear;
+  frmMsgBox.richText.Lines.LoadFromStream(tmpStm);
+  FreeAndNil(tmpStm);
+  frmMsgBox.Caption := Title;
+  frmMsgBox.ShowModal;
 
 end;
 
-{ TDirCache }
-
-procedure TDirCache.addItem(itm: FSE);
+procedure AddEntryCallback(entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
 begin
 
-  inc(numData);
-  if (numData > maxData) then
-  begin
-    maxData := maxData + 4;
-    setLength(data,maxData);
-  end;
-  data[numdata-1] := itm;
-  if TDirPos = 0 then
-    TDirPos := posrev(sch, itm^.name);
-
-end;
-
-function TDirCache.getItem(idx: integer): FSE;
-begin
-
-  result := data[idx];
-
-end;
-
-function TDirCache.getNumItems: integer;
-begin
-
-  result := numData;
-
-end;
-
-constructor TDirCache.Create(dirSep: string);
-begin
-
-  maxData := 4;
-  setLength(data,maxData);
-  numData := 0;
-  tdirpos := 0;
-  sch := dirSep;
-
-end;
-
-destructor TDirCache.Free();
-begin
-
-  setLength(data,0);
-  
-end;
-
-function TDirCache.getTDirPos: integer;
-begin
-
-  result := TDirPos;
+  dup5Main.FSE.addEntry(entrynam,offset,size,datax,datay);
 
 end;
 
@@ -253,7 +202,7 @@ initialization
 
 finalization
 
-  try
+{  try
     if (ht <> nil) then
     begin
       ht.AutoFreeObjects := true;
@@ -268,6 +217,7 @@ finalization
       end;
     finally
     end;
-  end;
+  end;}
+
 
 end.

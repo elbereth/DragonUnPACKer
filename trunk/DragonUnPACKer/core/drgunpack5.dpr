@@ -43,14 +43,12 @@ uses
   classConvert in 'classConvert.pas',
   classFSE in 'classFSE.pas',
   classIconsFromExt in 'classIconsFromExt.pas',
-  declFSE in 'declFSE.pas',
   HashTrie in 'HashTrie.pas',
   lib_bincopy in '..\common\lib_bincopy.pas',
   lib_binUtils in '..\common\lib_binUtils.pas',
   lib_crc in '..\common\lib_crc.pas',
   lib_language in '..\common\lib_language.pas',
   lib_look in 'lib_look.pas',
-  lib_Percent in 'lib_Percent.pas',
   lib_Utils in '..\common\lib_Utils.pas',
   lib_Zlib in '..\common\lib_zlib.pas',
   prg_ver in 'prg_ver.pas',
@@ -69,7 +67,9 @@ uses
   lib_temptools in '..\common\lib_temptools.pas',
   cls_duplog in '..\common\cls_duplog.pas',
   lib_version in '..\common\lib_version.pas',
-  ComCtrls;
+  ComCtrls,
+  cls_dupcommands in 'cls_dupcommands.pas',
+  lib_pe32 in '..\common\lib_pe32.pas';
 
 const _DEBUGMODE = FALSE;
 
@@ -272,15 +272,23 @@ end;
 var hwnd : word = 0;
     x: integer;
     res: boolean = false;
+    compileTime: TDateTime;
 //    hProcess: THandle;
 begin
 
+  // Create the logging facility and start logging
   dupLog := TDupLog.Create();
 
   if _DEBUGMODE then
   begin
     dupLog.enableLogIntoFile(Application.ExeName+'.debug.'+FormatDateTime('yyyymmddhhnnsszzz',Now)+'.log');
   end;
+
+  compileTime := GetImageLinkDateTime(Application.ExeName);
+  if CurEdit = '' then
+    dupLog.addMessage('Dragon UnPACKer v' + CurVersion + ' (Build ' + IntToStr(CurBuild) +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')',sevHigh)
+  else
+    dupLog.addMessage('Dragon UnPACKer v' + CurVersion + ' ' + CurEdit + ' (Build ' + IntToStr(CurBuild)  +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')',sevHigh);
 
   { Removed because I fixed the root of the problem in the thread execution stuff
   // Set CPU affinity to first processor only
@@ -406,15 +414,16 @@ begin
         if _DEBUGMODE then
           dupLog.AddMessage('Application.Initialize;');
         Application.Initialize;
-        Application.Title := 'Dragon UnPACKer 5';
+        Application.Title := 'Dragon UnPACKer';
         if _DEBUGMODE then
           dupLog.AddMessage('Application.CreateForm(Tdup5Main, dup5Main)');
         Application.CreateForm(Tdup5Main, dup5Main);
-        dup5Main.setLogFacility(dupLog);
+  dup5Main.setLogFacility(dupLog);
+
         if _DEBUGMODE then
           dupLog.AddMessage('Application.CreateForm(TfrmAbout, frmAbout)');
   Application.CreateForm(TfrmAbout, frmAbout);
-        if _DEBUGMODE then
+  if _DEBUGMODE then
           dupLog.AddMessage('Application.CreateForm(TfrmSearch, frmSearch)');
   Application.CreateForm(TfrmSearch, frmSearch);
         if _DEBUGMODE then

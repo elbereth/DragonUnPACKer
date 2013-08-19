@@ -19,7 +19,7 @@ unit HyperRipper_aux;
 interface
 
 uses
-  Windows, Classes, HyperRipper, lib_utils, SysUtils, declFSE, Main;
+  Windows, Classes, HyperRipper, lib_utils, SysUtils, Main;
 
 type
   THRipSearch = class(TThread)

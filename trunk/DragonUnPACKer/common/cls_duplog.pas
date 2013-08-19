@@ -18,7 +18,7 @@ interface
 uses Controls, Graphics, SysUtils, StdCtrls, ComCtrls, ShellApi;
 
 // Enum type for the message severity
-type TDupLogMessageSeverity = (sevDebug=0, sevHigh=1, sevMedium=2, sevLow=3);
+type TDupLogMessageSeverity = (sevDebug=0, sevLow=1, sevMedium=2, sevHigh=3, sevError=4);
 
 // The class that stores the message
 type TDupLogMessage = class(TObject)
@@ -35,6 +35,7 @@ type TDupLogMessage = class(TObject)
        property LevelHR: Char read getLevelHR;
        property Message: String read _Message write _Message;
        constructor Create(Message : String; Level: TDupLogMessageSeverity = sevMedium);
+       procedure appendMessage(Suffix: String);
      end;
 
 // The class for the actual logging facility
@@ -63,10 +64,14 @@ type TDupLog = class(TObject)
        procedure enableLogIntoMemo(Memo: TMemo);
        procedure enableLogIntoRichEdit(RichEdit: TRichEdit);
        procedure addMessage(Message: String; Level: TDupLogMessageSeverity = sevMedium);
+       procedure appendMessage(Suffix: String);
+       procedure appendMessageIf(Suffix: String; MinLevel: TDupLogMessageSeverity);
        procedure flushMessages;
      end;
 
 implementation
+
+uses Main;
 
 // Create a Log Message, by default uses todays date and if level is not specified it will have sevMedium level
 constructor TDupLogMessage.create(Message : String; Level: TDupLogMessageSeverity = sevMedium);
@@ -79,11 +84,20 @@ begin
 
 end;
 
+procedure TDupLogMessage.appendMessage(Suffix: String);
+begin
+
+  _Message := _Message + ' ' + Suffix;
+
+end;
+
 // Returns the severity level as a displayable char
 function TDupLogMessage.getLevelHR: Char;
 begin
 
   case _Level of
+    sevError:
+      result := 'E';
     sevDebug:
       result := 'D';
     sevHigh:
@@ -98,35 +112,69 @@ begin
 
 end;
 
+procedure TDupLog.appendMessage(Suffix: string);
+begin
+
+  _Messages[_MessageIndex].appendMessage(Suffix);
+  if (_MessageIndex <= _FlushedIndex) then
+  begin
+    if _LogIntoFile then
+      Write(_LogFile,' '+Suffix);
+
+    if _LogIntoRichEdit then
+    begin
+      _LogRichEdit.Lines.Strings[_LogRichEdit.Lines.Count-1] := _LogRichEdit.Lines.Strings[_LogRichEdit.Lines.Count-1]+' '+Suffix;
+      _LogRichEdit.Refresh;
+    end;
+  end;
+
+end;
+
+procedure TDupLog.appendMessageIf(Suffix: String; MinLevel: TDupLogMessageSeverity);
+begin
+
+  if (_Messages[_MessageIndex].Level >= MinLevel) then
+    appendMessage(Suffix);
+
+end;
+
 // Flush the messages into the respective logging destinations (file, TRichEdit, TMemo, ..)
 procedure TDupLog.flushMessages;
 var x: integer;
     dateMsg: string;
 begin
 
-  for x := _FlushedIndex+1 to _MessageIndex do
+  if _LogIntoFile or _LogIntoRichEdit or _LogIntoMemo then
   begin
 
-    dateMsg := FormatDateTime('yyyy/mm/dd" "hh:nn:ss"."zzz',_Messages[x].Date);
-
-    if _LogIntoFile then
-      WriteLn(_LogFile,dateMsg+' ['+_Messages[x].LevelHR+'] '+_Messages[x].Message);
-
-    if _LogIntoRichEdit then
+    for x := _FlushedIndex+1 to _MessageIndex do
     begin
-      if _LogRichEdit.Lines.Count >= 32760 then
-      _LogRichEdit.Lines.Delete(0);
 
-      _LogRichEdit.Lines.Add(dateMsg+' ['+_Messages[x].LevelHR+'] '+_Messages[x].Message);
-      _LogRichEdit.SelStart := _LogRichEdit.GetTextLen;
-      _LogRichEdit.SelLength := 0;
-      _LogRichEdit.ScrollBy(0,_LogRichEdit.Lines.Count);
-      _LogRichEdit.Refresh;
+      dateMsg := FormatDateTime('yyyy/mm/dd" "hh:nn:ss"."zzz',_Messages[x].Date);
+
+      if _LogIntoFile then
+      begin
+        WriteLn(_LogFile);
+        Write(_LogFile,dateMsg+' ['+_Messages[x].LevelHR+'] '+_Messages[x].Message);
+      end;
+
+      if _LogIntoRichEdit then
+      begin
+        if _LogRichEdit.Lines.Count >= 32760 then
+        _LogRichEdit.Lines.Delete(0);
+
+        _LogRichEdit.Lines.Add(dateMsg+' ['+_Messages[x].LevelHR+'] '+_Messages[x].Message);
+        _LogRichEdit.SelStart := _LogRichEdit.GetTextLen;
+        _LogRichEdit.SelLength := 0;
+        _LogRichEdit.ScrollBy(0,_LogRichEdit.Lines.Count);
+        _LogRichEdit.Refresh;
 //      _LogRichEdit.Perform(EM_LINESCROLL,0,1);
+      end;
     end;
-  end;
 
-  _FlushedIndex := _MessageIndex;
+    _FlushedIndex := _MessageIndex;
+
+  end;
 
 end;
 

@@ -19,7 +19,8 @@ unit Main;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,  Dialogs, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, Menus, ImgList,
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, classFSE, classConvert, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, Menus, ImgList,
   lib_language, translation, ShellApi, VirtualTrees, lib_look, ToolWin,
   DropSource, XPMan, DragDrop, DragDropFile, prg_ver, StrUtils,
   classIconsFromExt, DateUtils, lib_binutils, commonTypes,
@@ -27,7 +28,7 @@ uses
   // Vampyre Imaging Library
   ImagingTypes, Imaging, ImagingClasses, ImagingComponents, ImagingCanvases,
   ImagingFormats, ImagingUtility, dwTaskbarComponents,
-  lib_crc, lib_temptools, lib_version, IniFiles, cls_duplog;
+  lib_crc, lib_temptools, lib_version, IniFiles, cls_duplog, cls_dupcommands;
 
 type
   TdupThemeInfo = record
@@ -136,7 +137,7 @@ type
     Bouton_Ajouter: TToolButton;
     Bouton_Remplacer: TToolButton;
     Bouton_Supprimer: TToolButton;
-    Percent: TdwProgressBar;
+    Percent: TProgressBar;
     imgTheme32: TImageList;
     imgTheme16: TImageList;
     richLog: TRichEdit;
@@ -278,10 +279,14 @@ type
     procedure drawError32(Bitmap: TBitmap);
     procedure addImageToList(file16, file32: string);
   public
+    FSE: TDrivers;
+    CPlug: TPlugins;
     TempFiles: TStrings;
     isPreviewLimit: boolean;
     previewLimitValue: integer;
     globalLogFacility: TDupLog;
+    globalCommandsFacility: TDupCommands;
+    currentTheme: String;
     function getVerboseLevel(): integer;
     procedure setVerboseLevel(verbLevel: integer);
     procedure writeLog(text: string);
@@ -295,7 +300,6 @@ type
     procedure separatorLog();
     procedure separatorLogVerbose(minLevel: integer);
     function getPreviewLimitInBytes(value: integer): integer;
-    function messageDlgTitle(const Title: String; const Msg: string; Buttons: TMsgDlgButtons; HelpCtx: Longint): Integer;
     procedure addEntry(entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
     procedure loadTheme(themename: string);
     function getThemeInfo(themename: string): TdupThemeInfo;
@@ -317,8 +321,8 @@ var
 implementation
 
 uses About, Registry, lib_utils, Search,
-     DrvInfo, Options, Splash, spec_DULK, declFSE,
-     HyperRipper, classConvert, classFSE, List, Error, MsgBox;
+     DrvInfo, Options, Splash, spec_DULK,
+     HyperRipper, List, Error, MsgBox;
 
 var
   msgBuf: String;
@@ -1004,7 +1008,7 @@ begin
 
   if p>100 then
     p := 100;
-  dup5Main.Percent.ShowInTaskbar := not((p = 0) or (p = 100));
+//  dup5Main.Percent.ShowInTaskbar := not((p = 0) or (p = 100));
   dup5Main.Percent.Position := p;
   dup5Main.Refresh;
 
@@ -1453,9 +1457,12 @@ end;
 procedure Tdup5Main.FormCreate(Sender: TObject);
 var Reg: TRegistry;
     tmpi: integer;
-    clng,currentTheme: string;
+    clng: string;
     DoSetRegistryDUP5: boolean;
 begin
+
+  // Create the commands facility
+  globalCommandsFacility := TDupCommands.Create(Self,Status,Percent,lstContent,lstIndex,TempFiles);
 
   DoSetRegistryDUP5 := false;  
 
@@ -1471,12 +1478,7 @@ begin
   lstIndex.NodeDataSize := SizeOf(virtualIndexData);
 
   // Indicate version number in title and in log
-  Caption := 'Dragon UnPACKer v' + CurVersion + ' ' + CurEdit;
-
-  if CurEdit = '' then
-    dup5Main.writeLog('Dragon UnPACKer v' + CurVersion + ' (Build ' + IntToStr(CurBuild) +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')')
-  else
-    dup5Main.writeLog('Dragon UnPACKer v' + CurVersion + ' ' + CurEdit + ' (Build ' + IntToStr(CurBuild)  +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')');
+  globalCommandsFacility.SetTitleDefault;
 
   // Edit and Tools menus are hidden (visible only when a file is loaded)
   menuEdit.Visible := false;
@@ -1701,9 +1703,6 @@ begin
 
   TranslateMain;
 
-  LoadTheme(currentTheme);
-
-  application.Title := dup5Main.Caption;
   lstContent_displayHiddenHeader;
 
   // This require admin privileges on Vista/7...
@@ -1741,7 +1740,7 @@ begin
 
   dup5Main.writeLog(DLNGStr('LOG002'));
 
-  FSE := FSEInit;
+  FSE := TDrivers.Create(globalLogFacility, globalCommandsFacility);
   FSE.SetProgressBar(PercentCB);
   FSE.SetLanguage(LanguageCB);
   FSE.SetPath(ExtractFilePath(Application.ExeName)+'data\drivers\');
@@ -1752,7 +1751,7 @@ begin
 
   dup5Main.writeLog(DLNGStr('LOG003'));
 
-  CPlug := CPlugInit;
+  CPlug := TPlugins.Create(globalLogFacility, globalCommandsFacility);
   CPlug.SetPercent(PercentCB);
   CPlug.SetLanguage(LanguageCB);
   CPlug.SetPath(ExtractFilePath(Application.ExeName)+'data\convert\');
@@ -2056,6 +2055,8 @@ begin
   dup5Main.menuTools.Visible := False;
   dup5Main.Caption := 'Dragon UnPACKer v'+CurVersion+' '+CurEdit;
   application.Title := dup5Main.Caption;
+
+  dup5Main.lstIndex.AddChild(nil);
 
   dup5Main.Status.Panels.Items[0].Text := '0 '+DLNGStr('STAT10');
   dup5Main.Status.Panels.Items[1].Text := '0 '+DLNGStr('STAT20');
@@ -2656,18 +2657,20 @@ end;
 procedure Tdup5Main.writeLog(text: string);
 begin
 
-  if richLog.Lines.Count >= 32760 then
+{  if richLog.Lines.Count >= 32760 then
     richLog.Lines.Delete(0);
 
   richLog.Lines.Add(DateTimeToStr(now)+' : '+text);
-  richLog.Perform(EM_LINESCROLL,0,1);
+  richLog.Perform(EM_LINESCROLL,0,1);}
+  globalLogFacility.addMessage(text);
 
 end;
 
 procedure Tdup5Main.appendLog(text: string);
 begin
 
-  richLog.Lines.Strings[richLog.Lines.Count-1] := richLog.Lines.Strings[richLog.Lines.Count-1]+' '+text;
+//  richLog.Lines.Strings[richLog.Lines.Count-1] := richLog.Lines.Strings[richLog.Lines.Count-1]+' '+text;
+  globalLogFacility.appendMessage(text);
 
 end;
 
@@ -2715,18 +2718,41 @@ begin
 end;
 
 procedure Tdup5Main.appendLogVerbose(minLevel: integer; text: string);
+var severity: TDupLogMessageSeverity;
 begin
 
-  if verboseLevel >= minLevel then
-    appendLog(text);
+//  if verboseLevel >= minLevel then
+//    appendLog(text);
+  case minLevel of
+    0: severity := sevDebug;
+    1: severity := sevLow;
+    2: severity := sevMedium;
+    3: severity := sevHigh;
+  else
+    severity := sevError;
+  end;
+  globalLogFacility.appendMessageIf(text,severity);
 
 end;
 
 procedure Tdup5Main.writeLogVerbose(minLevel: integer; text: string);
+var severity: TDupLogMessageSeverity;
 begin
 
-  if verboseLevel >= minLevel then
-    writeLog(text);
+//  if verboseLevel >= minLevel then
+//    appendLog(text);
+  case minLevel of
+    0: severity := sevDebug;
+    1: severity := sevLow;
+    2: severity := sevMedium;
+    3: severity := sevHigh;
+  else
+    severity := sevError;
+  end;
+
+//  if verboseLevel >= minLevel then
+//    writeLog(text);
+  globalLogFacility.addMessage(text,severity);
 
 end;
 
@@ -2988,6 +3014,8 @@ end;
 procedure Tdup5Main.FormShow(Sender: TObject);
 begin
 
+  LoadTheme(currentTheme);
+
   TimerInit.Enabled := true;
 
 end;
@@ -3122,22 +3150,6 @@ begin
 
 end;
 
-
-function Tdup5Main.MessageDlgTitle(const Title: AnsiString; const Msg: Ansistring; Buttons: TMsgDlgButtons; HelpCtx: Longint): Integer;
-var tmpStm: TMemoryStream;
-begin
-
-  tmpStm := TMemoryStream.Create;
-  tmpStm.WriteBuffer(Msg[1],Length(Msg));
-  tmpStm.Seek(0,soBeginning);
-  frmMsgBox.richText.Clear;
-  frmMsgBox.richText.Lines.LoadFromStream(tmpStm);
-  FreeAndNil(tmpStm);
-  frmMsgBox.Caption := Title;
-  result := frmMsgBox.ShowModal;
-
-end;
-
 //
 // Free the memory associated with a node of lstIndex
 //
@@ -3173,6 +3185,7 @@ begin
 end;
 
 procedure Tdup5Main.FormDestroy(Sender: TObject);
+var     x: integer;
 begin
 
   FreeAndNil(Icons);
@@ -3186,14 +3199,20 @@ begin
 //  FreeAndNil(DropFileSource);
   FreeAndNil(FPreviewImage);
   FreeAndNil(FPreviewBitmap);
+  FreeAndNil(GlobalCommandsFacility);
 
-  Application.Terminate;
-  
+  for x := 0 to TempFiles.Count-1 do
+    if FileExists(TempFiles.Strings[x]) and Not(DeleteFile(TempFiles.Strings[x])) then
+      MessageDlg(ReplaceValue('%f',DLNGStr('ERRTMP'),TempFiles.Strings[x]),mtWarning,[mbOk],0);
+
+  FreeAndNil(TempFiles);
+
+  Close;
+
 end;
 
 procedure Tdup5Main.FormHide(Sender: TObject);
 var Reg: TRegistry;
-    x: integer;
     maxed: TWindowState;
 begin
 
@@ -3239,19 +3258,9 @@ begin
     FreeAndNil(Reg);
   end;
 
-  FSE.CloseFile;
-  FSE.FreeDrivers;
   FreeAndNil(FSE);
-
-  CPlug.FreePlugins;
   FreeAndNil(CPlug);
-
-  for x := 0 to TempFiles.Count-1 do
-    if FileExists(TempFiles.Strings[x]) and Not(DeleteFile(TempFiles.Strings[x])) then
-      MessageDlg(ReplaceValue('%f',DLNGStr('ERRTMP'),TempFiles.Strings[x]),mtWarning,[mbOk],0);
-
-  FreeAndNil(TempFiles);
-
+  
 end;
 
 //
@@ -3538,7 +3547,7 @@ begin
       try
         repeat
           themefiles16.Add(Rec.Name);
-          writeLogVerbose(2,'16x16 Candidate Found ('+Rec.name+')');
+          writeLogVerbose(0,'16x16 Candidate Found ('+Rec.name+')');
         until FindNext(Rec) <> 0;
       finally
         FindClose(Rec) ;
@@ -3552,7 +3561,7 @@ begin
       try
         repeat
           themefiles32.Add(Rec.Name);
-          writeLogVerbose(2,'32x32 Candidate Found ('+Rec.name+')');
+          writeLogVerbose(0,'32x32 Candidate Found ('+Rec.name+')');
         until FindNext(Rec) <> 0;
       finally
         FindClose(Rec) ;
@@ -3566,7 +3575,7 @@ begin
       for imgidx := 0 to 30 do
       begin
 
-        writeLogVerbose(2,'-- Icon '+inttostr(imgidx));
+        writeLogVerbose(0,'-- Icon '+inttostr(imgidx));
 
         // By default consider there is no file
         themefile16 := '';
@@ -3605,7 +3614,7 @@ begin
           try
             if strtoint(leftstr(themefiles32.Strings[x],pos('-',themefiles32.Strings[x])-1)) = imgidx then
             begin
-              appendlogVerbose(2,' [32x32 = '+themefiles32.Strings[x]+']');
+              appendlogVerbose(0,' [32x32 = '+themefiles32.Strings[x]+']');
               themefile32 := themepath+'32x32\'+themefiles32.Strings[x];
               themefiles32.Delete(x);
               break;

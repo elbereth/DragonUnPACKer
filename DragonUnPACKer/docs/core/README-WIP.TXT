@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    10/07/2013
+by Alexande "Elbereth" Devilliers                                    19/08/2013
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -11,7 +11,7 @@ by Alexande "Elbereth" Devilliers                                    10/07/2013
 Main program version and versions history:
 
 Version 5.7.0.279
-SVN Release 656 [Unreleased]
+SVN Release 662 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
@@ -37,6 +37,11 @@ SVN Release 656 [Unreleased]
  + Added FastCode & FastMove.
    http://fastcode.sourceforge.net/
  ! Fixed support for multiple convert plugins during preview.
+ * Refactored how TDrivers & TPlugins were global variables, now properties
+   of the main form. Both don't access directly main form components anymore
+   and go through a wrapper command class.
+ * Completely revamped the logging features.
+   This is still work in progress but is now used everywhere.
  i HyperRipper v5.6b:
    ! Fixed the sanity check on the BIK searching algorithm.
      Should avoid some false-positives.

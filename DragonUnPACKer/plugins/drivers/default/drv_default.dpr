@@ -200,6 +200,7 @@ type FSE = ^element;
     30010        Upgraded to new interface DUDI v6 (plugin is not backward compatible to v4/v5)
                  Added Aliens vs Predator (2010) .ASR (Asura & AsuraZlb) support
                  Added Star Wars Starfighter .PAK support
+    30110        Fixed EVE Online .STUFF support.      
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -221,7 +222,7 @@ type FSE = ^element;
 const
   DUDI_VERSION = 6;
   DUDI_VERSION_COMPATIBLE = 6;
-  DRIVER_VERSION = 30010;
+  DRIVER_VERSION = 30110;
   DUP_VERSION = 57010;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
@@ -5397,7 +5398,7 @@ begin
     DrvInfo.ID := 'STUFF';
     DrvInfo.Sch := '\';
     DrvInfo.FileHandle := FHandle;
-    DrvInfo.ExtractInternal := True;
+    DrvInfo.ExtractInternal := False;
 
   end;
 

@@ -200,7 +200,8 @@ type FSE = ^element;
     30010        Upgraded to new interface DUDI v6 (plugin is not backward compatible to v4/v5)
                  Added Aliens vs Predator (2010) .ASR (Asura & AsuraZlb) support
                  Added Star Wars Starfighter .PAK support
-    30110        Fixed EVE Online .STUFF support.      
+    30110        Fixed EVE Online .STUFF support.
+    30112        Really fixed the extraction of files (and not only EVE Online .STUFF)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -222,7 +223,7 @@ type FSE = ^element;
 const
   DUDI_VERSION = 6;
   DUDI_VERSION_COMPATIBLE = 6;
-  DRIVER_VERSION = 30110;
+  DRIVER_VERSION = 30112;
   DUP_VERSION = 57010;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
@@ -15934,40 +15935,50 @@ begin
   FileSeek(FHandle,Offset,0);
 
   if DrvInfo.ID = '007' then
+  begin
     if (DataX = 1) then
       DecompressZlibToStream(outputstream, DataY, Size)
     else
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+  end
 
   else if DrvInfo.ID = 'ADF' then
     DecryptADFToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent)
 
   else if DrvInfo.ID = 'BSA' then
+  begin
     if (DataX = 1) then
     begin
       FileSeek(FHandle,Offset,0);
       DecompressZlibToStream(outputstream, DataY, Size);
     end
     else
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+  end
 
   else if DrvInfo.ID = 'CBF0' then
+  begin
     if (DataY = 1) then
       DecompressCBFToStream(FHandle,outputstream,offset,DataX,Size,BUFFER_SIZE,silent,SetPercent)
     else
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+  end
 
   else if DrvInfo.ID = 'CBF1' then
+  begin
     if (DataY = 1) then
       DecompressCBFToStream(FHandle,outputstream,offset,DataX,Size,BUFFER_SIZE,silent,SetPercent)
     else
-      DecryptCBFToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent,SetPercent)
+      DecryptCBFToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent,SetPercent);
+  end
 
   else if DrvInfo.ID = 'DNI' then
+  begin
     if (DataX > 0) then
       DecompressZlibToStream(outputstream, DataX, Size)
     else
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+  end
 
 {  else if DrvInfo.ID = 'F22DAT' then
   begin
@@ -15975,6 +15986,7 @@ begin
   end}
 
   else if DrvInfo.ID = 'GZP' then
+  begin
     if (DataY = 1) then
     begin
       GetMem(Buf,DataX);
@@ -15988,7 +16000,8 @@ begin
       end;
     end
     else
-      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent)
+      BinCopyToStream(FHandle,outputstream,offset,DataX,0,BUFFER_SIZE,silent,SetPercent);
+  end
 
 {IFDEF EXPFORMATS}
   else if DrvInfo.ID = 'H4R' then
@@ -16011,10 +16024,12 @@ begin
 
   // Total Annihilation .HPI
   else if DrvInfo.ID = 'HPI' then
+  begin
     if (DataX = 2) or (DataX = 1) then
       DecompressHPIToStream(outputstream,Offset,Size,DataX,silent)
     else
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+  end
 
   else if Leftstr(DrvInfo.ID,4) = 'MOSD' then
   begin
@@ -16073,17 +16088,21 @@ begin
   end
 
   else if DrvInfo.ID = 'PKPAK' then
+  begin
     if DataX <> Size then
       DecompressZlibToStream(outputstream, DataX, Size)
     else
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+  end
 
   // Ghostbusters: Sanctum of Slime .PAK decompression handling
   else if DrvInfo.ID = 'tonga' then
+  begin
     if DataX = 1 then
       DecompressLZMAToStream(outputstream,offset,Size,silent)
     else
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+  end
 
   // The Movies .PAK decompression handling
   else if DrvInfo.ID = 'TMPAK' then
@@ -16134,24 +16153,30 @@ begin
   end
 
   else if DrvInfo.ID = 'RCF' then
+  begin
     if (DataX = 1) then
       DecompressRCFToStream(outputstream,offset,size,BUFFER_SIZE,silent,SetPercent)
     else
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+  end
 
   else if DrvInfo.ID = 'RFA' then
+  begin
     if (DataX = 0) then
       BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
     else if (DataX = 1) then
-      DecompressRFAToStream(outputstream,Offset,Size,silent)
+      DecompressRFAToStream(outputstream,Offset,Size,silent);
+  end
 
   else if DrvInfo.ID = 'RFH/RFD' then
+  begin
     if (DataX = 2) then
       DecompressRFDToStream(outputstream, DataY, Size)
     else if (DataX = 1) then
       BinCopyToStream(FHandle,outputstream,offset,DataY,0,BUFFER_SIZE,silent,SetPercent)
     else
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+  end
 
   else if DrvInfo.ID = 'SSA' then
   begin
@@ -16164,10 +16189,12 @@ begin
   end
 
   else if DrvInfo.ID = 'VFS' then
+  begin
     if (DataX > 0) then
       DecompressZlibVFSChunksToStream(outputstream,offset,DataY,Size)
     else
-      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent)
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+  end
 
   else
     BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);

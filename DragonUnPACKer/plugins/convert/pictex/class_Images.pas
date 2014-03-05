@@ -120,6 +120,18 @@ type TCouleur = record
        Unk2: Integer;
        MipMap: integer;
      end;
+     POD5TEXHeader = packed record
+       Version: integer; // 0
+       Hash: array[0..3] of Integer;
+       Null: integer;
+       Format: Integer;
+       Width: integer;
+       Height: integer;
+       Unknown1: Integer;
+       MipMap: integer;
+       Unknown2: Integer;
+       Unknown3: Integer;
+     end;
   // Physical bitmap pixel
   TColorRGB = packed record
     r, g, b	: BYTE;

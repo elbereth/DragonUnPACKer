@@ -72,7 +72,7 @@ var Percent: TPercentCallback;
 const
   DUCI_VERSION = 4;
   DUCI_VERSION_COMPATIBLE = 3;
-  DRIVER_VERSION = 22040;
+  DRIVER_VERSION = 22140;
   DUP_VERSION = 56040;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
@@ -100,6 +100,7 @@ const
   * v2.2.0 Beta  (22010): Using DUCI v4, backward compatible with v3
   *                       Removed Imaging Lib (feature to be integrated in Dragon UnPACKer)
   * v2.2.0       (22040): Removed beta status for 5.6.0 release
+  * v2.2.1       (22140): Added Ghostbusters .TEX support
   * }
 
 // Identifies the DLL as a Convert plugin (minimum version to load plugin)
@@ -152,7 +153,7 @@ begin
           end;
     end;
   end
-  else if (fmt = 'POD3') and (uppercase(extractfileext(nam)) = '.TEX') then
+  else if ((fmt = 'POD3') or (fmt = 'POD5')) and (uppercase(extractfileext(nam)) = '.TEX') then
     result := true
   else if ((fmt = 'HMCTEX') or (fmt = 'GTEX')) and
           ((uppercase(extractfileext(nam)) = '.RGBA')
@@ -244,6 +245,13 @@ begin
     result.List[3].Display := 'TGA - Targa (24bpp)';
     result.List[3].Ext := 'TGA';
     result.List[3].ID := 'TGA24';
+  end
+  else if (fmt = 'POD5') and (uppercase(extractfileext(nam)) = '.TEX') then
+  begin
+    result.NumFormats := 1;
+    result.List[1].Display := 'DDS - Microsoft DirectDraw Surface';
+    result.List[1].Ext := 'DDS';
+    result.List[1].ID := 'DDS';
   end
   else if ((fmt = 'HMCTEX') or (fmt = 'GTEX')) then
   begin
@@ -629,6 +637,123 @@ begin
 
 end;
 
+//
+//  Based on Ghostbusters texture converter (c++ code)
+//	Copyright 2010 Jonathan Wilson
+//
+function ConvertPOD5TEXStream(src, dst: TStream; cnv: String): integer;
+var W,H,x,y: integer;
+    fsize: cardinal;
+    HDR: POD5TEXHeader;
+    Buffer: PByteArray;
+    DDS: DDSHeader;
+begin
+
+  result := 0;
+
+  try
+    src.ReadBuffer(HDR,SizeOf(HDR));
+
+    FillChar(DDS,SizeOf(DDSHeader),0);
+    DDS.ID[0] := 'D';
+    DDS.ID[1] := 'D';
+    DDS.ID[2] := 'S';
+    DDS.ID[3] := ' ';
+    DDS.SurfaceDesc.dwSize := 124;
+    DDS.SurfaceDesc.dwFlags := DDSD_CAPS or DDSD_HEIGHT or DDSD_WIDTH or DDSD_PIXELFORMAT or DDSD_LINEARSIZE;
+    DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDSCAPS_TEXTURE;
+    if HDR.MipMap > 0 then
+    begin
+      DDS.SurfaceDesc.dwFlags := DDS.SurfaceDesc.dwFlags or DDSD_MIPMAPCOUNT;
+      DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDS.SurfaceDesc.ddsCaps.dwCaps1 or DDSCAPS_MIPMAP or DDSCAPS_COMPLEX;
+      DDS.SurfaceDesc.dwMipMapCount := HDR.MipMap + 1;
+    end;
+    DDS.SurfaceDesc.dwHeight := HDR.Height;
+    DDS.SurfaceDesc.dwWidth := HDR.Width;
+    fsize := src.Size - src.Seek(0,soFromCurrent);
+//    DDS.SurfaceDesc.dwPitchOrLinearSize := fsize;
+    DDS.SurfaceDesc.ddpfPixelFormat.dwSize := 32;
+    case HDR.Format of
+      3: begin
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_RGB or DDPF_ALPHAPIXELS;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRGBBitCount := 32;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRBitMask := $00ff0000;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwGBitMask := $0000ff00;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwBBitMask := $000000ff;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRGBAlphaBitMask := $ff000000;
+      end;
+      4: begin
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_RGB;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRGBBitCount := 16;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRBitMask := $0000f800;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwGBitMask := $000007e0;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwBBitMask := $0000001f;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRGBAlphaBitMask := $00000000;
+      end;
+      5: begin
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_RGB or DDPF_ALPHAPIXELS;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRGBBitCount := 16;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRBitMask := $00000f00;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwGBitMask := $000000f0;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwBBitMask := $0000000f;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRGBAlphaBitMask := $0000f000;
+      end;
+      23: begin
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_FOURCC;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'D';
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[1] := 'X';
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[2] := 'T';
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '3';
+      end;
+      24: begin
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_RGB or DDPF_ALPHAPIXELS;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRGBBitCount := 32;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRBitMask := $00ff0000;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwGBitMask := $0000ff00;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwBBitMask := $000000ff;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRGBAlphaBitMask := $ff000000;
+        DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDSCAPS_COMPLEX;
+        DDS.SurfaceDesc.ddsCaps.dwCaps2 := DDSCAPS2_CUBEMAP_POSITIVEX or DDSCAPS2_CUBEMAP_NEGATIVEX or DDSCAPS2_CUBEMAP_POSITIVEY or DDSCAPS2_CUBEMAP_NEGATIVEY or DDSCAPS2_CUBEMAP_POSITIVEZ or DDSCAPS2_CUBEMAP_NEGATIVEZ;
+      end;
+      43: begin
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_FOURCC;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'D';
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[1] := 'X';
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[2] := 'T';
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '1';
+      end;
+      46: begin
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_FOURCC;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'q';
+      end;
+      47: begin
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_LUMINANCE or DDPF_ALPHAPIXELS;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRGBBitCount := 16;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRBitMask := $000000ff;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRGBAlphaBitMask := $ff00;
+      end;
+      50: begin
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_FOURCC;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'D';
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[1] := 'X';
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[2] := 'T';
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := '5';
+      end;
+      55: begin
+        DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_LUMINANCE;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRGBBitCount := 8;
+        DDS.SurfaceDesc.ddpfPixelFormat.dwRBitMask := $000000ff;
+      end;
+      else
+        raise Exception.Create('Unknown format '+inttostr(HDR.Format)+'!');
+    end;
+    dst.Write(DDS,SizeOf(DDSHeader));
+    dst.CopyFrom(src,fsize);
+  finally
+  end;
+
+end;
+
 function ConvertHMC_TEX_RGBAStream(texFile, dst: TStream): integer;
 var x, y, W, H, fsize: integer;
     img: TSaveImage32;
@@ -922,6 +1047,10 @@ begin
   else if (fmt = 'POD3') and (uppercase(extractfileext(nam)) = '.TEX') then
   begin
     result := ConvertPOD3TEXStream(src,dst,cnv);
+  end
+  else if (fmt = 'POD5') and (uppercase(extractfileext(nam)) = '.TEX') then
+  begin
+    result := ConvertPOD5TEXStream(src,dst,cnv);
   end
   else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.RGBA') then
   begin

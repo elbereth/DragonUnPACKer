@@ -29,6 +29,7 @@ const DDSD_CAPS        = $00000001;
 const DDPF_ALPHAPIXELS = $00000001;
       DDPF_FOURCC      = $00000004;
       DDPF_RGB         = $00000040;
+      DDPF_LUMINANCE   = $00020000;
 
 // DDSCAPS2 dwCaps1
 const DDSCAPS_COMPLEX  = $00000008;

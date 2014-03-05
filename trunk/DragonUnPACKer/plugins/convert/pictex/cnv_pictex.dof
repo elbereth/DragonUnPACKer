@@ -110,8 +110,8 @@ IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=2
 MinorVer=2
-Release=0
-Build=122
+Release=1
+Build=123
 Debug=0
 PreRelease=0
 Special=0
@@ -122,7 +122,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=DUP5 - Picture/Textures Convert Plugin
-FileVersion=2.2.0.122
+FileVersion=2.2.1.123
 InternalName=cnv_pictex
 LegalCopyright=Created by Alexandre Devilliers (aka Elbereth/Piecito)
 LegalTrademarks=Mozilla Public License 1.1
@@ -130,3 +130,20 @@ OriginalFilename=cnv_pictex.d5c
 ProductName=Dragon UnPACKer 5
 ProductVersion=5.6
 Comments=Convert between file formats in DUP5
+[HistoryLists\hlConditionals]
+Count=1
+Item0=DRGUNPACK
+[HistoryLists\hlUnitAliases]
+Count=1
+Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlSearchPath]
+Count=2
+Item0=$(DELPHI)\Lib\Debug;C:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;P:\Programs\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
+Item1=E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
+[HistoryLists\hlUnitOutputDirectory]
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-dcu
+[HistoryLists\hlOutputDirectorry]
+Count=2
+Item0=E:\Developpement\dup-dev-5.1-compiled\data\convert
+Item1=E:\Developpement\dup-dev-5.1-compiled

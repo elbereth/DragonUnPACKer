@@ -2909,7 +2909,7 @@ begin
             CListInfo.NumFormats := CList.NumFormats;
             for i := 1 to CList.NumFormats do
             begin
-              foundCnv := (uppercase(CList.List[i].Info.ID) = 'BMP') or (uppercase(CList.List[i].Info.ID) = 'TGA32') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT1') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT3');
+              foundCnv := (uppercase(CList.List[i].Info.ID) = 'BMP') or (uppercase(CList.List[i].Info.ID) = 'TGA32') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT1') or (uppercase(CList.List[i].Info.ID) = 'DDSDXT3') or (uppercase(CList.List[i].Info.ID) = 'DDS');
               if foundCnv then
               begin
                 cnvInfo := CPlug.getPluginInfo(CList.List[i].Plugin);

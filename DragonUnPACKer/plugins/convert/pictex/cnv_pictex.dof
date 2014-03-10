@@ -111,7 +111,7 @@ AutoIncBuild=1
 MajorVer=2
 MinorVer=2
 Release=1
-Build=123
+Build=124
 Debug=0
 PreRelease=0
 Special=0
@@ -122,7 +122,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=DUP5 - Picture/Textures Convert Plugin
-FileVersion=2.2.1.123
+FileVersion=2.2.1.124
 InternalName=cnv_pictex
 LegalCopyright=Created by Alexandre Devilliers (aka Elbereth/Piecito)
 LegalTrademarks=Mozilla Public License 1.1

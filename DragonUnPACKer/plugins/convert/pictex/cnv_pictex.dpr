@@ -660,7 +660,7 @@ begin
     DDS.ID[2] := 'S';
     DDS.ID[3] := ' ';
     DDS.SurfaceDesc.dwSize := 124;
-    DDS.SurfaceDesc.dwFlags := DDSD_CAPS or DDSD_HEIGHT or DDSD_WIDTH or DDSD_PIXELFORMAT or DDSD_LINEARSIZE;
+    DDS.SurfaceDesc.dwFlags := DDSD_CAPS or DDSD_HEIGHT or DDSD_WIDTH or DDSD_PIXELFORMAT;
     DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDSCAPS_TEXTURE;
     if HDR.MipMap > 0 then
     begin

@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    10/03/2014
+by Alexande "Elbereth" Devilliers                                    17/03/2014
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,8 +10,8 @@ by Alexande "Elbereth" Devilliers                                    10/03/2014
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.7.0.280
-SVN Release 666 [Unreleased]
+Version 5.7.0.281
+SVN Release 669 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
@@ -31,7 +31,7 @@ SVN Release 666 [Unreleased]
    ! SVN 646: Fixed files without directories not working in previous SVN 644.
    ! SVN 648: Fixed folder cache never cleared when closing files. This was
               resulting in duplicate files when loading HRF files for ex.
-   ! SVN 649: Fixed DUDI v6 plugin internal extraction not working.
+   ! SVN 649: Fixed DUDI v6 plug-in internal extraction not working.
               Fixed exception when there was only 1 entry in the input file.
    ! SVN 652: Fixed search functions.
  + Added FastCode & FastMove.
@@ -42,17 +42,29 @@ SVN Release 666 [Unreleased]
    and go through a wrapper command class.
  * Completely revamped the logging features.
    This is still work in progress but is now used everywhere.
+ + Revamped the old "Look" functionality to a much easier to maintain and
+   modify "Theme" (files in a folder for the moment).
+   Current SVN version is transitional and the new folder structure does not
+   exists (which means the Nightly build will be icon less for the menu,
+   po-pups and tool bar).
+ + Added chained conversion from plug-ins to internal Vampyre Imaging Library.
+   This allows for the plug-ins to just convert to .DDS for example and the
+   chaining will also propose BMP, PNG and TGA with no additional work from
+   the plug-in.
+   Currently only for multiple selections (I will be adding single ones asap).
+ + Added direct internal Vampyre Imaging Library convertion of compatible
+   files.
+   Currently only for multiple selections (I will be adding single ones asap).
+ ! Fixed the SetPercent callback function that was refreshing the component
+   on every call, now it will refresh only if the value changed...
+   This resulted in tremendous speed up for the loading of some formats, for
+   ex: POD5 loading in previous version: ~17sec now: ~7sec.
  i HyperRipper v5.6b:
    ! Fixed the sanity check on the BIK searching algorithm.
      Should avoid some false-positives.
    ! Fixed the memory leak for not freeing the TBufferedFS component:
      Switched back to using THandleStream instead of TBufferedFS.
 	 Free THandleStream but keep handle open and pass it to TDrivers.
- + Revamped the old "Look" functionality to a much easier to maintain and
-   modify "Theme" (files in a folder for the moment).
-   Current SVN version is transitional and the new folder structure does not
-   exists (which means the Nightly build will be icon less for the menu,
-   po-pups and tool bar).
  * Elbereth's Main Driver plug-in v3.0.0:
    * Updated to new DUDI v6. This means as of this version the plug-in
      requires Dragon UnPACKer v5.7.0 or more. It won't work with older Dragon

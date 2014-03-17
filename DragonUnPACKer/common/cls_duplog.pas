@@ -168,7 +168,8 @@ begin
         _LogRichEdit.SelLength := 0;
         _LogRichEdit.ScrollBy(0,_LogRichEdit.Lines.Count);
         _LogRichEdit.Refresh;
-//      _LogRichEdit.Perform(EM_LINESCROLL,0,1);
+        // EM_LINESCROLL = $00B6;
+        _LogRichEdit.Perform($00B6,0,1);
       end;
     end;
 

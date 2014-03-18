@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    17/03/2014
+by Alexande "Elbereth" Devilliers                                    18/03/2014
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,8 +10,8 @@ by Alexande "Elbereth" Devilliers                                    17/03/2014
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.7.0.281
-SVN Release 669 [Unreleased]
+Version 5.7.0.282
+SVN Release 670 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
@@ -51,10 +51,8 @@ SVN Release 669 [Unreleased]
    This allows for the plug-ins to just convert to .DDS for example and the
    chaining will also propose BMP, PNG and TGA with no additional work from
    the plug-in.
-   Currently only for multiple selections (I will be adding single ones asap).
  + Added direct internal Vampyre Imaging Library convertion of compatible
-   files.
-   Currently only for multiple selections (I will be adding single ones asap).
+   files. For ex: .DDS to .BMP/.PNG/.TGA.
  ! Fixed the SetPercent callback function that was refreshing the component
    on every call, now it will refresh only if the value changed...
    This resulted in tremendous speed up for the loading of some formats, for

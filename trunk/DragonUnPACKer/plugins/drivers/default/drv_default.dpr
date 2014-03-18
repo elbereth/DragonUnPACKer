@@ -14765,13 +14765,6 @@ begin
   
 end;
 
-type
-  FormatEntry = record
-    FileName: ShortString;
-    Offset, Size: Int64;
-    DataX, DataY: Integer;
-  end;
-
 function GetEntry(): FormatEntry; stdcall;
 var a: FSE;
 begin

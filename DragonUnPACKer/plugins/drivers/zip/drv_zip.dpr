@@ -23,6 +23,7 @@ uses
   Classes,
   dup5drv_utils in '..\dup5drv_utils.pas',
   dup5drv_data in '..\dup5drv_data.pas',
+  spec_DUDI in '..\..\..\common\spec_DUDI.pas',
   UnZip in 'UnZip.pas',
   lib_version in '..\..\..\common\lib_version.pas',
   lib_BinUtils in '..\..\..\common\lib_binutils.pas';

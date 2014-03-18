@@ -24,7 +24,9 @@ unit dup5drv_data;
 
 interface
 
-uses dup5drv_utils;
+uses dup5drv_utils,
+     spec_DUDI;
+
 
 procedure FSE_add(Name: String; Offset, Size: Int64; DataX, DataY: integer);
 function FSE_Read(): FormatEntry;

@@ -1203,15 +1203,14 @@ begin
 end;
 
 procedure Tdup5Main.Popup_Extrairevers_MODELClick(Sender: TObject);
-var ext,dstfil,tmpfil: string;
-//    DataX, DataY: integer;
-//    Offset, Size: int64;
+var ext,dstfil,tmpfil,filename,internalformat,tmpdisp: string;
+    plugidx,internalformatidx: integer;
     CurrentMenu: TMenuItem;
     Data: pvirtualTreeData;
-    Filename: string;
     tmpStm: TMemoryStream;
-    outStm: TFileStream;
-    silentExtract: boolean;
+    outStm, chainedOutStm: TStream;
+    chainedConvertImage: TMultiImage;
+    silentExtract, convertInternal: boolean;
 begin
 
   CurrentMenu := Sender as TMenuItem;
@@ -1222,9 +1221,55 @@ begin
   Data := lstContent.GetNodeData(lstContent.GetFirstSelected);
   Filename := FSE.Items[Data.entryIndex].FileName;
 
-  writeLog(ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),CListInfo.List[CurrentMenu.Tag].Info.Display));
+  // If the tag is more than 255 then we are in a chained convertion situation (Plugin+Internal)
+  // Else we are in a normal plugin only convertion
+  convertInternal := (CurrentMenu.Tag > 255);
 
-  SaveDialog.FileName := ChangeFileExt(filename,'.'+CListInfo.List[CurrentMenu.Tag].Info.Ext);
+  if convertInternal then
+  begin
+    // Retrieve the plugin index (8 lower bits of the tag)
+    plugidx := (CurrentMenu.Tag AND $FF);
+
+    // Retrieve the internal format (8 higher bits of the tag)
+    internalformatidx := (CurrentMenu.Tag AND $FF00) shr 8;
+
+    // Only 1 to 3 allowed, if different we deactivate the internal chaining
+    case internalformatidx of
+      1:  internalformat := 'bmp';
+      2:  internalformat := 'png';
+      3:  internalformat := 'tga';
+    else
+      convertInternal := false;
+      // If internal chaining deactivated then the final output extension is the plugins' one
+      ext := CListInfo.List[plugidx].Info.Ext;
+    end;
+
+    // If internal chaining the final output extension is the internalformat
+    if convertInternal then
+      ext := internalformat;
+
+  end
+  else
+  begin
+    // Retrieve the plugin index (no special treatment, it is the full tag)
+    plugidx := CurrentMenu.Tag;
+    ext := CListInfo.List[plugidx].Info.Ext;
+  end;
+
+  // Some sanity check
+  if (plugidx = 0) and not(convertInternal) then
+  begin
+    appendLog(DLNGStr('LOG513'));
+    appendLog('Fatal: No plugin / Not internal');
+    exit;
+  end;
+
+  if plugidx = 0 then
+    writeLog(ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),'Vampyre Imaging Library'))
+  else
+    writeLog(ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),CListInfo.List[CurrentMenu.Tag].Info.Display));
+
+  SaveDialog.FileName := ChangeFileExt(filename,'.'+ext);
 
   if SaveDialog.Execute then
   begin
@@ -1243,14 +1288,56 @@ begin
     appendLog(DLNGStr('LOGC11'));
     tmpStm := TMemoryStream.Create;
     outStm := TFileStream.Create(dstfil,fmCreate or fmShareDenyWrite);
+
+    // If we need to chain to internal convertion, let's instantiate some classes
+    if convertInternal then
+    begin
+      chainedOutStm := outStm;
+      chainedConvertImage := TMultiImage.Create;
+      // Only if plugin is needed
+      if plugidx > 0 then
+        outStm := TMemoryStream.Create;
+    end;
+
     try
       FSE.ExtractFileToStream(Data.entryIndex,tmpStm,tmpfil,silentExtract);
       tmpStm.Seek(0,soBeginning);
-      writeLogVerbose(1,ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[CurrentMenu.Tag].Info.Display));
-      CPlug.convert(CListInfo.List[CurrentMenu.Tag].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[CurrentMenu.Tag].Info.ID,FSE.Items[Data.entryIndex].Offset,FSE.Items[Data.entryIndex].DataX,FSE.Items[Data.entryIndex].DataY,False);
+
+      // Only if plugin is needed
+      if plugidx > 0 then
+      begin
+        writeLogVerbose(1,ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[plugidx].Info.Display));
+        CPlug.convert(CListInfo.List[plugidx].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[plugidx].Info.ID,FSE.Items[Data.entryIndex].Offset,FSE.Items[Data.entryIndex].DataX,FSE.Items[Data.entryIndex].DataY,False);
+        // Chain to internal convertion
+        if convertInternal then
+        begin
+          outStm.Seek(0,soBeginning);
+          chainedConvertImage.LoadMultiFromStream(outStm);
+          chainedConvertImage.ActiveImage := 0;
+          chainedConvertImage.SaveToStream(internalformat,chainedOutStm);
+        end;
+      end
+      // If internal convertion alone
+      else if convertInternal then
+      begin
+        tmpdisp := CurrentMenu.Caption;
+        if tmpdisp[1] = '&' then
+          tmpdisp := RightStr(tmpdisp,length(tmpdisp)-1);
+        writeLogVerbose(1,ReplaceValue('%b',DLNGStr('LOGC13'),tmpdisp));
+        chainedConvertImage.LoadMultiFromStream(tmpStm);
+        chainedConvertImage.ActiveImage := 0;
+        chainedConvertImage.SaveToStream(internalformat,OutStm);
+      end;
     finally
       FreeAndNil(tmpStm);
       FreeAndNil(outStm);
+      // Free the classes used for internal convertion
+      if convertInternal then
+      begin
+        if plugidx > 0 then
+          FreeAndNil(chainedOutStm);
+        FreeAndNil(chainedConvertImage);
+      end;
     end;
 
     try
@@ -1307,20 +1394,14 @@ begin
 end;
 
 procedure Tdup5Main.Popup_ExtraireMulti_MODELClick(Sender: TObject);
-var outputdir: string;
-    x,oldperc: integer;
-    plugidx,internalformatidx: integer;
-{    DataX, DataY: integer;
-    Offset, Size: int64;}
-    tmpfil,dstfil,rep,filename,internalformat,ext: string;
-    perc: integer;
+var x,perc,oldperc,plugidx,internalformatidx: integer;
+    tmpfil,dstfil,rep,filename,internalformat,ext,tmpdisp,outputdir: string;
     CurrentMenu: TMenuItem;
-    Silent: boolean;
+    Silent,convertInternal: boolean;
     Node: PVirtualNode;
     Data: pvirtualTreeData;
     tmpStm: TMemoryStream;
     outStm, chainedOutStm: TStream;
-    convertInternal: boolean;
     chainedConvertImage: TMultiImage;
 begin
 
@@ -1386,7 +1467,10 @@ begin
       exit;
     end;
 
-    writeLog(ReplaceValue('%b',DLNGStr('LOGC14'),TMenuItem(Sender).Caption));
+    tmpdisp := CurrentMenu.Caption;
+    if tmpdisp[1] = '&' then
+      tmpdisp := RightStr(tmpdisp,length(tmpdisp)-1);
+    writeLog(ReplaceValue('%b',DLNGStr('LOGC14'),tmpdisp));
 
     appendLogVerbose(2,DLNGStr('LOGC11'));
 
@@ -1979,7 +2063,7 @@ var Data: pvirtualTreeData;
     Test, SubTest: TMenuItem;
     rep,ext,mext,filename: string;
     Offset, Size: int64;
-    i,j,DataX, DataY, oldpnum: integer;
+    i,j,DataX, DataY: integer;
     CList: ExtConvertList;
     ConvertOK, ConvertInternal, ConvertPlugin: Boolean;
     isExtractDefault: Boolean;
@@ -2066,7 +2150,6 @@ begin
          CList := CPlug.GetFileConvert(fileName,offset,size,FSE.DriverID,DataX, DataY);
 
          CListInfo.NumFormats := CList.NumFormats;
-         oldpnum := -1;
          for i := 1 to CList.NumFormats do
          begin
 
@@ -2227,10 +2310,28 @@ begin
        ext := UpperCase(ext);
      end;
 
+     // Check if interal conversion is possible
+     ConvertInternal := (FindImageFileFormatByExt(ext) <> nil);
+
+     // Get all possible output formats from the plugins
      CList := CPlug.GetFileConvert(fileName,offset,size,FSE.DriverID,DataX, DataY);
 
+     // Cleanup existing popup from old menu items
      for i := Popup_Extrairevers.Count-1 downto 2  do
-       Popup_Extrairevers.Remove(Popup_Extrairevers.Items[i]);
+     begin
+       Test := Popup_Extrairevers.Items[i];
+       for j := Popup_Extrairevers.Items[i].Count downto 1 do
+       begin
+         SubTest := Popup_Extrairevers.Items[i].Items[j-1];
+         Test.Remove(SubTest);
+         FreeAndNil(SubTest);
+       end;
+       Popup_Extrairevers.Remove(Test);
+
+       // We free all except the Model
+       if Test.Name <> 'Popup_Extrairevers_MODEL' then
+         FreeAndNil(Test);
+     end;
 
      CListInfo.NumFormats := CList.NumFormats;
      for i := 1 to CList.NumFormats do
@@ -2238,12 +2339,113 @@ begin
        Test := TMenuItem.Create(Self);
        Test.Caption := CList.List[i].Info.Display;
        Test.Tag := i;
-       CListInfo.List[i] := CList.List[i];
        Test.OnClick := Popup_Extrairevers_MODEL.OnClick;
        Popup_Extrairevers.Add(Test);
+
+       CListInfo.List[i] := CList.List[i];
+
+       // If the internal Vampyre Library cannot further convert the output of the plugin
+       if FindImageFileFormatByExt(CList.List[i].Info.Ext) = nil then
+       begin
+
+         // Add single format to popup with direct action
+         Test := TMenuItem.Create(Self);
+         Test.Caption := CList.List[i].Info.Display;
+         Test.Tag := i;
+         Test.OnClick := Popup_Extrairevers_MODEL.OnClick;
+         Popup_Extrairevers.Add(Test);
+
+       end
+       // If the internal Vampyre Library can further convert the output of the plugin
+       else
+       begin
+
+         // Generic popup (no action)
+         Test := TMenuItem.Create(Self);
+         Test.Caption := CList.List[i].Info.Display;
+         Popup_Extrairevers.Add(Test);
+         SubTest := TMenuItem.Create(Self);
+         SubTest.Caption := CList.List[i].Info.Display;
+         SubTest.Tag := i;
+         SubTest.OnClick := Popup_Extrairevers_MODEL.OnClick;
+         Test.Add(SubTest);
+
+         // Add separator
+         SubTest := TMenuItem.Create(Self);
+         SubTest.Caption := '-';
+         Test.Add(SubTest);
+
+         // Add chained convertion towards BMP (if output is not already BMP)
+         if (Lowercase(CListInfo.List[i].Info.Ext) <> 'bmp') then
+         begin
+           SubTest := TMenuItem.Create(Self);
+           SubTest.Tag := i + 256;
+           SubTest.Caption := 'BMP - Windows Bitmap Format';
+           SubTest.OnClick := Popup_Extrairevers_MODEL.OnClick;
+           Test.Add(SubTest);
+         end;
+
+         // Add chained convertion towards PNG (if output is not already PNG)
+         if (Lowercase(CListInfo.List[i].Info.Ext) <> 'png') then
+         begin
+           SubTest := TMenuItem.Create(Self);
+           SubTest.Tag := i + 256 * 2;
+           SubTest.Caption := 'PNG - Portable Network Graphics';
+           SubTest.OnClick := Popup_Extrairevers_MODEL.OnClick;
+           Test.Add(SubTest);
+         end;
+
+         // Add chained convertion towards TGA (if output is not already TGA)
+         if (Lowercase(CListInfo.List[i].Info.Ext) <> 'tga') then
+         begin
+           SubTest := TMenuItem.Create(Self);
+           SubTest.Tag := i + 256 * 3;
+           SubTest.Caption := 'TGA - Truevision Targa File Format';
+           SubTest.OnClick := Popup_Extrairevers_MODEL.OnClick;
+           Test.Add(SubTest);
+         end;
+
+       end;
+
      end;
 
-     if CList.NumFormats > 0 then
+     // If internal conversion is possible
+     if ConvertInternal then
+     begin
+
+       // Add internal convertion towards BMP (if output is not already BMP)
+       if (ext <> 'BMP') then
+       begin
+         Test := TMenuItem.Create(Self);
+         Test.Tag := 256;
+         Test.Caption := 'BMP - Windows Bitmap Format';
+         Test.OnClick := Popup_Extrairevers_MODEL.OnClick;
+         Popup_Extrairevers.Add(Test);
+       end;
+
+       // Add internal convertion towards BMP (if output is not already BMP)
+       if (ext <> 'PNG') then
+       begin
+         Test := TMenuItem.Create(Self);
+         Test.Tag := 256 * 2;
+         Test.Caption := 'PNG - Portable Network Graphics';
+         Test.OnClick := Popup_Extrairevers_MODEL.OnClick;
+         Popup_Extrairevers.Add(Test);
+       end;
+
+       // Add internal convertion towards TGA (if output is not already TGA)
+       if (ext <> 'TGA') then
+       begin
+         Test := TMenuItem.Create(Self);
+         Test.Tag := 256 * 3;
+         Test.Caption := 'TGA - Truevision Targa File Format';
+         Test.OnClick := Popup_Extrairevers_MODEL.OnClick;
+         Popup_Extrairevers.Add(Test);
+       end;
+
+     end;
+
+     if (CList.NumFormats > 0) or ConvertInternal then
        N6.Visible := True
      else
        N6.Visible := False;

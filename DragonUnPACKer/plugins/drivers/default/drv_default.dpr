@@ -197,7 +197,7 @@ type FSE = ^element;
     21140  56140 Added Ghostbusters: The Video Game .POD files support (slightly modified BloodRayne .POD format)
                  Added Ghostbusters: Sanctum of Slime .PAK files support (with LZMA decompression)
     21210        Added preliminary The Witcher 2: Assassins of Kings .DZIP files support
-    30010        Upgraded to new interface DUDI v6 (plugin is not backward compatible to v4/v5)
+    30010  57010 Upgraded to new interface DUDI v6 (plugin is not backward compatible to v4/v5)
                  Added Aliens vs Predator (2010) .ASR (Asura & AsuraZlb) support
                  Added Star Wars Starfighter .PAK support
     30110        Fixed EVE Online .STUFF support.

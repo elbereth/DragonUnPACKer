@@ -18,9 +18,13 @@ library drv_zip;
 //
 
 uses
+  FastMM4,
+  FastCode,
+  FastMove,
   SysUtils,
   Windows,
   Classes,
+  AbArcTyp, AbZipTyp, AbZipPrc, AbUnzPrc, AbUtils,
   dup5drv_utils in '..\dup5drv_utils.pas',
   dup5drv_data in '..\dup5drv_data.pas',
   spec_DUDI in '..\..\..\common\spec_DUDI.pas',
@@ -35,9 +39,16 @@ uses
 {$Include datetime.inc}
 
 type
-   TPercentCallback = procedure (p: byte);
-   TLanguageCallback = function (lngid: ShortString): ShortString;
-
+  TZipHelper = class
+  public
+    _SetPercent: TPercentCallback;
+    procedure UnzipToStreamProc( Sender : TObject; Item : TAbArchiveItem; OutStream : TStream );
+    procedure ZipProc( Sender : TObject; Item : TAbArchiveItem; OutStream : TStream );
+    procedure ArchiveItemProgress( Sender: TObject;
+                                   Item: TAbArchiveItem;
+                                   Progress: Byte;
+                                   var Abort: Boolean);
+  end;
 { /////////////////////////////////////////////////////////////////////////////
 
   10240  50012  Added Line of Sight: Vietnam .ZA to the supported file types
@@ -53,191 +64,71 @@ type
   11340  55240  Added Heroes of Might & Magic 5 .PAK to the supported file types
   11341  56040  This is the same version as the original 11340 without the
                 bad modifications released with 5.6.0 Exedra
+  20011  57010  Updated to DUDI v6 and now using Abbrevia
 
   /////////////////////////////////////////////////////////////////////////////}
-const DRIVER_VERSION = 11341;
-      DUP_VERSION = 56040;
-      COMPANY_NAME = 'Info-ZIP';
+const DRIVER_VERSION = 20011;
+      DUP_VERSION = 57010;
+      DUDI_VERSION = 6;
+      DUDI_VERSION_COMPATIBLE = 6;
+      SVN_REVISION = '$Rev: 671 $';
+      SVN_DATE = '$Date: 2014-03-18 08:22:21 +0100 (mar., 18 mars 2014) $';
 
 var CurFormat: Integer = 0;
     DrvInfo: CurrentDriverInfo;
     ErrInfo: ErrorInfo;
     NumEntry: integer = 0;
-    DCList: DCL;
-    ZIPfile: string;
     DLLStatus: boolean = false;
     DLLFound: boolean = false;
-    DLLHandle: THandle;
-    DLLPath, DLLVersion: String;
     SetPercent: TPercentCallback;
     DLNGStr: TLanguageCallback;
     CurPath: string;
     AHandle : THandle;
     AOwner : TComponent;
-    UFuncs : USERFUNCTIONS;
-    UzpFreeMemBuffer : PROCUzpFreeMemBuffer;
-    UzpVersion : PROCUzpVersion;
-    Wiz_UnzipToMemory : PROCWiz_UnzipToMemory;
-    Wiz_SingleEntryUnzip : PROCWiz_SingleEntryUnzip;
-    Loading : Boolean;
+    SupportedDUDI: byte = 0;
+    Helper: TZipHelper;
+    Archive: TAbZipArchive;
+    ShowMsgBox : TMsgBoxCallback;
+    AddEntry : TAddEntryCallback;
 
+
+procedure TZipHelper.ArchiveItemProgress( Sender: TObject;
+  Item: TAbArchiveItem; Progress: Byte; var Abort: Boolean);
 type
- TFVISubBlock = (sbCompanyName, sbFileDescription, sbFileVersion, sbInternalName, sbLegalCopyright,
-   sbLegalTradeMarks, sbOriginalFilename, sbProductName, sbProductVersion, sbComments);
-
-
-{----------------------------------------------------------------------------------
- Description    : retrieves selected version information from the specified
-                  version-information resource. True on success
- Parameters     :
-                  const FullPath : string;        the exe or dll full path
-                  SubBlock       : TFVISubBlock;  the requested sub block information ie sbCompanyName
-                  var sValue     : string         the returned string value
- Error checking : YES
- Notes          :
-                  1. 32bit only ( It does not work with 16-bit Windows file images )
-                  2. TFVISubBlock is declared as
-                     TFVISubBlock = (sbCompanyName, sbFileDescription, sbFileVersion, sbInternalName,
-                                     sbLegalCopyright, sbLegalTradeMarks, sbOriginalFilename,
-                                     sbProductName, sbProductVersion, sbComments);
- Tested         : in Delphi 4 only
- Author         : Theo Bebekis <bebekis@otenet.gr>
------------------------------------------------------------------------------------}
-function Get_FileVersionInfo(const FullPath: string; SubBlock: TFVISubBlock; var sValue: string):boolean;
+  TMethodStrings = array [ cmStored..cmDCLImploded ] of string;
 const
- arStringNames : array[sbCompanyName..sbComments] of string =
-  ('CompanyName', 'FileDescription', 'FileVersion', 'InternalName', 'LegalCopyright',
-   'LegalTradeMarks', 'OriginalFilename', 'ProductName', 'ProductVersion', 'Comments');
+  MethodStrings : TMethodStrings = ('UnStoring', 'UnShrinking', 'UnReducing',
+                                    'UnReducing', 'UnReducing', 'UnReducing',
+                                    'Exploding', 'DeTokenizing', 'Inflating',
+                                    'Enhanced Inflating', 'DCL Exploding');
 var
-  Dummy       : DWORD;
-  iLen        : DWORD;
-  pData       : PChar;
-  pVersion    : Pointer;
-  pdwLang     : PDWORD;
-  sLangID     : string;
-  sCharsetID  : string;
-  pValue      : PChar;
+  ActionString : string;
+  CompMethod: TAbZipCompressionMethod;
 begin
+  case Item.Action of
 
-  Result := False;
-
-  { get the size of the size in bytes of the file's version information}
-  iLen := GetFileVersionInfoSize(PChar(FullPath), Dummy);
-  if iLen = 0 then Exit;
-
-
-  { get the information }
-  pData := StrAlloc(iLen + 1);
-  if not GetFileVersionInfo(PChar(FullPath),  { pointer to filename string }
-                            0,                { ignored }
-                            iLen,             { size of buffer }
-                            pData)            { pointer to buffer to receive file-version info }
-  then Exit;
-
-
-  { get the national ID.
-    retrieve a pointer to an array of language and
-    character-set identifiers. Use these identifiers
-    to create the name of a language-specific
-    structure in the version-information resource}
-  if not VerQueryValue(pData,                       { address of buffer for version resource (in)}
-                       '\VarFileInfo\Translation',  { address of value to retrieve (in) }
-                       pVersion,                    { address of buffer for version pointer (out)}
-                       iLen )                       { address of version-value length buffer (out)}
-  then Exit;
-
-  { analyze it }
-  pdwLang    := pVersion;
-  sLangID    := IntToHex(pdwLang^, 8);
-  sCharsetID := Copy(sLangID, 1, 4);
-  sLangID    := Copy(sLangID, 5, 4);
-
-
-  { get the info for the requested sub block }
-  if not VerQueryValue(pData,
-                       PChar('\StringFileInfo\' + sLangID + sCharsetID + '\' + arStringNames[SubBlock]),
-                       pVersion,
-                       iLen)
-  then Exit;     
-
-  { copy it to sValue }
-  pValue := StrAlloc(iLen + 1);
-  StrLCopy(pValue, pVersion, iLen);
-  sValue := String(pValue);
-  StrDispose(pValue);
-
-  Result := True;
-end;      
-{----------------------------------------------------------------------------------
- NOTE : this function uses the SearchPath WinAPI call to locate the dll and
-        then checks up for the version info using the above Get_FileVersionInfo
-        to get both the version number and the company name.
-        The dll's UzpVersion function does not check for the CompanyName.
-        I recommend to call the IsExpectedUnZipDllVersion function as the very
-        first step to ensure that is the right dll and not any other with a
-        similar name etc.
-        This function is more usefull when link the dll dynamically
-----------------------------------------------------------------------------------}
-function IsExpectedUnZipDllVersion(dllpath: string): boolean;
-var
- sCompany  : string;
-begin
-
-  Result := FileExists(dllpath);
-
-  if Result then
-    if Get_FileVersionInfo(dllpath, sbCompanyName, sCompany) then
-      Result :=  (sCompany = COMPANY_NAME);
-
-end;
-
-procedure GetDLLVer();
-var tmpI: PUzpVer;
-begin
-
-  if @UzpVersion <> Nil then
-  begin
-    tmpI := UzpVersion;
-    DLLVersion := IntToStr(tmpI^.UnZip.Major)+'.'+IntToStr(tmpI^.UnZip.Minor)+'.'+IntToStr(tmpI^.UnZip.PatchLevel);
-  end
-  else
-    DLLVersion := '';
-
-end;
-
-procedure LoadUNZipDLL();
-begin
-
-  if DLLFound then
-  begin
-    if Not(DLLStatus) then
-      DLLHandle := LoadLibrary(PChar(DLLPath))
-    else
-    begin
-      FreeLibrary(DLLHandle);
-      DLLHandle := LoadLibrary(PChar(DLLPath));
-    end;
-    if DLLHandle <> 0 then
-    begin
-      @UzpFreeMemBuffer := GetProcAddress(DLLHandle, 'UzpFreeMemBuffer');
-      @Wiz_SingleEntryUnzip := GetProcAddress(DLLHandle, 'Wiz_SingleEntryUnzip');
-      @Wiz_UnzipToMemory := GetProcAddress(DLLHandle, 'Wiz_UnzipToMemory');
-      @UzpVersion := GetProcAddress(DLLHandle, 'UzpVersion');
-      DLLStatus := not(@UzpFreeMemBuffer = Nil) and not(@Wiz_SingleEntryUnzip = Nil) and not(@Wiz_UnzipToMemory = Nil) and not(@UzpVersion = Nil);
-      if Not(DLLStatus) then
-      begin
-        FreeLibrary(DLLHandle);
-        DLLStatus := false;
-      end
+    aaAdd : ActionString := 'Adding  ';
+    aaFreshen : ActionString := 'Freshening  ';
+    else begin
+      CompMethod := (Item as TAbZipItem).CompressionMethod;
+      if CompMethod in [cmStored..cmDCLImploded] then
+        ActionString := MethodStrings[(Item as TAbZipItem).CompressionMethod] +
+          '  '
       else
-        GetDLLVer;
-    end
-    else
-      DLLStatus := False;
-  end
-  else
-    DLLStatus := False;
+        ActionString := 'Decompressing  ';
+    end;
+  end;
+  _SetPercent(Progress);
+end;
 
+procedure TZipHelper.UnzipToStreamProc( Sender : TObject; Item : TAbArchiveItem; OutStream : TStream );
+begin
+  AbUnzipToStream( Sender, TAbZipItem(Item), OutStream );
+end;
+
+procedure TZipHelper.ZipProc( Sender : TObject; Item : TAbArchiveItem; OutStream : TStream );
+begin
+  AbZip( TAbZipArchive(Sender), TAbZipItem(Item), OutStream );
 end;
 
 function IsValidZIP(fil: string): boolean;
@@ -258,17 +149,24 @@ begin
 
 end;
 
-{ ----------------------------------------------------------
-    function - DUDIVersion()
-  parameters - none
-     returns - Byte
-  ----------------------------------------------------------
-}
+// Identifies the DLL as a Driver plugin (minimum version to load plugin)
+// Exported
 function DUDIVersion: Byte; stdcall;
 begin
-  DUDIVersion := 4;
+  result := DUDI_VERSION_COMPATIBLE;
+  SupportedDUDI := DUDI_VERSION_COMPATIBLE;
 end;
 
+// Indicate current DUDIVersion (should return 5 at minimum)
+// Exported
+function DUDIVersionEx(supported: byte): byte; stdcall;
+begin
+  result := DUDI_VERSION;
+  SupportedDUDI := supported;
+end;
+
+// Returns Driver plugin version
+// Exported
 function GetNumVersion: Integer; stdcall;
 begin
 
@@ -276,122 +174,85 @@ begin
 
 end;
 
-{ ----------------------------------------------------------
-    function - GetDriverInfo()
-  parameters - none
-     returns - DriverInfo record
-  ----------------------------------------------------------
-
-  This function is called by DUP5 for file associations and
-  for Open dialog box file types.
-}
+// Returns information about the driver (mainly supported files list)
+// Exported
 function GetDriverInfo: DriverInfo; stdcall;
 begin
 
-  // Initialize result to 0
+  // Initialize output to 0 filled
   FillChar(result,SizeOf(DriverInfo),0);
 
-  if DLLFound then
+  // Information about the plugin
+  with result do
   begin
-    if DLLStatus then
-    begin
-      result.Name := 'InfoZip''s ZIP Driver (DLL wrapper)';
-      result.Version := GetVersion(DRIVER_VERSION)+' (DLL v'+DLLVersion+')';
-    end
-    else
-    begin
-      result.Name := 'InfoZip''s ZIP Driver [BAD UNZIP32.DLL]';
-      result.Version := GetVersion(DRIVER_VERSION)+' (Bad DLL!)';
-    end;
-  end
-  else
-  begin
-    result.Name := 'InfoZip''s ZIP Driver [MISSING UNZIP32.DLL]';
-    result.Version := GetVersion(DRIVER_VERSION)+' (No DLL!)';
+    Name := 'Elbereth''s ZIP Driver';
+    Author := 'Alexandre Devilliers (aka Elbereth)';
+    Version := getVersion(DRIVER_VERSION);
+    Comment := 'This driver uses TAbUnzip from Abbrevia to support all ZIP file formats.'+#10+'This is the official ZIP driver. Check about box for more info.';
   end;
-  result.Author := 'Alexandre Devilliers (aka Elbereth/Piecito)';
-  result.Comment := 'This Driver is a wrapper to the Info-ZIP UnZip32.DLL. Using UnZip.pas by Gerke Preussner <j3rky@gerke-preussner.de>. Note: Password for Paradise Cracked files is "stereosystem".';
-  if DLLStatus then
-  begin
-    result.NumFormats := 0;
-    AddFormat(result,'*.A','Hellhog XP (*.A)');
-    AddFormat(result,'*.ABZ','Alpha Black Zero (*.ABZ)');
-    AddFormat(result,'*.ARF','Packmania 2 (*.ARF)');
-    AddFormat(result,'*.ARH','El Airplane (*.ARH)');
-    AddFormat(result,'*.BND','Neighbours From Hell (*.BND)|Neighbours From Hell 2 (*.BND)');
-    AddFormat(result,'*.BOS','Fallout Tactics (*.BOS)');
-    AddFormat(result,'*.BOT','Team Factor (*.BOT)');
-    AddFormat(result,'*.BOX','Cellblock Squadrons (*.BOX)');
-    AddFormat(result,'*.BIN','X-Men Legends 2 (*.BIN)|XPand Rally (*.BIN)');
-    AddFormat(result,'*.CAB','Microsoft Flight Simulator 2004 (*.CAB)');
-    AddFormat(result,'*.CRF','System Shock 2 (*.CRF)|Thief (*.CRF)|Thief 2 (*.CRF)');
-    AddFormat(result,'*.CSC','18 Wheels Of Steel Pedal To The Metal (*.CSC)');
-    AddFormat(result,'*.CTP','Call To Power (*.CTP)');
-    AddFormat(result,'*.DAT','Against Rome (*.DAT)|Defiance (*.DAT)|Ricochet Lost Worlds Recharged (*.DAT)|Ricochet Xtreme (*.DAT)|Star Wolves (*.DAT)|Uplink (*.DAT)');
-    AddFormat(result,'*.DLU','Dirty Little Helper 98(*.DLU)');
-    AddFormat(result,'*.FBZ','Shadowgrounds (*.FBZ)');
-    AddFormat(result,'*.FF','Freedom Force (*.FF)|Freedom Force vs The 3rd Reich (*.FF)');
-    AddFormat(result,'*.FLMOD','Freelancer (*.FLMOD)');
-    AddFormat(result,'*.GRO','Serious Sam (*.GRO)|Serious Sam 2 (*.GRO)');
-    AddFormat(result,'*.IWD','Call of Duty 2 (*.IWD)|Call of Duty 3 (*.IWD)|Call of Duty 4: Modern Warfare (*.IWD)|Call of Duty: World at War (*.IWD)');
-    AddFormat(result,'*.LZP','Law And Order 3 Justice Is Served (*.LZP)');
-    AddFormat(result,'*.MGZ','Metal Gear Solid (*.MGZ)');
-    AddFormat(result,'*.MOB','Master of Orion 3 (*.MOB)');
-    AddFormat(result,'*.NOB','Vampire: The Masquerade (*.NOB)|Vampire The Masquerade Redemption (*.NOB)');
-    AddFormat(result,'*.PAC','Desperados: Wanted Dead or Alive (*.PAC)');
-    AddFormat(result,'*.PAK','Blitzkrieg (*.PAK)|Blitzkrieg Burning Horizon (*.PAK)|Blitzkrieg Rolling Thunder (*.PAK)|Brothers Pilots 4 (*.PAK)|Call of Juarez (*.PAK)|Far Cry (*.PAK)|Heroes of Might & Magic 5 (*.PAK)|Maximus XV (*.PAK)|Monte Cristo (*.PAK)|Outfront (*.PAK)');
-    AddFormat(result,'*.PAK','Paradise Cracked (*.PAK)|Perimeter (*.PAK)');
-    AddFormat(result,'*.PK1;*.PK2','XS Mark (*.PK1;*.PK2)');
-    AddFormat(result,'*.PK3','Call of Duty (*.PK3)|Quake 3 Arena (*.PK3)|Medal of Honor: Allied Assault (*.PK3)|American McGee Alice (*.PK3)|Jedi Knight 2: Jedi Outcast (*.PK3)|Heavy Metal: F.A.K.K.2 (*.PK3)');
-    AddFormat(result,'*.PK4','Doom 3 (*.PK4)|Quake 4 (*.PK4)|Doom 3 Resurrection Of Evil (*.PK4)');
-    AddFormat(result,'*.POD','Hoyle Games 2005 (*.POD)|Terminator 3 (*.POD)');
-    AddFormat(result,'*.PSH','Itch (*.PSH)|Pusher (*.PSH)');
-    AddFormat(result,'*.RBZ','Richard Burns Rally (*.RBZ)');
-    AddFormat(result,'*.RES','Swat 3 Close Quarters Battle (*.RES)');
-    AddFormat(result,'*.ROD','Hot Rod American Street Drag (*.ROD)');
-    AddFormat(result,'*.RVI;*.RVM;*.RVR','Revenant (*.RVI;*.RVM;*.RVR)');
-    AddFormat(result,'*.SAB','Sabotain (*.SAB)');
-    AddFormat(result,'*.SCS','Hunting Unlimited 3 (*.SCS)');
-    AddFormat(result,'*.SXT','Singles Flirt Up Your Life (*.SXT)');
-    AddFormat(result,'*.TEXTUREPACK;*.DATA','Arena Wars (*.TEXTUREPACK;*.DATA)');
-    AddFormat(result,'*.Vl2','Tribes 2 (*.VL2)');
-    AddFormat(result,'*.ZA','Elite Warriors (*.ZA)|Line of Sight: Vietnam (*.ZA)|Deadly Dozen (*.ZA)|Deadly Dozen 2 Pacific Theater (*.ZA)');
-    AddFormat(result,'*.ZIP','Dethkarz (*.ZIP)|Battlefield 2 (*.ZIP)|Empire Earth 2 (*.ZIP)|Falcon 4 (*.ZIP)|Fire Starter (*.ZIP)|Freedom Fighters (*.ZIP)|Hitman Contracts (*.ZIP)|Hitman Bloodmoney (*.ZIP)|Hitman 2 Silent Assasin (*.ZIP)|Slave Zero (*.ZIP)');
-    AddFormat(result,'*.ZIPFS','18 Wheels Of Steel Across America (*.ZIPFS)|Duke Nukem - Manhattan Project (*.ZIPFS)');
-    AddFormat(result,'*.ZTD','Dinosaur Digs (*.ZTD)|Marine Mania (*.ZTD)');
-    //--------------------------------------------------------------------------
-    //NOTE only for Paradise Cracked
-    //The game Paradise Cracked using default ZIP files + password
-    //The password for archives -> stereosystem
-    //--------------------------------------------------------------------------
-  end
-  else
-    GetDriverInfo.NumFormats := 0;
+
+//  result.Comment := 'This Driver is a wrapper to the Info-ZIP UnZip32.DLL. Using UnZip.pas by Gerke Preussner <j3rky@gerke-preussner.de>. Note: Password for Paradise Cracked files is "stereosystem".';
+
+  result.NumFormats := 0;
+  AddFormat(result,'*.A','Hellhog XP (*.A)');
+  AddFormat(result,'*.ABZ','Alpha Black Zero (*.ABZ)');
+  AddFormat(result,'*.ARF','Packmania 2 (*.ARF)');
+  AddFormat(result,'*.ARH','El Airplane (*.ARH)');
+  AddFormat(result,'*.BND','Neighbours From Hell (*.BND)|Neighbours From Hell 2 (*.BND)');
+  AddFormat(result,'*.BOS','Fallout Tactics (*.BOS)');
+  AddFormat(result,'*.BOT','Team Factor (*.BOT)');
+  AddFormat(result,'*.BOX','Cellblock Squadrons (*.BOX)');
+  AddFormat(result,'*.BIN','X-Men Legends 2 (*.BIN)|XPand Rally (*.BIN)');
+  AddFormat(result,'*.CAB','Microsoft Flight Simulator 2004 (*.CAB)');
+  AddFormat(result,'*.CRF','System Shock 2 (*.CRF)|Thief (*.CRF)|Thief 2 (*.CRF)');
+  AddFormat(result,'*.CSC','18 Wheels Of Steel Pedal To The Metal (*.CSC)');
+  AddFormat(result,'*.CTP','Call To Power (*.CTP)');
+  AddFormat(result,'*.DAT','Against Rome (*.DAT)|Defiance (*.DAT)|Ricochet Lost Worlds Recharged (*.DAT)|Ricochet Xtreme (*.DAT)|Star Wolves (*.DAT)|Uplink (*.DAT)');
+  AddFormat(result,'*.DLU','Dirty Little Helper 98(*.DLU)');
+  AddFormat(result,'*.FBZ','Shadowgrounds (*.FBZ)');
+  AddFormat(result,'*.FF','Freedom Force (*.FF)|Freedom Force vs The 3rd Reich (*.FF)');
+  AddFormat(result,'*.FLMOD','Freelancer (*.FLMOD)');
+  AddFormat(result,'*.GRO','Serious Sam (*.GRO)|Serious Sam 2 (*.GRO)');
+  AddFormat(result,'*.IWD','Call of Duty 2 (*.IWD)|Call of Duty 3 (*.IWD)|Call of Duty 4: Modern Warfare (*.IWD)|Call of Duty: World at War (*.IWD)');
+  AddFormat(result,'*.LZP','Law And Order 3 Justice Is Served (*.LZP)');
+  AddFormat(result,'*.MGZ','Metal Gear Solid (*.MGZ)');
+  AddFormat(result,'*.MOB','Master of Orion 3 (*.MOB)');
+  AddFormat(result,'*.NOB','Vampire: The Masquerade (*.NOB)|Vampire The Masquerade Redemption (*.NOB)');
+  AddFormat(result,'*.PAC','Desperados: Wanted Dead or Alive (*.PAC)');
+  AddFormat(result,'*.PAK','Blitzkrieg (*.PAK)|Blitzkrieg Burning Horizon (*.PAK)|Blitzkrieg Rolling Thunder (*.PAK)|Brothers Pilots 4 (*.PAK)|Call of Juarez (*.PAK)|Far Cry (*.PAK)|Heroes of Might & Magic 5 (*.PAK)|Maximus XV (*.PAK)|Monte Cristo (*.PAK)|Outfront (*.PAK)');
+  AddFormat(result,'*.PAK','Paradise Cracked (*.PAK)|Perimeter (*.PAK)');
+  AddFormat(result,'*.PK1;*.PK2','XS Mark (*.PK1;*.PK2)');
+  AddFormat(result,'*.PK3','Call of Duty (*.PK3)|Quake 3 Arena (*.PK3)|Medal of Honor: Allied Assault (*.PK3)|American McGee Alice (*.PK3)|Jedi Knight 2: Jedi Outcast (*.PK3)|Heavy Metal: F.A.K.K.2 (*.PK3)');
+  AddFormat(result,'*.PK4','Doom 3 (*.PK4)|Quake 4 (*.PK4)|Doom 3 Resurrection Of Evil (*.PK4)');
+  AddFormat(result,'*.POD','Hoyle Games 2005 (*.POD)|Terminator 3 (*.POD)');
+  AddFormat(result,'*.PSH','Itch (*.PSH)|Pusher (*.PSH)');
+  AddFormat(result,'*.RBZ','Richard Burns Rally (*.RBZ)');
+  AddFormat(result,'*.RES','Swat 3 Close Quarters Battle (*.RES)');
+  AddFormat(result,'*.ROD','Hot Rod American Street Drag (*.ROD)');
+  AddFormat(result,'*.RVI;*.RVM;*.RVR','Revenant (*.RVI;*.RVM;*.RVR)');
+  AddFormat(result,'*.SAB','Sabotain (*.SAB)');
+  AddFormat(result,'*.SCS','Hunting Unlimited 3 (*.SCS)');
+  AddFormat(result,'*.SXT','Singles Flirt Up Your Life (*.SXT)');
+  AddFormat(result,'*.TEXTUREPACK;*.DATA','Arena Wars (*.TEXTUREPACK;*.DATA)');
+  AddFormat(result,'*.Vl2','Tribes 2 (*.VL2)');
+  AddFormat(result,'*.ZA','Elite Warriors (*.ZA)|Line of Sight: Vietnam (*.ZA)|Deadly Dozen (*.ZA)|Deadly Dozen 2 Pacific Theater (*.ZA)');
+  AddFormat(result,'*.ZIP','Dethkarz (*.ZIP)|Battlefield 2 (*.ZIP)|Empire Earth 2 (*.ZIP)|Falcon 4 (*.ZIP)|Fire Starter (*.ZIP)|Freedom Fighters (*.ZIP)|Hitman Contracts (*.ZIP)|Hitman Bloodmoney (*.ZIP)|Hitman 2 Silent Assasin (*.ZIP)|Slave Zero (*.ZIP)');
+  AddFormat(result,'*.ZIPFS','18 Wheels Of Steel Across America (*.ZIPFS)|Duke Nukem - Manhattan Project (*.ZIPFS)');
+  AddFormat(result,'*.ZTD','Dinosaur Digs (*.ZTD)|Marine Mania (*.ZTD)');
+
+  //--------------------------------------------------------------------------
+  //NOTE only for Paradise Cracked
+  //The game Paradise Cracked using default ZIP files + password
+  //The password for archives -> stereosystem
+  //--------------------------------------------------------------------------
 
 end;
 
 function ExtractFileToStream(outputstream: TStream; entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer; Silent: boolean): boolean; stdcall;
-var Buf: UzpBuffer;
-    retcode: longint;
 begin
 
-  Buf.StrLength := 0;
-  Buf.StrPtr := nil;
-
-  retcode := Wiz_UnzipToMemory(PChar(ZIPfile),PChar(String(entrynam)), UFuncs, Buf);
-
-  if retcode = 0 then
-  begin
-    result := False;
-  end
-  else
-  begin
-    outputstream.WriteBuffer(Buf.StrPtr^,Buf.StrLength);
-
-    UzpFreeMemBuffer(Buf);
-
-    result := True;
-  end;
+  Archive.ExtractToStream(entrynam,outputstream);
+  result := True;
 
 end;
 
@@ -423,64 +284,6 @@ begin
   FileClose(fil);
 
 end;
-{
-var retcode, ps: integer;
-    TmpFil,SrcFil: string;
-    FNV: array[0..0] of PChar;
-
-begin
-
-  tmpfil := ExtractFilePath(outputfile);
-
-  GetMem(FNV[0], Length(entrynam)+1);
-  StrPCopy(FNV[0], entrynam);
-
-  with UZDCL do
-  begin
-    ExtractOnlyNewer  := Integer(False);
-    SpaceToUnderscore := Integer(False);
-    PromptToOverwrite := Integer(False);
-    fQuiet            := 2;
-    nCFlag            := Integer(False);
-    nTFlag            := Integer(False);
-    nVFlag            := Integer(False);
-    nUFlag            := Integer(False);
-    nZFlag            := Integer(False);
-    nDFlag            := Integer(False);
-    nOFlag            := Integer(True);
-    nAFlag            := Integer(False);
-    nZIFlag           := Integer(False);
-    C_flag            := Integer(True);
-    fPrivilege        := 2;
-
-    lpszExtractDir    := PChar(tmpfil);
-    lpszZipFN         := PChar(ZIPfile);
-  end;
-
-  retcode := Wiz_SingleEntryUnzip(1, @FNV, 0, nil, UZDCL, Ufuncs);
-
-  if (retcode <> 0) and (retcode <> 80) then
-  begin
-    ExtractFile := False;
-    //ShowMessage('error'+#10+EntryNam+#10+tmpfil+#10+inttostr(retcode));
-  end
-  else
-  begin
-    ps := PosRev('/',entrynam);
-    if ps > 0 then
-      SrcFil := Copy(entrynam,ps+1,length(entrynam)-ps)
-    else
-      SrcFil := EntryNam;
-    SrcFil := TmpFil + SrcFil;
-    if uppercase(SrcFil) <> Uppercase(outputfile) then
-    begin
-      RenameFile(SrcFil,Outputfile);
-      //ShowMessage(srcfil+#10+outputfile);
-    end;
-    ExtractFile := True;
-  end;
-
-end;            }
 
 { ----------------------------------------------------------
     function - IsFormat()
@@ -499,104 +302,99 @@ function IsFormat(fil: ShortString; Deeper: Boolean): Boolean; stdcall;
 var ext: string;
 begin
 
-  Result := false;
+  ext := ExtractFileExt(fil);
+  if ext <> '' then
+    ext := copy(ext,2,length(ext)-1);
+  ext := UpperCase(ext);
 
-  if DLLStatus then
+  if Deeper then
+    Result := IsValidZIP(fil)
+  else
   begin
-  // Put file extension uppercase form in ext var
-    ext := ExtractFileExt(fil);
-    if ext <> '' then
-      ext := copy(ext,2,length(ext)-1);
-    ext := UpperCase(ext);
-
-    if Deeper then
-      Result := IsValidZIP(fil)
+    if ext = 'PK3' then
+      IsFormat := True
+    else if ext = 'A' then
+      IsFormat := True
+    else if ext = 'ABZ' then
+      IsFormat := True
+    else if ext = 'ARF' then
+      IsFormat := True
+    else if ext = 'ARH' then
+      IsFormat := True
+    else if ext = 'BND' then
+      IsFormat := True
+    else if ext = 'BIN' then
+      IsFormat := True
+    else if ext = 'BOS' then
+      IsFormat := True
+    else if ext = 'BOT' then
+      IsFormat := True
+    else if ext = 'BOX' then
+      IsFormat := True
+    else if ext = 'CAB' then
+      IsFormat := True
+    else if ext = 'CRF' then
+      IsFormat := True
+    else if ext = 'CSC' then
+      IsFormat := True
+    else if ext = 'CTP' then
+      IsFormat := True
+    else if ext = 'DATA' then
+      IsFormat := True
+    else if ext = 'DLU' then
+      IsFormat := True
+    else if ext = 'FBZ' then
+      IsFormat := True
+    else if ext = 'FF' then
+      IsFormat := True
+    else if ext = 'FLMOD' then
+      IsFormat := True
+    else if ext = 'GRO' then
+      IsFormat := True
+    else if ext = 'IWD' then
+      IsFormat := True
+    else if ext = 'LZP' then
+      IsFormat := True
+    else if ext = 'MOB' then
+      IsFormat := True
+    else if ext = 'NOB' then
+      IsFormat := True
+    else if ext = 'PAK' then
+      IsFormat := True
+    else if ext = 'PK1' then
+      IsFormat := True
+    else if ext = 'PK2' then
+      IsFormat := True
+    else if ext = 'PK4' then
+      IsFormat := True
+    else if ext = 'POD' then
+      IsFormat := True
+    else if ext = 'ROD' then
+      IsFormat := True
+    else if ext = 'RVI' then
+      IsFormat := True
+    else if ext = 'RVM' then
+      IsFormat := True
+    else if ext = 'RVR' then
+      IsFormat := True
+    else if ext = 'SCS' then
+      IsFormat := True
+    else if ext = 'SXT' then
+      IsFormat := True
+    else if ext = 'TEXTUREPACK' then
+      IsFormat := True
+    else if ext = 'VL2' then
+      IsFormat := True
+    else if ext = 'ZA' then
+      IsFormat := True
+    else if ext = 'ZIP' then
+      IsFormat := True
+    else if ext = 'ZIPFS' then
+      IsFormat := True
+    else if ext = 'ZTD' then
+      IsFormat := True
     else
-      if ext = 'PK3' then
-        IsFormat := True
-      else if ext = 'A' then
-        IsFormat := True
-      else if ext = 'ABZ' then
-        IsFormat := True
-      else if ext = 'ARF' then
-        IsFormat := True
-      else if ext = 'ARH' then
-        IsFormat := True
-      else if ext = 'BND' then
-        IsFormat := True
-      else if ext = 'BIN' then
-        IsFormat := True
-      else if ext = 'BOS' then
-        IsFormat := True
-      else if ext = 'BOT' then
-        IsFormat := True
-      else if ext = 'BOX' then
-        IsFormat := True
-      else if ext = 'CAB' then
-        IsFormat := True
-      else if ext = 'CRF' then
-        IsFormat := True
-      else if ext = 'CSC' then
-        IsFormat := True
-      else if ext = 'CTP' then
-        IsFormat := True
-      else if ext = 'DATA' then
-        IsFormat := True
-      else if ext = 'DLU' then
-        IsFormat := True
-      else if ext = 'FBZ' then
-        IsFormat := True
-      else if ext = 'FF' then
-        IsFormat := True
-      else if ext = 'FLMOD' then
-        IsFormat := True
-      else if ext = 'GRO' then
-        IsFormat := True
-      else if ext = 'IWD' then
-        IsFormat := True
-      else if ext = 'LZP' then
-        IsFormat := True
-      else if ext = 'MOB' then
-        IsFormat := True
-      else if ext = 'NOB' then
-        IsFormat := True
-      else if ext = 'PAK' then
-        IsFormat := True
-      else if ext = 'PK1' then
-        IsFormat := True
-      else if ext = 'PK2' then
-        IsFormat := True
-      else if ext = 'PK4' then
-        IsFormat := True
-      else if ext = 'POD' then
-        IsFormat := True
-      else if ext = 'ROD' then
-        IsFormat := True
-      else if ext = 'RVI' then
-        IsFormat := True
-      else if ext = 'RVM' then
-        IsFormat := True
-      else if ext = 'RVR' then
-        IsFormat := True
-      else if ext = 'SCS' then
-        IsFormat := True
-      else if ext = 'SXT' then
-        IsFormat := True
-      else if ext = 'TEXTUREPACK' then
-        IsFormat := True
-      else if ext = 'VL2' then
-        IsFormat := True
-      else if ext = 'ZA' then
-        IsFormat := True
-      else if ext = 'ZIP' then
-        IsFormat := True
-      else if ext = 'ZIPFS' then
-        IsFormat := True
-      else if ext = 'ZTD' then
-        IsFormat := True
-      else
-        IsFormat := False;
-
+      IsFormat := False;
   end;
 
 end;
@@ -615,8 +413,6 @@ end;
 procedure CloseFormat; stdcall;
 begin
 
-  // This is an example
-  // Change it the way you need
   DrvInfo.Sch := '';
   DrvInfo.ID := '';
   DrvInfo.FileHandle := 0;
@@ -685,107 +481,6 @@ begin
 
 end;
 
-function CallbackPassword (pwbuf: PChar; size: Longint; m, efn: PChar): EDllPassword; stdcall;
-begin
-  Result := IZ_PW_NONE;
-end;
-
-function CallbackPrint (buffer: PChar; size: Longword): EDllPrint; stdcall;
-begin
-   Result := size;
-end;
-
-function CallbackReplace (filename: PChar): EDllReplace; stdcall;
-begin
-  Result := IDM_REPLACE_NONE;
-end;
-
-function CallbackService (efn: PChar; details: Longword): EDllService; stdcall;
-begin
-  Result := UZ_ST_CONTINUE;
-end;
-
-procedure CallbackMessage (ucsize, csiz, cfactor, mo, dy, yr, hh, mm: Longword; c: Byte; fname, meth: PChar; crc: Longword; fCrypt: Byte); stdcall;
-var tmpStr: string;
-//Var T: TextFile;
-begin
-
-  if Loading then
-  begin
-    tmpStr := Strip0(fname);
-
-    if Copy(tmpStr,length(tmpStr),1) <> '/' then
-    begin
-      Inc(NumEntry);
-      FSE_Add(tmpStr,NumEntry,ucsize,crc,0);
-    end;
-  end;
-
-end;
-
-function OpenZipFile(fil: String): integer;
-var retcode: integer;
-   incl:      PChar;
-   excl:      PChar;
-begin
-
-  with Ufuncs do
-  begin
-      print := CallbackPrint;
-      sound := nil;
-      replace := CallbackReplace;
-      password := CallbackPassword;
-      SendApplicationMessage := CallbackMessage;
-      ServCallBk := CallbackService;
-  end;
-
-  with DCList do
-  begin
-    ExtractOnlyNewer := 0;
-    SpaceToUnderscore := 0;
-    PromptToOverwrite := 0;
-    fQuiet := 2;
-    nCFlag := 0;
-    nTFlag := 0;
-    nVFlag := 1;
-    nFFlag := 0;
-    nZFlag := 0;
-    nDFlag := 1;
-    nOFlag := 0;
-    nAFlag := 1;
-    nZIFlag := 0;
-    C_flag := 1;
-    fPrivilege := 2;
-    lpszZipFN := PChar(fil);
-    lpszExtractDir := nil;
-  end;
-
-  ZIPfile := fil;
-
-  incl := nil;
-  excl := nil;
-
-  NumEntry := 0;
-  Loading := true;
-  retcode := Wiz_SingleEntryUnzip(0, incl, 0, excl, DCList, Ufuncs);
-  Loading := false;
-
-  if retcode <> 0 then
-  begin
-    Result := -3;
-    ErrInfo.Format := 'ZIP';
-    ErrInfo.Games := 'Medal of Honor: Allied Assault, Quake 3 Arena, ...';
-  end
-  else
-  begin
-    DrvInfo.ID := 'ZIP';
-    DrvInfo.Sch := '/';
-    DrvInfo.FileHandle := 0;
-    DrvInfo.ExtractInternal := True;
-    Result := NumEntry;
-  end;
-
-end;
 { ----------------------------------------------------------
     function - ReadFormat()
   parameters - fil: ShortString
@@ -833,64 +528,36 @@ end;
  ----------------------------------------------------------
 }
 function ReadFormat(fil: ShortString; percent: TPercentCallback; Deeper: boolean): Integer; stdcall;
-var ext: string;
+var x: integer;
 begin
 
-  if DLLStatus then
+  if Not(IsValidZIP(fil)) then
   begin
-
-    ext := ExtractFileExt(fil);
-    if ext <> '' then
-      ext := copy(ext,2,length(ext)-1);
-    ext := UpperCase(ext);
-
-    if Deeper then
-    begin
-      if Not(IsValidZIP(fil)) then
-      begin
-        ReadFormat := -3;
-        ErrInfo.Format := 'ZIP';
-        ErrInfo.Games := 'Medal of Honor: Allied Assault, Quake 3 Arena, ...';
-      end
-      else
-        Result := OpenZIPFile(fil);
-    end
-    else if isFormat(fil,false) then
-        Result := OpenZIPFile(fil)
-      else
-        ReadFormat := -1;
-
-
+    ReadFormat := -3;
+    ErrInfo.Format := 'ZIP';
+    ErrInfo.Games := 'Medal of Honor: Allied Assault, Quake 3 Arena, ...';
   end
   else
   begin
-    ReadFormat := -4;
-    ErrInfo.Format := 'ZIP';
-    ErrInfo.Games := 'UNZIP32.DLL';
+
+    if (Archive <> nil) then
+      FreeAndNil(Archive);
+      
+    Archive := TAbZipArchive.Create(fil,fmOpenReadWrite or fmShareDenyWrite);
+    Archive.ExtractToStreamHelper := Helper.UnzipToStreamProc;
+    Archive.OnArchiveItemProgress := Helper.ArchiveItemProgress;
+    Archive.Load;
+
+    for x := 0 to Archive.Count-1 do
+      AddEntry(Archive.Items[x].FileName,Archive.Items[x].RelativeOffset,Archive.Items[x].UncompressedSize,x,0);
+
+    DrvInfo.Sch := '/';
+    DrvInfo.ID := 'ZIP';
+    DrvInfo.FileHandle := 0;
+    DrvInfo.ExtractInternal := true;
+
+    Result := Archive.Count;
   end;
-
-end;
-
-
-function SearchDLL: string;
-var
- iRes      : DWORD;
- pBuffer   : array[0..MAX_PATH - 1] of Char;
- pFilePart : PChar;
-begin
-
-  Result := '';
-
-  iRes := SearchPath(nil,               { address of search path }
-                    'unzip32',   { address of filename }
-                    '.dll',             { address of extension }
-                    MAX_PATH - 1,       { size, in characters, of buffer }
-                    pBuffer,            { address of buffer for found filename }
-                    pFilePart           { address of pointer to file component }
-                    );
-
-  if iRes <> 0 then
-    result := Strip0(pBuffer);
 
 end;
 
@@ -903,62 +570,90 @@ begin
   AHandle := AppHandle;
   AOwner := AppOwner;
 
-  DLLPath := ExtractFilePath(CurPath)+'data\drivers\unzip32.dll';
-  DLLFound := IsExpectedUnzipDLLVersion(DLLPath);
-  if not(DLLFound) then
-  begin
-    DLLPath := ExtractFilePath(CurPath)+'unzip32.dll';
-    DLLFound := IsExpectedUnzipDLLVersion(DLLPath);
-    if not(DLLFound) then
-    begin
-      DLLPath := SearchDLL;
-      DLLFound := IsExpectedUnzipDLLVersion(DLLPath);
-    end;
-  end;
+  Helper := TZipHelper.Create;
+  Helper._SetPercent := per;
+  Archive := nil;
 
-  LoadUNZipDLL;
+end;
+
+procedure InitPluginEx5(MsgBox: TMsgBoxCallback); stdcall;
+begin
+
+  showMsgBox := MsgBox;
+
+end;
+
+procedure InitPluginEx6(AddEntryCB: TAddEntryCallback); stdcall;
+begin
+
+  addEntry := AddEntryCB;
 
 end;
 
 procedure AboutBox; stdcall;
-var msg: string;
+var aboutText: string;
 begin
 
-      msg := 'InfoZip''s ZIP Driver v'+getVersion(DRIVER_VERSION)+' ('+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')'+#10+
-                          'Created by Alexandre Devilliers'+#10+#10+
-                          'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+#10+
-                          'This is a wrapper for the Info-ZIP UnZIP32.DLL.'+#10+
-                          'Using UnZip.pas by Gerke Preussner <j3rky@gerke-preussner.de>.'+#10+#10+
-                          'DLL Status:'+#10;
+    aboutText := '{\rtf1\ansi\ansicpg1252\deff0\deflang1036{\fonttbl{\f0\fswiss\fcharset0 Arial;}}'+#10+
+                 '\viewkind4\uc1\pard\qc\ul\b\f0\fs24\par Elbereth''s ZIP Driver plugin v'+getVersion(DRIVER_VERSION)+'\par'+#10+
+                 '\ulnone\b0\i\fs22 Created by \b Alexandre Devilliers (aka Elbereth/Piecito)\par'+#10+
+                 '\par'+#10+
+                 '\b0\i0\fs20 Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+'\par'+#10+
+                 'Driver Interface [DUDI] v'+inttostr(DUDI_VERSION)+' (v'+inttostr(DUDI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUDI)+']\par'+#10+
+                 'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+'\par'+#10+
+                 'Based on SVN rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')\par'+#10+
+                 '\par'+#10+
+                 '\ul Credits:\par'+#10+
+                 '\ulnone Abbrevia for all ZIP operations:\par'+#10+'\b http://tpabbrevia.sourceforge.net/\par'+#10+
+                 '}'+#10;
 
-  if DLLFound then
-    if DLLStatus then
-      msg := msg + 'Loaded (Version '+DLLVersion+')'
-    else
-      msg := msg + 'Error (Bad DLL found!)'
-  else
-    msg := msg + 'Error (Missing DLL)';
+  showMsgBox('About Elbereth''s ZIP Driver plugin...',aboutText);
 
-  MessageBoxA(AHandle, PChar(msg), 'About InfoZip''s ZIP Driver...', MB_OK);
+end;
+
+// Returns information about the driver creation capabilities (supported formats)
+// Exported
+function GetDriverModifInfo: DriverModifInfo; stdcall;
+begin
+
+  // Initialize output to 0 filled
+  FillChar(result,SizeOf(DriverModifInfo),0);
 
 end;
 
 // Exported functions
 exports
-  CloseFormat,
   DUDIVersion,
-  ExtractFile,   // Export only if your program uses internal
-                 // extraction.
-  GetCurrentDriverInfo,
-  InitPlugin,
-  GetDriverInfo,
-  GetEntry,
-  GetErrorInfo,
-  GetNumVersion,
-  IsFormat,
-  ReadFormat,
+  DUDIVersionEx,
+  ExtractFile,
   ExtractFileToStream,
-  AboutBox;
+  ReadFormat,
+  CloseFormat,
+  GetEntry,
+  GetDriverInfo,
+  GetDriverModifInfo,
+  GetNumVersion,
+  GetCurrentDriverInfo,
+  GetErrorInfo,
+  AboutBox,
+  InitPlugin,
+  InitPluginEx5,
+  InitPluginEx6,
+  IsFormat;
 
+{procedure LibExit(Reason: Integer);
+begin
+  if Reason = DLL_PROCESS_DETACH then
+  begin
+  ...  // library exit code
+  end;
+  SaveDllProc(Reason);  // call saved entry point procedure
+end;
+begin
+  ...  // library initialization code
+  SaveDllProc := DllProc;  // save exit procedure chain
+  DllProc := @LibExit;  // install LibExit exit procedure
+
+end.}
 
 end.

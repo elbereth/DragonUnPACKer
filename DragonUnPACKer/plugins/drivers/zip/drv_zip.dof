@@ -3,8 +3,8 @@ Version=7.0
 [Compiler]
 A=8
 B=0
-C=1
-D=1
+C=0
+D=0
 E=0
 F=0
 G=1
@@ -12,7 +12,7 @@ H=1
 I=1
 J=0
 K=0
-L=1
+L=0
 M=0
 N=1
 O=1
@@ -25,7 +25,7 @@ U=0
 V=1
 W=0
 X=1
-Y=1
+Y=0
 Z=1
 ShowHints=1
 ShowWarnings=1
@@ -96,7 +96,7 @@ PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=
 Packages=vcl;rtl;vclx;indy;inet;xmlrtl;vclie;inetdbbde;inetdbxpress;dbrtl;dsnap;dsnapcon;vcldb;soaprtl;VclSmp;dbexpress;dbxcds;inetdb;bdertl;vcldbx;webdsnap;websnap;adortl;ibxpress;teeui;teedb;tee;dss;visualclx;visualdbclx;vclactnband;vclshlctrls;IntrawebDB_50_70;Intraweb_50_70;Rave50CLX;Rave50VCL;dclOfficeXP;DJcl;JvStdCtrlsD7R;JvAppFrmD7R;JvCoreD7R;JvBandsD7R;JvBDED7R;JvDBD7R;JvDlgsD7R;JvCmpD7R;JvCryptD7R;JvCtrlsD7R;JvCustomD7R;JvDockingD7R;JvDotNetCtrlsD7R;JvEDID7R;qrpt;JvGlobusD7R;JvHMID7R;JvInspectorD7R;JvInterpreterD7R;JvJansD7R;JvManagedThreadsD7R;JvMMD7R;JvNetD7R;JvPageCompsD7R;JvPluginD7R;JvPrintPreviewD7R;JvSystemD7R;JvTimeFrameworkD7R;JvUIBD7R;JvValidatorsD7R;JvWizardD7R;JvXPCtrlsD7R;IcsDel70;RxDB7;RxCtl7;RxBDE7;VirtualTreesD7
-Conditionals=dyn_unzip32
+Conditionals=BuildingStub
 DebugSourceDirs=
 UsePackages=0
 [Parameters]
@@ -108,10 +108,10 @@ DebugCWD=
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=1
-MajorVer=1
-MinorVer=1
-Release=3
-Build=140
+MajorVer=2
+MinorVer=0
+Release=0
+Build=141
 Debug=0
 PreRelease=0
 Special=0
@@ -120,13 +120,32 @@ DLL=1
 Locale=1036
 CodePage=1252
 [Version Info Keys]
-CompanyName=ElberethZone
-FileDescription=DUP5 - ZIP Driver (Info-ZIP's DLL wrapper)
-FileVersion=1.1.3.140
+CompanyName=Elbereth Zone
+FileDescription=Elbereth's ZIP Driver plugin for Dragon UnPACKer 5
+FileVersion=2.0.0.141
 InternalName=drv_zip
 LegalCopyright=Created by Alexandre Devilliers (aka Elbereth/Piecito)
 LegalTrademarks=Mozilla Public License 1.1
 OriginalFilename=drv_zip.d5d
 ProductName=Dragon UnPACKer 5
-ProductVersion=5.5.2 Beta
-Comments=DUP5 - ZIP Driver (Info-ZIP's DLL wrapper)
+ProductVersion=5.7.0 Beta
+[HistoryLists\hlConditionals]
+Count=3
+Item0=BuildingStub
+Item1=dyn_unzip32
+Item2=DRGUNPACK
+[HistoryLists\hlUnitAliases]
+Count=1
+Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlSearchPath]
+Count=2
+Item0=$(DELPHI)\Lib\Debug;C:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;P:\Programs\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
+Item1=E:\PROGRA~2\Borland\Delphi7\Source\jcl\lib\d7\debug;E:\Developpement\dup-HEAD-2008\DragonUnPACKer
+[HistoryLists\hlUnitOutputDirectory]
+Count=1
+Item0=E:\Developpement\dup-dev-5.1-dcu
+[HistoryLists\hlOutputDirectorry]
+Count=3
+Item0=E:\Developpement\dup-dev-5.1-compiled\data\drivers
+Item1=E:\Developpement\dup-dev-5.1-compiled\data\convert
+Item2=E:\Developpement\dup-dev-5.1-compiled

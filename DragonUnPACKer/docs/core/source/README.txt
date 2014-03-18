@@ -1,5 +1,5 @@
 Dragon UnPACKer 5.7.0 Beta Source Code                          MPL open source
-by Alexande "Elbereth" Devilliers                                    20/02/2013
+by Alexande "Elbereth" Devilliers                                    18/03/2014
 ===============================================================================
 
 This source code can be used and modified if following the Mozilla Public
@@ -20,6 +20,8 @@ You obviously also need some Delphi programming skills. :P
 Lazarus/FPC compilation can be tried, some plugins can be compiled for ex.
 
 Needed libraries:
+- Abbrevia v5.1                   http://tpabbrevia.sourceforge.net/
+  (for drv_zip)
 - Indy 9 (latest DevSnapshot)     
   http://www.indyproject.org/Sockets/Download/Files/Indy9.EN.aspx
 - DCPcrypt v2 Beta 3          

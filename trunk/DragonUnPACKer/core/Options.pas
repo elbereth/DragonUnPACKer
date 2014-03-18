@@ -215,7 +215,11 @@ type
     procedure chkKeepFilterIndexClick(Sender: TObject);
     procedure chkAccept0BytesClick(Sender: TObject);
     procedure chkDisplayXYClick(Sender: TObject);
+    procedure CONVList();
+    procedure DRVList();
+    procedure LNGList();
     procedure ThemeList();
+    procedure TYPEList();
   private
     { Déclarations privées }
   public
@@ -280,7 +284,7 @@ begin
 
 end;
 
-procedure LNGList();
+procedure TfrmConfig.LNGList();
 var sr: TSearchRec;
     Name,Author,URL,Email,FontName: string;
     itmx : TComboExItem;
@@ -293,6 +297,7 @@ begin
   frmConfig.imgLstLangue.GetBitmap(0,Icn);
   frmConfig.imgLstLangue.Clear;
   frmConfig.imgLstLangue.Add(Icn,Nil);
+  FreeAndNil(Icn);
   frmConfig.lstLangues.Clear;
   itmx := frmConfig.lstLangues.ItemsEx.Add;
   itmx.Caption := 'Français (French)';
@@ -318,6 +323,7 @@ begin
           Icn.TransparentColor := clBlack;
           Icn.Transparent := True;
           IcnIdx := frmConfig.imgLstLangue.Add(icn,nil);
+          FreeAndNil(icn);
 
           if IcnIdx <> -1 then
             itmx.ImageIndex := IcnIdx;
@@ -333,7 +339,7 @@ begin
 
 end;
 
-procedure DRVList();
+procedure TfrmConfig.DRVList();
 var x : integer;
     itmx : TListItem;
 begin
@@ -353,7 +359,7 @@ begin
 
 end;
 
-procedure CONVList();
+procedure TfrmConfig.CONVList();
 var x : integer;
     itmx : TListItem;
     info : ConvertInfoEx;
@@ -376,20 +382,7 @@ begin
 
 end;
 
-function RemoveIllegalChars(str: string): string;
-var x : integer;
-    res : string;
-begin
-
-  for x := 1 to length(str) do
-    if str[x] <> '*' then
-      res := res + str[x];
-
-  RemoveIllegalChars := res;
-
-end;
-
-procedure TYPEList();
+procedure TfrmConfig.TYPEList();
 var str,tmp: string;
     x: integer;
 begin
@@ -403,16 +396,16 @@ begin
     tmp := Copy(str,0,pos(';',str)-1);
     if pos('.',tmp) <> 0 then
       tmp := Copy(tmp,posrev('.',tmp)+1,length(tmp)-posrev('.',tmp));
-    tmp := UpperCase(RemoveIllegalChars(tmp));
-    if frmConfig.lstTypes.Items.IndexOf(tmp) = -1 then
+    tmp := Trim(UpperCase(RemoveIllegalChars(tmp)));
+    if (frmConfig.lstTypes.Items.IndexOf(tmp) = -1) and (tmp <> '') then
       frmConfig.lstTypes.Items.Add(tmp);
     str := Copy(str,pos(';',str)+1,length(str)-length(tmp));
   end;
 
   if pos('.',str) <> 0 then
     str := Copy(str,posrev('.',str)+1,length(str)-posrev('.',str));
-  str := UpperCase(RemoveIllegalChars(str));
-  if frmConfig.lstTypes.Items.IndexOf(str) = -1 then
+  str := Trim(UpperCase(RemoveIllegalChars(str)));
+  if (frmConfig.lstTypes.Items.IndexOf(str) = -1) and (str <> '') then
     frmConfig.lstTypes.Items.Add(str);
 
   for x := 0 to frmConfig.lstTypes.Count - 1 do
@@ -615,8 +608,6 @@ end;
 
 procedure TfrmConfig.ThemeList();
 var sr: TSearchRec;
-    Hin: Integer;
-    HDR: DULK_Header;
     Reg: TRegistry;
     CurrentTheme: string;
     CurrentThemeIdx: integer;
@@ -645,12 +636,15 @@ begin
   if FindFirst(ExtractFilePath(Application.ExeName)+'Data\Themes\*',faDirectory,sr) = 0 then
   begin
     repeat
-      ThemeInfo := dup5Main.getThemeInfo(Sr.Name);
-      if ThemeInfo.ValidTheme then
+      if (Sr.Name <> '.') and  (Sr.Name <> '..') then
       begin
-        frmConfig.lstLook.Items.Add(sr.Name);
-        if UpperCase(Sr.name) = UpperCase(CurrentTheme) then
-          CurrentThemeIdx := frmConfig.lstLook.Count-1;
+        ThemeInfo := dup5Main.getThemeInfo(Sr.Name);
+        if ThemeInfo.ValidTheme then
+        begin
+          frmConfig.lstLook.Items.Add(sr.Name);
+          if UpperCase(Sr.name) = UpperCase(CurrentTheme) then
+            CurrentThemeIdx := frmConfig.lstLook.Count-1;
+        end;
       end;
     until FindNext(sr) <>0;
     FindClose(sr);
@@ -689,7 +683,6 @@ end;
 
 procedure TfrmConfig.lstLookClick(Sender: TObject);
 var themename: string;
-    parpos: integer;
     Reg: TRegistry;
     ThemeInfo: TdupThemeInfo;
 begin
@@ -704,10 +697,11 @@ begin
     frmConfig.lblLookEmail.Caption := ThemeInfo.Email;
     frmConfig.lblLookComment.Caption := ThemeInfo.Comment;
 
-    dup5Main.loadTheme(themename);
-
     if Not(Loading) then
     begin
+
+      dup5Main.loadTheme(themename);
+
       Reg := TRegistry.Create;
       Try
         Reg.RootKey := HKEY_CURRENT_USER;

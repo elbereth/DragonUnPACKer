@@ -77,10 +77,24 @@ procedure SetRegistryHR(prefix: string; ID: integer; value: boolean);
 function GetAllSystemInfo(): TOSInfo;
 function getPlugVersion(version: integer): string;
 function GetFileSize(fileName : String) : Int64;
+function RemoveIllegalChars(str: string): string;
 
 implementation
 
 uses lib_language, Windows, registry, forms, lib_BinUtils, SysUtils;
+
+function RemoveIllegalChars(str: string): string;
+var x : integer;
+    res : string;
+begin
+
+  for x := 1 to length(str) do
+    if str[x] <> '*' then
+      res := res + str[x];
+
+  RemoveIllegalChars := res;
+
+end;
 
 function PadRight(Data: string; PadWidth: integer) : string;
 begin

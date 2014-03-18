@@ -11,7 +11,7 @@ by Alexande "Elbereth" Devilliers                                    18/03/2014
 Main program version and versions history:
 
 Version 5.7.0.282
-SVN Release 670 [Unreleased]
+SVN Release 672 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
@@ -63,7 +63,12 @@ SVN Release 670 [Unreleased]
    ! Fixed the memory leak for not freeing the TBufferedFS component:
      Switched back to using THandleStream instead of TBufferedFS.
 	 Free THandleStream but keep handle open and pass it to TDrivers.
- * Elbereth's Main Driver plug-in v3.0.0:
+ * Elbereth's ZIP Driver plug-in v2.0.0 Beta 1:
+   * Updated to new DUDI v6. This means as of this version the plug-in
+     requires Dragon UnPACKer v5.7.0 or more. It won't work with older Dragon
+	 UnPACKer versions.
+   * Changed to use Abbrevia instead of Info-Zip UnZip32.dll.
+ * Elbereth's Main Driver plug-in v3.0.1 Beta 2:
    * Updated to new DUDI v6. This means as of this version the plug-in
      requires Dragon UnPACKer v5.7.0 or more. It won't work with older Dragon
 	 UnPACKer versions.

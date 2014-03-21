@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    18/03/2014
+by Alexande "Elbereth" Devilliers                                    21/03/2014
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -11,7 +11,7 @@ by Alexande "Elbereth" Devilliers                                    18/03/2014
 Main program version and versions history:
 
 Version 5.7.0.282
-SVN Release 672 [Unreleased]
+SVN Release 678 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
@@ -27,7 +27,7 @@ SVN Release 672 [Unreleased]
    Both the old DUDI v1-v5 & v6 methods will be supported by Dragon UnPACKer
    5.7.0+.
    New directory cache should be as fast (if not faster) than the old one.
-   Note: Only main driver was adapted to DUDI v6.
+   Note: Only main & ZIP driver were adapted to DUDI v6.
    ! SVN 646: Fixed files without directories not working in previous SVN 644.
    ! SVN 648: Fixed folder cache never cleared when closing files. This was
               resulting in duplicate files when loading HRF files for ex.
@@ -68,7 +68,7 @@ SVN Release 672 [Unreleased]
      requires Dragon UnPACKer v5.7.0 or more. It won't work with older Dragon
 	 UnPACKer versions.
    * Changed to use Abbrevia instead of Info-Zip UnZip32.dll.
- * Elbereth's Main Driver plug-in v3.0.1 Beta 2:
+ * Elbereth's Main Driver plug-in v3.0.1 Beta 3:
    * Updated to new DUDI v6. This means as of this version the plug-in
      requires Dragon UnPACKer v5.7.0 or more. It won't work with older Dragon
 	 UnPACKer versions.
@@ -82,6 +82,12 @@ SVN Release 672 [Unreleased]
 	 access).
    + Added support for Star Wars Starfighter .PAK file format.
      Feature request #89 by James Krayenhagen.
+   + Added support for The 7th Guest .GJD file format.
+     (This never worked in drv_11th...)
+   + Added support for The 11th Hour .GJD file format.
+     (No activation needed)
+ - Removed Elbereth's The 11th Hour Driver plug-in.
+   Not needed anymore, features merged in drv_default v3.0.1 Beta 3.
  * Duppi v3.4.0:
    i Updated to work with Indy 9 instead of Curl.
      This means a full Delphi implementation with no need for DLLs.

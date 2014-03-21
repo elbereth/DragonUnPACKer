@@ -24,9 +24,8 @@ uses
   SysUtils,
   Windows,
   Classes,
-  AbArcTyp, AbZipTyp, AbZipPrc, AbUnzPrc, AbUtils,
+  AbArcTyp, AbZipTyp, AbUnzPrc, AbUtils,
   dup5drv_utils in '..\dup5drv_utils.pas',
-  dup5drv_data in '..\dup5drv_data.pas',
   spec_DUDI in '..\..\..\common\spec_DUDI.pas',
   UnZip in 'UnZip.pas',
   lib_version in '..\..\..\common\lib_version.pas',
@@ -128,7 +127,7 @@ end;
 
 procedure TZipHelper.ZipProc( Sender : TObject; Item : TAbArchiveItem; OutStream : TStream );
 begin
-  AbZip( TAbZipArchive(Sender), TAbZipItem(Item), OutStream );
+//  AbZip( TAbZipArchive(Sender), TAbZipItem(Item), OutStream );
 end;
 
 function IsValidZIP(fil: string): boolean;
@@ -436,28 +435,15 @@ end;
 function GetCurrentDriverInfo(): CurrentDriverInfo; stdcall;
 begin
 
-  GetCurrentDriverInfo := DrvInfo;
+  result := DrvInfo;
 
 end;
 
-{ ----------------------------------------------------------
-    function - GetEntry()
-  parameters - none
-     returns - FormatEntry record
-  ----------------------------------------------------------
-
-  This function is called by DUP5 to retrieve entries of the
-  file parsed by ReadFile() function.
-  It is called just after ReadFile() and N times (with N
-  equal to the value returned by ReadFile).
-
-  NOTE: You don't need to change this function if you want
-        to use the same driver model as this example.
-}
+// Legacy function of DUDI version < 6
 function GetEntry(): FormatEntry; stdcall;
 begin
 
-  GetEntry := FSE_Read;
+  FillChar(result, sizeof(FormatEntry),0);
 
 end;
 

@@ -37,7 +37,8 @@ uses
   lib_unlzw in '..\..\..\common\lib_unlzw.pas',
   lib_crc in '..\..\..\common\lib_crc.pas',
   dup5drv_utils in '..\dup5drv_utils.pas',
-  spec_DUDI in '..\..\..\common\spec_DUDI.pas';
+  spec_DUDI in '..\..\..\common\spec_DUDI.pas',
+  spec_D11D in '..\..\..\common\spec_D11D.pas';
 
 {$E d5d}
 
@@ -202,6 +203,8 @@ type FSE = ^element;
                  Added Star Wars Starfighter .PAK support
     30110        Fixed EVE Online .STUFF support.
     30112        Really fixed the extraction of files (and not only EVE Online .STUFF)
+    30113        Merged The 11th Hour .GJD support (drv_11th is not needed anymore)
+                 Added The 7th Guest .GJD support (drv_11th never worked)...
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -223,7 +226,7 @@ type FSE = ^element;
 const
   DUDI_VERSION = 6;
   DUDI_VERSION_COMPATIBLE = 6;
-  DRIVER_VERSION = 30112;
+  DRIVER_VERSION = 30113;
   DUP_VERSION = 57010;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
@@ -334,6 +337,7 @@ begin
   addFormat(result,'*.FAR','The Sims (*.FAR)');
   addFormat(result,'*.FFL','Aliens vs Predator (*.FFL)');
   addFormat(result,'*.FPK','Sid Meier''s Civilization 4 (*.FPK)|Sid Meier''s Civilization V (*.FPK)');
+  addFormat(result,'*.GJD','The 11th Hour (*.GJD)');
   addFormat(result,'*.GOB','Dark Forces (*.GOB)|Indiana Jones 3D (*.GOB)|Jedi Knight: Dark Forces 2 (*.GOB)');
   addFormat(result,'*.GRP;*.ART','Duke Nukem 3D (*.GRP;*.ART)|Shadow Warrior (*.GRP;*.ART)');
   addFormat(result,'*.GZP','Giants: Citizen Kabuto (*.GZP)');
@@ -10827,6 +10831,237 @@ begin
 end;
 
 // -------------------------------------------------------------------------- //
+// The 7th Guest .GJD support =============================================== //
+// -------------------------------------------------------------------------- //
+
+type GJD_Entry_7 = packed record       // 20 Bytes
+    Filename: array[1..12] of char;
+    Offset: longword;
+    Size: longword;
+  end;
+
+function Read7thGuestGJD(src, comprl: string): Integer;
+var NumE, infil: integer;
+    hLST: integer;
+    x, totsize, totent, curidx, spcpos: integer;
+    ENT: GJD_Entry_7;
+    filelist, entrylist: TStream;
+    fnlist: TStringList;
+    fnliststring, filename, fileindex, srcfilename: string;
+begin
+
+  FHandle := FileOpen(src,fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    TotFSize := FileSeek(FHandle,0,2);
+
+    // Open compagnon file
+    entrylist := TFileStream.Create(comprl,fmOpenRead or fmShareDenyWrite);
+
+    // Total number of entries is the entrylist file size divided by 20
+    totent := entrylist.Size div 20;
+    entrylist.Position := 0;
+    NumE := 0;
+
+    // Go through all entries and only select the one related to the found index
+    for x := 1 to totent do
+    begin
+      entrylist.ReadBuffer(ENT,20);
+      if (ENT.Offset + ENT.Size) <= TotFSize then
+      begin
+        Inc(NumE);
+        FSE_Add(Strip0(ENT.Filename),ENT.Offset,ENT.Size,0,0);
+      end;
+      SetPercent(round((x / totent)*100));
+    end;
+    freeandnil(entrylist);
+
+    DrvInfo.ID := 'GJD';
+    DrvInfo.Sch := '';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := False;
+
+    result := NumE;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// The 11th Hour .GJD support =============================================== //
+// -------------------------------------------------------------------------- //
+
+// Data file is expected in plugin's folder with following name:
+const
+    D11D_DATA_FILENAME : string = 'drv_default_d11d.dat';
+
+type GJD_Entry = packed record         // 32 Bytes
+    Unknown: integer;
+    Offset: longword;
+    Size: longword;
+    Index: word;
+    Filename: array[1..18] of char;
+  end;
+
+// Data file can be created from any The 11th Hour CD-Rom using d11dc tool
+// with files from the CD (path relative to root):
+//   \GROOVIE\GJD.GJD
+//   \GROOVIE\DIR.RL
+
+// This function checks the data file is correct (header, size and CRC-32 of
+// the payload) and returns both files (DIR.RL = fileindex and GJD.GJD = entrylist)
+// as TMemoryStreams.
+// Supports uncompressed & Zlib compressed payload 
+function get11thHourData(retrieveData: boolean; var fileindex, entrylist: TStream): boolean;
+var HDR: D11D_Header;
+    D11Dstm: TFileStream;
+    testcrc: longint;
+    decompressorStm: TDecompressionStream;
+    tmpStm: TMemoryStream;
+    afterHDR: integer;
+begin
+
+  result := FileExists(CurPath+D11D_DATA_FILENAME);
+
+  if result then
+  begin
+    result := false;
+    D11Dstm := TFileStream.Create(CurPath+D11D_DATA_FILENAME,fmOpenRead or fmShareDenyWrite);
+    try
+      if (D11Dstm.Size >= SizeOf(HDR)) then
+      begin
+        D11Dstm.ReadBuffer(HDR,sizeof(HDR));
+        if (HDR.ID = 'D11D') and (HDR.EOF = 25) and (HDR.Version = D11D_Version)
+        and ((HDR.Flags and D11D_FLAG_CRC) = D11D_FLAG_CRC)
+        and (D11Dstm.Size = (SizeOf(HDR) + HDR.CompressedSize)) then
+        begin
+          tmpStm := TMemoryStream.Create;
+          tmpStm.CopyFrom(D11Dstm,HDR.CompressedSize);
+          tmpStm.Position := 0;
+          testcrc := GetStmCRC32(tmpStm,HDR.CompressedSize);
+          result := testcrc = HDR.CRC32;
+          if (retrieveData) then
+          begin
+            tmpStm.Position := 0;
+            fileindex := TMemoryStream.Create;
+            entrylist := TMemoryStream.Create;
+            if ((HDR.Flags and D11D_FLAG_ZLIB) = D11D_FLAG_ZLIB) then
+            begin
+              decompressorStm := TDecompressionStream.Create(tmpStm);
+              try
+                fileindex.CopyFrom(decompressorStm,HDR.SeparatorOffset);
+                entrylist.CopyFrom(decompressorStm,HDR.UncompressedSize - HDR.SeparatorOffset);
+              finally
+                FreeAndNil(decompressorStm);
+              end;
+            end
+            else
+            begin
+              fileindex.CopyFrom(tmpStm,HDR.SeparatorOffset);
+              entrylist.CopyFrom(tmpStm,HDR.UncompressedSize - HDR.SeparatorOffset);
+            end;
+          end;
+          freeandnil(tmpStm);
+        end;
+      end;
+    finally
+      FreeAndNil(D11Dstm);
+    end;
+  end;
+
+end;
+
+// Wrapper to the data retrieval to just check if the data file is present and
+// correct (header, size & CRC-32)
+function get11thHourStatus(): Boolean;
+var test1, test2: tstream;
+begin
+
+  result := get11thHourData(false,test1,test2);
+
+end;
+
+function Read11thHourGJD(src: string): Integer;
+var NumE, infil: integer;
+    hLST: integer;
+    x, totsize, totent, curidx, spcpos: integer;
+    ENT: GJD_Entry;
+    filelist, entrylist: TStream;
+    fnlist: TStringList;
+    fnliststring, filename, fileindex, srcfilename: string;
+begin
+
+  FHandle := FileOpen(src,fmOpenRead);
+
+  if FHandle > 0 then
+  begin
+
+    // We can only continue is the data file is correct & loaded
+    if (get11thHourData(true,filelist,entrylist)) then
+    begin
+
+      // Total number of entries is the entrylist file size divided by 32
+      totent := entrylist.Size div 32;
+      entrylist.Position := 0;
+      NumE := 0;
+
+      // Explode the file list into a StringList
+      filelist.Position := 0;
+      SetLength(fnliststring,filelist.size);
+      filelist.ReadBuffer(fnliststring[1],filelist.Size);
+      FreeAndNil(Filelist);
+      fnlist := TStringList.Create;
+      fnlist.Delimiter := #10;
+      fnlist.DelimitedText := fnliststring;
+
+      // Go through the StringList to retrieve the filename index
+      infil := -1;
+      curidx := 0;
+      srcfilename := ExtractFilename(src);
+      while (infil = -1) and (curidx < fnlist.Count) do
+      begin
+        filename := fnlist.Strings[curidx];
+        if stricomp(Pchar(filename),PChar(srcfilename)) = 0 then
+          infil := strtoint(fnlist.Strings[curidx+1]);
+        inc(curidx,2);
+      end;
+      freeandnil(fnlist);
+
+      // Go through all entries and only select the one related to the found index
+      for x := 1 to totent do
+      begin
+        entrylist.ReadBuffer(ENT,32);
+        if (ENT.Index = infil) then
+        begin
+          Inc(NumE);
+          FSE_Add(Strip0(ENT.Filename),ENT.Offset,ENT.Size,ENT.Unknown,0);
+        end;
+        SetPercent(round((x / totent)*100));
+      end;
+      freeandnil(entrylist);
+
+      DrvInfo.ID := '11TH';
+      DrvInfo.Sch := '';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+      result := NumE;
+
+    end
+    else
+      Result := -2;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
 // The Elder Scrolls IV: Oblivion .BSA support ============================== //
 // -------------------------------------------------------------------------- //
 
@@ -13827,6 +14062,28 @@ begin
 
 end;
 
+function ReadHubGJD(src: String): Integer;
+var compagnonFile: string;
+    res: integer;
+begin
+
+  compagnonFile := ChangeFileExt(src,'.rl');
+
+  if fileexists(compagnonFile) then
+    res := Read7thGuestGJD(src,compagnonFile)
+  else
+    res := Read11thHourGJD(src);
+
+  if res = -3 then
+  begin
+    FHandle := 0;
+    Result := -3;
+    ErrInfo.Format := 'GJD';
+    ErrInfo.Games := 'The 7th Guest & The 11th Hour';
+  end;
+
+end;
+
 function ReadHubGOB(src: String): Integer;
 var ID: array[0..3] of char;
     res: integer;
@@ -14628,6 +14885,8 @@ begin
       ReadFormat := ReadAvPRFFL(fil)
     else if ext = 'FPK' then
       Result := ReadCivilization4FPK(fil)
+    else if ext = 'GJD' then
+      ReadFormat := ReadHubGJD(fil)
     else if ext = 'GL' then
     begin
       FHandle := FileOpen(fil, fmOpenRead or fmShareDenyWrite);
@@ -15094,7 +15353,7 @@ begin
   ext := UpperCase(ext);
 
   if Deeper then
-    IsFormat := IsFormatSMART(fil) or (ext = 'POD') or (ext = 'PAK') or (ext = 'TLK') or (ext = 'SDT') or (ext = 'RFH') or (ext = 'MTF') or (ext = 'BKF') or (ext = 'DAT') or (ext = 'PBO') or (ext = 'AWF') or (ext = 'SND') or (ext = 'ART') or (ext = 'SNI') or (ext = 'DIR') or (ext = 'IMG') or (ext = 'BAR') or (ext = 'BAG') or (ext = 'SQH') or (ext = 'GL') or (ext = 'RFA') or (ext = 'ADF') or (ext = 'RES') or (ext = 'XRS') or (ext = 'STUFF') or (ext = 'BIN') or (ext = 'COB')
+    IsFormat := IsFormatSMART(fil) or (ext = 'POD') or (ext = 'PAK') or (ext = 'TLK') or (ext = 'SDT') or (ext = 'RFH') or (ext = 'MTF') or (ext = 'BKF') or (ext = 'DAT') or (ext = 'PBO') or (ext = 'AWF') or (ext = 'SND') or (ext = 'ART') or (ext = 'SNI') or (ext = 'DIR') or (ext = 'IMG') or (ext = 'BAR') or (ext = 'BAG') or (ext = 'SQH') or (ext = 'GL') or (ext = 'RFA') or (ext = 'ADF') or (ext = 'RES') or (ext = 'XRS') or (ext = 'STUFF') or (ext = 'BIN') or (ext = 'COB') or (ext = 'GJD')
   else
     if ext = 'PAK' then
       IsFormat := True
@@ -15832,12 +16091,17 @@ begin
 end;
 
 procedure AboutBox; stdcall;
-var aboutText: string;
+var aboutText, status11thHour: string;
 begin
 
-  if (SupportedDUDI >= 5) then
-  begin
-    aboutText := '{\rtf1\ansi\ansicpg1252\deff0\deflang1036{\fonttbl{\f0\fswiss\fcharset0 Arial;}}'+#10+
+  if get11thHourStatus then
+    status11thHour := DLNGStr('11TH07')
+  else
+    status11thHour := DLNGStr('11TH06');
+
+  status11thHour := StringReplace(StringReplace(DLNGStr('11TH05'),'%s',status11thHour,[rfReplaceAll]),#10,'\par'+#10,[rfReplaceAll]);
+
+  aboutText := '{\rtf1\ansi\ansicpg1252\deff0\deflang1036{\fonttbl{\f0\fswiss\fcharset0 Arial;}}'+#10+
                  '\viewkind4\uc1\pard\qc\ul\b\f0\fs24\par Elbereth''s Main Driver plugin v'+getVersion(DRIVER_VERSION)+'\par'+#10+
                  '\ulnone\b0\i\fs22 Created by \b Alexandre Devilliers (aka Elbereth/Piecito)\par'+#10+
                  '\par'+#10+
@@ -15845,6 +16109,9 @@ begin
                  'Driver Interface [DUDI] v'+inttostr(DUDI_VERSION)+' (v'+inttostr(DUDI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUDI)+']\par'+#10+
                  'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+'\par'+#10+
                  'Based on SVN rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')\par'+#10+
+                 '\par'+#10+
+                 '\ul 11th Hour (.GJD):\par'+#10+
+                 '\ulnone '+status11thHour+'\par'+#10+
                  '\par'+#10+
                  '\ul Limitations:\par'+#10+
                  '\ulnone Breakneck .SYN files are not decrypted (useless support?)\par'+#10+
@@ -15869,37 +16136,6 @@ begin
                  'Some file formats support based on info found on:\par'+#10+
                  '{\b http://wiki.xentax.com\par}'+
                  '}'+#10;
-  end
-  else
-  begin
-    aboutText :=          'Elbereth''s Main Driver plugin v'+getVersion(DRIVER_VERSION)+#10+
-                          'Created by Alexandre Devilliers (aka Elbereth/Piecito)'+#10+#10+
-                          'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
-                          'Driver Interface [DUDI] v'+inttostr(DUDI_VERSION)+' (v'+inttostr(DUDI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUDI)+']'+#10+
-                          'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+
-                          'Based on SVN rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')'+#10+#10+
-                          'Limitations:'+#10+
-                          'Breakneck .SYN files are not decrypted (useless support?)'+#10+
-                          'Commandos 3 .PCK decryption is experimental.'+#10+
-                          'Daikatana .PAK files: No extraction is possible.'+#10+
-                          'Empires: Dawn of the Modern World SSA support is partial.'+#10+
-                          'Novalogic .PFF files: Only PFF3 can be loaded.'+#10+#10+
-                          'Credits:'+#10+
-                          'realMyst 3D DNI support code based on source of: dniExtract by Ken Taylor'+#10+
-                          'Darkstone MTF decompression code based on infos by: Guy Ratajczak'+#10+
-                          'GTA3 IMG/DIR support based on specs and infos by: Dan Strandberg of Game-Editing.net'+#10+
-                          'Spellforce PAK and Eve Online STUFF support based on infos by: DaReverse'+#10+
-                          'Painkiller PAK support partially based on infos by: MrMouse'+#10+
-                          'The Elder Scrolls 4: Oblivion BSA support based on infos found on:'+#10+
-                          'http://www.uesp.net/wiki/Tes4Mod:BSA_File_Format'+#10+
-                          'Giants .GZP decompression code based on infos by:'+#10+
-                          'Thilo Girmann (Nullpointer)'+#10+
-                          'Command & Conquer .MIX infos by:'+#10+
-                          'Olaf van der Spek'+#10+
-                          'http://xhp.xwis.net/documents/MIX_Format.html'+#10+
-                          'Some file formats support based on info found on:'+#10+
-                          'http://wiki.xentax.com'
-  end;
 
   // Dump XCC-Util .DAT filename database for Westwood MIX games if found
   dumpWestWoodMIX_XCCDatabase;
@@ -16214,6 +16450,7 @@ begin
 end;
 
 procedure InitPlugin(per: TPercentCallback; lngid: TLanguageCallback; DUP5Path: ShortString; AppHandle: THandle; AppOwner: TComponent); stdcall;
+var test1, test2: tstream;
 begin
 
   SetPercent := per;

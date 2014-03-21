@@ -62,6 +62,7 @@ begin
       crc32table[i] := crc;
    end;
    result := crc32table;
+   tabinit := true;
 end;
 
 function GetStrCRC32(Data: string) : longint;
@@ -118,7 +119,7 @@ begin
    index := 1;
    while index <= datalength do
    begin
-      tmpRead := data.Read(tmpRead,1);
+      data.ReadBuffer(tmpRead,1);
       crc := ((crc shr 8) and $FFFFFF) xor fcrctable[(crc xor tmpRead) and $FF];
       inc(index) ;
    end;

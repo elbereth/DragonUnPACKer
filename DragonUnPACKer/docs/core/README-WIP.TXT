@@ -11,7 +11,7 @@ by Alexande "Elbereth" Devilliers                                    22/03/2014
 Main program version and versions history:
 
 Version 5.7.0.283
-SVN Release 681 [Unreleased]
+SVN Release 682 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.

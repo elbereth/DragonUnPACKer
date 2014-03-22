@@ -1093,7 +1093,7 @@ begin
   _CommandsFacility.SaveTitle;
   _CommandsFacility.SetTitle(DLNGStr('XTRCAP'));
   if not(silent) then
-    _LogFacility.addMessage(ReplaceValue('%f',DLNGStr('XTRSTA'),entryList[entryIndex].Name));
+    _LogFacility.addMessage(ReplaceValue('%f',DLNGStr('XTRSTA'),entryList[entryIndex].Name),sevHigh);
   Screen.Cursor := crHourGlass;    { Affiche le curseur en forme de sablier }
   try
     //GetListElem(entrynam,Offset,Size,DataX,DataY);
@@ -1193,11 +1193,11 @@ begin
     begin
       Drivers[CurrentDriver].Functions.ExtractFile(outfile,entrynam,offset,size,datax,datay,silent);
       if not(silent) then
-        _LogFacility.appendMessage(DLNGStr('LOG510'));
+        _LogFacility.appendMessageIf(DLNGStr('LOG510'),sevHigh);
     end
     else
     begin
-      _LogFacility.appendMessage(DLNGStr('LOG512'));
+      _LogFacility.appendMessageIf(DLNGStr('LOG512'),sevHigh);
       _LogFacility.addMessage(ReplaceValue('%f',DLNGStr('ERR900'),'ExtractFile()'),sevError);
     end;
   end
@@ -1215,11 +1215,11 @@ begin
       end;
       FileClose(dst);
       if not(silent) then
-        _LogFacility.appendMessage(DLNGStr('LOG510'));
+        _LogFacility.appendMessageIf(DLNGStr('LOG510'),sevHigh);
     end
     else if not(silent) then
     begin
-      _LogFacility.appendMessage(DLNGStr('LOG512'));
+      _LogFacility.appendMessageIf(DLNGStr('LOG512'),sevHigh);
     end;
   end;
  except
@@ -1394,10 +1394,9 @@ begin
 end;
 
 function TDrivers.SearchAll(searchst: string; CaseSensible: Boolean): integer;
-var ext: String;
-    testpos,posext,x,TDirPos,per,perold: integer;
+var testpos,x,TDirPos,per,perold: integer;
     TotSize: int64;
-    CurData, CurSize, TotFiles: integer;
+    CurSize, TotFiles: integer;
 begin
 
   TotSize := 0;
@@ -1460,8 +1459,7 @@ begin
 end;
 
 function TDrivers.SearchDir(searchst: string; CurrentDirID: integer; CaseSensible: Boolean): integer;
-var ext,TDir: String;
-    TDirPos,testpos,posext,tmpi, per, perold: integer;
+var TDirPos,testpos, per, perold: integer;
     TotSize: int64;
     CurData, CurSize, TotFiles, x, y, fullSizeCache: integer;
 begin
@@ -1589,7 +1587,7 @@ var hHRF: integer;
     HDR: HRF3_Header;
     NFO: HRF3_Info;
     ENT: HRF3_Index;
-    x, y: integer;
+    y: integer;
     cstr: string;
 begin
 

@@ -385,6 +385,22 @@ begin
     result := 13
   else if (ext = 'JPG') or (ext = 'JPEG') then
     result := 14
+  else if (ext = 'FNT') or (ext = 'FONT') or (ext = 'TTF') then
+    result := 15
+  else if (ext = 'GIF') then
+    result := 16
+  else if (ext = 'IFF') then
+    result := 17
+  else if (ext = 'PNG') then
+    result := 18
+  else if (ext = 'PSD') then
+    result := 19
+  else if (ext = 'TIF') then
+    result := 20
+  else if (ext = 'WAL') then
+    result := 21
+  else if (ext = 'ZIP') or (ext = 'RAR') or (ext = '7Z') or (ext = 'GZ') or (ext = 'BZ2') or (ext = 'TAR') then
+    result := 22
   else
     result := 0;
 

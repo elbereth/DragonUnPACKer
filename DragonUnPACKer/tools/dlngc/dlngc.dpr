@@ -24,75 +24,13 @@ uses
   Classes,
   DateUtils,
   Zlib,
-  spec_DLNG in '..\..\common\spec_DLNG.pas';
+  spec_DLNG in '..\..\common\spec_DLNG.pas',
+  lib_crc in '..\..\common\lib_crc.pas';
 
-const AppVersion : string = '4.1.1';
+const AppVersion : string = '4.1.2';
       AppEdit : string = '';
       DLNG_Version : Byte = 4;
       DLNG_Manufacturer : Byte = 41;
-
-{CRC32}
-type
-   crc32tabletype = array[0..255] of longint;
-var
-   fcrctable: crc32tabletype;
-
-function crc32gen: crc32tabletype;
-var
-   crc, poly: longint;
-   i, j: integer;
-   crc32table: crc32tabletype;
-begin
-   fillchar(crc32table, sizeof(crc32table) , 0) ;
-   poly := longint($EDB88320) ;
-   for i := 0 to 255 do
-   begin
-      crc := i;
-      for j := 8 downto 1 do
-      begin
-         if (crc and 1) = 1 then
-            crc := (crc shr 1) xor poly
-         else
-            crc := crc shr 1;
-      end;
-      crc32table[i] := crc;
-   end;
-   result := crc32table;
-end;
-
-function GetStrCRC32(Data: string) : longint;
-var
-   crc: longint;
-   index, datalength: integer;
-begin
-   crc := longint($FFFFFFFF) ;
-
-   datalength := length(data) ;
-   index := 1;
-   while index <= datalength do
-   begin
-      crc := ((crc shr 8) and $FFFFFF) xor fcrctable[(crc xor byte(data[index]) ) and $FF];
-      inc(index) ;
-   end;
-   result := (crc xor Integer($FFFFFFFF) ) ;
-end;
-
-function GetStrmCRC32(Data: TStream) : longint;
-var
-   crc: longint;
-   db: byte;
-begin
-   Data.Position := 0;
-
-   crc := longint($FFFFFFFF) ;
-
-   while data.Position < data.size do
-   begin
-      Data.ReadBuffer(db, 1) ;
-      crc := ((crc shr 8) and $FFFFFF) xor fcrctable[(crc xor db) and $FF];
-   end;
-   result := (crc xor longint($FFFFFFFF) ) ;
-end;
 
 function BoolToStr(B: Boolean) : string;
 begin
@@ -280,12 +218,13 @@ begin
     else
     begin
       writeln('OK ['+IntToStr(Cline)+' lines - '+IntToStr(ULine)+' used]');
-      writeln(' - Writing file..... '+outfil);
 
       if PascalOutput then
         outfil := ExtractFilePath(outfil)+'lib_language_internal.pas'
       else if PascalOutputInclude then
         outfil := ChangeFileExt(outfil,'.'+HDR.PrgID+'.inc');
+
+      writeln(' - Writing file..... '+outfil);
 
       outFileStm := TFileStream.Create(outfil, fmCreate);
 //      ofil := FileCreate(outfil);
@@ -439,7 +378,7 @@ begin
           end
           else
           begin
-            HDR.ExtendedHeaderCRC := getStrmCrc32(bufMemStm);
+            HDR.ExtendedHeaderCRC := GetStmCRC32(bufMemStm,bufMemStm.Size);
             writeln(' [CRC '+inttohex(HDR.ExtendedHeaderCRC,8)+']');
           end;
 
@@ -487,7 +426,7 @@ begin
           begin
             write(' [CRC ');
 
-            HDR.IndexCRC := GetStrmCRC32(bufMemStm);
+            HDR.IndexCRC := GetStmCRC32(bufMemStm,bufMemStm.Size);
 
             writeln(inttohex(HDR.IndexCRC,8)+']');
           end;
@@ -548,7 +487,7 @@ begin
           begin
             write(' [CRC ');
 
-            HDR.DataCRC := GetStrmCRC32(bufMemStm);
+            HDR.DataCRC := GetStmCRC32(bufMemStm,bufMemStm.Size);
 
             writeln(inttohex(HDR.DataCRC,8)+']');
           end;
@@ -613,17 +552,17 @@ begin
      while (xp <= ParamCount) do
      begin
        if (lowercase(ParamStr(xp)) = '/nc') or (lowercase(ParamStr(xp)) = '/nocrc') then
-         NoCRC := true;
-       if (lowercase(ParamStr(xp)) = '/ni') or (lowercase(ParamStr(xp)) = '/noicon') then
-         NoIcon := true;
-       if (lowercase(ParamStr(xp)) = '/il') or (lowercase(ParamStr(xp)) = '/internal') then
-         PascalOutput := true;
-       if (lowercase(ParamStr(xp)) = '/in') or (lowercase(ParamStr(xp)) = '/include') then
-         PascalOutputInclude := true;
-       writeln(' - Unknown parameter: ' + ParamStr(xp));
+         NoCRC := true
+       else if (lowercase(ParamStr(xp)) = '/ni') or (lowercase(ParamStr(xp)) = '/noicon') then
+         NoIcon := true
+       else if (lowercase(ParamStr(xp)) = '/il') or (lowercase(ParamStr(xp)) = '/internal') then
+         PascalOutput := true
+       else if (lowercase(ParamStr(xp)) = '/in') or (lowercase(ParamStr(xp)) = '/include') then
+         PascalOutputInclude := true
+       else
+         writeln(' - Unknown parameter: ' + ParamStr(xp));
        xp := xp + 1;
      end;
-     fcrctable := crc32gen;
      Compile(ParamStr(1),NoCRC,NoIcon,PascalOutput,PascalOutputInclude);
    end;
 

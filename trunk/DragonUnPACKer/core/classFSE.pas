@@ -618,6 +618,7 @@ begin
 
   _CommandsFacility.SaveTitle;
   _CommandsFacility.SetTitle(ReplaceValue('%f',DLNGstr('TLD001'),ExtractFilename(pth)));
+  _CommandsFacility.SetStatus('?');
   //result := dlError;
 
   if (FileExists(pth)) then
@@ -694,6 +695,7 @@ begin
         FileClose(i);
 
         _LogFacility.addMessage(ReplaceValue('%d',DLNGStr('LOG501'),Drivers[CurrentDriver].Infos.DriverInfo.Name),sevHigh);
+        _CommandsFacility.SetStatus('O');
 
         StartTime := Now;
         entryListIndex := -1;
@@ -746,6 +748,7 @@ begin
           begin
 
             _LogFacility.addMessage(ReplaceValue('%x',DLNGStr('LOG502'),inttostr(NumElems)),sevHigh);
+            _CommandsFacility.SetStatus('R');
 
             try
               for y := 1 to NumElems do
@@ -803,6 +806,7 @@ begin
 
           // Prepare lstIndex root node and parse directories (create sub-nodes) if needed
           // Also fill the entry cache
+          _CommandsFacility.SetStatus('P');
           ParseEntries((Sch <> ''));
 
           LoadTimeParse := MilliSecondsBetween(Now, StartTime);
@@ -873,6 +877,7 @@ begin
 
     FreeAndNil(ErrList);
     LoadFile := res;
+    _CommandsFacility.SetStatus('-');
 
   end
   else

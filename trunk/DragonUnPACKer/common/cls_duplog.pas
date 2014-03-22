@@ -54,6 +54,7 @@ type TDupLog = class(TObject)
        _LogFile: TextFile;
        _LogMemo: TMemo;
        _LogRichEdit: TRichEdit;
+       _LogRichEditMinLevel: TDupLogMessageSeverity;
        function getNumMessages(): integer;
      public
        property Count: Integer read getNumMessages;
@@ -62,7 +63,8 @@ type TDupLog = class(TObject)
        destructor Destroy; override;
        procedure enableLogIntoFile(Filename: string);
        procedure enableLogIntoMemo(Memo: TMemo);
-       procedure enableLogIntoRichEdit(RichEdit: TRichEdit);
+       procedure enableLogIntoRichEdit(RichEdit: TRichEdit; minLevel: TDupLogMessageSeverity = sevLow);
+       procedure setRichLogMinLevel(minLevel: TDupLogMessageSeverity = sevLow);
        procedure addMessage(Message: String; Level: TDupLogMessageSeverity = sevMedium);
        procedure appendMessage(Suffix: String);
        procedure appendMessageIf(Suffix: String; MinLevel: TDupLogMessageSeverity);
@@ -121,7 +123,7 @@ begin
     if _LogIntoFile then
       Write(_LogFile,' '+Suffix);
 
-    if _LogIntoRichEdit then
+    if _LogIntoRichEdit and (_Messages[_MessageIndex].Level >= _LogRichEditMinLevel) then
     begin
       _LogRichEdit.Lines.Strings[_LogRichEdit.Lines.Count-1] := _LogRichEdit.Lines.Strings[_LogRichEdit.Lines.Count-1]+' '+Suffix;
       _LogRichEdit.Refresh;
@@ -158,7 +160,7 @@ begin
         Write(_LogFile,dateMsg+' ['+_Messages[x].LevelHR+'] '+_Messages[x].Message);
       end;
 
-      if _LogIntoRichEdit then
+      if _LogIntoRichEdit and (_Messages[x].Level >= _LogRichEditMinLevel) then
       begin
         if _LogRichEdit.Lines.Count >= 32760 then
         _LogRichEdit.Lines.Delete(0);
@@ -257,12 +259,13 @@ end;
 
 // Enable the TRichEdit logging destination
 // TODO Find replacement for Lazarus
-procedure TDupLog.enableLogIntoRichEdit(RichEdit: TRichEdit);
+procedure TDupLog.enableLogIntoRichEdit(RichEdit: TRichEdit; minLevel: TDupLogMessageSeverity = sevLow);
 begin
 
   if Assigned(RichEdit) then
   begin
     _LogRichEdit := RichEdit;
+    _LogRichEditMinLevel := minLevel;
     _LogIntoRichEdit := true;
   end;
 
@@ -278,6 +281,14 @@ begin
     _LogMemo := Memo;
     _LogIntoMemo := true;
   end;
+
+end;
+
+// Set the minimum message severity to log to the TRichEdit destination
+procedure TDupLog.setRichLogMinLevel(minLevel: TDupLogMessageSeverity = sevLow);
+begin
+
+  _LogRichEditMinLevel := minLevel;
 
 end;
 

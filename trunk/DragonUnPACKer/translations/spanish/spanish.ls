@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-# Programa: Dragon UnPACKer v5.6.2
+# Programa: Dragon UnPACKer v5.7.0 Beta
 # Lenguaje: Español
-#  Version: 15
+#  Version: 16
 #    Autor: Alexandre Devilliers (con la ayuda de Cinthia)
 # ============================================================================
 {LSF}
@@ -12,7 +12,7 @@ Author = Alexandre Devilliers
 Email = translation@dragonunpacker.com
 URL = http://www.dragonunpacker.com
 ProgramID = UP
-ProgramVer = 15
+ProgramVer = 16
 IconFile = flag_sp.bmp
 Compression=99
 OutFile = spanish.lng
@@ -174,6 +174,7 @@ OPT841=Selecciona el nivel de información que quiere ver :
 OPT850=Bajo - Pocas informaciones
 OPT851=Medio - Bastantes informaciones
 OPT852=Alto - Muchísimas informaciones!
+OPT852=Debug
 OPT900=Previsualización
 OPT910=Opciones de previsualización
 OPT911=Activar la previsualización
@@ -355,18 +356,9 @@ LST507=Salvando el fichero de lista...
 LST508=Extrayendo ficheros compañeros desde la plantilla...
 LST509=Completo!
 
-11TH01=Para activar el soporte para los ficheros del juego The 11th Hour la extensión necesita copiar dos ficheros que podrás encontrar sobre el CD-ROM The 11th Hour en la carpeta GROOVIE.%n%nEsta seguro de querer continuar ?
-11TH02=Selecciona el fichero %f de The 11th Hour...
-11TH03=La extensión esta activada!%nAhora se puede abrir ficheros GJD de The 11th Hour!
-11TH04=Desactivar el soporte The 11th Hour va a suprimir los ficheros siguientes:%n%n%a%n%b%n%nPodras reactivarlo con el CD-ROM de The 11th Hour.%n%nEsta seguro de querer continuar ?
-11TH05=Estatuto de la extensión: %s%n(Activado significa que puedes abrir ficheros GJD)%n(Desactivado significa que debes importar los ficheros GJD.GJD y DIR.RL)
+11TH05=Estatuto de la extensión: %s%n(Activado significa que puedes abrir ficheros GJD de The 11th Hour)%n(Desactivado significa que debes importar los ficheros GJD.GJD y DIR.RL)
 11TH06=Desactivada
 11TH07=Activada
-11TH10=Configuración de la extensión The 11th Hour
-11TH11=Activar
-11TH12=Desactivar
-11TH13=Estatuto actual:
-11TH14=Soporte The 11th Hour:
 
 DUT100=Configuración
 DUT101=Biblioteca
@@ -398,12 +390,15 @@ EXSPR=Sprite
 EXTEX=Textura (%e)
 EXTXT=Documento Texto
 
-LOG001=Inicializar extensiónes:
 LOG002=Cargando extensiónes Pilotos...
 LOG003=Cargando extensiónes de Conversion...
 LOG004=Cargando extensiónes HyperRipper...
 LOG005=Librerias utilizadas:
 LOG009=%p extensión(es)
+LOG020=Cargando el tema: %t
+LOG021=Buscando iconos del menú y de la barra de herramientas
+LOG022=Buscando iconos de los tipos de ficheros
+LOG023=%i icono(s) / %a asignado
 LOG101=Abriendo el fichero "%f":
 LOG102=Formato del fichero desconocido!
 LOG103=Cargando al HyperRipper...

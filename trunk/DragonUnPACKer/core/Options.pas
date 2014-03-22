@@ -1005,21 +1005,24 @@ procedure TfrmConfig.trackbarVerboseChange(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  Reg := TRegistry.Create;
-  Try
-    Reg.RootKey := HKEY_CURRENT_USER;
-    if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
-    begin
-      Reg.WriteInteger('VerboseLevel',trackbarVerbose.Position);
-      Reg.CloseKey;
+  if not(loading) then
+  begin
+    Reg := TRegistry.Create;
+    Try
+      Reg.RootKey := HKEY_CURRENT_USER;
+      if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
+      begin
+        Reg.WriteInteger('VerboseLevel',trackbarVerbose.Position);
+        Reg.CloseKey;
+      end;
+    Finally
+      FreeAndNil(Reg);
     end;
-  Finally
-    FreeAndNil(Reg);
+
+    dup5Main.setVerboseLevel(trackbarVerbose.Position);
   end;
 
   trackbarVerboseUpdateHint;
-
-  dup5Main.setVerboseLevel(trackbarVerbose.Position);
 
 end;
 

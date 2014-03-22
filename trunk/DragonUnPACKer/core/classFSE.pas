@@ -410,22 +410,16 @@ var sr: TSearchRec;
     DUDIVerEx: TDUDIVersionEx;
     DUDIVerVal, DUDIVerExVal: byte;
     Handle: THandle;
-    tmpInfo: DriverInfo;
-    tmpModifInfo: ^DriverModifInfo;
 begin
 
   NumDrivers := 0;
 
-  if IsConsole then
-    writeln('Looking for drivers...');
+  _LogFacility.addMessage('Looking for drivers...',sevDebug);
 
   if FindFirst(pth+'*.d5d', faAnyFile, sr) = 0 then
   begin
     repeat
-      if IsConsole then
-        write(sr.name+ ' ')
-      else
-        _LogFacility.addMessage(' + '+sr.Name+' :',sevHigh);
+      _LogFacility.addMessage(' + '+sr.Name+' :',sevLow);
       Handle := LoadLibrary(PChar(pth + sr.name));
       if Handle <> 0 then
       begin
@@ -449,10 +443,7 @@ begin
           else
             Drivers[NumDrivers].Infos.DUDIVersion := DUDIVerVal;
 
-          if IsConsole then
-            write('IsDUDI... ')
-          else
-            _LogFacility.appendMessage('DUDI v'+inttostr(Drivers[NumDrivers].Infos.DUDIVersion)+' -');
+          _LogFacility.appendMessageIf('DUDI v'+inttostr(Drivers[NumDrivers].Infos.DUDIVersion)+' -',sevLow);
 
           @Drivers[NumDrivers].Functions.CloseFile := GetProcAddress(Handle, 'CloseFormat');
           @Drivers[NumDrivers].Functions.GetEntry := GetProcAddress(Handle, 'GetEntry');
@@ -545,7 +536,7 @@ begin
               Drivers[NumDrivers].Infos.IsConfigBox := not(@Drivers[NumDrivers].Functions.ShowConfigBox = nil) or not(@Drivers[NumDrivers].Functions.ShowConfigBox2 = nil) or not(@Drivers[NumDrivers].Functions.ShowConfigBox3 = nil);
               Drivers[NumDrivers].Infos.Priority := getDriverPriority(ExtractFileName(sr.Name));
               DriversSorted[NumDrivers] := NumDrivers;
-              _LogFacility.appendMessage(Drivers[NumDrivers].Functions.GetInfo.Name+' v'+Drivers[NumDrivers].Functions.GetInfo.Version);
+              _LogFacility.appendMessageIf(Drivers[NumDrivers].Functions.GetInfo.Name+' v'+Drivers[NumDrivers].Functions.GetInfo.Version,sevLow);
             except
               on E:Exception do
               begin
@@ -638,7 +629,7 @@ begin
 
     SmartOpen := GetRegistryBool('StartUp','SmartOpen',True);
     if SmartOpen then
-      _LogFacility.addMessage(DLNGStr('LOG400'),sevHigh);
+      _LogFacility.addMessage(DLNGStr('LOG400'),sevLow);
 
     x := 1 ;
     NumCanOpen := 0;
@@ -652,7 +643,7 @@ begin
       try
         if Drivers[DriversSorted[x]].Functions.CanOpen(pchar(pth),SmartOpen) then
         begin
-          _LogFacility.addMessage(ReplaceValue('%d',DLNGStr('LOG500'),Drivers[DriversSorted[x]].Infos.DriverInfo.Name),sevHigh);
+          _LogFacility.addMessage(ReplaceValue('%d',DLNGStr('LOG500'),Drivers[DriversSorted[x]].Infos.DriverInfo.Name),sevMedium);
           CanOpen[NumCanOpen] := DriversSorted[x];
           Inc(NumCanOpen);
         end;
@@ -793,31 +784,23 @@ begin
           DispNumElems := entryListIndex+1;
 
           _CommandsFacility.SetTitle(DLNGstr('TLD003'));
-          StartTime := Now;
 
           SCh := DrvInfo.Sch;
 
           InternalExtract := DrvInfo.ExtractInternal;
           CurrentFile := DrvInfo.FileHandle;
 
-          _LogFacility.addMessage(DLNGStr('LOG503'),sevLow);
-
           CurrentFileName := pth;
 
           // Prepare lstIndex root node and parse directories (create sub-nodes) if needed
           // Also fill the entry cache
-          _CommandsFacility.SetStatus('P');
           ParseEntries((Sch <> ''));
-
-          LoadTimeParse := MilliSecondsBetween(Now, StartTime);
-
-          _LogFacility.appendMessageIf(inttostr(LoadTimeParse)+'ms',sevMedium);
 
           _CommandsFacility.SetTitle(pth);
 
           res := dlOK;
 
-          _LogFacility.addMessage(ReplaceValue('%p',ReplaceValue('%f',DLNGStr('LOG504'),DriverID),Drivers[CurrentDriver].Infos.DriverInfo.Name),sevMedium);
+          _LogFacility.addMessage(ReplaceValue('%p',ReplaceValue('%f',DLNGStr('LOG504'),DriverID),Drivers[CurrentDriver].Infos.DriverInfo.Name),sevLow);
 
           break;
 
@@ -2180,7 +2163,14 @@ var Root, CachedVirtualNode: PVirtualNode;
     DataCache: TObject;
     dirCache: TStringHashTrie;
     Percent, OldPercent: integer;
+    StartTime: TDateTime;
 begin
+
+  // Indicate we are parsing the directories
+  _LogFacility.addMessage(DLNGStr('LOG503'),sevHigh);
+  _CommandsFacility.SetStatus('P');
+
+  StartTime := Now;
 
   // Reset the folder id
   CurrentFolderID := 0;
@@ -2379,6 +2369,11 @@ begin
       FreeAndNil(dirCache);
     end;
   end;
+
+  // Indicate we are done
+  LoadTimeParse := MilliSecondsBetween(Now, StartTime);
+  _LogFacility.appendMessageIf(inttostr(LoadTimeParse)+'ms',sevHigh);
+  _CommandsFacility.SetStatus('-');
 
   // Focus the root node (to force display of directory content)
   _CommandsFacility.LstIndexFocusRootNode(Root);

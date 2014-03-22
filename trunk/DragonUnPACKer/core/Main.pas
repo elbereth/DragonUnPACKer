@@ -256,10 +256,10 @@ type
     FPreviewBitmap: TImagingBitmap;
     FPreviewImage: TMultiImage;
     isPreviewImage: boolean;
-    verboseLevel: integer;
     AlreadyDragging: boolean;
     bottomHeight: integer;
     RecentFiles: array of String;
+    verboseLevel: integer;
     procedure Open_Hub(src: String);
     procedure setRichEditLineStyle(R: TRichEdit; Line: Integer;
       Style: TFontStyles);
@@ -279,6 +279,7 @@ type
     procedure drawError32(Bitmap: TBitmap);
     procedure addImageToList(file16, file32: string);
     procedure addImageToIconsList(file16, file32: string);
+    function getMinSeverity(): TDupLogMessageSeverity;
   public
     FSE: TDrivers;
     CPlug: TPlugins;
@@ -1214,7 +1215,8 @@ var ext,dstfil,tmpfil,filename,internalformat,tmpdisp: string;
     tmpStm: TMemoryStream;
     outStm, chainedOutStm: TStream;
     chainedConvertImage: TMultiImage;
-    silentExtract, convertInternal: boolean;
+    convertInternal: boolean;
+    StartTime: TDateTime;
 begin
 
   CurrentMenu := Sender as TMenuItem;
@@ -1263,33 +1265,25 @@ begin
   // Some sanity check
   if (plugidx = 0) and not(convertInternal) then
   begin
-    appendLog(DLNGStr('LOG513'));
-    appendLog('Fatal: No plugin / Not internal');
+    writelogVerbose(4,DLNGStr('LOG513'));
+    writelogVerbose(0,'Fatal: No plugin / Not internal');
     exit;
   end;
-
-  if plugidx = 0 then
-    writeLog(ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),'Vampyre Imaging Library'))
-  else
-    writeLog(ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),CListInfo.List[CurrentMenu.Tag].Info.Display));
 
   SaveDialog.FileName := ChangeFileExt(filename,'.'+ext);
 
   if SaveDialog.Execute then
   begin
 
-    tmpfil := getTemporaryDir+getTemporaryFilename(filename);
+    if (plugidx = 0) or convertInternal then
+      writelogVerbose(2,ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),Uppercase(ext)))
+    else
+      writelogVerbose(2,ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),CListInfo.List[plugidx].Info.Display));
 
+    tmpfil := getTemporaryDir+getTemporaryFilename(filename);
     dstfil := SaveDialog.Filename;
 
-    ext := ExtractFileExt(filename);
-    if ext[1] = '.' then
-      ext := RightStr(ext,length(ext)-1);
-    ext := UpperCase(ext);
-
-    silentExtract := getVerboseLevel = 0;
-
-    appendLog(DLNGStr('LOGC11'));
+    writelogVerbose(1,' + '+DLNGStr('LOGC11'));
     tmpStm := TMemoryStream.Create;
     outStm := TFileStream.Create(dstfil,fmCreate or fmShareDenyWrite);
 
@@ -1304,33 +1298,40 @@ begin
     end;
 
     try
-      FSE.ExtractFileToStream(Data.entryIndex,tmpStm,tmpfil,silentExtract);
+      writeLogVerbose(1,' + '+DLNGStr('PRV010')+'...');
+      StartTime := Now;
+      FSE.ExtractFileToStream(Data.entryIndex,tmpStm,tmpfil,true);
       tmpStm.Seek(0,soBeginning);
+      dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
 
       // Only if plugin is needed
       if plugidx > 0 then
       begin
-        writeLogVerbose(1,ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[plugidx].Info.Display));
+        writeLogVerbose(1,' + '+ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[plugidx].Info.Display));
+        StartTime := Now;
         CPlug.convert(CListInfo.List[plugidx].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[plugidx].Info.ID,FSE.Items[Data.entryIndex].Offset,FSE.Items[Data.entryIndex].DataX,FSE.Items[Data.entryIndex].DataY,False);
+        dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
         // Chain to internal convertion
         if convertInternal then
         begin
+          writeLogVerbose(1,' + '+ReplaceValue('%b',DLNGStr('LOGC13'),Uppercase(ext)));
+          StartTime := Now;
           outStm.Seek(0,soBeginning);
           chainedConvertImage.LoadMultiFromStream(outStm);
           chainedConvertImage.ActiveImage := 0;
           chainedConvertImage.SaveToStream(internalformat,chainedOutStm);
+          dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
         end;
       end
       // If internal convertion alone
       else if convertInternal then
       begin
-        tmpdisp := CurrentMenu.Caption;
-        if tmpdisp[1] = '&' then
-          tmpdisp := RightStr(tmpdisp,length(tmpdisp)-1);
-        writeLogVerbose(1,ReplaceValue('%b',DLNGStr('LOGC13'),tmpdisp));
+        writeLogVerbose(1,' + '+ReplaceValue('%b',DLNGStr('LOGC13'),Uppercase(ext)));
+        StartTime := Now;
         chainedConvertImage.LoadMultiFromStream(tmpStm);
         chainedConvertImage.ActiveImage := 0;
         chainedConvertImage.SaveToStream(internalformat,OutStm);
+        dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
       end;
     finally
       FreeAndNil(tmpStm);
@@ -1915,8 +1916,6 @@ begin
   dup5Main.writeLogVerbose(1,' + Vampyre Imaging Library v'+Imaging.GetVersionStr);
   dup5Main.writeLogVerbose(1,' + VirtualTree v'+VTVersion);
 
-  dup5Main.writeLog(DLNGStr('LOG001'));
-
   dup5Main.writeLog(DLNGStr('LOG002'));
 
   FSE := TDrivers.Create(globalLogFacility, globalCommandsFacility);
@@ -2314,7 +2313,7 @@ begin
        ext := UpperCase(ext);
      end;
 
-     // Check if interal conversion is possible
+     // Check if internal conversion is possible
      ConvertInternal := (FindImageFileFormatByExt(ext) <> nil);
 
      // Get all possible output formats from the plugins
@@ -2340,11 +2339,11 @@ begin
      CListInfo.NumFormats := CList.NumFormats;
      for i := 1 to CList.NumFormats do
      begin
-       Test := TMenuItem.Create(Self);
+{       Test := TMenuItem.Create(Self);
        Test.Caption := CList.List[i].Info.Display;
        Test.Tag := i;
        Test.OnClick := Popup_Extrairevers_MODEL.OnClick;
-       Popup_Extrairevers.Add(Test);
+       Popup_Extrairevers.Add(Test);}
 
        CListInfo.List[i] := CList.List[i];
 
@@ -3188,9 +3187,11 @@ begin
 end;
 
 procedure Tdup5Main.setVerboseLevel(verbLevel: integer);
+var minSeverity: TDupLogMessageSeverity;
 begin
 
   verboseLevel := verbLevel;
+  GlobalLogFacility.setRichLogMinLevel(getMinSeverity());
 
 end;
 
@@ -3276,37 +3277,41 @@ begin
         stmBitmap := TMemoryStream.Create;
         try
 
-          dup5Main.appendLogVerbose(2,DLNGStr('PRV010')+'... ');
+          dup5Main.WriteLogVerbose(1,' + '+DLNGStr('PRV010')+'... ');
 
+          StartTime := Now;
           FSE.ExtractFileToStream(Data.entryIndex,stmSource,tmpfil,true);
           stmSource.Seek(0,soBeginning);
+          dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
 
-          dup5Main.appendLogVerbose(2,DLNGStr('PRV009')+'... ');
+          dup5Main.WriteLogVerbose(1,' + '+DLNGStr('PRV009')+'... ');
 
           StartTime := Now;
           foundFormat := Imaging.DetermineStreamFormat(stmSource);
-          dup5Main.appendLogVerbose(2,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
+          dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
 
           if (foundFormat <> '') then
           begin
 
-            dup5Main.appendLogVerbose(2,ReplaceValue('%f',DLNGStr('PRV008'),uppercase(foundFormat)));
-
-            dup5Main.appendLogVerbose(2,'... '+DLNGStr('PRV004')+'...');
+            dup5Main.appendLogVerbose(1,' ('+ReplaceValue('%f',DLNGStr('PRV008'),uppercase(foundFormat))+')');
+            dup5Main.writeLogVerbose(1,' + '+DLNGStr('PRV004')+'... ');
             try
+              StartTime := Now;
               FPreviewImage.LoadMultiFromStream(stmSource);
-              dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV005')+'...');
+              dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
+              dup5Main.WriteLogVerbose(1,' + '+DLNGStr('PRV005')+'...');
+              StartTime := Now;
               FPreviewImage.ActiveImage := 0;
               isPreviewImage := true;
               scrollPreview.Visible := isPreviewImage;
               ImgPreview.Picture.Graphic.Assign(FPreviewImage);
               ImgPreview.Refresh;
-              dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV006'));
+              dup5Main.appendLogVerbose(1,' '+DLNGStr('PRV006')+' ('+inttostr(MilliSecondsBetween(Now, StartTime))+'ms)');
             except
               on E: EImagingError do
               begin
-                dup5Main.writeLogVerbose(0,DLNGStr('PRV002')+' '+E.Message);
-                dup5Main.colorLogVerbose(0,clRed); 
+                dup5Main.writeLogVerbose(4,DLNGStr('PRV002')+' '+E.Message);
+                dup5Main.colorLogVerbose(4,clRed); 
                 isPreviewImage := false;
                 scrollPreview.Visible := isPreviewImage;
                 imgPreview.Refresh;
@@ -3317,7 +3322,7 @@ begin
           else
           begin
 
-            dup5Main.appendLogVerbose(2,DLNGstr('PRV007'));
+            dup5Main.writeLogVerbose(1,' + '+DLNGstr('PRV007'));
 
             CList := CPlug.GetFileConvert(fileName,offset,size,FSE.DriverID,DataX, DataY);
 
@@ -3328,29 +3333,34 @@ begin
               if foundCnv then
               begin
                 cnvInfo := CPlug.getPluginInfo(CList.List[i].Plugin);
-                dup5Main.appendLogVerbose(2,cnvInfo.Name+' v'+cnvInfo.Version);
+                dup5Main.appendLogVerbose(1,cnvInfo.Name+' v'+cnvInfo.Version);
                 stmSource.Seek(0,soBeginning);
+                dup5Main.writeLogVerbose(1,' + '+DLNGstr('LOGC15'));
                 if CPlug.Convert(CList.List[i].Plugin,stmSource,stmBitmap,filename,FSE.DriverID,CList.List[i].Info.ID,offset,DataX,DataY,true) then
                 begin
                   stmBitmap.Seek(0,soBeginning);
+                  dup5Main.appendLogVerbose(1,' '+inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
 
                 try
-                  dup5Main.appendLogVerbose(2,'... '+DLNGStr('PRV004')+'...');
+                  dup5Main.writeLogVerbose(1,' + '+DLNGStr('PRV004')+'... ');
+                  StartTime := Now;
                   FPreviewImage.LoadMultiFromStream(stmBitmap);
-                  dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV005')+'...');
+                  dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
+                  dup5Main.writeLogVerbose(1,' + '+DLNGStr('PRV005')+'... ');
+                  StartTime := Now;
                   FPreviewImage.ActiveImage := 0;
                   isPreviewImage := true;
                   ImgPreview.Picture.Graphic.Assign(FPreviewImage);
                   scrollPreview.Visible := isPreviewImage;
                   ImgPreview.Refresh;
-                  dup5Main.appendLogVerbose(2,' '+DLNGStr('PRV006'));
+                  dup5Main.appendLogVerbose(1,' '+DLNGStr('PRV006')+' ('+inttostr(MilliSecondsBetween(Now, StartTime))+'ms)');
 
                   break;
                 except
                   on E: EImagingError do
                   begin
-                    dup5Main.writeLogVerbose(0,DLNGStr('PRV002')+' '+E.Message);
-                    dup5Main.colorLogVerbose(0,clRed);
+                    dup5Main.writeLogVerbose(4,DLNGStr('PRV002')+' '+E.Message);
+                    dup5Main.colorLogVerbose(4,clRed);
                     isPreviewImage := false;
                     scrollPreview.Visible := isPreviewImage;
                     imgPreview.Refresh;
@@ -3362,7 +3372,7 @@ begin
 
             if not(foundCnv) then
             begin
-              dup5Main.appendLogVerbose(2,DLNGStr('PRV001'));
+              dup5Main.writeLogVerbose(1,' = '+DLNGStr('PRV001'));
               isPreviewImage := false;
               scrollPreview.Visible := isPreviewImage;
               imgPreview.Refresh;
@@ -3372,12 +3382,12 @@ begin
         except
           on E: Exception do
           begin
-            writeLogVerbose(0,DLNGStr('ERR200'));
-            colorLogVerbose(0,clRed);
-            writeLogVerbose(2,DLNGStr('ERR202')+' '+E.ClassName);
-            colorLogVerbose(2,clRed);
-            writeLogVerbose(2,DLNGStr('ERR203')+' '+E.Message);
-            colorLogVerbose(2,clRed);
+            writeLogVerbose(4,DLNGStr('ERR200'));
+            colorLogVerbose(4,clRed);
+            writeLogVerbose(4,DLNGStr('ERR202')+' '+E.ClassName);
+            colorLogVerbose(4,clRed);
+            writeLogVerbose(4,DLNGStr('ERR203')+' '+E.Message);
+            colorLogVerbose(4,clRed);
           end;
         end;
         if Assigned(stmSource) then
@@ -3387,12 +3397,12 @@ begin
           except
             on E: Exception do
             begin
-              writeLogVerbose(0,DLNGStr('ERR200'));
-              colorLogVerbose(0,clRed);
-              writeLogVerbose(2,DLNGStr('ERR202')+' '+E.ClassName);
-              colorLogVerbose(2,clRed);
-              writeLogVerbose(2,DLNGStr('ERR203')+' '+E.Message);
-              colorLogVerbose(2,clRed);
+              writeLogVerbose(4,DLNGStr('ERR200'));
+              colorLogVerbose(4,clRed);
+              writeLogVerbose(4,DLNGStr('ERR202')+' '+E.ClassName);
+              colorLogVerbose(4,clRed);
+              writeLogVerbose(4,DLNGStr('ERR203')+' '+E.Message);
+              colorLogVerbose(4,clRed);
             end;
           end;
         end;
@@ -4027,11 +4037,11 @@ procedure Tdup5Main.loadTheme(themename: string);
 var themepath, themefile16, themefile32: String;
     Rec : TSearchRec;
     themefiles16, themefiles32: TStringList;
-    imgidx, x: integer;
+    imgidx, x, numIcons, numIconsFound: integer;
     ThemeInfo: TdupThemeInfo;
 begin
 
-  writeLogVerbose(1,'Loading theme: '+themename);
+  writeLogVerbose(2,ReplaceValue('%t',DLNGStr('LOG020'),themename));
 
   // Get Theme info (and validity)
   ThemeInfo := GetThemeInfo(themename);
@@ -4046,7 +4056,7 @@ begin
     imgTheme16.Clear;
     imgTheme32.Clear;
 
-    WriteLogVerbose(0,'+ Loading the menu/toolbar icons:');
+    WriteLogVerbose(1,' + '+DLNGStr('LOG021'));
 
     // Initialize list of files
     themefiles16 := TStringList.Create;
@@ -4054,11 +4064,12 @@ begin
     try
 
       // Retrieve all 16x16 images in the theme folder
+      writeLogVerbose(0,' +-- Parsing '+themepath + '16x16\*-*.*:');
       if FindFirst(themepath + '16x16\*-*.*', faAnyFile - faDirectory, Rec) = 0 then
       try
         repeat
           themefiles16.Add(Rec.Name);
-          writeLogVerbose(0,'16x16 Candidate Found ('+Rec.name+')');
+          writeLogVerbose(0,' +-+ 16x16 Candidate Found ('+Rec.name+')');
         until FindNext(Rec) <> 0;
       finally
         FindClose(Rec) ;
@@ -4068,11 +4079,12 @@ begin
       themefiles16.Sort;
 
       // Retrieve all 32x32 images in the theme folder
+      writeLogVerbose(0,' +-- Parsing '+themepath + '32x32\*-*.*:');
       if FindFirst(themepath + '32x32\*-*.*', faAnyFile - faDirectory, Rec) = 0 then
       try
         repeat
           themefiles32.Add(Rec.Name);
-          writeLogVerbose(0,'32x32 Candidate Found ('+Rec.name+')');
+          writeLogVerbose(0,' +-+ 32x32 Candidate Found ('+Rec.name+')');
         until FindNext(Rec) <> 0;
       finally
         FindClose(Rec) ;
@@ -4080,13 +4092,16 @@ begin
 
       // Sort the list for faster processing afterwards
       themefiles32.Sort;
+      numIconsFound := themefiles16.Count + themefiles32.Count;
+      NumIcons := 0;
 
       // For each image index, find the matching file in each theme sub-folder
       // Image index is the value before the first '-' in the filename
+      writeLogVerbose(0,' +-- Indexing icons (Assigning):');
       for imgidx := 0 to 30 do
       begin
 
-        writeLogVerbose(0,'-- Icon '+inttostr(imgidx));
+        writeLogVerbose(0,' +-+ Icon '+inttostr(imgidx));
 
         // By default consider there is no file
         themefile16 := '';
@@ -4100,6 +4115,7 @@ begin
               appendlogVerbose(0,' [16x16 = '+themefiles16.Strings[x]+']');
               themefile16 := themepath+'16x16\'+themefiles16.Strings[x];
               themefiles16.Delete(x);
+              inc(NumIcons);
               break;
             end;
           except
@@ -4128,6 +4144,7 @@ begin
               appendlogVerbose(0,' [32x32 = '+themefiles32.Strings[x]+']');
               themefile32 := themepath+'32x32\'+themefiles32.Strings[x];
               themefiles32.Delete(x);
+              inc(NumIcons);
               break;
             end;
           except
@@ -4149,17 +4166,20 @@ begin
 
       end;
 
+      WriteLogVerbose(1,' += '+ReplaceValue('%a',ReplaceValue('%i',DLNGStr('LOG023'),inttostr(numIconsFound)),inttostr(numIcons)));
+
       //*** File types icons ***//
-      WriteLogVerbose(0,'+ Loading the file type icons:');
+      WriteLogVerbose(1,' + '+DLNGStr('LOG022'));
       themefiles16.Clear;
       themefiles32.Clear;
 
       // Retrieve all 16x16 images in the theme folder
+      writeLogVerbose(0,' +-- Parsing '+themepath + '16x16\Types\*-*.*:');
       if FindFirst(themepath + '16x16\Types\*-*.*', faAnyFile - faDirectory, Rec) = 0 then
       try
         repeat
           themefiles16.Add(Rec.Name);
-          writeLogVerbose(0,'16x16 Icon Candidate Found ('+Rec.name+')');
+          writeLogVerbose(0,' +-+ 16x16 Icon Candidate Found ('+Rec.name+')');
         until FindNext(Rec) <> 0;
       finally
         FindClose(Rec) ;
@@ -4169,11 +4189,12 @@ begin
       themefiles16.Sort;
 
       // Retrieve all 32x32 images in the theme folder
+      writeLogVerbose(0,' +-- Parsing '+themepath + '32x32\Types\*-*.*:');
       if FindFirst(themepath + '32x32\Types\*-*.*', faAnyFile - faDirectory, Rec) = 0 then
       try
         repeat
           themefiles32.Add(Rec.Name);
-          writeLogVerbose(0,'32x32 Icon Candidate Found ('+Rec.name+')');
+          writeLogVerbose(0,' +-+ 32x32 Icon Candidate Found ('+Rec.name+')');
         until FindNext(Rec) <> 0;
       finally
         FindClose(Rec) ;
@@ -4181,13 +4202,16 @@ begin
 
       // Sort the list for faster processing afterwards
       themefiles32.Sort;
+      numIconsFound := themefiles16.Count + themefiles32.Count;
+      NumIcons := 0;
 
       // For each image index, find the matching file in each theme sub-folder
       // Image index is the value before the first '-' in the filename
+      writeLogVerbose(0,' +-- Indexing icons (Assigning):');
       for imgidx := 0 to 22 do
       begin
 
-        writeLogVerbose(0,'-- File Type Icon '+inttostr(imgidx));
+        writeLogVerbose(0,' +-+  File Type Icon '+inttostr(imgidx));
 
         // By default consider there is no file
         themefile16 := '';
@@ -4201,6 +4225,7 @@ begin
               appendlogVerbose(0,' [16x16 = '+themefiles16.Strings[x]+']');
               themefile16 := themepath+'16x16\Types\'+themefiles16.Strings[x];
               themefiles16.Delete(x);
+              inc(NumIcons);
               break;
             end;
           except
@@ -4229,6 +4254,7 @@ begin
               appendlogVerbose(0,' [32x32 = '+themefiles32.Strings[x]+']');
               themefile32 := themepath+'32x32\Types\'+themefiles32.Strings[x];
               themefiles32.Delete(x);
+              inc(NumIcons);
               break;
             end;
           except
@@ -4249,12 +4275,15 @@ begin
         addImageToIconsList(themefile16,themefile32);
 
       end;
+
+      WriteLogVerbose(1,' += '+ReplaceValue('%a',ReplaceValue('%i',DLNGStr('LOG023'),inttostr(numIconsFound)),inttostr(numIcons)));
+
     finally
       FreeAndNil(themefiles16);
       FreeAndNil(themefiles32);
     end;
 
-    WriteLogVerbose(0,'= Done ('+ThemeInfo.Name+')');
+    WriteLogVerbose(2,' = '+ThemeInfo.Name);
   end;
 
 end;
@@ -4306,7 +4335,21 @@ procedure Tdup5Main.setLogFacility(LogFacility: TDupLog);
 begin
 
   globalLogFacility := LogFacility;
-  globalLogFacility.enableLogIntoRichEdit(richLog);
+  globalLogFacility.enableLogIntoRichEdit(richLog,getMinSeverity());
+
+end;
+
+function Tdup5Main.getMinSeverity(): TDupLogMessageSeverity;
+begin
+
+  case verboseLevel of
+    0: result := sevHigh;
+    1: result := sevMedium;
+    2: result := sevLow;
+    3: result := sevDebug;
+  else
+    result := sevError;
+  end;
 
 end;
 

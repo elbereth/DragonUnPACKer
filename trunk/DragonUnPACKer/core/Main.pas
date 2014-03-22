@@ -1208,7 +1208,7 @@ begin
 end;
 
 procedure Tdup5Main.Popup_Extrairevers_MODELClick(Sender: TObject);
-var ext,dstfil,tmpfil,filename,internalformat,tmpdisp: string;
+var ext,dstfil,tmpfil,filename,internalformat: string;
     plugidx,internalformatidx: integer;
     CurrentMenu: TMenuItem;
     Data: pvirtualTreeData;
@@ -1276,9 +1276,9 @@ begin
   begin
 
     if (plugidx = 0) or convertInternal then
-      writelogVerbose(2,ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),Uppercase(ext)))
+      writelogVerbose(3,ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),Uppercase(ext)))
     else
-      writelogVerbose(2,ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),CListInfo.List[plugidx].Info.Display));
+      writelogVerbose(3,ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),CListInfo.List[plugidx].Info.Display));
 
     tmpfil := getTemporaryDir+getTemporaryFilename(filename);
     dstfil := SaveDialog.Filename;
@@ -1383,7 +1383,7 @@ begin
       Data := lstContent.GetNodeData(Node);
       Filename := FSE.Items[Data.entryIndex].FileName;
       dstfil := outputdir + fileName;
-      FSE.ExtractFile(data.entryIndex,dstfil,true);
+      FSE.ExtractFile(data.entryIndex,dstfil,false);
       Inc(CurFiles);
       perc := Round((CurFiles / lstContent.SelectedCount)*100);
       if (perc >= numper+5) then
@@ -1408,6 +1408,7 @@ var x,perc,oldperc,plugidx,internalformatidx: integer;
     tmpStm: TMemoryStream;
     outStm, chainedOutStm: TStream;
     chainedConvertImage: TMultiImage;
+    StartTime: TDateTime;
 begin
 
   CurrentMenu := Sender as TMenuItem;
@@ -1467,17 +1468,16 @@ begin
     // Some sanity check
     if (plugidx = 0) and not(convertInternal) then
     begin
-      appendLog(DLNGStr('LOG513'));
-      appendLog('Fatal: No plugin / Not internal');
+      writelogVerbose(4,DLNGStr('LOG513'));
+      writelogVerbose(0,'Fatal: No plugin / Not internal');
       exit;
     end;
 
-    tmpdisp := CurrentMenu.Caption;
-    if tmpdisp[1] = '&' then
-      tmpdisp := RightStr(tmpdisp,length(tmpdisp)-1);
-    writeLog(ReplaceValue('%b',DLNGStr('LOGC14'),tmpdisp));
-
-    appendLogVerbose(2,DLNGStr('LOGC11'));
+    if (plugidx = 0) or convertInternal then
+      writelogVerbose(3,ReplaceValue('%b',DLNGStr('LOGC14'),Uppercase(ext)))
+    else
+      writelogVerbose(3,ReplaceValue('%b',DLNGStr('LOGC14'),CListInfo.List[plugidx].Info.Display));
+    writeLogVerbose(1,' + '+DLNGStr('LOGC11'));
 
     while (Node <> Nil) do
     begin
@@ -1500,37 +1500,48 @@ begin
       end;
 
       try
-        FSE.ExtractFileToStream(Data.entryIndex,tmpStm,tmpfil,false);
+        writelogVerbose(2,ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),Uppercase(ext)));
+        writeLogVerbose(1,' + '+DLNGStr('PRV010')+'... ');
+        StartTime := Now;
+        FSE.ExtractFileToStream(Data.entryIndex,tmpStm,tmpfil,true);
         tmpStm.Seek(0,soBeginning);
-        appendLog(DLNGStr('LOGC15'));
+        dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
 
         // Only if plugin is needed
         if plugidx > 0 then
         begin
+          writeLogVerbose(1,' + '+ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[plugidx].Info.Display));
+          StartTime := Now;
           CPlug.convert(CListInfo.List[plugidx].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[plugidx].Info.ID,FSE.Items[Data.entryIndex].Offset,FSE.Items[Data.entryIndex].DataX,FSE.Items[Data.entryIndex].DataY,Silent);
-          // Chain to internal convertion
+          dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
+        // Chain to internal convertion
           if convertInternal then
           begin
+            writeLogVerbose(1,' + '+ReplaceValue('%b',DLNGStr('LOGC13'),Uppercase(ext)));
+            StartTime := Now;
             outStm.Seek(0,soBeginning);
             chainedConvertImage.LoadMultiFromStream(outStm);
             chainedConvertImage.ActiveImage := 0;
             chainedConvertImage.SaveToStream(internalformat,chainedOutStm);
+            dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
           end;
         end
         // If internal convertion alone
         else if convertInternal then
         begin
+          writeLogVerbose(1,' + '+ReplaceValue('%b',DLNGStr('LOGC13'),Uppercase(ext)));
+          StartTime := Now;
           chainedConvertImage.LoadMultiFromStream(tmpStm);
           chainedConvertImage.ActiveImage := 0;
           chainedConvertImage.SaveToStream(internalformat,OutStm);
+          dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
         end;
       except
         on E: Exception do
         begin
-          appendLog(DLNGStr('LOG513'));
-          writeLog(DLNGStr('ERR200')+' '+E.ClassName+' - '+E.Message);
-          colorLog(clRed);
-          styleLog([fsBold]);
+          writeLogVerbose(4,DLNGStr('ERR200')+' '+E.ClassName+' - '+E.Message);
+          colorLogVerbose(4,clRed);
+          styleLogVerbose(4,[fsBold]);
         end;
       end;
       FreeAndNil(tmpStm);
@@ -3187,7 +3198,6 @@ begin
 end;
 
 procedure Tdup5Main.setVerboseLevel(verbLevel: integer);
-var minSeverity: TDupLogMessageSeverity;
 begin
 
   verboseLevel := verbLevel;
@@ -3734,12 +3744,11 @@ begin
   Reg := TRegistry.Create;
   Try
     Reg.RootKey := HKEY_CURRENT_USER;
+    ShowHidden := False;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\StartUp',True) then
     begin
       if Reg.ValueExists('DisplayXYInContent') then
-        ShowHidden := Reg.ReadBool('DisplayXYInContent')
-      else
-        ShowHidden := False;
+        ShowHidden := Reg.ReadBool('DisplayXYInContent');
       Reg.CloseKey;
     end;
     if ShowHidden then

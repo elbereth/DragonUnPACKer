@@ -3,7 +3,7 @@
 // =============================================================================
 //  This file was created automatically from:
 //  french.ls
-//  With Dragon Language Compiler v4.1.1 
+//  With Dragon Language Compiler v4.1.2 
 //
 // DO NOT CHANGE THIS FILE MANUALLY, EDIT THE SOURCE FILE AND RECOMPILE IT WITH
 // DLOOKC <file> /IN
@@ -319,6 +319,8 @@ begin
     result := 'Moyen - Affichage de plus d''informations '
   else if sch = 'OPT852' then
     result := 'Haut - Affichage du maximum d''informations'
+  else if sch = 'OPT853' then
+    result := 'Débogage'
   else if sch = 'OPT900' then
     result := 'Prévisualisation'
   else if sch = 'OPT910' then
@@ -671,30 +673,12 @@ begin
     result := 'Extraction des fichiers supplémentaires du modèle...'
   else if sch = 'LST509' then
     result := 'Terminé!'
-  else if sch = '11TH01' then
-    result := 'Pour activer le support des fichiers du jeu The 11th Hour, l''extension a besoin de copier deux fichiers que vous pouvez trouver dans le répertoire GROOVIE du CDRom de The 11th Hour.%n%nVoulez-vous continuer ?'
-  else if sch = '11TH02' then
-    result := 'Selectionnez le fichier %f de 11th Hour...'
-  else if sch = '11TH03' then
-    result := 'L''extension est désormais activée.%nMaintenant vous pouvez ouvrir les fichiers GJD de The 11th Hour!'
-  else if sch = '11TH04' then
-    result := 'La désactivation du support The 11th Hour va supprimer les fichiers suivants:%n%n%a%n%b%n%nVous pourrez les recréer plus tard en réactivant le support The 11th Hour.%n%nEtes-vous sur de vouloir continuer?'
   else if sch = '11TH05' then
-    result := 'Statut de l''extension: %s%n(Activée signifie que vous pouvez ouvrir des fichiers GJD)%n(Désactivée signifie que vous devez importer les fichiers GJD.GJD et DIR.RL)'
+    result := 'Statut de l''extension: %s%n(Activée signifie que vous pouvez ouvrir des fichiers GJD de The 11th Hour)%n(Désactivée signifie que vous devez importer les fichiers GJD.GJD et DIR.RL, voir documentation)'
   else if sch = '11TH06' then
     result := 'Désactivée'
   else if sch = '11TH07' then
     result := 'Activée'
-  else if sch = '11TH10' then
-    result := 'Configuration de l''extension pour le support de The 11th Hour'
-  else if sch = '11TH11' then
-    result := 'Activer'
-  else if sch = '11TH12' then
-    result := 'Désactiver'
-  else if sch = '11TH13' then
-    result := 'Statut actuel:'
-  else if sch = '11TH14' then
-    result := 'Support The 11th Hour:'
   else if sch = 'DUT100' then
     result := 'Configuration'
   else if sch = 'DUT101' then
@@ -751,8 +735,6 @@ begin
     result := 'Texture (%e)'
   else if sch = 'EXTXT' then
     result := 'Document Texte'
-  else if sch = 'LOG001' then
-    result := 'Initialisation des extensions:'
   else if sch = 'LOG002' then
     result := 'Chargement des extensions Pilotes...'
   else if sch = 'LOG003' then
@@ -763,6 +745,14 @@ begin
     result := 'Librairies utilisées:'
   else if sch = 'LOG009' then
     result := '%p extension(s)'
+  else if sch = 'LOG020' then
+    result := 'Chargement du thème: %t'
+  else if sch = 'LOG021' then
+    result := 'Récupération des icônes du menu et de la barre d''outils'
+  else if sch = 'LOG022' then
+    result := 'Récupération des icônes de types de fichiers'
+  else if sch = 'LOG023' then
+    result := '%i icône(s) trouvées / %a assignée(s)'
   else if sch = 'LOG101' then
     result := 'Ouverture du fichier "%f":'
   else if sch = 'LOG102' then
@@ -838,7 +828,7 @@ begin
   else if sch = 'PRV008' then
     result := 'Format: %f'
   else if sch = 'PRV009' then
-    result := 'Detection'
+    result := 'Détection'
   else if sch = 'PRV010' then
     result := 'Extraction'
   else if sch = 'ERR000' then

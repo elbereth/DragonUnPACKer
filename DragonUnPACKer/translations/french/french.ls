@@ -1,8 +1,8 @@
 # Language Source File (pour DLNGC v4.0)
 # ============================================================================
-#  Programme: Dragon UnPACKer v5.6.2 Exedra-Chac
+#  Programme: Dragon UnPACKer v5.7.0 Beta
 #     Langue: English
-#    Version: 15
+#    Version: 16
 #     Auteur: Alex Devilliers
 # ============================================================================
 #
@@ -28,6 +28,10 @@
 # ============================================================================
 # Informations sur cette traduction
 # ============================================================================
+#
+# version 16:
+# Ajout de OPT853, LOG020, LOG021, LOG022, LOG023
+# Suppression de LOG001, 11TH01, 11TH02, 11TH03, 11TH04, 11TH10, 11TH11, 11TH12, 11TH13, 11TH14
 #
 # version 15:
 # Ajout de LSTCP5, LSTCP6, OPT040, OPT041 et OPT129
@@ -313,6 +317,7 @@ OPT841=Sélectionnez le niveau de détail pour le journal d'exécution:
 OPT850=Bas - Aucune information supplémentaire
 OPT851=Moyen - Affichage de plus d'informations 
 OPT852=Haut - Affichage du maximum d'informations
+OPT853=Débogage
 OPT900=Prévisualisation
 OPT910=Options de la prévisualisation
 OPT911=Activer la prévisualisation
@@ -494,18 +499,9 @@ LST507=Sauvegarde du fichier de liste...
 LST508=Extraction des fichiers supplémentaires du modèle...
 LST509=Terminé!
 
-11TH01=Pour activer le support des fichiers du jeu The 11th Hour, l'extension a besoin de copier deux fichiers que vous pouvez trouver dans le répertoire GROOVIE du CDRom de The 11th Hour.%n%nVoulez-vous continuer ?
-11TH02=Selectionnez le fichier %f de 11th Hour...
-11TH03=L'extension est désormais activée.%nMaintenant vous pouvez ouvrir les fichiers GJD de The 11th Hour!
-11TH04=La désactivation du support The 11th Hour va supprimer les fichiers suivants:%n%n%a%n%b%n%nVous pourrez les recréer plus tard en réactivant le support The 11th Hour.%n%nEtes-vous sur de vouloir continuer?
-11TH05=Statut de l'extension: %s%n(Activée signifie que vous pouvez ouvrir des fichiers GJD)%n(Désactivée signifie que vous devez importer les fichiers GJD.GJD et DIR.RL)
+11TH05=Statut de l'extension: %s%n(Activée signifie que vous pouvez ouvrir des fichiers GJD de The 11th Hour)%n(Désactivée signifie que vous devez importer les fichiers GJD.GJD et DIR.RL, voir documentation)
 11TH06=Désactivée
 11TH07=Activée
-11TH10=Configuration de l'extension pour le support de The 11th Hour
-11TH11=Activer
-11TH12=Désactiver
-11TH13=Statut actuel:
-11TH14=Support The 11th Hour:
 
 DUT100=Configuration
 DUT101=Librairie
@@ -537,12 +533,15 @@ EXSPR=Sprite
 EXTEX=Texture (%e)
 EXTXT=Document Texte
 
-LOG001=Initialisation des extensions:
 LOG002=Chargement des extensions Pilotes...
 LOG003=Chargement des extensions Convertions...
 LOG004=Chargement des extensions HyperRipper...
 LOG005=Librairies utilisées:
 LOG009=%p extension(s)
+LOG020=Chargement du thème: %t
+LOG021=Récupération des icônes du menu et de la barre d'outils
+LOG022=Récupération des icônes de types de fichiers
+LOG023=%i icône(s) trouvées / %a assignée(s)
 LOG101=Ouverture du fichier "%f":
 LOG102=Format de fichier non reconnu!
 LOG103=Démarrage de HyperRipper...
@@ -581,7 +580,7 @@ PRV005=Affichage
 PRV006=OK
 PRV007=Extension de conversion:
 PRV008=Format: %f
-PRV009=Detection
+PRV009=Détection
 PRV010=Extraction
 
 ERR000=Erreur

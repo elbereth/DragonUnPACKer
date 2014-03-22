@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-#  Program: Dragon UnPACKer v5.6.2
+#  Program: Dragon UnPACKer v5.7.0 Beta
 # Language: English
-#  Version: 15
+#  Version: 16
 #   Author: Alex Devilliers
 # ============================================================================
 #
@@ -27,6 +27,10 @@
 # ============================================================================
 # Informations about this translation
 # ============================================================================
+#
+# version 16:
+# Added OPT853, LOG020, LOG021, LOG022, LOG023
+# Removed LOG001, 11TH01, 11TH02, 11TH03, 11TH04, 11TH10, 11TH11, 11TH12, 11TH13, 11TH14
 #
 # version 15:
 # Added LSTCP5, LSTCP6, OPT040, OPT041 and OPT129
@@ -156,9 +160,10 @@ URL = http://www.dragonunpacker.com
 # Dragon UnPACKer v5.5.1 Beta    UP      13
 # Dragon UnPACKer v5.6.1         UP      14
 # Dragon UnPACKer v5.6.2         UP      15
+# Dragon UnPACKer v5.7.0 Beta    UP      16
 #
 ProgramID = UP
-ProgramVer = 15
+ProgramVer = 16
 #
 # + IconFile +
 # Path & FileName of the "icon" displayed with language name (ex: c:\test.bmp)
@@ -366,6 +371,7 @@ OPT841=Select the amount of informations to display :
 OPT850=Low - Scarce information
 OPT851=Medium - A good amount of information
 OPT852=High - A lot of information!
+OPT853=Debug
 OPT900=Preview
 OPT910=Preview options
 OPT911=Enable preview
@@ -547,18 +553,9 @@ LST507=Saving file list...
 LST508=Extracting companion files from template...
 LST509=Done!
 
-11TH01=To activate support for 11th Hour game files the plugin needs to copy two files that can be found in the GROOVIE directory of the CDRom of The 11th Hour.%n%nDo you want to continue ?
-11TH02=Select the %f file from 11th Hour...
-11TH03=The plugin is now activated.%nNow you can open 11th Hour GJD files!
-11TH04=Disabling 11th Hour support will remove the following files:%n%n%a%n%b%n%nYou will be able to recreate them by enabling 11th Hour support again later using your 11th Hour CDRom.%n%nAre you sure you want to continue?
-11TH05=Plugin status: %s%n(Enabled means you can open files)%n(Disabled means you need to import GJD.GJD and DIR.RL)
+11TH05=Plugin status: %s%n(Enabled means you can open .GJD files from The 11th Hour)%n(Disabled means you need to import GJD.GJD and DIR.RL)
 11TH06=Disabled
 11TH07=Enabled
-11TH10=11th Hour plugin configuration
-11TH11=Enable
-11TH12=Disable
-11TH13=Current status:
-11TH14=The 11th Hour support:
 
 DUT100=Configuration
 DUT101=Library
@@ -590,12 +587,15 @@ EXSPR=Sprite
 EXTEX=Texture (%e)
 EXTXT=Text Document
 
-LOG001=Initializing plugins:
 LOG002=Loading Drivers plugins...
 LOG003=Loading Convert plugins...
 LOG004=Loading HyperRipper plugins...
 LOG005=Libraries used:
 LOG009=%p plugin(s)
+LOG020=Loading theme: %t
+LOG021=Retrieving menu and toolbar icons
+LOG022=Retrieving file type icons
+LOG023=%i icon(s) found / %a assigned
 LOG101=Opening "%f" file:
 LOG102=File format not recognized!
 LOG103=Starting HyperRipper...

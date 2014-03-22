@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    21/03/2014
+by Alexande "Elbereth" Devilliers                                    22/03/2014
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,8 +10,8 @@ by Alexande "Elbereth" Devilliers                                    21/03/2014
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.7.0.282
-SVN Release 678 [Unreleased]
+Version 5.7.0.283
+SVN Release 681 [Unreleased]
 
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
@@ -44,9 +44,6 @@ SVN Release 678 [Unreleased]
    This is still work in progress but is now used everywhere.
  + Revamped the old "Look" functionality to a much easier to maintain and
    modify "Theme" (files in a folder for the moment).
-   Current SVN version is transitional and the new folder structure does not
-   exists (which means the Nightly build will be icon less for the menu,
-   po-pups and tool bar).
  + Added chained conversion from plug-ins to internal Vampyre Imaging Library.
    This allows for the plug-ins to just convert to .DDS for example and the
    chaining will also propose BMP, PNG and TGA with no additional work from

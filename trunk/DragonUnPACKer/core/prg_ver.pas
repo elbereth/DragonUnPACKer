@@ -25,11 +25,11 @@ function curEdit:string;
 
 const
 //  CurVersion: String = '5.7.0';
-//  CurEdit: String = 'Beta';
+  CurSpecialEdit: String = 'Beta';
   CurURL: String = 'http://www.dragonunpacker.com';
   CurSVNRevision: String = '$Rev$';
   CurSVNDate: String = '$Date$';
-
+  isSpecialBuild: Boolean = False;
 
 implementation
 
@@ -109,8 +109,13 @@ function curEdit:string;
 var lv, editinfo : string;
 begin
 
-  lv := lectureVersion(editInfo);
-  result := editInfo;
+  if isSpecialBuild then
+    result := curSpecialEdit
+  else
+  begin
+    lv := lectureVersion(editInfo);
+    result := editInfo;
+  end;
 
 end;
 

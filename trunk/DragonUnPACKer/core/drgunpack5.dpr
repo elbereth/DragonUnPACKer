@@ -75,9 +75,8 @@ const _DEBUGMODE = FALSE;
 
 var     dupLog: TDupLog;
 
-{$R '*.res'}
+{$R *.res}
 
-{$R 'versioninfo.res' 'versioninfo.rc'}
 {$R 'icones.res' 'icones.rc'}
 {$R 'images.res' 'images.rc'}
 

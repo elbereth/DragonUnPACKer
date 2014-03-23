@@ -24,8 +24,8 @@ function curVersion:string;
 function curEdit:string;
 
 const
-//  CurVersion: String = '5.7.0';
-  CurSpecialEdit: String = 'Beta';
+  CurVersionFallback: String = '?.?.?';
+  CurSpecialEdit: String = 'Missing VersionInfo';
   CurURL: String = 'http://www.dragonunpacker.com';
   CurSVNRevision: String = '$Rev$';
   CurSVNDate: String = '$Date$';
@@ -92,7 +92,10 @@ var lv, editinfo : string;
 begin
 
   lv := lectureVersion(editInfo);
-  result := strtoint(rightstr(lv, length(lv) - posrev('.',lv)));
+  if (lv = '') then
+    result := 0
+  else
+    result := strtoint(rightstr(lv, length(lv) - posrev('.',lv)));
 
 end;
 
@@ -101,7 +104,10 @@ var lv, editinfo : string;
 begin
 
   lv := lectureVersion(editInfo);
-  result := leftstr(lv,posrev('.',lv)-1);
+  if (lv = '') then
+    result := curVersionFallback
+  else
+    result := leftstr(lv,posrev('.',lv)-1);
 
 end;
 
@@ -114,7 +120,10 @@ begin
   else
   begin
     lv := lectureVersion(editInfo);
-    result := editInfo;
+    if editInfo = '' then
+      result := curSpecialEdit
+    else
+      result := editInfo;
   end;
 
 end;

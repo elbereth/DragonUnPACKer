@@ -224,44 +224,26 @@ begin
   // Default result if True (everything OK)
   result := True;
 
-  if _DEBUGMODE then
-    dupLog.AddMessage('Sanity check - CheckLanguage');
+  dupLog.AddMessage(' + Sanity check - CheckLanguage',sevDebug);
 
   // If the CheckLanguage returns false
   if Not(CheckLanguage) then
   begin
 
-    if _DEBUGMODE then
-      dupLog.AddMessage('Missing language setting --> Creating select language form');
+    dupLog.AddMessage(' = Missing language setting --> Creating select language form',sevDebug);
 
     // Create the select language form
     with TfrmSelectLanguage.Create(nil) do
     try
-      if _DEBUGMODE then
-        dupLog.AddMessage('Displaying Select Language form');
+      dupLog.AddMessage(' + Displaying Select Language form',sevDebug);
       // Display the form as modal
       ShowModal;
     finally
-      if _DEBUGMODE then
-        dupLog.AddMessage('Freeing Select Language form');
+      dupLog.AddMessage(' + Freeing Select Language form',sevDebug);
       // Free the form, we don't need it anymore
       free;
     end;
 
-  end;
-
-  if _DEBUGMODE then
-    dupLog.AddMessage('Sanity Check - LOOK file ('+ExtractFilePath(Application.ExeName)+'data\default.dulk)');
-
-  // If the default LOOK file do not exists
-  // Return false because this is a needed file.
-  if Not(FileExists(ExtractFilePath(Application.ExeName)+'data\default.dulk')) then
-  begin
-    if _DEBUGMODE then
-      dupLog.AddMessage('Missing LOOK file --> FATAL ERROR');
-    // Displays an english error message, cannot send translated message because the language files are not loaded yet
-    MessageDlg('Needed file not found:'+#10+'\data\default.dulk'+#10+#10+'Please reinstall Dragon UnPACKer 5.',mtError,[mbOk],0);
-    result := False;
   end;
 
 end;
@@ -280,9 +262,7 @@ begin
   dupLog := TDupLog.Create();
 
   if _DEBUGMODE then
-  begin
     dupLog.enableLogIntoFile(Application.ExeName+'.debug.'+FormatDateTime('yyyymmddhhnnsszzz',Now)+'.log');
-  end;
 
   compileTime := GetImageLinkDateTime(Application.ExeName);
   if CurEdit = '' then
@@ -296,8 +276,7 @@ begin
   hProcess := OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessID() );
   SetProcessAffinityMask(hProcess,1);}
 
-  if _DEBUGMODE then
-    dupLog.AddMessage('Checking if Dragon UnPACKer is already running...');
+  dupLog.AddMessage('Checking if Dragon UnPACKer is already running...',sevDebug);
 
   // If only one instance can be run at once, search if a Dragon UnPACKer 5 windows exists
   // and retrieve the handle
@@ -306,101 +285,82 @@ begin
   else
     hwnd := 0;
 
-  if _DEBUGMODE then
-    dupLog.AddMessage('hwnd = '+inttostr(hwnd));
+  dupLog.AddMessage(' = hwnd: '+inttostr(hwnd),sevDebug);
 
   // If the windows was found
   // We send the parameters to the existing dragon unpacker by posting
   // messages to the handle
   if hwnd<>0 then
   begin
-    if _DEBUGMODE then
-      dupLog.AddMessage('Existing window was found so we send parameter to the existing instance');
-
-    if _DEBUGMODE then
-      dupLog.AddMessage('ParamStr(1)='+ParamStr(1));
+    dupLog.AddMessage(' + Existing window was found so we send parameter to the existing instance',sevDebug);
+    dupLog.AddMessage(' + ParamStr(1)='+ParamStr(1),sevDebug);
 
     for x:=1 to length(ParamStr(1)) do
     begin
       PostMessage(hwnd, wm_User, ord(ParamStr(1)[x]), 0);
     end;
     PostMessage(hwnd, wm_User, 0, 0);
-    if _DEBUGMODE then
-      dupLog.AddMessage('PostMessage done');
+    dupLog.AddMessage(' = PostMessage done',sevDebug);
   end
   // If not we create a Mutex and start Dragon UnPACKer
   else begin
 
-    if _DEBUGMODE then
-      dupLog.AddMessage('Create the mutex');
+    dupLog.AddMessage('Create the mutex',sevDebug);
 
     // The Mutex is used by Duppi to check if Dragon UnPACKer is running.
     CreateMutex(nil, False, 'DragonUnPACKer5');
 
-    if _DEBUGMODE then
-      dupLog.AddMessage('Create the Splash screen');
+    dupLog.AddMessage('Create the Splash screen',sevDebug);
 
     // Create the Splash screen
     with TfrmSplash.Create(nil) do
     try
 
-      if _DEBUGMODE then
-        dupLog.AddMessage('Check if the Splash screen should be visible');
+      dupLog.AddMessage(' + Check if the Splash screen should be visible',sevDebug);
 
       // Check if need to display the splash screen
       if CheckByPass then
       begin
-        if _DEBUGMODE then
-          dupLog.AddMessage('Visible := False');
+        dupLog.AddMessage(' = Visible := False',sevDebug);
         Visible := False
       end
       else
       begin
-        if _DEBUGMODE then
-          dupLog.AddMessage('Visible := True');
-
-        if _DEBUGMODE then
-          dupLog.AddMessage('Display special images for WIP/RC/Beta/Alpha');
+        dupLog.AddMessage(' = Visible := True',sevDebug);
+        dupLog.AddMessage('Display special images for WIP/RC/Beta/Alpha',sevDebug);
 
         // Check if need to display WIP/RC/Beta/Alpha image
         If (pos('WIP',CurEdit) > 0) or (pos('SVN',CurEdit) > 0) then
         begin
-          if _DEBUGMODE then
-            dupLog.AddMessage('WIP/SVN detected');
+          dupLog.AddMessage(' + WIP/SVN detected',sevDebug);
           imgWIP.Visible := true;
         end;
         If (pos('RC',CurEdit) > 0) then
         begin
-          if _DEBUGMODE then
-            dupLog.AddMessage('RC detected');
+          dupLog.AddMessage(' + RC detected',sevDebug);
           imgRC.Visible := true;
         end;
         If (pos('Beta',CurEdit) > 0) then
         begin
-          if _DEBUGMODE then
-            dupLog.AddMessage('Beta detected');
+          dupLog.AddMessage(' + Beta detected',sevDebug);
           imgBeta.Visible := true;
         end;
         If (pos('Alpha',CurEdit) > 0) then
         begin
-          if _DEBUGMODE then
-            dupLog.AddMessage('Alpha detected');
+          dupLog.AddMessage(' + Alpha detected',sevDebug);
           imgAlpha.Visible := true;
         end;
 
-        if _DEBUGMODE then
-          dupLog.AddMessage('Showing splash screen');
+        dupLog.AddMessage(' = Showing splash screen',sevDebug);
 
         // Show & Update the splash screen
         Show;
-        if _DEBUGMODE then
-          dupLog.AddMessage('Updating splash screen');
+        dupLog.AddMessage(' = Updating splash screen',sevDebug);
         Update;
 
       end;
 
-      if _DEBUGMODE then
-        dupLog.AddMessage('Execute sanity checks');
+      dupLog.AddMessage('Execute sanity checks',sevDebug);
 
       // Test everything needed to run Dragon UnPACKer is present
       res := DoTest;
@@ -408,49 +368,34 @@ begin
       // If everything is OK
       if res then
       begin
-        if _DEBUGMODE then
-          dupLog.AddMessage('Sanity Checks are OK');
-
-        if _DEBUGMODE then
-          dupLog.AddMessage('Application.Initialize;');
+        dupLog.AddMessage(' = Sanity Checks are OK',sevDebug);
+        dupLog.AddMessage('Application.Initialize;',sevDebug);
         Application.Initialize;
         Application.Title := 'Dragon UnPACKer';
-        if _DEBUGMODE then
-          dupLog.AddMessage('Application.CreateForm(Tdup5Main, dup5Main)');
+        dupLog.AddMessage('Application.CreateForm(Tdup5Main, dup5Main)',sevDebug);
         Application.CreateForm(Tdup5Main, dup5Main);
-  dup5Main.setLogFacility(dupLog);
-
-        if _DEBUGMODE then
-          dupLog.AddMessage('Application.CreateForm(TfrmAbout, frmAbout)');
-  Application.CreateForm(TfrmAbout, frmAbout);
-  if _DEBUGMODE then
-          dupLog.AddMessage('Application.CreateForm(TfrmSearch, frmSearch)');
-  Application.CreateForm(TfrmSearch, frmSearch);
-        if _DEBUGMODE then
-          dupLog.AddMessage('Application.CreateForm(TfrmDrvInfo, frmDrvInfo)');
-  Application.CreateForm(TfrmDrvInfo, frmDrvInfo);
-        if _DEBUGMODE then
-          dupLog.AddMessage('Application.CreateForm(TfrmConfig, frmConfig)');
-  Application.CreateForm(TfrmConfig, frmConfig);
-        if _DEBUGMODE then
-          dupLog.AddMessage('Application.CreateForm(TfrmHyperRipper, frmHyperRipper)');
-  Application.CreateForm(TfrmHyperRipper, frmHyperRipper);
-        if _DEBUGMODE then
-          dupLog.AddMessage('Application.CreateForm(TfrmList, frmList)');
-  Application.CreateForm(TfrmList, frmList);
-        if _DEBUGMODE then
-          dupLog.AddMessage('Application.CreateForm(TfrmError, frmError)');
-  Application.CreateForm(TfrmError, frmError);
-        if _DEBUGMODE then
-          dupLog.AddMessage('Application.CreateForm(TfrmOptMPEGa, frmOptMPEGa)');
-  Application.CreateForm(TfrmOptMPEGa, frmOptMPEGa);
-        if _DEBUGMODE then
-          dupLog.AddMessage('Application.CreateForm(TfrmMsgBox, frmMsgBox)');
-  Application.CreateForm(TfrmMsgBox, frmMsgBox);
-  end;
+        dup5Main.setLogFacility(dupLog);
+        dupLog.AddMessage('Application.CreateForm(TfrmAbout, frmAbout)',sevDebug);
+        Application.CreateForm(TfrmAbout, frmAbout);
+        dupLog.AddMessage('Application.CreateForm(TfrmSearch, frmSearch)',sevDebug);
+        Application.CreateForm(TfrmSearch, frmSearch);
+        dupLog.AddMessage('Application.CreateForm(TfrmDrvInfo, frmDrvInfo)',sevDebug);
+        Application.CreateForm(TfrmDrvInfo, frmDrvInfo);
+        dupLog.AddMessage('Application.CreateForm(TfrmConfig, frmConfig)',sevDebug);
+        Application.CreateForm(TfrmConfig, frmConfig);
+        dupLog.AddMessage('Application.CreateForm(TfrmHyperRipper, frmHyperRipper)',sevDebug);
+        Application.CreateForm(TfrmHyperRipper, frmHyperRipper);
+        dupLog.AddMessage('Application.CreateForm(TfrmList, frmList)',sevDebug);
+        Application.CreateForm(TfrmList, frmList);
+        dupLog.AddMessage('Application.CreateForm(TfrmError, frmError)',sevDebug);
+        Application.CreateForm(TfrmError, frmError);
+        dupLog.AddMessage('Application.CreateForm(TfrmOptMPEGa, frmOptMPEGa)',sevDebug);
+        Application.CreateForm(TfrmOptMPEGa, frmOptMPEGa);
+        dupLog.AddMessage('Application.CreateForm(TfrmMsgBox, frmMsgBox)',sevDebug);
+        Application.CreateForm(TfrmMsgBox, frmMsgBox);
+      end;
     finally
-      if _DEBUGMODE then
-        dupLog.AddMessage('Activate timer to close the Splash screen');
+      dupLog.AddMessage('Activate timer to close the Splash screen',sevDebug);
       // When everything is loaded we start the close timer
       TimerClose.Enabled := true;
     end;
@@ -459,14 +404,12 @@ begin
     if res then
     begin
 
-      if _DEBUGMODE then
-        dupLog.AddMessage('Adding special error handling');
+      dupLog.AddMessage('Adding special error handling',sevDebug);
 
       // Global Error handling
       Application.OnException := frmError.OnAppliException;
 
-      if _DEBUGMODE then
-        dupLog.AddMessage('Run Application');
+      dupLog.AddMessage('Run Application',sevDebug);
 
       // Execute application
       Application.Run;

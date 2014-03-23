@@ -1400,7 +1400,7 @@ end;
 
 procedure Tdup5Main.Popup_ExtraireMulti_MODELClick(Sender: TObject);
 var x,perc,oldperc,plugidx,internalformatidx: integer;
-    tmpfil,dstfil,rep,filename,internalformat,ext,tmpdisp,outputdir: string;
+    tmpfil,dstfil,rep,filename,internalformat,ext,outputdir: string;
     CurrentMenu: TMenuItem;
     Silent,convertInternal: boolean;
     Node: PVirtualNode;

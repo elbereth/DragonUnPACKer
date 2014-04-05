@@ -63,6 +63,7 @@ begin
   imgLstLangue.GetBitmap(0,Icn);
   imgLstLangue.Clear;
   imgLstLangue.Add(Icn,Nil);
+  FreeAndNil(Icn);
   lstLangues.Clear;
   itmx := lstLangues.ItemsEx.Add;
   itmx.Caption := 'Français (French)';
@@ -88,6 +89,7 @@ begin
           Icn.TransparentColor := clBlack;
           Icn.Transparent := True;
           IcnIdx := imgLstLangue.Add(icn,nil);
+          FreeAndNil(Icn);
 
           if IcnIdx <> -1 then
             itmx.ImageIndex := IcnIdx;

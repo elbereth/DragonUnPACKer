@@ -69,7 +69,8 @@ uses
   lib_version in '..\common\lib_version.pas',
   ComCtrls,
   cls_dupcommands in 'cls_dupcommands.pas',
-  lib_pe32 in '..\common\lib_pe32.pas';
+  lib_pe32 in '..\common\lib_pe32.pas',
+  spec_DUDI in '..\common\spec_DUDI.pas';
 
 const _DEBUGMODE = FALSE;
 

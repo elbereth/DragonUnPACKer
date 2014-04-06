@@ -205,6 +205,7 @@ type FSE = ^element;
     30112        Really fixed the extraction of files (and not only EVE Online .STUFF)
     30113        Merged The 11th Hour .GJD support (drv_11th is not needed anymore)
                  Added The 7th Guest .GJD support (drv_11th never worked)...
+    30114        Added sanity checks to Terminal Velocity .POD support
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -226,7 +227,7 @@ type FSE = ^element;
 const
   DUDI_VERSION = 6;
   DUDI_VERSION_COMPATIBLE = 6;
-  DRIVER_VERSION = 30113;
+  DRIVER_VERSION = 30114;
   DUP_VERSION = 57010;
   SVN_REVISION = '$Rev$';
   SVN_DATE = '$Date$';
@@ -10781,14 +10782,19 @@ var HDR: PODHeader;
     ENT: PODEntry;
     disp: string;
     NumE, x: integer;
+    EndOfHeaderOffset, SanityCheck, FSize: Int64;
 begin
 
   if FHandle > 0 then
   begin
+    FSize := FileSeek(Fhandle,0,2);
     FileSeek(Fhandle, 0, 0);
     FileRead(FHandle, HDR, 84);
 
-    if HDR.Dirnum < 1 then
+    EndOfHeaderOffset := HDR.Dirnum;
+    EndOfHeaderOffset := EndOfHeaderOffset * SizeOf(PODEntry);
+
+    if (HDR.Dirnum < 1) or (EndOfHeaderOffset > FSize) then
     begin
       FileClose(Fhandle);
       FHandle := 0;
@@ -10808,9 +10814,19 @@ begin
         SetPercent(Per);
 
         FileRead(Fhandle,ENT,40);
-        disp := Strip0(ENT.FileName);
 
-        //owMessage(ENT.Filename+#10+disp);
+        SanityCheck := ENT.Offset;
+        Inc(SanityCheck,ENT.Size);
+        if (ENT.Offset < EndOfHeaderOffset) or (ENT.Size < 0) or (SanityCheck > FSize) then
+        begin
+          FileClose(Fhandle);
+          FHandle := 0;
+          ReadTerminalVelocityPOD := -3;
+          ErrInfo.Format := 'POD';
+          ErrInfo.Games := 'Terminal Velocity';
+        end;
+
+        disp := Strip0(ENT.FileName);
 
         FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
 

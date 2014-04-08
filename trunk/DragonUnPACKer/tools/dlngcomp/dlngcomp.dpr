@@ -26,7 +26,7 @@ uses
   spec_DLNG in '..\..\common\spec_DLNG.pas',
   lib_BinUtils in '..\..\common\lib_BinUtils.pas';
 
-const AppVersion : string = '4.0.1';
+const AppVersion : string = '4.0.2';
       AppEdit : string = '';
       DLNG_Version : Byte = 4;
       DLNG_Manufacturer : Byte = 30;
@@ -340,7 +340,7 @@ begin
                    FillChar(idx3,8,0);
                    FileRead(lng,idx3,8);
                    res.Tab[x].ID := idx3.ID;
-                   res.Tab[x].Value := Get16v(lng,idx3.Length);
+                   res.Tab[x].Value := Get16(lng,idx3.Length);
                  end;
 
                  writeln('OK ('+inttostr(res.Num)+' entries)');
@@ -430,7 +430,7 @@ begin
                        FileRead(lng,Idx1.Offset,4);
                        FileRead(lng,Idx1.Size,2);
                        FileSeek(lng,Idx1.Offset-1,0);
-                       res.Tab[x].Value := Get16v(lng,Idx1.Size);
+                       res.Tab[x].Value := Get16(lng,Idx1.Size);
                      end;
                    end;
 

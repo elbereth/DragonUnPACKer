@@ -1,0 +1,123 @@
+Dragon UnPACKer Package Installer v4.0.0                    MPL 1.1 open source
+Created by Alexande "Elbereth" Devilliers                            20/02/2013
+===============================================================================
+
+  What is DUPPI ?
+  ---------------
+
+This is the update manager for Dragon UnPACKer.
+It has several features:
+- Install update files (.D5P) to your Dragon UnPACKer folder
+- Check for available updates on Internet (depending on your version)
+- Download updates from Internet
+Internet access can be direct or through a proxy.
+
+
+  How to use DUPPI
+  ----------------
+
+Start the program without any parameter and you will get a wizard-like screen.
+Just follow indications.
+
+If you already downloaded an update file (.D5P) you can start the program with
+that file in parameter:
+
+Ex: DUPPI duppiupdate.d5p
+
+Or just drag & drop the update file on duppi.exe.
+This will start Duppi in installation mode and will present the install screen
+for the package in parameter.
+
+
+  Contact
+  -------
+
+You can reach Alex Devilliers:
+
+ By E-Mail: duppi (at) elberethzone (dot) net
+    By ICQ: 1535372 (Elbereth)
+
+
+  What's new?
+  -----------
+
+  Legende:
+
+    * = Updated
+    + = New
+    - = Deleted
+    ! = Bug fixed
+    # = Known Bug
+    i = Information
+
+-------------------------------------------------------------------------------
+
+ * Duppi v3.4.0:
+   i Updated to work with Indy 9 instead of Curl.
+     This means a full Delphi implementation with no need for DLLs.
+	 It is also compatible with Lazarus (Indy 9 & 10 were ported to Lazarus).
+   i Now compiled with FastMM4, FastCode & FastMove.
+
+ * Duppi v3.3.5:
+   * Added new main icons for 64x64, 128x128 and 256x256.
+     Based on Oxygen Team's Apps system software update icon.
+	 Old resolutions 16x16 and 32x32 stays the same. :p
+   i Updated libcurl to v7.21.6. 
+ 
+ * Duppi v3.3.4:
+   + Added Dragon UnPACKer build check on startup (FR #3089945).
+   i Updated libcurl to v7.21.1. 
+
+ * Duppi v3.3.3:
+   ! Fixed the URL used when the user want to download manually a new version
+     of Dragon UnPACKer.
+	 
+ * Duppi v3.3.2:
+   ! Fixed version number of 3.3.1 (was still reporting 3.3.0). Sorry!
+   
+ * Duppi v3.3.1:
+   ! Fixed the popup asking for update to newer version of Dragon UnPACKer even
+     when no update package was available (ex: 5.2.0b --> 5.4.0a).
+
+ * Duppi v3.3.0:
+   + Added multi-server support (when one server fails to download an update
+     Duppi will automatically try the next available one).
+   + Added download verification by checking file size and hash.
+   i Updated third party DLLs to libcurl v7.21.0 and zlib v1.2.5.
+   
+ * Duppi v3.2.1:
+  ! Fixed banner bug showing beneath the text under Vista/7 when Aero was
+    activated.
+	
+ * Duppi v3.2.0:
+  + Added new DUPP v4 feature: Obsolete Files
+
+ * Duppi v3.1.3:
+  ! Fixed needed missing zlib1.dll.
+
+ * Duppi v3.1.2:
+  ! Fixed HUGE bug introduced in v3.1.0 that prevented Duppi from downloading
+    any update from internet (fail with an Exception).
+  ! Fixed bug introduced in v3.1.0 that prevented Duppi to update itself when
+    libcurl-3.dll was in the package...
+
+ * Duppi v3.1.1:
+  ! Fixed small bug in information log
+
+ * Duppi v3.1.0:
+   * Optimized code to remove all useless units:
+       JVCL & JCL are no more used
+	   VirtualTree are no more used
+	 This alone reduced size by 300kB...
+   i Updated to work with curl instead of Overbyte's ICS.
+     This was done in order to be more platform independant (FPC/Lazarus).
+	 Tested successfully with v7.18.0 & 7.19.4. Will be packed with v7.18.0 in
+	 order to reduce size (it is the latest version without SSL support).
+   * Improved feedback to the user while installing DUPP v4 files.
+   + Added log while installing to know what's going on.
+   + Implemented auto-update of Dragon UnPACKer.
+   ! Translated all text introduced with DUPP v4 support. Sorry to non-english
+     speakers it was alwars showing in english...
+	 This required bump in language version number (PI v2).
+
+===============================================================================

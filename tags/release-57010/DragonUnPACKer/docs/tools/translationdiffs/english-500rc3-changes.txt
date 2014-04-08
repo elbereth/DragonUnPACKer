@@ -1,0 +1,70 @@
+Language Compare Report created 27/09/2003 13:25:45 using DLNGComp v3.0.2 Beta
+===============================================================================
+
+Language file 1: english-rc2.lng (339 entries)
+Language file 2: english-rc3.lng (362 entries)
+
+Entries difference: 23
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : UP (Both)
+Program Version: 5 (english-rc2.lng) / 6 (english-rc3.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-rc2.lng but not in english-rc3.lng:
+
+
+  Total: 0
+
+Entries found in english-rc3.lng but not in english-rc2.lng:
+
+ABT004=Dragon UnPACKer make use of:
+ABT005=Beta testing team:
+ABT006=Special thanks to all the translators:
+BUTDEL=Delete
+BUTREM=Remove
+CNV010=Note:%nUse the configuration box to manage%n(add or remove) palettes.
+CNV992=Do you really want to delete this palette?
+PI0042=This package cannot be installed with your version of Dragon UnPACKer.
+PI0043=Unable to register %s.
+11TH01=To activate support for 11th Hour game files the plugin needs to copy two files that can be found in the GROOVIE directory of the CDRom of The 11th Hour.%n%nDo you want to continue ?
+11TH02=Select the %f file from 11th Hour...
+11TH03=The plugin is now activated.%nNow you can open 11th Hour GJD files!
+11TH04=Disabling 11th Hour support will remove the following files:%n%n%a%n%b%n%nYou will be able to recreate them by enabling 11th Hour support again later using your 11th Hour CDRom.%n%nAre you sure you want to continue?
+11TH05=Plugin status: %s%n(Enabled means you can open files)%n(Disabled means you need to import GJD.GJD and DIR.RL)
+11TH06=Disabled
+11TH07=Enabled
+11TH10=11th Hour plugin configuration
+11TH11=Enable
+11TH12=Disable
+11TH13=Current status:
+11TH14=The 11th Hour support:
+ERRH01=HyperRipper plugin could not be loaded (bad interface version or not a DUP5 HyperRipper plugin).
+ERRH02=HyperRipper plugin could not be loaded (missing important functions).
+
+  Total: 23
+
+
+Values comparison:
+------------------
+
+Values modified between english-rc2.lng and english-rc3.lng:
+
+HR4021=No Rollback (not recommanded)
+HR4021=No Rollback (not recommended)
+HR4052=Custum
+HR4052=Custom
+
+  Total: 2
+
+===============================================================================
+                                                         Found 26 difference(s)

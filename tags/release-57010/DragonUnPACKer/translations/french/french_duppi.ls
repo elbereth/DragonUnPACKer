@@ -1,0 +1,311 @@
+# ============================================================================
+# Language Source File (pour DLNGC v4.0)
+# ============================================================================
+#  Programme: Duppi v3.3.4 (Dragon UnPACKer)
+#     Langue: Français
+#    Version: 5
+#     Auteur: Alexandre Devilliers
+# ============================================================================
+#
+# Ce fichier est le model pour les traductions de Duppi (Dragon UnPACKer).
+#
+# Il vous suffit de traduire entre les tags {BODY} et {/BODY}
+#
+# Compilez ce fichier avec DLNGC et mettez le fichier .LNG resultant dans le
+# sous-répertoire Utils\Data\ de Dragon UnPACKer.
+#
+# Pour selectionner une autre langue pour Dragon UnPACKer lancez:
+# DrgUnPACK5.exe /lng
+# Ou aller dans les Options générale.
+#
+# NE MODIFIEZ AUCUN MOT CLE - CHANGEZ JUSTE LE TEXTE APRES LE SYMBOLE =
+#
+# Si vous faite une traduction n'hésitez pas a l'envoyer a Alex Devilliers
+# afin qu'elle soit distribuée sur le site internet et avec le programme.
+#
+# ATTENTION: Une traduction complète de Dragon UnPACKer comprend DEUX
+#            fichiers:
+#              french.ls        Traduction pour Dragon UnPACKer
+#              french_duppi.ls  Traduction pour Duppi
+#
+# Vous pouvez contacter Alex Devilliers par e-mail:
+# translation@dragonunpacker.com et par ICQ: 1535372 (Elbereth)
+#
+# ============================================================================
+# Informations sur cette traduction
+# ============================================================================
+#
+# Version 1:
+# Version initiale (séparation entre Duppi & Dragon UnPACKer pour permettre
+# une mise à jour indépendante).
+#
+# Version 3:
+# Ajout de la possibilité d'éffacer d'anciens fichiers obsolètes.
+#
+# Version 4:
+# Utilisation de toutes les serveurs de download disponible (dans l'ordre)
+# tant que le fichier n'est pas correct (taille et hachage).
+#
+{LSF}
+{HEADER}
+#
+# * Header *
+#
+# + Name +
+# Ecriverz ici le nom qui apparaitra das la boite de dialogue de Dragon
+# UnPACKer pour votre fichier de langue. Ex: Français (French)
+#
+# Peut contenir jusqu'à 80 caractères
+#
+Name = Français (French)
+#
+# + Author +
+# Inscrivez ici votre nom ou un surnom (et n'importe quel commentaire)
+#
+# Peut contenir jusqu'à 80 caractères
+#
+Author = Alexandre Devilliers
+#
+# + Email +
+# Inscrivez ici votre email (ou vide si vous ne voulez pas le divulger)
+#
+# Peut contenir jusqu'à 80 caractères
+#
+Email = dup5.translation@dragonunpacker.com
+#
+# + URL +
+# Inscrivez une adresse internet où l'on peut récuperer la derniere version de
+# votre traduction
+#
+# Peut contenir jusqu'à 80 caractères
+#
+URL = http://www.dragonunpacker.com
+#
+# + Block identifiant programme (ProgramID & ProgramVer)
+#
+# NE CHANGEZ LES VALEURS QUE SI VOUS SAVEZ CE QUE VOUS FAITES
+#
+#                                ID      Ver
+# Duppi v3.0.0                   PI       1
+# Duppi v3.1.0 - 3.1.3           PI       2
+# Duppi v3.2.0 - 3.2.1           PI       3
+# Duppi v3.3.0 - 3.3.3           PI       4
+# Duppi v3.3.4                   PI       5
+#
+ProgramID = PI
+ProgramVer = 5
+#
+# + IconFile +
+# Chemin & nom du fichier de l'icône affichée avec le nom de langue.
+#
+# Ce fichier doit être de type Windows Bitmap 16x16 (Hauteur=16 Largeur=16).
+# Le compilateur ne teste pas ce fichier mais le programme n'affichera pas
+# l'icone si ce n'est pas un fichier valide.
+#
+# Si vous ne désirez pas d'icône commentez la ligne.
+#
+IconFile = flag_fr.bmp
+#
+# + OutFile +
+# Chemin & nom du fichier du resultat de la compilation.
+#
+OutFile = french.lng
+#
+# + FontName +
+# Nom de la fonte a utiliser (si vous ne désirez pas utiliser celle par défaut)
+# (Par ex Arial, Tahoma, etc..)
+#
+#FontName=Comic Sans MS
+#
+# + Compression +
+# Compression a utiliser pour les données.
+#
+# Valeurs possibles:   0 = Sans compression (Par Défaut)
+#                     99 = Zlib
+#
+Compression=99
+#
+{/HEADER}
+#
+# * Body *
+#
+# Chaque mot clé utilisé dans le programme est suivi du texte qui apparait
+# dans le programme.
+#
+# Ex: TEST01=Ceci est un test
+#
+# Chaque mot clé ne peut faire que 6 caractères alpha-numériques au maximum.
+#
+# Macro speciales:
+#  %n = Saute une ligne
+# N'importe qu'el autre lettre suivant un % (ex: %k) est une macro speciale qui
+# sera remplacée par Dragon UnPACKer lors de l'execution.
+#
+# N'AJOUTER/SUPPRIMER PAS DE MOT CLE SAUF SI VOUS SAVEZ CE QUE VOUS FAITES.
+# LE PROGRAMME TESTE LA PRESENCE DE CERTAINS MOT CLE ET N'UTILISERA PAS VOTRE
+# FICHIER DE LANGUE S'IL MANQUE DES MOTS CLES.
+#
+{BODY}
+PI0000=Version de DUP5 detectée:
+PI0001=Titre
+PI0002=Auteur
+PI0003=Commentaire
+PI0004=URL
+PI0005=Informations sur le package 
+PI0006=Veuillez patientez pendant l'installation du package...
+PI0007=Ce programme va installer le package suivant dans le répertoire de Dragon UnPACKer.
+PI0008=Dragon UnPACKer 5 doit être fermé pour continuer.
+PI0009=Statut:
+PI0010=En attente de l'utilisateur...
+PI0011=Etes-vous sur de vouloir quitter?
+PI0012=Erreur... DUP5 est lancé...
+PI0013=Erreur Dragon UnPACKer 5 est lancé...%nFermez le puis ré-essayez.
+PI0014=Erreur fatale.. Version non supportée de Package Dragon UnPACKer 5 (.D5P) [version %v]
+PI0015=Erreur fatale.. Ceci n'est pas un fichier de Package Dragon UnPACKer 5 (.D5P)
+PI0016=Utilisation: duppi <fichier.d5p>%n%nCeci installera le package fichier.d5p dans le répertoire de Dragon UnPACKer 5.
+PI0017=Fichier introuvable!%n%f
+PI0018=Lecture du package...
+PI0019=Le fichier suivant existe déjà et est plus récent (ou le même) que le fichier que vous essayez d'installer:%n%n%f%n%nVersion actuelle: %1%nFichier du package: %2%n%nInstaller quand même?
+PI0020=Le fichier suivant a un mauvais CRC. Le fichier ne sera pas installé.%nSi vous avez téléchargez ce fichier, re-téléchargez le.%n%n%f
+PI0021=Le fichier suivant a une mauvaise taille. Le fichier ne sera pas installé.%nSi vous avez téléchargez ce fichier, re-téléchargez le.%n%n%f
+PI0022=Installation avec succés de %i fichier(s)...
+PI0023=Installation teminée avec succés...
+PI0024=Installation non réussie (%e fichier(s) ont donnés des erreurs)...
+PI0025=Installation non réussie... %i fichier(s) installés avec succés et %e erreur(s)...
+PI0026=Chemin d'accés a Dragon UnPACKer 5 introuvable.%nVeuillez lancer Dragon UnPACKer 5 au moins une fois avant de rééssayer.
+PI0027=Evité...
+PI0028=ko
+PI0029=Lecture...
+PI0030=Décompression...
+PI0031=Ecriture...
+PI0032=OK
+PI0033=Version
+PI0034=Ce programme vous permet d'installer des packages de Dragon UnPACKer 5.
+PI0035=Que voulez vous faire?
+PI0036=Rechercher sur internet les mises a jour et les installer.
+PI0037=Remarque: Aucune information n'est envoyé à Dragon Software.
+PI0038=Options Proxy
+PI0039=Installer un package depuis le disque dur:
+PI0040=Selectionner le package a installer...
+PI0041=Pour installer ce fichier D5P vous devez disposer d'une version de Duppi plus récente.%nVotre version de Duppi: %y%nVersion de Duppi requise: %v%n%nPour cela mettez à jour votre Dragon UnPACKer 5.
+PI0042=Ce package ne peut pas être installé avec votre version de Dragon UnPACKer.
+PI0043=Impossible d'enregistrer %s.
+PI0044=Données erronnées en provenance du serveur de mises à jour!
+PI0045=Répertoire de destination inconnu!
+PI0046=Mise à jour de Duppi terminée avec succès!
+PI0047=Une nouvelle version de Duppi est disponible:%nVotre version: %a%nVersion disponible: %b%nTaille de la mise à jour: %s Ko%n%nVoulez-vous mettre à jour maintenant (Recommandé)?
+PI0048=Montrer aussi les versions instables
+PI0049=Pas d'URL pour la mise à jour de Duppi!
+PI0050=Une nouvelle version de Dragon UnPACKer est disponible en téléchargement.%n%nNouvelle version: %v%nTaille de la mise à jour: %s Ko%nCommentaire: %c%n%nVoulez-vous mettre à jour maintenant (Recommandé)?
+PI0051=Pas d'URL pour la mise à jour de Dragon UnPACKer!
+PI0052=%s octets
+PI0053=%s Kio
+PI0054=Paquet %a...
+PI0055=Recherche des blocs...
+PI0056=Lecture du block "%a"...
+PI0057=entrées
+PI0058=noms
+PI0059=contenu
+PI0060=Installation du fichier %a: %b
+PI0061=Enregistrement OCX...
+PI0062=Le paquet est installé avec succès.%nLe programme Duppi va maintenant redémarrer pour se mettre à jour.
+PI0063=Récupération des informations du paquet...
+PI0064=Paquet %d
+PI0065=Le fichier suivant est obsolète et va donc être éffacé:%n%n%f%n%n
+PI0066=Version du fichier: %1%nVersions obsolètes: <= %2%n%n
+PI0067=Continuer et effacer le fichier (recommandé)?
+PI0068=Effacé!
+PI0069=La version de Dragon UnPACKer détectée (%a) diffère de la dernière version lancée (%b).%nVous devez lancer Dragon UnPACKer 5 au moins une fois après une mise à jour.%n%nVoulez-vous le lancer maintenant (recommandé)?
+
+PI3001=Serveur %i: %d
+PI3002=La taille du fichier est incorrecte! (%a <> %b)
+PI3003=Vérification de l'intégrité du fichier...
+PI3004=Erreur d'intégritée du fichier! (%a <> %b)
+PI3005=Erreur %a: %b
+
+PIE401=Fonction de hachage inconnue: %h
+PIE402=Positionnement vers le fichier échoué (%a <> %b)
+PIE403=Erreur lors de la lecture du fichier (%a octets <> %b octets)
+PIE404=Erreur de décompression %a (%b octets <> %c octets)
+PIE405=Compression non supportée (%a)
+PIE406=Le hachage ne correspond pas au bloc (%a <> %b)
+PIE407=Positionnement vers le bloc échoué (%a <> %b)
+PIE408=Erreur lors de la lecture du bloc (%a octets <> %b octets)
+PIE409=Erreur pendant la récupération des informations:
+PIE410=Erreur pendant la récupération de la banière:
+PIE411=Erreur pendant la récupération des données du bloc "%a":
+
+PII001=Titre
+PII002=Votre version
+PII003=Version disponible
+PII004=Description
+PII005=Taille
+PII011=Afficher les:
+PII012=Extensions
+PII013=Traductions
+PII021=Version stable actuelle :
+PII022=Version WIP actuelle :
+PII030=Traduction
+PII031=Revision
+PII032=Auteur
+PII100=la liste des mises a jours
+PII101=Telechargement de %f...
+PII102=Telechargement de %f (%b octets reçus)
+PII103=Reception terminée de %f (%b octets)
+PII104=Erreur: %c (%d)
+PII105=Serveur contacté avec succés!
+PII106=-Aucune description-
+PII107=Une nouvelle version de Dragon UnPACKer est disponible en téléchargement.%n%nNouvelle version: %v%nCommentaire: %c%n%nVoulez vous aller sur la page officielle pour la télécharger?
+PII108=%p extension(s) et %t traduction(s) disponibles!
+
+PII200=Aucune mise a jour n'a pu être téléchargée.%nLe programme va maintenant s'arreter.
+
+PIEM01=Connection à la base de données impossible. Réessayez ultérieurement!
+PIEM10=Erreur serveur lors de la recherche dernière version stable!
+PIEM11=Erreur serveur lors de la recherche dernière version instable!
+PIEM12=Erreur serveur lors de la recherche des informations de mises à jours de la version stable!
+PIEM13=Erreur serveur lors de la recherche des informations de mises à jours de la version instable!
+PIEM20=Erreur serveur lors de la recherche de votre version!
+PIEM30=Erreur serveur lors de la recherche des extensions de convertion disponibles!
+PIEM31=Erreur serveur lors de la recherche des extensions driver disponibles!
+PIEM32=Erreur serveur lors de la recherche des extensions HyperRipper disponibles!
+PIEM33=Erreur serveur lors de la recherche des traductions disponibles!
+PIEM40=Erreur serveur lors de la récupération de la liste des serveurs!
+PIEM41=Erreur serveur lors de la recherche des extensions driver instables disponibles!
+PIEM42=Erreur serveur lors de la recherche des extensions de convertion instables disponibles!
+PIEM43=Erreur serveur lors de la recherche des extensions HyperRipper instables disponibles!
+PIEM60=Erreur serveur lors de la recherche denière version Duppi!
+PIEP01=Paramètre erronnée! Si vous n'avez pas encore lancer Dragon UnPACKer faites-le, puis relancer Duppi.
+PIEP02=Le serveur n'a pas reconnu votre version de Dragon UnPACKer.
+PIEUNK=Erreur serveur inconnu: "%e"
+
+PIP000=Configuration du proxy
+PIP001=Proxy:
+PIP002=Port du proxy:
+PIP003=Le proxy requiere une identification:
+PIP004=Utilisateur:
+PIP005=Mot de passe:
+
+BUTADD=Ajouter
+BUTCAN=Annuler
+BUTCLO=Terminer
+BUTCNV=Convertir
+BUTCON=Continuer
+BUTDEL=Supprimer
+BUTDET=Details
+BUTDIR=Nouveau Dossier
+BUTEDT=Editer
+BUTGO=Go!
+BUTINS=Installer
+BUTNEX=Suivant
+BUTOK=Ok
+BUTPAL=Ajouter Palette
+BUTREF=Rafraichir
+BUTREM=Supprimer
+BUTSCH=Chercher
+
+{/BODY}
+#
+# Fin du fichier source de langue (Language Source File)
+#
+{/LSF}

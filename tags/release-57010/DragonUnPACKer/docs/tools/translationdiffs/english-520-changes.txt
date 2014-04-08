@@ -1,0 +1,123 @@
+Language Compare Report created 30/01/2006 11:21:00 using DLNGComp v4.0.0 
+===============================================================================
+
+Language file 1: english-500.lng (DLNG v4 - 362 entries)
+Language file 2: english-520cinthia.lng (DLNG v4 - 440 entries)
+
+Entries difference: 78
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : UP (Both)
+Program Version: 6 (english-500.lng) / 9 (english-520cinthia.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-500.lng but not in english-520cinthia.lng:
+
+
+  Total: 0
+
+Entries found in english-520cinthia.lng but not in english-500.lng:
+
+INFO20=Plugin name
+INFO21=Version
+INFO22=Advanced Informations
+INFO23=Int.Ver.:
+POP3S1=Show log
+POP3S2=Hide log
+POP3S3=Clear log
+OPT126=Show runtime log
+OPT203=Driver plugins:
+OPT220=Priority :
+OPT221=Refresh list
+OPT800=Execution log
+OPT810=Execution log options
+OPT811=Show the execution log in main window.
+OPT840=Verbose Level
+OPT841=Select the amount of informations to display :
+OPT850=Low - Scarce information
+OPT851=Medium - A good amount of information
+OPT852=High - A lot of information!
+BUTEDT=Edit
+PI0044=Bad data received from the update server!
+PII011=Show updates:
+PII012=Plugins
+PII013=Translations
+PII021=Current stable version :
+PII022=Current WIP version :
+PII030=Translation
+PII031=Revision
+PII032=Author
+PII108=%p plugin(s) and %t translation(s) available!
+PIEM01=Database connection error. Please try again later!
+PIEM10=Error while retrieving latest stable version info!
+PIEM11=Error while retrieving latest WIP version info!
+PIEM20=Error while retrieving your version info!
+PIEM30=Error while retrieving available convert plugins!
+PIEM31=Error while retrieving available driver plugins!
+PIEM32=Error while retrieving available HyperRipper plugins!
+PIEM33=Error while retrieving available translations!
+PIEP01=Wrong parameter! If you have not run Dragon UnPACKer do it and re-run Duppi afterwards.
+PIEP02=The server did not recognize your Dragon UnPACKer version...
+PIEUNK=Unknown server error: "%e"
+DUT100=Configuration
+DUT101=Library
+DUT110=ID
+DUT111=Path
+DUT112=Game Hint
+DUT113=DA?
+DUT114=GID
+DUT201=From which game is the package you are opening ?
+DUT202=Don't ask again for this directory
+DUT203=- Unknown / Other -
+LOG001=Initializing plugins:
+LOG002=Loading Drivers plugins...
+LOG003=Loading Convert plugins...
+LOG004=Loading HyperRipper plugins...
+LOG009=%p plugin(s)
+LOG101=Opening "%f" file:
+LOG102=File format not recognized!
+LOG103=Starting HyperRipper...
+LOG104=File not found (or is locked by another program)...
+LOG200=Closing current file...
+LOG300=Displaying entries of "%d" directory...
+LOG301=%e entries...
+LOG400=Using SmartOpen to detect format of source file.
+LOG500=Driver plugin "%d" thinks it can open this file.
+LOG501=Opening the file using "%d" plugin...
+LOG502=Retrieving %x entries...
+LOG503=Parsing entries for directories...
+LOG504=File successfully opened using "%p" plugin (detected format: "%f")
+LOG510=Done!
+LOG511=Success!
+LOG512=Failed!
+LOG513=Error!
+ERRCAL=Error while calling:
+ERREXT=Error while extracting data (File mode) from %f driver:
+ERRSTM=Error while extracting data (Stream mode) from %f driver:
+ERRDR1=For more information about this error please contact the driver's author (%a).
+ERR900=Missing %f function in plugin...
+
+  Total: 78
+
+
+Values comparison:
+------------------
+
+Values modified between english-500.lng (1) and english-520cinthia.lng (2):
+
+(1) ERRDRV=Error while using the following DUP5 driver:%n%n%d%n%nFor more information about this error please contact the driver's author (%a).
+(2) ERRDRV=Error while using the "%d" driver:
+
+  Total: 1
+
+===============================================================================
+                                                         Found 80 difference(s)

@@ -1,0 +1,48 @@
+Language Compare Report created 07/08/2011 19:51:33 using DLNGComp v4.0.1 
+===============================================================================
+
+Language file 1: english-561.lng (DLNG v4 - 442 entries)
+Language file 2: english-562.lng (DLNG v4 - 447 entries)
+
+Entries difference: 5
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : UP (Both)
+Program Version: 14 (english-561.lng) / 15 (english-562.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-561.lng but not in english-562.lng:
+
+
+  Total: 0
+
+Entries found in english-562.lng but not in english-561.lng:
+
+LSTCP5=Data X
+LSTCP6=Data Y
+OPT040=Drivers plugin entries integrity
+OPT041=Do not ignore files with size = 0 bytes (not recommended)
+OPT129=Display extra advanced fields in the list of entries (not recommended)
+
+  Total: 5
+
+
+Values comparison:
+------------------
+
+Values modified between english-561.lng (1) and english-562.lng (2):
+
+
+  Total: 0
+
+===============================================================================
+                                                          Found 6 difference(s)

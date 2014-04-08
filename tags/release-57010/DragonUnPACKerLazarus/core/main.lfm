@@ -1,0 +1,232 @@
+object frmMain: TfrmMain
+  Left = 602
+  Height = 452
+  Top = 178
+  Width = 622
+  Caption = 'frmMain'
+  ClientHeight = 432
+  ClientWidth = 622
+  Menu = menuMain
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  LCLVersion = '0.9.29'
+  object StatusBar: TStatusBar
+    Left = 0
+    Height = 23
+    Top = 409
+    Width = 622
+    Panels = <>
+  end
+  object lstIndex: TVirtualStringTree
+    Left = 0
+    Height = 330
+    Top = 26
+    Width = 176
+    Align = alLeft
+    DefaultText = 'Node'
+    Header.AutoSizeIndex = 0
+    Header.Columns = <>
+    Header.DefaultHeight = 17
+    Header.MainColumn = -1
+    TabOrder = 1
+  end
+  object Splitter1: TSplitter
+    Cursor = crVSplit
+    Left = 0
+    Height = 5
+    Top = 356
+    Width = 622
+    Align = alBottom
+    ResizeAnchor = akBottom
+  end
+  object LogView: TLogTreeView
+    Left = 0
+    Height = 48
+    Top = 361
+    Width = 622
+    Align = alBottom
+    DefaultItemHeight = 17
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
+    ShowRoot = False
+    TabOrder = 3
+    OnCustomDrawItem = LogViewCustomDrawItem
+    Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoToolTips, tvoThemedDraw]
+  end
+  object lstView: TVirtualStringTree
+    Left = 181
+    Height = 330
+    Top = 26
+    Width = 322
+    Align = alClient
+    DefaultText = 'Node'
+    Header.AutoSizeIndex = 0
+    Header.Columns = <    
+      item
+        Position = 0
+        Text = 'Name'
+        Width = 168
+      end    
+      item
+        Position = 1
+        Text = 'Offset'
+      end    
+      item
+        Position = 2
+        Text = 'Size'
+      end    
+      item
+        Position = 3
+        Text = 'Description'
+      end>
+    Header.DefaultHeight = 17
+    Header.Options = [hoColumnResize, hoDrag, hoShowSortGlyphs, hoVisible]
+    TabOrder = 4
+  end
+  object Splitter2: TSplitter
+    Left = 176
+    Height = 330
+    Top = 26
+    Width = 5
+    AutoSnap = False
+  end
+  object Splitter3: TSplitter
+    Left = 503
+    Height = 330
+    Top = 26
+    Width = 5
+    Align = alRight
+    ResizeAnchor = akRight
+  end
+  object Panel1: TPanel
+    Left = 508
+    Height = 330
+    Top = 26
+    Width = 114
+    Align = alRight
+    Caption = 'Panel1'
+    TabOrder = 7
+  end
+  object ToolBar1: TToolBar
+    Left = 0
+    Height = 26
+    Top = 0
+    Width = 622
+    Caption = 'ToolBar1'
+    TabOrder = 8
+  end
+  object menuMain: TMainMenu
+    Images = imgMenu
+    left = 8
+    top = 24
+    object menuMain_File: TMenuItem
+      Caption = '&File'
+      object menuMain_File_Open: TMenuItem
+        Caption = '&Open...'
+        ImageIndex = 0
+        ShortCut = 16463
+      end
+      object menuMain_File_Close: TMenuItem
+        Caption = '&Close'
+        ImageIndex = 1
+        ShortCut = 16499
+      end
+      object menuMain_File_Separator1: TMenuItem
+        Caption = '-'
+      end
+      object menuMain_File_OpenRecent: TMenuItem
+        Caption = 'Open Recent'
+      end
+      object menuMain_File_Separator2: TMenuItem
+        Caption = '-'
+      end
+      object menuMain_File_HyperRipper: TMenuItem
+        Caption = '&HyperRipper'
+        ImageIndex = 2
+        ShortCut = 16456
+      end
+      object menuMain_File_Separator3: TMenuItem
+        Caption = '-'
+      end
+      object menuMain_File_Quit: TMenuItem
+        Caption = 'Quit'
+        ImageIndex = 3
+        OnClick = menuMain_File_QuitClick
+      end
+    end
+    object menuMain_Tools: TMenuItem
+      Caption = 'Tools'
+      object menuMain_Tools_Find: TMenuItem
+        Caption = 'Find entries...'
+        ImageIndex = 4
+      end
+      object menuMain_Tools_Separator1: TMenuItem
+        Caption = '-'
+      end
+      object menuMain_Tools_List: TMenuItem
+        Caption = 'Create list of entries...'
+      end
+    end
+    object menuMain_Options: TMenuItem
+      Caption = 'Options'
+      object menuMain_Options_Basic: TMenuItem
+        Caption = 'Basic'
+        ImageIndex = 5
+        object menuMain_Options_Basic_Basic: TMenuItem
+          Caption = 'Basic'
+          ImageIndex = 5
+        end
+        object menuMain_Options_Basic_Advanced: TMenuItem
+          Caption = 'Advanced'
+          ImageIndex = 6
+        end
+        object menuMain_Options_Basic_Log: TMenuItem
+          Caption = 'Execution Log'
+          ImageIndex = 7
+        end
+      end
+      object menuMain_Options_Plugins: TMenuItem
+        Caption = 'Plugins'
+        ImageIndex = 8
+        object menuMain_Options_Plugins_Convert: TMenuItem
+          Caption = 'Convert'
+          ImageIndex = 9
+        end
+        object menuMain_Options_Plugins_Drivers: TMenuItem
+          Caption = 'Drivers'
+          ImageIndex = 10
+        end
+      end
+      object menuMain_Options_FileAssociation: TMenuItem
+        Caption = 'File Association'
+        ImageIndex = 11
+      end
+      object menuMain_Options_Themes: TMenuItem
+        Caption = 'Themes'
+        ImageIndex = 12
+      end
+      object menuMain_Options_Preview: TMenuItem
+        Caption = 'Preview'
+        ImageIndex = 13
+      end
+    end
+    object MenuItem5: TMenuItem
+      Caption = '?'
+      object MenuItem6: TMenuItem
+        Caption = 'Look for new versions on internet...'
+      end
+      object MenuItem7: TMenuItem
+        Caption = '-'
+      end
+      object MenuItem8: TMenuItem
+        Caption = 'About Dragon UnPACKer...'
+        ImageIndex = 14
+      end
+    end
+  end
+  object imgMenu: TImageList
+    left = 532
+    top = 36
+  end
+end

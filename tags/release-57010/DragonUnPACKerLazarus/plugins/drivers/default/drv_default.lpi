@@ -1,0 +1,149 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <ProjectOptions>
+    <PathDelim Value="\"/>
+    <Version Value="7"/>
+    <General>
+      <Flags>
+        <MainUnitHasCreateFormStatements Value="False"/>
+        <MainUnitHasTitleStatement Value="False"/>
+        <UseDefaultCompilerOptions Value="True"/>
+      </Flags>
+      <MainUnit Value="0"/>
+      <TargetFileExt Value=".exe"/>
+      <ResourceType Value="res"/>
+      <UseXPManifest Value="True"/>
+      <ActiveWindowIndexAtStart Value="0"/>
+    </General>
+    <VersionInfo>
+      <UseVersionInfo Value="True"/>
+      <AutoIncrementBuild Value="True"/>
+      <MajorVersionNr Value="6"/>
+      <Language Value=""/>
+      <CharSet Value=""/>
+      <StringTable Comments="Default Driver Plugin for Dragon UnPACKer 6" CompanyName="ElberethZone" FileDescription="Default Driver Plugin for Dragon UnPACKer 6" FileVersion="6.0.0.0" InternalName="drv_default" LegalCopyright="Mozilla Public Licence 1.1" LegalTrademarks="" OriginalFilename="drv_default.d6d" ProductName="Dragon UnPACKer" ProductVersion="6.0.0"/>
+    </VersionInfo>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IgnoreBinaries Value="False"/>
+      <IncludeFileFilter Value="*.(pas|pp|inc|lfm|lpr|lrs|lpi|lpk|sh|xml)"/>
+      <ExcludeFileFilter Value="*.(bak|ppu|ppw|o|so);*~;backup"/>
+    </PublishOptions>
+    <RunParams>
+      <local>
+        <FormatVersion Value="1"/>
+        <LaunchingApplication Use="True" PathPlusParams="E:\Developpement\dup-dev-6-compiled\drgunpack6.exe"/>
+      </local>
+    </RunParams>
+    <Units Count="1">
+      <Unit0>
+        <Filename Value="drv_default.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="drv_default"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="0"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="3"/>
+        <CursorPos X="21" Y="3"/>
+        <UsageCount Value="23"/>
+        <Loaded Value="True"/>
+      </Unit0>
+    </Units>
+    <JumpHistory Count="10" HistoryIndex="9">
+      <Position1>
+        <Filename Value="drv_default.lpr"/>
+        <Caret Line="24" Column="1" TopLine="1"/>
+      </Position1>
+      <Position2>
+        <Filename Value="drv_default.lpr"/>
+        <Caret Line="23" Column="67" TopLine="1"/>
+      </Position2>
+      <Position3>
+        <Filename Value="drv_default.lpr"/>
+        <Caret Line="28" Column="6" TopLine="1"/>
+      </Position3>
+      <Position4>
+        <Filename Value="drv_default.lpr"/>
+        <Caret Line="23" Column="56" TopLine="3"/>
+      </Position4>
+      <Position5>
+        <Filename Value="drv_default.lpr"/>
+        <Caret Line="28" Column="1" TopLine="3"/>
+      </Position5>
+      <Position6>
+        <Filename Value="drv_default.lpr"/>
+        <Caret Line="30" Column="21" TopLine="4"/>
+      </Position6>
+      <Position7>
+        <Filename Value="drv_default.lpr"/>
+        <Caret Line="53" Column="1" TopLine="22"/>
+      </Position7>
+      <Position8>
+        <Filename Value="drv_default.lpr"/>
+        <Caret Line="14" Column="1" TopLine="1"/>
+      </Position8>
+      <Position9>
+        <Filename Value="drv_default.lpr"/>
+        <Caret Line="31" Column="23" TopLine="22"/>
+      </Position9>
+      <Position10>
+        <Filename Value="drv_default.lpr"/>
+        <Caret Line="6" Column="13" TopLine="1"/>
+      </Position10>
+    </JumpHistory>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="8"/>
+    <PathDelim Value="\"/>
+    <Target>
+      <Filename Value="E:\Developpement\dup-dev-6-compiled\plugins\drv_default.d6d"/>
+    </Target>
+    <SearchPaths>
+      <IncludeFiles Value="$(ProjOutDir)\"/>
+      <UnitOutputDirectory Value="E:\Developpement\dup-6-dev-lib\plugins\drivers\default\lib\$(TargetCPU)-$(TargetOS)"/>
+    </SearchPaths>
+    <Parsing>
+      <SyntaxOptions>
+        <UseAnsiStrings Value="True"/>
+      </SyntaxOptions>
+    </Parsing>
+    <CodeGeneration>
+      <SmartLinkUnit Value="True"/>
+      <TargetProcessor Value="pentium4"/>
+      <TargetCPU Value="i386"/>
+      <TargetOS Value="Win32"/>
+      <Optimizations>
+        <OptimizationLevel Value="3"/>
+      </Optimizations>
+    </CodeGeneration>
+    <Linking>
+      <Debugging>
+        <StripSymbols Value="True"/>
+        <UseExternalDbgSyms Value="True"/>
+      </Debugging>
+      <LinkSmart Value="True"/>
+      <Options>
+        <ExecutableType Value="Library"/>
+      </Options>
+    </Linking>
+    <Other>
+      <CompilerMessages>
+        <UseMsgFile Value="True"/>
+      </CompilerMessages>
+      <CompilerPath Value="$(CompPath)"/>
+    </Other>
+  </CompilerOptions>
+  <Debugging>
+    <Exceptions Count="3">
+      <Item1>
+        <Name Value="EAbort"/>
+      </Item1>
+      <Item2>
+        <Name Value="ECodetoolError"/>
+      </Item2>
+      <Item3>
+        <Name Value="EFOpenError"/>
+      </Item3>
+    </Exceptions>
+  </Debugging>
+</CONFIG>

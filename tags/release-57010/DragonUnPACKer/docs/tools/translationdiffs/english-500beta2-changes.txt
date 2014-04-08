@@ -1,0 +1,127 @@
+Language Compare Report created 18/10/2002 00:55:16 using DLNGComp v3.0.2 Beta
+===============================================================================
+
+Language file 1: english-beta1.lng (158 entries)
+Language file 2: english-beta2.lng (242 entries)
+
+Entries difference: 84
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : UP (Both)
+Program Version: 1 (english-beta1.lng) / 2 (english-beta2.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-beta1.lng but not in english-beta2.lng:
+
+
+  Total: 0
+
+Entries found in english-beta2.lng but not in english-beta1.lng:
+
+OPT320=Look themes (files):
+OPT330=Look options
+OPT331=XP-like menus and toolbar
+OPT501=Convert plugins:
+HR0000=About...
+HR0001=The HyperRipper allows to search for "standard" file formats%nin other files that are not directly supported by Dragon UnPACKer.
+HR0002=WARNING: For expert users only!
+HR0003=Loaded plugins:
+HR0004=Total supported formats:
+HR1000=Search
+HR1001=Source:
+HR1002=Create HyperRipper File (HRF):
+HR1003=Cancel / Stop
+HR1011=Buffer size:
+HR1012=Rollback size:
+HR1013=Search speed:
+HR1014=Found:
+HR2000=Formats
+HR2011=Format
+HR2012=Type
+HR2021=Setup
+HR2022=All / None
+HR3000=HyperRipper File
+HR3010=Include following information:
+HR3011=Title:
+HR3012=URL:
+HR3020=HRF Version
+HR3021=Version
+HR3030=Options
+HR3031=Set program IDentifier to anonymous
+HR3032=Don't set program version
+HR4000=Advanced
+HR4010=Buffer memory
+HR4011=Kbytes
+HR4012=bytes
+HR4020=Memory rollback
+HR4021=No Rollback (not recommanded)
+HR4022=Default Rollback (128 bytes)
+HR4023=Big Rollback (1/4 of buffer)
+HR4024=Huge Rollback (1/2 of buffer)
+HR4030=Entries formatting
+HR4031=Make directories using type given by plugin
+HR4040=Prefixes
+HR4041=Automatic Prefix
+HR4042=Predefined Prefix:
+HRLG01=No formats selected...
+HRLG02=File %f not found!
+HRLG03=Opening %f...
+HRLG04=Done!
+HRLG05=Allocating ressources...
+HRLG06=Scanning file for selected formats...
+HRLG07=Could not read %b bytes from the file...
+HRLG08=Found %e @ %a (%s bytes)
+HRLG09=Scanned %s in %t secs!'
+HRLG10=bytes
+HRLG11=Kb
+HRLG12=Mb
+HRLG13=Gb
+HRLG14=Saving HRF...
+HRLG15=Displaying result in Dragon UnPACKer...
+HRLG16=Error while scanning... Aborting...
+HRLG17=Freeing ressources...
+HRLG18=Error!
+HRTYP0=Unknown
+HRTYP1=Audio
+HRTYP2=Video
+HRTYP3=Picture
+HRTYPM=Other
+HRTYPE=Type (%i)
+HRD000=MPEG Audio Options
+HRD100=MPEG Audio formats to search for
+HRD101=Unofficial
+HRD200=Limit by
+HRD211=Minimum frame numbers:
+HRD212=Maximum frame numbers:
+HRD213=frame(s)'
+HRD221=Minimum size:
+HRD222=Maximum size:
+HRD223=byte(s)'
+HRD300=Special'
+HRD301=Search (and use) Xing VBR header
+HRD302=Search ID3Tag v1.0/1.1
+PI0033=Version
+ERREMP=File is empty.
+
+  Total: 84
+
+
+Values comparison:
+------------------
+
+Values modified between english-beta1.lng and english-beta2.lng:
+
+
+  Total: 0
+
+===============================================================================
+                                                         Found 85 difference(s)

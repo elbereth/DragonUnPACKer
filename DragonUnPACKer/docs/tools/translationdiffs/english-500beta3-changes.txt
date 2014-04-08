@@ -1,0 +1,116 @@
+Language Compare Report created 08/04/2003 00:29:07 using DLNGComp v3.0.2 Beta
+===============================================================================
+
+Language file 1: english-beta2.lng (242 entries)
+Language file 2: english-beta3.lng (313 entries)
+
+Entries difference: 71
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : UP (Both)
+Program Version: 2 (english-beta2.lng) / 3 (english-beta3.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-beta2.lng but not in english-beta3.lng:
+
+
+  Total: 0
+
+Entries found in english-beta3.lng but not in english-beta2.lng:
+
+MNU5=&Tools
+MNU5S1=Create entry list...
+OPT124=Get icons from Windows registry (may be slower)
+OPT701=HyperRipper plugins:
+OPT710=Plugin information
+BUTDET=More
+BUTCON=Continue
+BUTNEX=Next
+BUTREF=Refresh
+LST000=Create list
+LST001=Sort
+LST100=Template
+LST101=Version:
+LST102=Author:
+LST103=Email:
+LST104=URL:
+LST200=List
+LST201=Selected entries
+LST202=All entries
+LST203=Current directory
+LST204=Include sub-directories
+LST300=Sort by
+LST301=Name
+LST302=Size
+LST303=Offset
+LST304=Invert
+LST400=WARNING: Sorting will slow down list creation...
+LST500=Save list to...
+LST501=Getting Header element from template...
+LST502=Getting Footer element from template...
+LST503=Getting Variable element from template...
+LST504=Retrieving entries...
+LST505=Sorting %v entries...
+LST506=Computing %v entries... %p%
+LST507=Saving file list...
+LST508=Extracting companion files from template...
+LST509=Done!
+PI0034=This program allows you to install packages for Dragon UnPACKer 5.
+PI0035=What would you like to do ?
+PI0036=Check on internet for new or updated packages and install them.
+PI0037=Note: Absolutly no data is sent to Dragon Software web site.
+PI0038=Proxy Options
+PI0039=Install a package from the hard disk:
+PI0040=Select the package to install...
+PII001=Title
+PII002=Your Version
+PII003=Available Version
+PII004=Description
+PII005=Size
+PII100=updates list
+PII101=Downloading %f...
+PII102=Downloading %f (%b bytes received)
+PII103=Successfully received %f (%b bytes)
+PII104=Error: %c (%d)
+PII105=Server contacted successfully!
+PII106=-No description-
+PII107=A new version of Dragon UnPACKer is available to download.%n%nNew version: %v%nComment: %c%n%nDo you want to go to the official homepage to download it?
+PII200=No update could be downloaded.%nThe program will now stop.
+PIP000=Proxy configuration
+PIP001=Proxy:
+PIP002=Proxy port:
+PIP003=Proxy needs Username/Password:
+PIP004=Username:
+PIP005=Password:
+ERR200=The following unhandled error happened:
+ERR201=From:
+ERR202=Exception:
+ERR203=Message:
+ERR204=If you want to do an error report please include following details (push the "More" button).
+ERR205=Copy to clipboard
+ERR206=Send bug report to:
+
+  Total: 71
+
+
+Values comparison:
+------------------
+
+Values modified between english-beta2.lng and english-beta3.lng:
+
+OPT510=Convert Information
+OPT510=Plugin information
+
+  Total: 1
+
+===============================================================================
+                                                         Found 73 difference(s)

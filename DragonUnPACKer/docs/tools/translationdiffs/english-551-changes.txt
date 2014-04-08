@@ -1,0 +1,47 @@
+Language Compare Report created 12/09/2009 09:20:06 using DLNGComp v4.0.1 
+===============================================================================
+
+Language file 1: english-540degei.lng (DLNG v4 - 430 entries)
+Language file 2: english-551beta.lng (DLNG v4 - 434 entries)
+
+Entries difference: 4
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : UP (Both)
+Program Version: 12 (english-540degei.lng) / 13 (english-551beta.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-540degei.lng but not in english-551beta.lng:
+
+
+  Total: 0
+
+Entries found in english-551beta.lng but not in english-540degei.lng:
+
+HR2031=Exclude file formats which might find false positives
+HR4061=Auto-Start search when unknown source format
+HR4062=Auto-Close HyperRipper when search is finished & entries were found
+HR4063=Force buffer size
+
+  Total: 4
+
+
+Values comparison:
+------------------
+
+Values modified between english-540degei.lng (1) and english-551beta.lng (2):
+
+
+  Total: 0
+
+===============================================================================
+                                                          Found 5 difference(s)

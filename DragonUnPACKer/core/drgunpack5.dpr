@@ -1,15 +1,8 @@
 program drgunpack5;
 
-// $Id$
-// $Source: /home/elbzone/backup/cvs/DragonUnPACKer/core/drgunpack5.dpr,v $
-//
-// The contents of this file are subject to the Mozilla Public License
-// Version 1.1 (the "License"); you may not use this file except in compliance
-// with the License. You may obtain a copy of the License at http://www.mozilla.org/MPL/
-//
-// Software distributed under the License is distributed on an "AS IS" basis,
-// WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for the
-// specific language governing rights and limitations under the License.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 //
 // The Original Code is drgunpack5.dpr, released May 8, 2004.
 //
@@ -54,7 +47,6 @@ uses
   prg_ver in 'prg_ver.pas',
   spec_DLNG in '..\common\spec_DLNG.pas',
   spec_DUHT in '..\common\spec_DUHT.pas',
-  spec_DULK in '..\common\spec_DULK.pas',
   Translation in 'Translation.pas',
   spec_HRF in '..\common\spec_HRF.pas',
   commonTypes in '..\common\commonTypes.pas',
@@ -375,7 +367,7 @@ begin
         Application.Title := 'Dragon UnPACKer';
         dupLog.AddMessage('Application.CreateForm(Tdup5Main, dup5Main)',sevDebug);
         Application.CreateForm(Tdup5Main, dup5Main);
-        dup5Main.setLogFacility(dupLog);
+  dup5Main.setLogFacility(dupLog);
         dupLog.AddMessage('Application.CreateForm(TfrmAbout, frmAbout)',sevDebug);
         Application.CreateForm(TfrmAbout, frmAbout);
         dupLog.AddMessage('Application.CreateForm(TfrmSearch, frmSearch)',sevDebug);

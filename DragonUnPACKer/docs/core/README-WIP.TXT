@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.0 Beta                                 MPL 1.1 open source
-by Alexande "Elbereth" Devilliers                                    22/03/2014
+by Alexande "Elbereth" Devilliers                                    08/04/2014
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,30 +10,25 @@ by Alexande "Elbereth" Devilliers                                    22/03/2014
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.7.0.283
-SVN Release 682 [Unreleased]
+Version 5.7.0.284
+Beta (SVN Release 692) [08/04/2014]
 
+ i Updated licence to MPL 2.0 (from MPL 1.1).
  ! Added extra check in the extraction routine to avoid going past the end of
    file.
  ! Fixed many memory leaks (thanks to FastMM!).
  ! Fixed create list feature (macros can be upper-case or lower-case).
  * Changed macros in the DUP4 HTML template (v1.2) for lists to upper-case
    anyway to be consistent.
- * Re-factoring the TDrivers class to stop using pointers replaced by dynamic
-   arrays. Will be easier to maintain and hopefully not slower.
+ * Re-factored the TDrivers class to stop using pointers replaced by dynamic
+   arrays. Will be easier to maintain and less prone to errors.
    Also introduced DUDI v6 that uses a callback function every time an entry
    needs to be added. This is completely different than DUDI v5 were the core
    program calls the plug-in function for all found entries.
-   Both the old DUDI v1-v5 & v6 methods will be supported by Dragon UnPACKer
+   Both the old DUDI v1-v5 & v6 methods are supported by Dragon UnPACKer
    5.7.0+.
    New directory cache should be as fast (if not faster) than the old one.
    Note: Only main & ZIP driver were adapted to DUDI v6.
-   ! SVN 646: Fixed files without directories not working in previous SVN 644.
-   ! SVN 648: Fixed folder cache never cleared when closing files. This was
-              resulting in duplicate files when loading HRF files for ex.
-   ! SVN 649: Fixed DUDI v6 plug-in internal extraction not working.
-              Fixed exception when there was only 1 entry in the input file.
-   ! SVN 652: Fixed search functions.
  + Added FastCode & FastMove.
    http://fastcode.sourceforge.net/
  ! Fixed support for multiple convert plug-ins during preview.
@@ -41,9 +36,10 @@ SVN Release 682 [Unreleased]
    of the main form. Both don't access directly main form components any more
    and go through a wrapper command class.
  * Completely revamped the logging features.
-   This is still work in progress but is now used everywhere.
+   There might still be some places were it misbehaves.
  + Revamped the old "Look" functionality to a much easier to maintain and
    modify "Theme" (files in a folder for the moment).
+   Not really nice with Delphi 7 but should pave the way to Lazarus.
  + Added chained conversion from plug-ins to internal Vampyre Imaging Library.
    This allows for the plug-ins to just convert to .DDS for example and the
    chaining will also propose BMP, PNG and TGA with no additional work from
@@ -65,7 +61,7 @@ SVN Release 682 [Unreleased]
      requires Dragon UnPACKer v5.7.0 or more. It won't work with older Dragon
 	 UnPACKer versions.
    * Changed to use Abbrevia instead of Info-Zip UnZip32.dll.
- * Elbereth's Main Driver plug-in v3.0.1 Beta 3:
+ * Elbereth's Main Driver plug-in v3.0.1 Beta 4:
    * Updated to new DUDI v6. This means as of this version the plug-in
      requires Dragon UnPACKer v5.7.0 or more. It won't work with older Dragon
 	 UnPACKer versions.
@@ -83,6 +79,7 @@ SVN Release 682 [Unreleased]
      (This never worked in drv_11th...)
    + Added support for The 11th Hour .GJD file format.
      (No activation needed)
+   * Added sanity checks to Terminal Velocity .POD format.
  - Removed Elbereth's The 11th Hour Driver plug-in.
    Not needed anymore, features merged in drv_default v3.0.1 Beta 3.
  * Duppi v3.4.0:

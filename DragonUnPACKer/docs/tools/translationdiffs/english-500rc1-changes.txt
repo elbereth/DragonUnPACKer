@@ -1,0 +1,73 @@
+Language Compare Report created 28/06/2003 20:03:02 using DLNGComp v3.0.2 Beta
+===============================================================================
+
+Language file 1: english-beta3.lng (313 entries)
+Language file 2: english-rc1.lng (337 entries)
+
+Entries difference: 24
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : UP (Both)
+Program Version: 3 (english-beta3.lng) / 4 (english-rc1.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-beta3.lng but not in english-rc1.lng:
+
+HR4040=Prefixes
+HR4041=Automatic Prefix
+HR4042=Predefined Prefix:
+
+  Total: 3
+
+Entries found in english-rc1.lng but not in english-beta3.lng:
+
+BUTPAL=Add Palette
+CNV100=Add new palette
+CNV101=Source:
+CNV102=Name:
+CNV103=Author:
+CNV104=Format:
+CNV110=Raw 768bytes binary palette
+CNV120=Unknown
+CNV900=Error while converting the palette:%n%nSource file: %f%nSource format: %t%n%nError: %e%n%nCould not add the palette.
+CNV901=Palette converted successfully!%nYou can now select it from the list.
+CNV990=Palette name already exists.
+CNV991=Format unknown (try changing the format).
+HR3033=Maximum entry name length:
+HR3034=%c characters
+HR3035=Compatible with version:
+HR3036=%v and earlier
+HR4050=Naming
+HR4051=Automatic
+HR4052=Custum
+HR4053=Example
+HRLEGF=filename
+HRLEGN=number
+HRLEGX=extension
+HRLEGO=offset (Dec)
+HRLEGH=offset (Hex)
+ERRC10=Error while converting palette.%nImpossible to add the new palette.
+ERRIO=Could not open the following file:%n%n%f%n%nCheck if it isn't available anymore or if it is opened in another program.
+
+  Total: 27
+
+
+Values comparison:
+------------------
+
+Values modified between english-beta3.lng and english-rc1.lng:
+
+
+  Total: 0
+
+===============================================================================
+                                                         Found 31 difference(s)

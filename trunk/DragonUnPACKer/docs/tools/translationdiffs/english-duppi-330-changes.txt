@@ -1,0 +1,48 @@
+Language Compare Report created 14/10/2010 18:22:24 using DLNGComp v4.0.1 
+===============================================================================
+
+Language file 1: english-duppi-4.lng (DLNG v4 - 149 entries)
+Language file 2: english-duppi-3.lng (DLNG v4 - 144 entries)
+
+Entries difference: 5
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : PI (Both)
+Program Version: 4 (english-duppi-4.lng) / 3 (english-duppi-3.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-duppi-4.lng but not in english-duppi-3.lng:
+
+PI3001=Using server %i: %d
+PI3002=File size is not correct! (%a <> %b)
+PI3003=Verifying file integrity...
+PI3004=File integrity failed! (%a <> %b)
+PI3005=Unforeseen exception %a: %b
+
+  Total: 5
+
+Entries found in english-duppi-3.lng but not in english-duppi-4.lng:
+
+
+  Total: 0
+
+
+Values comparison:
+------------------
+
+Values modified between english-duppi-4.lng (1) and english-duppi-3.lng (2):
+
+
+  Total: 0
+
+===============================================================================
+                                                          Found 6 difference(s)

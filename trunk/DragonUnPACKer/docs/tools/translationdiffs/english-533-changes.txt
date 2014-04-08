@@ -1,0 +1,63 @@
+Language Compare Report created 23/08/2008 21:16:07 using DLNGComp v4.0.1 
+===============================================================================
+
+Language file 1: english-532wip.lng (DLNG v4 - 467 entries)
+Language file 2: english-533beta.lng (DLNG v4 - 487 entries)
+
+Entries difference: 20
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : UP (Both)
+Program Version: 10 (english-532wip.lng) / 11 (english-533beta.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-532wip.lng but not in english-533beta.lng:
+
+
+  Total: 0
+
+Entries found in english-533beta.lng but not in english-532wip.lng:
+
+MNU2S9=Preview
+POP4S1=Hide preview
+POP4S2=Show preview
+POP5S1=Display mode
+POP5S2=Original size with scrollbar (if needed)
+POP5S3=Shrinked/Stretched to panel size
+POP5S4=Preview options...
+OPT900=Preview
+OPT910=Preview options
+OPT911=Enable preview
+OPT920=Preview Size Limits
+OPT921=Do not limit size of files to preview
+OPT922=Limit size of files that will be previewed (Recommended)
+OPT923=Limit:
+OPT924=Very Low
+OPT925=Low
+OPT926=Medium (Recommended)
+OPT927=High
+OPT928=Very High
+OPT940=Preview Display Mode
+
+  Total: 20
+
+
+Values comparison:
+------------------
+
+Values modified between english-532wip.lng (1) and english-533beta.lng (2):
+
+
+  Total: 0
+
+===============================================================================
+                                                         Found 21 difference(s)

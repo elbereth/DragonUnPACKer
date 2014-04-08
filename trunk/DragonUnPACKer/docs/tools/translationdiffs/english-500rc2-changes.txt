@@ -1,0 +1,53 @@
+Language Compare Report created 08/09/2003 20:47:09 using DLNGComp v3.0.2 Beta
+===============================================================================
+
+Language file 1: english-rc1.lng (337 entries)
+Language file 2: english-rc2.lng (339 entries)
+
+Entries difference: 2
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : UP (Both)
+Program Version: 4 (english-rc1.lng) / 5 (english-rc2.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-rc1.lng but not in english-rc2.lng:
+
+
+  Total: 0
+
+Entries found in english-rc2.lng but not in english-rc1.lng:
+
+OPT125=Use HyperRipper if no plugin could open the file
+PI0041=To install this Dragon UnPACKer 5 Package (D5P) file you need a newer Duppi version.%nYour Duppi version: %y%nNeeded Duppi version: %v%n%nPlease update your Dragon UnPACKer 5!
+
+  Total: 2
+
+
+Values comparison:
+------------------
+
+Values modified between english-rc1.lng and english-rc2.lng:
+
+HRLG09=Scanned %s in %t secs!'
+HRLG09=Scanned %s in %t secs!
+HRD213=frame(s)'
+HRD213=frame(s)
+HRD223=byte(s)'
+HRD223=byte(s)
+HRD300=Special'
+HRD300=Special
+
+  Total: 4
+
+===============================================================================
+                                                          Found 7 difference(s)

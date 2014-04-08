@@ -1,0 +1,44 @@
+Language Compare Report created 07/08/2011 19:49:10 using DLNGComp v4.0.1 
+===============================================================================
+
+Language file 1: english-duppi-4.lng (DLNG v4 - 149 entries)
+Language file 2: english-duppi-5.lng (DLNG v4 - 150 entries)
+
+Entries difference: 1
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : PI (Both)
+Program Version: 4 (english-duppi-4.lng) / 5 (english-duppi-5.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-duppi-4.lng but not in english-duppi-5.lng:
+
+
+  Total: 0
+
+Entries found in english-duppi-5.lng but not in english-duppi-4.lng:
+
+PI0069=Detected Dragon UnPACKer build (%a) mismatch last run one (%b).%nYou must run Dragon UnPACKer 5 at least once after an update.%n%nDo you want to run it now (recommended)?
+
+  Total: 1
+
+
+Values comparison:
+------------------
+
+Values modified between english-duppi-4.lng (1) and english-duppi-5.lng (2):
+
+
+  Total: 0
+
+===============================================================================
+                                                          Found 2 difference(s)

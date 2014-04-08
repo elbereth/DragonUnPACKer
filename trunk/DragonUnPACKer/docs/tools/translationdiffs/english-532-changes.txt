@@ -1,0 +1,72 @@
+Language Compare Report created 19/04/2008 20:26:18 using DLNGComp v4.0.1 
+===============================================================================
+
+Language file 1: english-520cinthia.lng (DLNG v4 - 440 entries)
+Language file 2: english-532wip.lng (DLNG v4 - 467 entries)
+
+Entries difference: 27
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : UP (Both)
+Program Version: 9 (english-520cinthia.lng) / 10 (english-532wip.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-520cinthia.lng but not in english-532wip.lng:
+
+OPT410=Associated extensions
+
+  Total: 1
+
+Entries found in english-532wip.lng but not in english-520cinthia.lng:
+
+MNU2S7=Advanced
+MNU2S8=Execution log
+OPT000=Advanced options
+OPT010=Temporary Directory
+OPT011=Use auto-detected temporary directory
+OPT012=Use defined temporary directory:
+OPT013=Select temporary directory to use...
+OPT020=Options for 'Open file'
+OPT021=Make 'Extract file... Without conversion' the default option
+OPT030=Buffer memory
+OPT031=Select the size of the extraction buffer:
+OPT032=No buffer / Not recommended! (Very slow)
+OPT033=%d byte(s)
+OPT034=%d kbytes
+OPT035=%d Mbytes
+OPT036=Default
+OPT191=Those plugins will handle the convertion of file formats when extracting or previewing files. Example: Convert textures from .ART file format to .BMP
+OPT192=Those plugins handle opening file formats so Dragon UnPACKer can browse into them. If a file is not supported that means no driver plugin could load it. HyperRipper handle files with another type of plugins (see below).
+OPT193=Those plugins handle the file format to scan in HyperRipper (ex: MPEG Audio, BMP, etc..)
+OPT401=Select the extensions Dragon UnPACKer should open when you will double-click them in the Explorer:
+OPT402=Currently associated icon:
+OPT420=Verify associations at start-up
+OPT430=Use external icon
+OPT431=Select icon file for association with Dagon UnPACKer 5...
+OPT432=Icons
+OPT440=Change the association text:
+OPT450=Add Windows Explorer extension "%d"
+OPT451=Open with Dragon UnPACKer 5
+
+  Total: 28
+
+
+Values comparison:
+------------------
+
+Values modified between english-520cinthia.lng (1) and english-532wip.lng (2):
+
+
+  Total: 0
+
+===============================================================================
+                                                         Found 30 difference(s)

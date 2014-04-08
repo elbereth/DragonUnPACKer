@@ -1,5 +1,22 @@
 unit lib_BinUtils;
 
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// The Original Code is lib_binutils.pas, released April 8, 2014.
+//
+// The Initial Developer of the Original Code is Alexandre Devilliers
+// (elbereth@users.sourceforge.net, http://www.elberethzone.net).
+//
+// =============================================================================
+// Binary Utilities library
+// =============================================================================
+//
+// Useful functions to read/write strings/data from/to files
+//
+// -----------------------------------------------------------------------------
+
 interface
 
 uses classes, SysUtils, StrUtils;

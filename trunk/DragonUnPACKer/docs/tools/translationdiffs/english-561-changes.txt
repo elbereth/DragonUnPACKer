@@ -1,0 +1,57 @@
+Language Compare Report created 05/04/2011 19:28:03 using DLNGComp v4.0.0 
+===============================================================================
+
+Language file 1: english-551beta.lng (DLNG v4 - 434 entries)
+Language file 2: english-561exedrabenton.lng (DLNG v4 - 442 entries)
+
+Entries difference: 8
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : UP (Both)
+Program Version: 13 (english-551beta.lng) / 14 (english-561exedrabenton.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-551beta.lng but not in english-561exedrabenton.lng:
+
+
+  Total: 0
+
+Entries found in english-561exedrabenton.lng but not in english-551beta.lng:
+
+POP2S6=Extract sub-directories to "%d"...
+POP3S4=Copy log to clipboard
+OPT127=Auto-expand the folders at opening
+OPT128=Keep the selected file type in open dialog
+OPT812=Clear when opening a new file
+LOG505=Skipped entry: %f (%r)...
+LOG506=Size equal to 0
+LOG507=Offset lower than 0
+
+  Total: 8
+
+
+Values comparison:
+------------------
+
+Values modified between english-551beta.lng (1) and english-561exedrabenton.lng (2):
+
+(1) POP2S1=Extract all to...
+(2) POP2S1=Extract all...
+(1) POP2S2=Extract sub-directories to...
+(2) POP2S2=Extract sub-directories...
+(1) OPT811=Show the execution log in main window.
+(2) OPT811=Show the execution log in main window
+
+  Total: 3
+
+===============================================================================
+                                                         Found 12 difference(s)

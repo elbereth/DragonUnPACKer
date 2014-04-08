@@ -1,0 +1,72 @@
+Language Compare Report created 12/09/2009 09:27:49 using DLNGComp v4.0.1 
+===============================================================================
+
+Language file 1: english-duppi-1.lng (DLNG v4 - 115 entries)
+Language file 2: english-duppi-3.lng (DLNG v4 - 144 entries)
+
+Entries difference: 29
+
+-------------------------------------------------------------------------------
+
+Basic comparison:
+-----------------
+
+Program ID     : PI (Both)
+Program Version: 1 (english-duppi-1.lng) / 3 (english-duppi-3.lng)
+
+  Total: 1
+
+
+Entries comparison:
+-------------------
+
+Entries found in english-duppi-1.lng but not in english-duppi-3.lng:
+
+
+  Total: 0
+
+Entries found in english-duppi-3.lng but not in english-duppi-1.lng:
+
+PI0051=No URL for Dragon UnPACKer update!
+PI0052=%s bytes
+PI0053=%s KiB
+PI0054=Package %a...
+PI0055=Search blocks...
+PI0056=Reading block "%a"...
+PI0057=entries
+PI0058=names
+PI0059=content
+PI0060=Installation of file %a: %b
+PI0061=Registering OCX...
+PI0062=Package installation successful.%nThe Duppi program will now restart to update itself.
+PI0063=Retrieving package informations...
+PI0064=Package %d
+PI0065=The following obsolete file was found and will be deleted:%n%n%f%n%n
+PI0066=File version: %1%nObsolete versions: <= %2%n%n
+PI0067=Proceed and delete (recommended)?
+PI0068=Deleted!
+PIE401=Hash function unknown: %h
+PIE402=Seek to file failed (%a <> %b)
+PIE403=Error while reading file (%a bytes <> %b bytes)
+PIE404=Error while decompressing %a (%b bytes <> %c bytes)
+PIE405=Unsupported compression (%a)
+PIE406=Hash value do not match the block (%a <> %b)
+PIE407=Seek to block failed (%a <> %b)
+PIE408=Error while reading block (%a bytes <> %b bytes)
+PIE409=Error while retrieving informations:
+PIE410=Error while retrieving banner:
+PIE411=Error while retrieving data of block "%a":
+
+  Total: 29
+
+
+Values comparison:
+------------------
+
+Values modified between english-duppi-1.lng (1) and english-duppi-3.lng (2):
+
+
+  Total: 0
+
+===============================================================================
+                                                         Found 30 difference(s)

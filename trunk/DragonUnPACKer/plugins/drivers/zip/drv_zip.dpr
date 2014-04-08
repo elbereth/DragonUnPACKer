@@ -20,7 +20,6 @@ uses
   AbArcTyp, AbZipTyp, AbUnzPrc, AbUtils,
   dup5drv_utils in '..\dup5drv_utils.pas',
   spec_DUDI in '..\..\..\common\spec_DUDI.pas',
-  UnZip in 'UnZip.pas',
   lib_version in '..\..\..\common\lib_version.pas',
   lib_BinUtils in '..\..\..\common\lib_binutils.pas';
 

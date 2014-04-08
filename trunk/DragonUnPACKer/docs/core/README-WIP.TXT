@@ -11,7 +11,7 @@ by Alexande "Elbereth" Devilliers                                    08/04/2014
 Main program version and versions history:
 
 Version 5.7.0.284
-Beta (SVN Release 692) [08/04/2014]
+Beta (SVN Release 694) [08/04/2014]
 
  i Updated licence to MPL 2.0 (from MPL 1.1).
  ! Added extra check in the extraction routine to avoid going past the end of

@@ -1,5 +1,5 @@
-Dragon LaNGuage Compare (DLNGCOMP) v4.0.1                 Open Source / MPL 1.1
-Created by Alexandre "Elbereth" Devilliers                           18-04-2008
+Dragon LaNGuage Compare (DLNGCOMP) v4.0.2                 Open Source / MPL 1.1
+Created by Alexandre "Elbereth" Devilliers                           08-04-2014
 ===============================================================================
 
   What is DLNGCOMP ?
@@ -54,6 +54,10 @@ You can reach Alex Devilliers:
 
   What's new?
   -----------
+
+Version 4.0.2:
+
+ * Changed get16v to get16...
 
 Version 4.0.1:
 

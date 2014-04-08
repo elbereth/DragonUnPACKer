@@ -11,7 +11,7 @@ by Alexande "Elbereth" Devilliers                                    08/04/2014
 Main program version and versions history:
 
 Version 5.7.0.284
-Beta (SVN Release 694) [08/04/2014]
+Beta (SVN Release 695) [08/04/2014]
 
  i Updated licence to MPL 2.0 (from MPL 1.1).
  ! Added extra check in the extraction routine to avoid going past the end of
@@ -87,25 +87,6 @@ Beta (SVN Release 694) [08/04/2014]
      This means a full Delphi implementation with no need for DLLs.
 	 It is also compatible with Lazarus (Indy 9 & 10 were ported to Lazarus).
    i Now compiled with FastMM4, FastCode & FastMove.
- + External Tools Conversion plug-in v0.2.1 Beta:
-   i This plug-in allows to use external command line tools to convert file
-     formats (for example the excellent vgmstream tool for audio files).
-	 This first version works fine but is only configured for vgmstream and to
-	 trigger on .smp files of Ghostbusters.
-	 Configuration is completely done in .INI files (one for each tool):
-	 data\convert\cnv_exttools\*.ini
-	 data\convert\cnv_exttools\vgmstream.ini for ex.
-	 You will also need a working test.exe file from vgmstream in the following
-	 folder (along with needed dlls):
-     data\convert\cnv_exttools\vgmstream
-     http://hcs64.com/vgmstream.html
-   i Edit or add new tools via the included configuration screen.
-     To get to it, just click on Configure button in the Convert plug-in options
-	 screen of Dragon UnPACKer while cnv_exttools plug-in is selected.
-   ! Fixed EAccessViolation exception when the entry clicked in Dragon UnPACKer
-     has no extension.
-   ! Fixed exception when clicking on the close configuration box of the plug-in
-     while an entry was selected.
  + Default Conversion plug-in v2.2.1:
    + Added Ghostbusters: The Video Game .TEX to .DDS
      Based on Ghostbusters texture converter C++ code by Jonathan Wilson

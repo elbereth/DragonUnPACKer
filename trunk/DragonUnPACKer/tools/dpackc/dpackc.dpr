@@ -36,7 +36,8 @@ uses
   URangeDecoder,
   URangeEncoder,
   ULZMAEnc in 'ULZMAEnc.pas',
-  BrowseForFolderU in '..\..\common\BrowseForFolderU.pas';
+  BrowseForFolderU in '..\..\common\BrowseForFolderU.pas',
+  lib_temptools in '..\..\common\lib_temptools.pas';
 
 {$R *.res}
 

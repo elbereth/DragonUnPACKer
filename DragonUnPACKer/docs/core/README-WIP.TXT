@@ -1,4 +1,4 @@
-Dragon UnPACKer v5.7.0 Beta                                 MPL 1.1 open source
+Dragon UnPACKer v5.7.0 Beta                                 MPL 2.0 open source
 by Alexande "Elbereth" Devilliers                                    08/04/2014
 ===============================================================================
 
@@ -9,6 +9,30 @@ by Alexande "Elbereth" Devilliers                                    08/04/2014
   
 -------------------------------------------------------------------------------
 Main program version and versions history:
+
+Version 5.7.1.285
+SVN Release 695 [Unreleased]
+
+ + External Tools Conversion plug-in v0.2.1 Beta:
+   i This plug-in allows to use external command line tools to convert file
+     formats (for example the excellent vgmstream tool for audio files).
+	 This first version works fine but is only configured for vgmstream and to
+	 trigger on .smp files of Ghostbusters.
+	 Configuration is completely done in .INI files (one for each tool):
+	 data\convert\cnv_exttools\*.ini
+	 data\convert\cnv_exttools\vgmstream.ini for ex.
+	 You will also need a working test.exe file from vgmstream in the following
+	 folder (along with needed dlls):
+     data\convert\cnv_exttools\vgmstream
+     http://hcs64.com/vgmstream.html
+   i Edit or add new tools via the included configuration screen.
+     To get to it, just click on Configure button in the Convert plug-in options
+	 screen of Dragon UnPACKer while cnv_exttools plug-in is selected.
+   ! Fixed EAccessViolation exception when the entry clicked in Dragon UnPACKer
+     has no extension.
+   ! Fixed exception when clicking on the close configuration box of the plug-in
+     while an entry was selected.
+	 
 
 Version 5.7.0.284
 Beta (SVN Release 695) [08/04/2014]

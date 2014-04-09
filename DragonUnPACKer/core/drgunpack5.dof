@@ -110,8 +110,8 @@ IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=5
 MinorVer=7
-Release=0
-Build=284
+Release=1
+Build=285
 Debug=0
 PreRelease=1
 Special=0
@@ -122,7 +122,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=ElbererhZone
 FileDescription=Dragon UnPACKer 5
-FileVersion=5.7.0.284
+FileVersion=5.7.1.285
 InternalName=DrgUnPack5
 LegalCopyright=Created by Alexandre "Elbereth" Devilliers under Mozilla Public License 1.1
 LegalTrademarks=
@@ -130,6 +130,8 @@ OriginalFilename=DrgUnPack5.exe
 ProductName=Dragon UnPACKer 5
 ProductVersion=Beta
 Comments=Universal game ripper/Ripper universel de jeux
+[Excluded Packages]
+c:\program files (x86)\borland\delphi7\Projects\Bpl\dclIndy70.bpl=Internet Direct (Indy) for D7 Property and Component Editors
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;

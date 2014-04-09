@@ -225,6 +225,17 @@ You can reach Alex Devilliers:
   What's new?
   -----------
 
+Version 3.7.0:
+
+ i Uses FastMM, FastCode & FastMove.
+ + Added themes installto values
+ + Added install to sub-folders (needed for themes)
+ + Updated pre-defined Dragon UnPACKer values up to 284 (5.7.0 Beta)
+ + Now saves & load last used path for all possible actions (in dpack.ini file
+   in same folder).
+ ! Fixed memory leaks.
+ 
+  
 Version 3.6.1:
 
  ! Fixed bug when non-compressed and compressed block had same size. It would

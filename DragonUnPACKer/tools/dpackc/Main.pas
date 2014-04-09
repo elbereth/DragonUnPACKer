@@ -13,10 +13,11 @@ unit Main;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, zlib,
-  Dialogs, ComCtrls, StdCtrls, Menus, ToolWin, ImgList, ExtCtrls, Buttons,
-  lib_crc, lib_zlib, spec_DUPP, lib_version, lib_binutils, BrowseForFolderU,
-  ULZMAEnc,UBufferedFS,DCPsha512,DCPsha256,DCPsha1,DCPmd5,DCPripemd160,DCPcrypt2,
+  Windows, Messages, SysUtils, Variants, Classes,
+  Graphics, Controls, Forms, zlib, Dialogs, ComCtrls, StdCtrls, Menus, ToolWin,
+  ImgList, ExtCtrls, Buttons, lib_crc, lib_zlib, spec_DUPP, lib_version,
+  lib_binutils, BrowseForFolderU, ULZMAEnc,UBufferedFS,DCPsha512,DCPsha256,
+  DCPsha1,DCPmd5,DCPripemd160,DCPcrypt2, Inifiles,
   // JVCL is used for XML manipulation (project files)
   JvSimpleXml;
 
@@ -194,6 +195,7 @@ type
     chkDelete: TCheckBox;
     Label27: TLabel;
     lblDir2DelNum: TLabel;
+    butAddFolder: TToolButton;
     procedure ListBox1DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure ListBox1DragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
@@ -243,11 +245,15 @@ type
     procedure JvImgBtn1Click(Sender: TObject);
     procedure chkOverrideNeededVersionClick(Sender: TObject);
     procedure chkDeleteClick(Sender: TObject);
+    procedure butAddFolderClick(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
 //    function convertInstallTo(val: integer): string;
   private
     { Déclarations privées }
+    ProgramConfiguration: TIniFile;
     function getPluginVersion(filename: String): Integer;
     function compressDUPPv4best(tmpStream: TStream; var CmpType: Byte): TMemoryStream;
+    procedure refreshInstallTo(item: TListItem);
     procedure refreshSelectedInstallTo;
     procedure refreshAvailableOptions;
     procedure createDUPPv2_v3;
@@ -255,8 +261,10 @@ type
     procedure diffDirectories(dir1, dir2: String);
     function getFilesTreeFromDirectory(root, dirName: string): TList;
     procedure addFile(filename: string; installTo: integer = -1; deleteFile: boolean = false);
+    procedure addDirectory(searchDir: string);
     procedure reinitFilesTab();
     function checkIfDeleteFile(): boolean;
+    function checkIfInstallDir(): boolean;
   public
     PackVersion: Integer;
     PackDUP5Check: Boolean;
@@ -299,11 +307,25 @@ implementation
 uses Compile, Config;
 
 const DPSVERSION = 5;
-      VERSION: integer = 34040;
+      VERSION: integer = 37040;
 
 {$R *.dfm}
 
 {$Include datetime.inc}
+
+function TfrmMain.checkIfInstallDir(): boolean;
+var x: integer;
+    tmpFileInfo: FileInfo;
+begin
+
+  result := false;
+  for x := 0 to lstFiles.Items.Count-1 do
+  begin
+    tmpFileInfo := FileInfo(lstFiles.Items.Item[x].Data);
+    result := result or (tmpFileInfo.InstallDir <> '');
+  end;
+
+end;
 
 function TfrmMain.checkIfDeleteFile(): boolean;
 var x: integer;
@@ -971,9 +993,7 @@ begin
   tmpStream := TMemoryStream.Create;
   try
     for x := 0 to lstFiles.Items.Count-1 do
-    begin
       put8(tmpStream,lstFiles.Items.Item[x].Caption);
-    end;
 
     tmpStream.Seek(0,0);
 
@@ -1317,16 +1337,17 @@ begin
   Dialog.Filter := 'All files|*.*';
   Dialog.Title := 'Add a file to the package...';
   Dialog.Options := [ofAllowMultiSelect, ofFileMustExist, ofEnableSizing];
+  Dialog.InitialDir := ProgramConfiguration.ReadString('FilePaths','FileAddPath','');
 
   if Dialog.Execute and (Dialog.Files.Count > 0) then
   begin
-
     for x := 0 to Dialog.Files.Count - 1 do
     begin
 
       addFile(Dialog.Files.Strings[x]);
 
     end;
+    ProgramConfiguration.WriteString('FilePaths','FileAddPath',ExtractFilePath(Dialog.Files.Strings[x]));
   end;
   Dialog.Free;
 
@@ -1599,14 +1620,23 @@ begin
 
 end;
 
+procedure TfrmMain.refreshInstallTo(item: TListItem);
+var tmp: FileInfo;
+begin
+
+  tmp := FileInfo(item.Data);
+  if (tmp.InstallDir = '') then
+    item.SubItems.Strings[2] := txtInstallTo.Items.Strings[tmp.InstallTo]
+  else
+    item.SubItems.Strings[2] := txtInstallTo.Items.Strings[tmp.InstallTo] + '\' + tmp.InstallDir;
+
+end;
+
 procedure TfrmMain.refreshSelectedInstallTo;
 begin
 
   if curSelectedRow <> -1 then
-    if txtInstallDir.Text = '' then
-      lstFiles.Items.Item[curSelectedRow].SubItems.Strings[2] := txtInstallTo.Items.Strings[curFileInfo.InstallTo]
-    else
-      lstFiles.Items.Item[curSelectedRow].SubItems.Strings[2] := txtInstallTo.Items.Strings[curFileInfo.InstallTo] + '\' + curFileInfo.InstallDir;
+    refreshInstallTo(lstFiles.Items.Item[curSelectedRow]);
 
 end;
 
@@ -1637,9 +1667,12 @@ begin
   SaveDialog.Title := 'Save project...';
   SaveDialog.Filter := 'Dragon UnPACKer 5 Package Project (*.D5PP)|*.D5PP';
 
+  SaveDialog.InitialDir := ProgramConfiguration.ReadString('FilePaths','ProjectSavePath','');
+
   if SaveDialog.Execute then
   begin
 
+    ProgramConfiguration.WriteString('FilePaths','ProjectSavePath',ExtractFilePath(SaveDialog.FileName));
     SimpleXML := TJvSimpleXML.Create(self);
 
     SimpleXML.Root.Create(nil);
@@ -1763,11 +1796,12 @@ begin
   Dialog.Title := 'Open project...';
   Dialog.Filter := 'Dragon UnPACKer 5 Package Project (*.D5PP)|*.D5PP';
 
-  if Dialog.FileName <> '' then
-    Dialog.FileName := ExtractFilePath(Dialog.FileName);
+  Dialog.InitialDir := ProgramConfiguration.ReadString('FilePaths','ProjectOpenPath','');
 
   if Dialog.Execute then
   begin
+
+   ProgramConfiguration.WriteString('FilePaths','ProjectOpenPath',ExtractFilePath(Dialog.FileName));
 
    try
 
@@ -1913,7 +1947,8 @@ begin
   application.Title := frmMain.Caption;
   lblVersion.Caption := 'Version '+getVersion(VERSION);
   lblCompatible.Caption := 'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime);
-
+  ProgramConfiguration := TIniFile.Create(ChangeFileExt(Application.ExeName,'.ini'));
+  
 end;
 
 procedure TfrmMain.butExitClick(Sender: TObject);
@@ -2045,6 +2080,9 @@ begin
       218: lblDUPVersion.Caption := 'v5.5.0 Beta';
       226: lblDUPVersion.Caption := 'v5.5.1 Beta';
       239: lblDUPVersion.Caption := 'v5.6.0';
+      262: lblDUPVersion.Caption := 'v5.6.1';
+      268: lblDUPVersion.Caption := 'v5.6.2';
+      284: lblDUPVersion.Caption := 'v5.7.0 Beta';
     else
       lblDUPVersion.Caption := '???';
     end;
@@ -2111,6 +2149,9 @@ begin
       218: txtDUP5Version.Text := '193';
       226: txtDUP5Version.Text := '218';
       239: txtDUP5Version.Text := '226';
+      262: txtDUP5Version.Text := '239';
+      268: txtDUP5Version.Text := '262';
+      284: txtDUP5Version.Text := '268';
     else
       txtDUP5Version.Text := inttostr(oldValue-1);
     end;
@@ -2178,12 +2219,15 @@ begin
       193: txtDUP5Version.Text := '218';
       218: txtDUP5Version.Text := '226';
       226: txtDUP5Version.Text := '239';
+      239: txtDUP5Version.Text := '262';
+      262: txtDUP5Version.Text := '268';
+      268: txtDUP5Version.Text := '284';
     else
       txtDUP5Version.Text := inttostr(oldValue+1);
     end;
   except
     on EConvertError do
-      txtDUP5Version.Text := '239';
+      txtDUP5Version.Text := '284';
   end;
 
 end;
@@ -2194,9 +2238,11 @@ begin
 
   SaveDialog.Title := 'Packge filename...';
   SaveDialog.Filter := 'Dragon UnPACKer 5 Package (*.D5P)|*.D5P';
+  SaveDialog.InitialDir := ProgramConfiguration.ReadString('FilePaths','CompiledPath','');
 
   if SaveDialog.Execute then
   begin
+    ProgramConfiguration.WriteString('FilePaths','CompiledPath',ExtractFilePath(SaveDialog.FileName));
     txtPackageFile.Text := SaveDialog.Filename;
   end;
 
@@ -2602,14 +2648,17 @@ end;
 
 procedure TfrmMain.addFile(filename: string; installTo: integer = -1; deleteFile: boolean = false);
 var itmx: TListItem;
-    ext,datestr: string;
+    ext,datestr,path,truepath: string;
     tmp: FileInfo;
+    postheme: integer;
 begin
 
       itmx := lstFiles.Items.Add;
       with itmx do
       begin
         itmx.Caption := ExtractFilename(filename);
+        truepath := ExtractFilePath(filename);
+        path := Lowercase(truepath);
         itmx.SubItems.Add(IntToStr(GetFSize(filename)));
         try
           datestr := DateTimeToStr(FileDateToDateTime(FileAge(filename)));
@@ -2662,7 +2711,14 @@ begin
         end
         else if (installTo = -1) then
         begin
-          tmp.InstallTo := 4;
+          postheme := pos('\data\themes\',path);
+          if (postheme>0) then
+          begin
+            tmp.InstallDir := copy(truepath,postheme+13,Length(truepath)-postheme-13);
+            tmp.InstallTo := 9;
+          end
+          else
+            tmp.InstallTo := 4;
         end;
 
         if (tmp.Version = -1) then
@@ -2679,13 +2735,22 @@ begin
           tmp.RegSvr := false;
         end;
         itmx.Data := tmp;
+        refreshInstallTo(itmx);
       end;
 
 end;
 
 procedure TfrmMain.reinitFilesTab();
+var x: integer;
+    tmp: FileInfo;
 begin
 
+  lstFiles.Selected.Selected := false;
+  for x := 0 to lstFiles.Items.Count-1 do
+  begin
+    tmp := FileInfo(lstFiles.Items.Item[x].Data);
+    FreeAndNil(tmp);
+  end;
   lstFiles.Clear;
 
   txtInstallTo.Enabled := false;
@@ -2702,24 +2767,32 @@ begin
 end;
 
 procedure TfrmMain.butOldVersionBrowseClick(Sender: TObject);
-var newDir: string;
+var oldDir,newDir: string;
 begin
 
+  oldDir := ProgramConfiguration.ReadString('FilePaths','DiffOldPath',txtUpdateDir1.text);
   newDir := BrowseForFolder('Select directory of old Dragon UnPACKer version:',txtUpdateDir1.text);
 
   if newDir <> '' then
+  begin
     txtUpdateDir1.Text := newdir;
+    ProgramConfiguration.WriteString('FilePaths','DiffOldPath',newdir);
+  end;
 
 end;
 
 procedure TfrmMain.butNewVersionBrowseClick(Sender: TObject);
-var newDir: string;
+var oldDir,newDir: string;
 begin
 
+  oldDir := ProgramConfiguration.ReadString('FilePaths','DiffNewPath',txtUpdateDir2.text);
   newDir := BrowseForFolder('Select directory of new Dragon UnPACKer version:',txtUpdateDir2.text);
 
   if newDir <> '' then
+  begin
     txtUpdateDir2.Text := newdir;
+    ProgramConfiguration.WriteString('FilePaths','DiffNewPath',newdir);
+  end;
 
 end;
 
@@ -2763,6 +2836,53 @@ begin
   chkHidden.enabled := not(curFileInfo.DeleteFile);
   chkReadOnly.enabled := not(curFileInfo.DeleteFile);
   chkStoreDateTime.enabled := not(curFileInfo.DeleteFile);
+
+end;
+
+procedure TfrmMain.addDirectory(searchDir: string);
+var sr: TSearchRec;
+    FileAttrs: Integer;
+begin
+
+  FileAttrs := faReadOnly + faHidden + faSysFile + faDirectory + faArchive + faAnyFile;
+  if FindFirst(searchDir+'\*.*', FileAttrs, sr) = 0 then
+  begin
+    repeat
+      if (sr.name <> '.') and (sr.name <> '..') then
+      begin
+        if ((sr.Attr and faDirectory) = faDirectory) then
+          addDirectory(searchDir+'\'+sr.Name)
+        else
+          addFile(searchDir+'\'+sr.Name);
+      end;
+    until FindNext(sr) <> 0;
+    FindClose(sr);
+  end;
+
+end;
+
+procedure TfrmMain.butAddFolderClick(Sender: TObject);
+var olddir, searchDir: string;
+begin
+
+  olddir := ProgramConfiguration.ReadString('FilePaths','AddFolderPath','');
+  searchDir := BrowseForFolder('Select directory to add:',olddir);
+
+  if (SearchDir <> '') then
+  begin
+    ProgramConfiguration.WriteString('FilePaths','AddFolderPath',searchDir);
+    addDirectory(searchDir);
+  end;
+
+end;
+
+procedure TfrmMain.FormDestroy(Sender: TObject);
+begin
+
+  ProgramConfiguration.UpdateFile;
+  ProgramConfiguration.Free;
+
+  reinitFilesTab;
 
 end;
 

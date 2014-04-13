@@ -196,6 +196,7 @@ type
     Label27: TLabel;
     lblDir2DelNum: TLabel;
     butAddFolder: TToolButton;
+    optDUPPv5: TRadioButton;
     procedure ListBox1DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure ListBox1DragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
@@ -1347,7 +1348,7 @@ begin
       addFile(Dialog.Files.Strings[x]);
 
     end;
-    ProgramConfiguration.WriteString('FilePaths','FileAddPath',ExtractFilePath(Dialog.Files.Strings[x]));
+    ProgramConfiguration.WriteString('FilePaths','FileAddPath',ExtractFilePath(Dialog.Files.Strings[x-1]));
   end;
   Dialog.Free;
 
@@ -2251,12 +2252,12 @@ end;
 procedure TfrmMain.optDUPPClick(Sender: TObject);
 begin
 
-  if checkIfDeleteFile and not(optDUPPv4.Checked) then
+  if checkIfDeleteFile and not(optDUPPv4.Checked) and not(optDUPPv5.Checked) then
   begin
 
     refreshAvailableOptions;
 
-    ShowMessage('Delete file option for at least one entry, only Version 4 supports this feature');
+    ShowMessage('Delete file option for at least one entry, only Version 4 and 5 supports this feature');
 
     optDUPPv4.Checked := true;
 
@@ -2745,7 +2746,8 @@ var x: integer;
     tmp: FileInfo;
 begin
 
-  lstFiles.Selected.Selected := false;
+  if lstFiles.SelCount > 0 then
+    lstFiles.Selected.Selected := false;
   for x := 0 to lstFiles.Items.Count-1 do
   begin
     tmp := FileInfo(lstFiles.Items.Item[x].Data);

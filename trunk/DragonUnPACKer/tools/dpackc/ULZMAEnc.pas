@@ -33,8 +33,8 @@ const
 begin
   encoder := TLZMAEncoder.Create;
   encoder.SetAlgorithm(2);
-  encoder.SetDictionarySize(1 shl 23);
-  encoder.SeNumFastBytes(128);
+  encoder.SetDictionarySize(1 shl 25);
+  encoder.SeNumFastBytes(273);
   encoder.SetMatchFinder(1);
   encoder.SetLcLpPb(3, 0, 2);
   encoder.SetEndMarkerMode(false);

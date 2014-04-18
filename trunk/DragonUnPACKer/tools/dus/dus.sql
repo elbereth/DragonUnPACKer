@@ -1,11 +1,7 @@
 --
--- The contents of this file are subject to the Mozilla Public License
--- Version 1.1 (the "License"); you may not use this file except in compliance
--- with the License. You may obtain a copy of the License at http://www.mozilla.org/MPL/
---
--- Software distributed under the License is distributed on an "AS IS" basis,
--- WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for the
--- specific language governing rights and limitations under the License.
+-- This Source Code Form is subject to the terms of the Mozilla Public
+-- License, v. 2.0. If a copy of the MPL was not distributed with this
+-- file, You can obtain one at http://mozilla.org/MPL/2.0/.
 --
 -- The Original Code is dus.sql, released December 17, 2005.
 --
@@ -14,19 +10,22 @@
 --
 
 -- phpMyAdmin SQL Dump
--- version 3.3.3
+-- version 4.1.13
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Jul 11, 2010 at 03:18 PM
--- Server version: 5.1.47
--- PHP Version: 5.3.2
+-- Generation Time: Apr 18, 2014 at 10:25 PM
+-- Server version: 5.5.35-2-log
+-- PHP Version: 5.5.10-1
 
-SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET time_zone = "+00:00";
 
---
--- Database: `d108923_DragonUnPACKer`
---
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
 
 -- --------------------------------------------------------
 
@@ -34,7 +33,7 @@ SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 -- Table structure for table `dus_convert`
 --
 
-CREATE TABLE `dus_convert` (
+CREATE TABLE IF NOT EXISTS `dus_convert` (
   `name` varchar(12) NOT NULL,
   `version` int(11) NOT NULL DEFAULT '0',
   `versiontype` enum('stable','unstable') NOT NULL DEFAULT 'stable',
@@ -48,6 +47,8 @@ CREATE TABLE `dus_convert` (
   `comment` text NOT NULL,
   `commentFR` text NOT NULL,
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `realsize` bigint(20) NOT NULL,
+  `hash` varchar(40) NOT NULL,
   PRIMARY KEY (`name`,`version`),
   KEY `duci` (`duci`),
   KEY `versiontype` (`versiontype`)
@@ -59,7 +60,7 @@ CREATE TABLE `dus_convert` (
 -- Table structure for table `dus_core`
 --
 
-CREATE TABLE `dus_core` (
+CREATE TABLE IF NOT EXISTS `dus_core` (
   `build` int(11) NOT NULL DEFAULT '0',
   `date` date NOT NULL DEFAULT '0000-00-00',
   `type` enum('wip','stable') CHARACTER SET utf8 NOT NULL DEFAULT 'wip',
@@ -76,7 +77,7 @@ CREATE TABLE `dus_core` (
 -- Table structure for table `dus_core_update`
 --
 
-CREATE TABLE `dus_core_update` (
+CREATE TABLE IF NOT EXISTS `dus_core_update` (
   `buildfrom` int(11) NOT NULL,
   `buildto` int(11) NOT NULL,
   `URL` text NOT NULL,
@@ -84,6 +85,7 @@ CREATE TABLE `dus_core_update` (
   `size` int(11) NOT NULL,
   `realsize` int(11) NOT NULL,
   `hash` varchar(40) NOT NULL,
+  `URLSF` text NOT NULL,
   PRIMARY KEY (`buildfrom`,`buildto`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -93,7 +95,7 @@ CREATE TABLE `dus_core_update` (
 -- Table structure for table `dus_driver`
 --
 
-CREATE TABLE `dus_driver` (
+CREATE TABLE IF NOT EXISTS `dus_driver` (
   `name` varchar(12) NOT NULL,
   `version` int(11) NOT NULL DEFAULT '0',
   `versiontype` enum('stable','unstable') NOT NULL DEFAULT 'stable',
@@ -119,7 +121,7 @@ CREATE TABLE `dus_driver` (
 -- Table structure for table `dus_duppi`
 --
 
-CREATE TABLE `dus_duppi` (
+CREATE TABLE IF NOT EXISTS `dus_duppi` (
   `versionfrom` int(11) NOT NULL DEFAULT '0',
   `version` int(11) NOT NULL,
   `versiondisp` varchar(32) NOT NULL,
@@ -137,7 +139,7 @@ CREATE TABLE `dus_duppi` (
 -- Table structure for table `dus_hyperripper`
 --
 
-CREATE TABLE `dus_hyperripper` (
+CREATE TABLE IF NOT EXISTS `dus_hyperripper` (
   `name` varchar(12) NOT NULL,
   `version` int(11) NOT NULL DEFAULT '0',
   `versiontype` enum('stable','unstable') NOT NULL DEFAULT 'stable',
@@ -162,14 +164,14 @@ CREATE TABLE `dus_hyperripper` (
 -- Table structure for table `dus_servers`
 --
 
-CREATE TABLE `dus_servers` (
+CREATE TABLE IF NOT EXISTS `dus_servers` (
   `serverID` tinyint(4) NOT NULL,
   `serverPriority` int(11) NOT NULL DEFAULT '0',
   `serverCountry` varchar(2) CHARACTER SET ascii NOT NULL DEFAULT 'fr',
   `serverURL` text NOT NULL,
   `serverName` varchar(128) NOT NULL,
   `serverEnabled` enum('true','false') CHARACTER SET ascii NOT NULL DEFAULT 'true',
-  `serverUsePaths` enum('true','false') NOT NULL DEFAULT 'true',
+  `serverUsePaths` enum('true','false','sourceforge') NOT NULL DEFAULT 'true',
   PRIMARY KEY (`serverID`),
   KEY `serverPriority` (`serverPriority`,`serverEnabled`),
   KEY `serverUsePaths` (`serverUsePaths`)
@@ -181,7 +183,7 @@ CREATE TABLE `dus_servers` (
 -- Table structure for table `dus_translation`
 --
 
-CREATE TABLE `dus_translation` (
+CREATE TABLE IF NOT EXISTS `dus_translation` (
   `name` varchar(32) NOT NULL,
   `version` tinyint(4) NOT NULL DEFAULT '0',
   `release` tinyint(4) NOT NULL DEFAULT '0',
@@ -203,13 +205,19 @@ CREATE TABLE `dus_translation` (
 -- Table structure for table `dus_versions`
 --
 
-CREATE TABLE `dus_versions` (
+CREATE TABLE IF NOT EXISTS `dus_versions` (
   `dupfrom` int(11) NOT NULL,
   `dupto` int(11) NOT NULL,
-  `duci` int(11) NOT NULL DEFAULT '0',
-  `dudi` int(11) NOT NULL DEFAULT '0',
+  `ducifrom` int(11) NOT NULL DEFAULT '0',
+  `ducito` int(11) NOT NULL DEFAULT '0',
+  `dudifrom` int(11) NOT NULL DEFAULT '0',
+  `dudito` int(11) NOT NULL DEFAULT '0',
   `duhi` int(11) NOT NULL DEFAULT '0',
   `translation` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`dupfrom`,`dupto`),
-  KEY `convert` (`duci`,`dudi`,`duhi`,`translation`)
+  KEY `convert` (`ducifrom`,`dudifrom`,`duhi`,`translation`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

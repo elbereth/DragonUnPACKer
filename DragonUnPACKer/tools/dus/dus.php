@@ -12,9 +12,22 @@
 //
 
   // Program version
-  define('DUS_VERSION','3.3.0');
-  define('DUS_DATE','20140418');
-
+  define('DUS_VERSION','3.3.1');
+  define('DUS_DATE','20140419');
+  
+  // MySQL configuration
+  define('DUS_SQL_HOST','localhost');
+  define('DUS_SQL_USER','d108923ro');
+  define('DUS_SQL_PASS','rofordus3');
+  define('DUS_SQL_DATABASE','drgunpackdus');          // Production Database
+  define('DUS_SQL_DATABASE_TEST','drgunpackdustest'); // Test Database
+  define('DUS_SQL_PORT', 3306);
+  define('DUS_SQL_SOCKET', '/var/run/mysqld/mysqld.sock');
+    
+  // nginx is configured to pass the test=1 parameter
+  // when the dus.php script is in /test/ sub-folder:
+  // rewrite ^/test/dus.php$ /test/dus.php?test=1 last;
+	
   // Retrieve the update
   function getCoreUpdate($mysqli,$buildfrom,$buildto) {
 
@@ -77,8 +90,19 @@
   header('Content-type: text/plain');
   echo "[ID]\n";
   echo "DUS=3\n";
-  echo "Description=Dragon UnPACKer 5 Update Server v".DUS_VERSION." (".DUS_DATE.")\n";
-
+  echo "Description=Dragon UnPACKer 5 Update Server v".DUS_VERSION." (".DUS_DATE.")";
+  
+  // Test information
+  define('DUS_TEST',isset($_GET['test']) && (strlen($_GET['test']) > 0) && boolVal($_GET['test']));
+  if (DUS_TEST) {
+    $testinfo = ' [TEST]';
+  }
+  else {
+    $testinfo = '';
+  }
+  
+  echo "$testinfo\n";
+  
   // Getting user build from HTTP GET parameter
   $userBuild = $_GET['installedbuild'];
   if ((!isset($userBuild)) | (strlen($userBuild) == 0) | (!is_numeric($userBuild))) {
@@ -88,7 +112,13 @@
   }
 
   // Connect to MYSQL Database
-  $mysqli = new mysqli('localhost', 'd108923ro', 'rofordus3', 'drgunpackdus', 3306, '/var/run/mysqld/mysqld.sock');
+  if (DUS_TEST) {
+    $sqldb = DUS_SQL_DATABASE_TEST;
+  }
+  else {
+    $sqldb = DUS_SQL_DATABASE;
+  }
+  $mysqli = new mysqli(DUS_SQL_HOST, DUS_SQL_USER, DUS_SQL_PASS, $sqldb, DUS_SQL_PORT, DUS_SQL_SOCKET);
   if ($mysqli->connect_error) {
     echo "Result=M01\n";
     echo "ResultDescription=".$mysqli->connect_error."\n";
@@ -97,7 +127,7 @@
   }
 
   // Selecting database
-  if (!$mysqli->select_db("drgunpackdus")) {
+  if (!$mysqli->select_db($sqldb)) {
     echo "Result=M02\n";
     echo "ResultDescription=".$mysqli->error."\n";
     die;
@@ -216,22 +246,40 @@
 
   $line = $queryresult->fetch_array(MYSQLI_ASSOC);
   $queryresult->close();
+  $currentbuild = 0;
 
   if ($line !== NULL) {
 
     $duscoreupd = getCoreUpdate($mysqli,$userBuild,$line['build']);
     $dusbody .= "[core]\nVersion=".$line['build']."\nVersionDisp=".$line['versiondisp']."\nUpdateURL=".$line['URL']."\n".$duscoreupd."\n";
+	$currentbuild = $line['build'];
 
   }
 
   // Retrieving corewip information
-  $query = "SELECT * FROM dus_core WHERE type = 'wip' AND available = 'yes' ORDER BY build DESC LIMIT 1";
-  $queryresult = $mysqli->query($query);
-  if ($queryresult === FALSE) {
-    echo "Result=M11\n";
+  $query = "SELECT * FROM dus_core WHERE type = 'wip' AND available = 'yes' AND build>? ORDER BY build DESC LIMIT 1";
+  $stmt = $mysqli->prepare($query);
+  if ($stmt === FALSE) {
+    echo "Result=M70\n";
     echo "ResultDescription=".$mysqli->error."\n";
     die;
   }
+  if (!$stmt->bind_param("i", $currentbuild)) {
+    echo "Result=M71\n";
+    echo "ResultDescription=".$stmt->error."\n";
+    die;
+  }
+  if (!$stmt->execute()) {
+    echo "Result=M72\n";
+    echo "ResultDescription=".$stmt->error."\n";
+    die;
+  }
+  if (!($queryresult = $stmt->get_result())) {
+    echo "Result=M11\n";
+    echo "ResultDescription=".$stmt->error."\n";
+    die;
+  }
+  $stmt->close();
 
   $line = $queryresult->fetch_array(MYSQLI_ASSOC);
   $queryresult->close();

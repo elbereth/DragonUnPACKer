@@ -12,9 +12,9 @@
 //
 
   // Program version
-  define('DUS_VERSION','3.3.1');
-  define('DUS_DATE','20140419');
-  
+  define('DUS_VERSION','3.3.2');
+  define('DUS_DATE','20140421');
+
   // MySQL configuration
   define('DUS_SQL_HOST','localhost');
   define('DUS_SQL_USER','d108923ro');
@@ -23,11 +23,7 @@
   define('DUS_SQL_DATABASE_TEST','drgunpackdustest'); // Test Database
   define('DUS_SQL_PORT', 3306);
   define('DUS_SQL_SOCKET', '/var/run/mysqld/mysqld.sock');
-    
-  // nginx is configured to pass the test=1 parameter
-  // when the dus.php script is in /test/ sub-folder:
-  // rewrite ^/test/dus.php$ /test/dus.php?test=1 last;
-	
+
   // Retrieve the update
   function getCoreUpdate($mysqli,$buildfrom,$buildto) {
 
@@ -86,12 +82,33 @@
 
   }
 
+  function sendData($data) {
+
+//    $supportsGzip = strpos( $_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip' ) !== false;
+
+//    if ( $supportsGzip ) {
+//      $content = gzcompress($data,6);
+//      header('Content-Encoding: gzip');
+//      header('Vary: Accept-Encoding');
+//    }
+//    else {
+      $content = $data;
+//    }
+
+    header( 'Content-Length: ' . strlen( $content ) );
+
+    echo $content;
+
+    die;
+
+  }
+
   // Sending the header
   header('Content-type: text/plain');
-  echo "[ID]\n";
-  echo "DUS=3\n";
-  echo "Description=Dragon UnPACKer 5 Update Server v".DUS_VERSION." (".DUS_DATE.")";
-  
+  $dusheader = "[ID]\n";
+  $dusheader .= "DUS=3\n";
+  $dusheader .= "Description=Dragon UnPACKer 5 Update Server v".DUS_VERSION." (".DUS_DATE.")";
+
   // Test information
   define('DUS_TEST',isset($_GET['test']) && (strlen($_GET['test']) > 0) && boolVal($_GET['test']));
   if (DUS_TEST) {
@@ -100,15 +117,15 @@
   else {
     $testinfo = '';
   }
-  
-  echo "$testinfo\n";
-  
+
+  $dusheader .= "$testinfo\n";
+
   // Getting user build from HTTP GET parameter
   $userBuild = $_GET['installedbuild'];
   if ((!isset($userBuild)) | (strlen($userBuild) == 0) | (!is_numeric($userBuild))) {
-    echo "Result=P01\n";
-    echo "ResultDescription=Parameter \"installedbuild\" is missing!\n";
-    die;
+    $dusheader .= "Result=P01\n";
+    $dusheader .= "ResultDescription=Parameter \"installedbuild\" is missing!\n";
+    sendData($dusheader);
   }
 
   // Connect to MYSQL Database
@@ -120,17 +137,18 @@
   }
   $mysqli = new mysqli(DUS_SQL_HOST, DUS_SQL_USER, DUS_SQL_PASS, $sqldb, DUS_SQL_PORT, DUS_SQL_SOCKET);
   if ($mysqli->connect_error) {
-    echo "Result=M01\n";
-    echo "ResultDescription=".$mysqli->connect_error."\n";
     $mysqli->close();
-    die;
+    $dusheader .= "Result=M01\n";
+    $dusheader .= "ResultDescription=".$mysqli->connect_error."\n";
+    sendData($dusheader);
   }
 
   // Selecting database
   if (!$mysqli->select_db($sqldb)) {
-    echo "Result=M02\n";
-    echo "ResultDescription=".$mysqli->error."\n";
-    die;
+    $mysqli->close();
+    $dusheader .= "Result=M02\n";
+    $dusheader .= "ResultDescription=".$mysqli->error."\n";
+    sendData($dusheader);
   }
 
   // Initialize body
@@ -140,10 +158,10 @@
   $query = "SELECT serverID, serverURL, serverUsePaths, serverName FROM dus_servers WHERE serverEnabled='true' ORDER BY serverPriority";
   $queryresult = $mysqli->query($query);
   if ($queryresult === FALSE) {
-    echo "Result=M40\n";
-    echo "ResultQuery=".$query."\n";
-    echo "ResultDescription=".$mysqli->error."\n";
-    die;
+    $dusheader .= "Result=M40\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$mysqli->error."\n";
+    sendData($dusheader);
   }
 
   $dusservers = '';
@@ -153,9 +171,9 @@
 
     if (!(array_key_exists('serverID',$line) && array_key_exists('serverURL',$line)
      && array_key_exists('serverUsePaths',$line) && array_key_exists('serverName',$line))) {
-      echo "Result=M41\n";
-      echo "ResultDescription=Missing columns in server query\n";
-      die;
+      $dusheader .= "Result=M41\n";
+      $dusheader .= "ResultDescription=Missing columns in server query\n";
+      sendData($dusheader);
     }
 
     $servers[$numservers]['id'] = $line['serverID'];
@@ -180,24 +198,28 @@
   $query = 'SELECT * FROM dus_duppi WHERE versionfrom=? ORDER BY version DESC LIMIT 1';
   $stmt = $mysqli->prepare($query);
   if ($stmt === FALSE) {
-    echo "Result=M60\n";
-    echo "ResultDescription=".$mysqli->error."\n";
-    die;
+    $dusheader .= "Result=M60\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$mysqli->error."\n";
+    sendData($dusheader);
   }
   if (!$stmt->bind_param("i", $userDuppiVersion)) {
-    echo "Result=M62\n";
-    echo "ResultDescription=".$stmt->error."\n";
-    die;
+    $dusheader .= "Result=M62\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$stmt->error."\n";
+    sendData($dusheader);
   }
   if (!$stmt->execute()) {
-    echo "Result=M63\n";
-    echo "ResultDescription=".$stmt->error."\n";
-    die;
+    $dusheader .= "Result=M63\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$stmt->error."\n";
+    sendData($dusheader);
   }
   if (!($queryresult = $stmt->get_result())) {
-    echo "Result=M64\n";
-    echo "ResultDescription=".$stmt->error."\n";
-    die;
+    $dusheader .= "Result=M64\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$stmt->error."\n";
+    sendData($dusheader);
   }
   $stmt->close();
 
@@ -208,9 +230,10 @@
     $query = 'SELECT * FROM dus_duppi WHERE versionfrom=0 ORDER BY version DESC LIMIT 1';
     $queryresult = $mysqli->query($query);
     if ($stmt === FALSE) {
-      echo "Result=M61\n";
-      echo "ResultDescription=".$mysqli->error."\n";
-      die;
+      $dusheader .= "Result=M61\n";
+      $dusheader .= "ResultQuery=".$query."\n";
+      $dusheader .= "ResultDescription=".$mysqli->error."\n";
+      sendData($dusheader);
     }
     $line = $queryresult->fetch_array(MYSQLI_ASSOC);
     $queryresult->close();
@@ -239,9 +262,10 @@
   $query = "SELECT * FROM dus_core WHERE type = 'stable' AND available = 'yes' ORDER BY build DESC LIMIT 1";
   $queryresult = $mysqli->query($query);
   if ($queryresult === FALSE) {
-    echo "Result=M10\n";
-    echo "ResultDescription=".$mysqli->error."\n";
-    die;
+    $dusheader .= "Result=M10\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$mysqli->error."\n";
+    sendData($dusheader);
   }
 
   $line = $queryresult->fetch_array(MYSQLI_ASSOC);
@@ -252,7 +276,7 @@
 
     $duscoreupd = getCoreUpdate($mysqli,$userBuild,$line['build']);
     $dusbody .= "[core]\nVersion=".$line['build']."\nVersionDisp=".$line['versiondisp']."\nUpdateURL=".$line['URL']."\n".$duscoreupd."\n";
-	$currentbuild = $line['build'];
+        $currentbuild = $line['build'];
 
   }
 
@@ -260,24 +284,28 @@
   $query = "SELECT * FROM dus_core WHERE type = 'wip' AND available = 'yes' AND build>? ORDER BY build DESC LIMIT 1";
   $stmt = $mysqli->prepare($query);
   if ($stmt === FALSE) {
-    echo "Result=M70\n";
-    echo "ResultDescription=".$mysqli->error."\n";
-    die;
+    $dusheader .= "Result=M70\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$mysqli->error."\n";
+    sendData($dusheader);
   }
   if (!$stmt->bind_param("i", $currentbuild)) {
-    echo "Result=M71\n";
-    echo "ResultDescription=".$stmt->error."\n";
-    die;
+    $dusheader .= "Result=M71\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$stmt->error."\n";
+    sendData($dusheader);
   }
   if (!$stmt->execute()) {
-    echo "Result=M72\n";
-    echo "ResultDescription=".$stmt->error."\n";
-    die;
+    $dusheader .= "Result=M72\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$stmt->error."\n";
+    sendData($dusheader);
   }
   if (!($queryresult = $stmt->get_result())) {
-    echo "Result=M11\n";
-    echo "ResultDescription=".$stmt->error."\n";
-    die;
+    $dusheader .= "Result=M11\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$stmt->error."\n";
+    sendData($dusheader);
   }
   $stmt->close();
 
@@ -296,24 +324,28 @@
   $query = "SELECT * FROM dus_versions WHERE (dupfrom <= ?) AND (dupto >= ?)";
   $stmt = $mysqli->prepare($query);
   if ($stmt === FALSE) {
-    echo "Result=M60\n";
-    echo "ResultDescription=".$mysqli->error."\n";
-    die;
+    $dusheader .= "Result=M60\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$mysqli->error."\n";
+    sendData($dusheader);
   }
   if (!$stmt->bind_param("ii", $userBuild, $userBuild)) {
-    echo "Result=M62\n";
-    echo "ResultDescription=".$stmt->error."\n";
-    die;
+    $dusheader .= "Result=M62\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$stmt->error."\n";
+    sendData($dusheader);
   }
   if (!$stmt->execute()) {
-    echo "Result=M63\n";
-    echo "ResultDescription=".$stmt->error."\n";
-    die;
+    $dusheader .= "Result=M63\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$stmt->error."\n";
+    sendData($dusheader);
   }
   if (!($queryresult = $stmt->get_result())) {
-    echo "Result=M64\n";
-    echo "ResultDescription=".$stmt->error."\n";
-    die;
+    $dusheader .= "Result=M64\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$stmt->error."\n";
+    sendData($dusheader);
   }
   $stmt->close();
 
@@ -332,20 +364,21 @@
   }
   else
   {
-    echo "Result=P02\n";
-    echo "ResultDescription=Unknown build of Dragon UnPACKer\n\n";
-    echo "ResultQuery=".$query."\n";
-    echo $dusbody;
-    die;
+    $dusheader .= "Result=P02\n";
+    $dusheader .= "ResultDescription=Unknown build of Dragon UnPACKer\n\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+	$dusbody = $dusheader.$dusbody;
+    sendData($dusbody);
   }
 
   // Retrieving available convert plugins
   $query = sprintf("SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR, DATE(date) FROM dus_convert WHERE duci>=%d AND duci<=%d AND versiontype='stable' ORDER BY name, version DESC",$userducifrom, $userducito);
   $queryresult = $mysqli->query($query);
   if ($queryresult === FALSE) {
-    echo "Result=M30\n";
-    echo "ResultDescription=".$mysqli->error."\n";
-    die;
+    $dusheader .= "Result=M30\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$mysqli->error."\n";
+    sendData($dusheader);
   }
 
   $dusupdates = "Updates=";
@@ -381,9 +414,10 @@
   $query = sprintf("SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR, DATE(date), realsize, hash FROM dus_driver WHERE dudi>=%d AND dudi<=%d AND versiontype='stable' ORDER BY name, version DESC",$userdudifrom,$userdudito);
   $queryresult = $mysqli->query($query);
   if ($queryresult === FALSE) {
-    echo "Result=M31\n";
-    echo "ResultDescription=".$mysqli->error."\n";
-    die;
+    $dusheader .= "Result=M31\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$mysqli->error."\n";
+    sendData($dusheader);
   }
 
   $lastdrivertname = '';
@@ -418,9 +452,10 @@
   $query = sprintf("SELECT name, version, versiontype, description, versiondisp, URL, file, fileDL, size, comment, commentFR, DATE(date), realsize, hash FROM dus_driver WHERE dudi>=%d AND dudi<=%d ORDER BY name, version DESC",$userdudifrom,$userdudito);
   $queryresult = $mysqli->query($query);
   if ($queryresult === FALSE) {
-    echo "Result=M41\n";
-    echo "ResultDescription=".$mysqli->error."\n";
-    die;
+    $dusheader .= "Result=M41\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$mysqli->error."\n";
+    sendData($dusheader);
   }
 
   $lastdrivertname = '';
@@ -460,10 +495,10 @@
   $query = sprintf("SELECT name, version, description, versiondisp, URL, file, fileDL, size, comment, commentFR, DATE(date) FROM dus_hyperripper WHERE duhi=%d AND versiontype='stable' ORDER BY name, version DESC",$userduhi);
   $queryresult = $mysqli->query($query);
   if ($queryresult === FALSE) {
-    echo "Result=M32\n";
-    echo "ResultQuery=".$query."\n";
-    echo "ResultDescription=".$mysqli->error."\n";
-    die;
+    $dusheader .= "Result=M32\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$mysqli->error."\n";
+    sendData($dusheader);
   }
 
   $lasthyperrippername = '';
@@ -497,10 +532,10 @@
   $query = sprintf("SELECT * FROM dus_translation WHERE version=%d ORDER BY name DESC",$userlang);
   $queryresult = $mysqli->query($query);
   if ($queryresult === FALSE) {
-    echo "Result=M33\n";
-    echo "ResultQuery=".$query."\n";
-    echo "ResultDescription=".$mysqli->error."\n";
-    die;
+    $dusheader .= "Result=M33\n";
+    $dusheader .= "ResultQuery=".$query."\n";
+    $dusheader .= "ResultDescription=".$mysqli->error."\n";
+    sendData($dusheader);
   }
 
   $lastlangname = '';
@@ -541,14 +576,16 @@
 
   $queryresult->close();
 
-  echo "Result=OK\n";
-  echo trim($dusupdates)."\n";
-  echo trim($dusupdatesuntable)."\n";
-  echo trim($dustranslations)."\n";
-  echo trim($dusservers)."\n\n";
-  echo $dusbody;
+  $dusheader .= "Result=OK\n";
+  $dusheader .= trim($dusupdates)."\n";
+  $dusheader .= trim($dusupdatesuntable)."\n";
+  $dusheader .= trim($dustranslations)."\n";
+  $dusheader .= trim($dusservers)."\n\n";
+  $dusbody = $dusheader.$dusbody;
 
   // Closing MYSQL connection
   $mysqli->close();
+
+  sendData($dusbody);
 
 ?>

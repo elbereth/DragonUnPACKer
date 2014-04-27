@@ -25,7 +25,14 @@ function zlibDecompressStr(const S: string) : string;
 
 implementation
 
-uses zlib, classes;
+uses
+{$IFDEF FPC}
+{$MODE DELPHI}
+zstream,
+{$ELSE}
+zlib,
+{$ENDIF}
+classes;
 
 function zlibCompressStr(const S: string) : string;
 var

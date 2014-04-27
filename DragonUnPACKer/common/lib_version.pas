@@ -89,7 +89,7 @@ begin
 
 end;
 
-function getVersion(version: integer): string; overload;
+function getVersion(version: integer): string;
 var majVer: integer;
     minVer: integer;
     revVer: integer;

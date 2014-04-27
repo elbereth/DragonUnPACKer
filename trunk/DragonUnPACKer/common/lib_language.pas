@@ -26,7 +26,14 @@ unit lib_language;
 // -----------------------------------------------------------------------------
 
 interface
-uses Graphics, Zlib;
+uses
+{$IFDEF FPC}
+  {$MODE DELPHI}
+  zstream,
+{$ELSE}
+  zlib,
+{$ENDIF}
+  Graphics;
 
 function GetIcon(fil: string): TBitmap;
 function GetFont(): String;

@@ -142,39 +142,43 @@ object frmInstaller: TfrmInstaller
       object lblProxyHost: TLabel
         Left = 12
         Height = 15
-        Top = 41
+        Top = 57
         Width = 132
         Alignment = taRightJustify
         AutoSize = False
         Caption = 'Proxy host:'
         Color = clDefault
+        Enabled = False
         ParentColor = False
         Transparent = False
       end
       object txtProxyHost: TEdit
         Left = 150
         Height = 23
-        Top = 39
+        Top = 55
         Width = 358
-        TabOrder = 0
+        Enabled = False
+        TabOrder = 1
       end
       object lblProxyPort: TLabel
         Left = 12
         Height = 15
-        Top = 70
+        Top = 87
         Width = 132
         Alignment = taRightJustify
         AutoSize = False
         Caption = 'Proxy port:'
+        Enabled = False
         ParentColor = False
       end
       object txtProxyPort: TEdit
         Left = 150
         Height = 23
-        Top = 67
+        Top = 83
         Width = 66
+        Enabled = False
         MaxLength = 5
-        TabOrder = 1
+        TabOrder = 2
       end
       object grpProxyUserPass: TGroupBox
         Left = 8
@@ -183,7 +187,7 @@ object frmInstaller: TfrmInstaller
         Width = 520
         ClientHeight = 86
         ClientWidth = 516
-        TabOrder = 2
+        TabOrder = 3
         object lblProxyPassword: TLabel
           Left = 6
           Height = 15
@@ -238,6 +242,47 @@ object frmInstaller: TfrmInstaller
           TabOrder = 0
         end
       end
+      object chkTest: TCheckBox
+        Left = 492
+        Height = 19
+        Top = -1
+        Width = 46
+        Caption = 'TEST'
+        TabOrder = 4
+        TabStop = False
+        Visible = False
+      end
+      object lblProxyType: TLabel
+        Left = 12
+        Height = 15
+        Top = 26
+        Width = 132
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Proxy type:'
+        Color = clDefault
+        ParentColor = False
+        Transparent = False
+      end
+      object lstProxyType: TComboBox
+        Left = 150
+        Height = 23
+        Top = 23
+        Width = 212
+        DropDownCount = 4
+        ItemHeight = 15
+        ItemIndex = 0
+        Items.Strings = (
+          'None'
+          'HTTP'
+          'Socks 4'
+          'Socks 5'
+        )
+        OnChange = lstProxyTypeChange
+        Style = csDropDownList
+        TabOrder = 0
+        Text = 'None'
+      end
     end
     object tabConnecting: TTabSheet
       Caption = 'tabConnecting'
@@ -256,6 +301,38 @@ object frmInstaller: TfrmInstaller
         Top = 4
         Width = 528
         TabOrder = 1
+      end
+    end
+    object tabUpdates: TTabSheet
+      Caption = 'tabUpdates'
+      ClientHeight = 251
+      ClientWidth = 544
+      object ListView1: TListView
+        Left = 9
+        Height = 219
+        Top = 20
+        Width = 523
+        Columns = <        
+          item
+            Caption = 'Type'
+            Width = 38
+          end        
+          item
+            Caption = 'Name'
+            Width = 44
+          end        
+          item
+            Caption = 'Version'
+            Width = 51
+          end        
+          item
+            AutoSize = True
+            Caption = 'Description'
+            Width = 386
+          end>
+        ScrollBars = ssAutoBoth
+        TabOrder = 0
+        ViewStyle = vsReport
       end
     end
   end
@@ -311,6 +388,7 @@ object frmInstaller: TfrmInstaller
     Height = 64
     Top = 0
     Width = 64
+    OnDblClick = imgHeaderLogoDblClick
     Picture.Data = {
       1754506F727461626C654E6574776F726B47726170686963101E000089504E47
       0D0A1A0A0000000D4948445200000040000000400806000000AA6971DE000000
@@ -574,7 +652,7 @@ object frmInstaller: TfrmInstaller
     MaxLineAction = maException
     Port = 0
     DefaultPort = 0
-    UseNagle = False
+    TransparentProxy = IdSocksInfo
     SSLOptions.RootCertFile = 'duppi.pem'
     SSLOptions.Method = sslvTLSv1_2
     SSLOptions.SSLVersions = [sslvTLSv1_2]
@@ -602,6 +680,7 @@ object frmInstaller: TfrmInstaller
     Request.Date = 0
     Request.Expires = 0
     Request.LastModified = 0
+    Request.Accept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
     Request.BasicAuthentication = False
     Request.UserAgent = 'Mozilla/3.0 (compatible; Indy Library)'
     Request.Ranges = <>
@@ -615,6 +694,10 @@ object frmInstaller: TfrmInstaller
   end
   object IdConnectionIntercept: TIdConnectionIntercept
     left = 169
+    top = 320
+  end
+  object IdSocksInfo: TIdSocksInfo
+    left = 141
     top = 320
   end
 end

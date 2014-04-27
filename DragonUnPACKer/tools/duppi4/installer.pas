@@ -5,16 +5,16 @@ unit Installer;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs,
-  ComCtrls, ActnList, ExtCtrls, StdCtrls, registry, Windows,
-  lib_binutils, lib_language, IdHTTP, IdSSLOpenSSL, IdComponent,
-  IdSSLOpenSSLHeaders, IdCTypes, IdAntiFreeze, IdIntercept, IdCompressorZLib, IdHeaderList,
-  IniFiles,
-  lib_version;
+  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ComCtrls,
+  ActnList, ExtCtrls, StdCtrls, registry, Windows, lib_binutils, lib_language,
+  IdHTTP, IdSSLOpenSSL, IdComponent, IdSSLOpenSSLHeaders, IdCTypes,
+  IdAntiFreeze, IdIntercept, IdCompressorZLib, IdHeaderList, IdSocks, IniFiles,
+  IdURI, lib_version;
 
 type
 
   RProxySettings = record
+    ProxyType: integer;
     Host: string;
     Port: String;
     UseAuth: boolean;
@@ -30,16 +30,22 @@ type
     butClose: TButton;
     butProxyOptions: TButton;
     butPackagePath: TButton;
+    chkTest: TCheckBox;
     chkProxyUseAuth: TCheckBox;
+    IdSocksInfo: TIdSocksInfo;
+    lstProxyType: TComboBox;
     grpProxyUserPass: TGroupBox;
     IdAntiFreeze: TIdAntiFreeze;
     IdConnectionIntercept: TIdConnectionIntercept;
     IdHTTP: TIdHTTP;
     IOHandlerSSL: TIdSSLIOHandlerSocketOpenSSL;
+    lblProxyType: TLabel;
     lblProxyPassword: TLabel;
     lblProxyUsername: TLabel;
+    ListView1: TListView;
     Memo1: TMemo;
     barDownload: TProgressBar;
+    tabUpdates: TTabSheet;
     txtPackagePath: TEdit;
     lblPage1Text3: TLabel;
     lblPage1Text2: TLabel;
@@ -73,11 +79,13 @@ type
       const AStatusText: string);
     procedure IdHTTPWork(ASender: TObject; AWorkMode: TWorkMode;
       AWorkCount: Int64);
+    procedure imgHeaderLogoDblClick(Sender: TObject);
     procedure IOHandlerSSLStatus(ASender: TObject; const AStatus: TIdStatus;
       const AStatusText: string);
     procedure IOHandlerSSLStatusInfo(const AMsg: String);
     function IOHandlerSSLVerifyPeer(Certificate: TIdX509; AOk: Boolean; ADepth,
       AError: Integer): Boolean;
+    procedure lstProxyTypeChange(Sender: TObject);
     procedure tabIntroContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
     procedure optInstallPackageChange(Sender: TObject);
@@ -150,6 +158,10 @@ begin
     end;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Duppi',True) then
     begin
+      if Reg.ValueExists('ProxyType') then
+        ProxySettings.ProxyType := Reg.ReadInteger('ProxyType')
+      else
+        ProxySettings.ProxyType := 0;
       if Reg.ValueExists('Proxy') then
         ProxySettings.Host := Reg.ReadString('Proxy')
       else
@@ -271,6 +283,15 @@ begin
 
 end;
 
+procedure TfrmInstaller.imgHeaderLogoDblClick(Sender: TObject);
+begin
+
+  // Hidden "feature", if on proxy options page, display the test checkbox
+  if pages.PageIndex = 1 then
+    chkTest.Visible := true;
+
+end;
+
 procedure TfrmInstaller.IOHandlerSSLStatus(ASender: TObject;
   const AStatus: TIdStatus; const AStatusText: string);
 begin
@@ -294,6 +315,16 @@ begin
     Memo1.Append('Server identity verified.');
   refresh;
   Result := Aok;
+
+end;
+
+procedure TfrmInstaller.lstProxyTypeChange(Sender: TObject);
+begin
+
+  lblProxyHost.Enabled := (lstProxyType.ItemIndex <> 0);
+  txtProxyHost.Enabled := lblProxyHost.Enabled;
+  lblProxyPort.Enabled := lblProxyHost.Enabled;
+  txtProxyPort.Enabled := lblProxyHost.Enabled;
 
 end;
 
@@ -389,6 +420,7 @@ begin
   end
   else if pagenum = 1 then
   begin
+    chkTest.Visible := false;
     lblTitle.Caption := 'Proxy Options';
     lblSubTitle.Caption := 'Set the proxy to use for internet connection (Optional).';
     butNext.Caption := 'Save';
@@ -403,6 +435,7 @@ begin
     chkProxyUseAuth.Checked := ProxySettings.UseAuth;
   end;
   pages.PageIndex := pagenum;
+  refresh;
 
 end;
 
@@ -415,6 +448,7 @@ begin
     Reg.RootKey := HKEY_CURRENT_USER;
     if Reg.OpenKey('\Software\Dragon Software\Dragon UnPACKer 5\Duppi',True) then
     begin
+      Reg.WriteInteger('Proxy',ProxySettings.ProxyType);
       Reg.WriteString('Proxy',ProxySettings.Host);
       Reg.WriteString('ProxyPort',ProxySettings.Port);
       Reg.WriteString('ProxyUser',ProxySettings.Username);
@@ -452,19 +486,45 @@ end;
 procedure TfrmInstaller.getInternetUpdates;
 var tmpStm: TMemoryStream;
     DUS: TIniFile;
-    url: String;
+    url,urltest: String;
+    URI: TIdUri;
 begin
 
-  url := 'https://update.dragonunpacker.com/dus.php?installedbuild='+inttostr(dup5Build)+'&duppiversion='+inttostr(VERSION);
+  // Define the URL to use for update
+  //   HTTPS for secure channel
+  //   Host is update.dragonunpacker.com
+  //   Path is empty "/" for production server or "/test/" for test server
+  //   Parameter installedbuild contains the Dragon UnPACKer build
+  //   Parameter duppiversion contains the Duppi VERSION constant
+  URI := TIdURI.Create('https://update.dragonunpacker.com/dus.php?installedbuild='+inttostr(dup5Build)+'&duppiversion='+inttostr(VERSION));
+
+  // If the test checkbox is set then use the test DUS server
+  if chkTest.Checked then
+    URI.Path := '/test/';
+
+  url := URI.GetFullURI();
+
+  // Go to tabConnecting
   GoToPage(2);
+
+  // We need a TMemoryStream to store the dus.ini file
   tmpStm := TMemoryStream.Create;
+
+  // Set the Root CA certificate to ElberethZone one (in duppi.pem)
   IOHandlerSSL.SSLOptions.RootCertFile := ExtractFilePath(Application.ExeName)+'duppi.pem';
+
   Memo1.Append('Contacting Dragon Update Server over secure channel...');
   Memo1.Append(url);
+  Memo1.Append('Using Indy v'+IOHandlerSSL.Version+' ');
+
   try
+    // Retrieve dus.ini (over SSL so can take more time)
     IdHTTP.Get(url,tmpStm);
+
     Memo1.Append('Done ('+inttostr(tmpStm.Size)+' bytes)');
     Memo1.Append('Parsing update information...');
+
+    // Parse dus.ini file
     tmpStm.Position := 0;
     DUS := TIniFile.Create(tmpStm);
     try

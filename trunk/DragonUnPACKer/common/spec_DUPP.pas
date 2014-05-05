@@ -231,7 +231,7 @@ type
                              // 3 = "Fixed" CRC calculation (sort of)
                              // 4 = New structure, LZMA compression & SHA-512 hash instead of CRC
                              // 5 = Fixed some flaws in v4, patches (exe diff), SHA-512 hash mandatory
-    NeededVersion: word;     // 35040 = For v5
+    NeededVersion: cardinal; // 35040 = For v5
                              // NOTE: Duppi check this field only since 20240.
                              // Please note that all Duppi version will be able
                              // to read and install all DUPP files but they won't
@@ -261,8 +261,8 @@ type
     Offset: int64;           // Offset in file
     Size: int64;             // Size in file
     DSize: int64;            // Decompressed size (in case of Compression), 0 otherwise
-    Hash: array[0..31] of byte;
-                             // SHA-256 Hash of the entry (as stored in the file)
+    Hash: array[0..63] of byte;
+                             // SHA-512 Hash of the entry (as stored in the file)
   end;
 
   DUP5PACK_File_v5 = packed record
@@ -304,7 +304,7 @@ type
     NameID: cardinal;          // Index number in Name block
     FolderID: cardinal;        // Index number in Folder block
     Version: cardinal;         // File version
-    Hash: array[0..31] of byte; // SHA-256
+    Hash: array[0..63] of byte; // SHA-512
   end;
 
   DUP5PACK_PatchInfo = packed record

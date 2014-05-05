@@ -35,7 +35,8 @@ function Get32(src: integer): string; overload;
 function Get32(src, size: integer): string; overload;
 function Get8(src: integer): string; overload;
 function Get8(stm: TStream): string; overload;
-function Get8u(src: integer): string;
+function Get8u(src: integer): string; overload;
+function Get8u(src: TStream): string; overload;
 function Get8v(src: integer; size: byte): string;
 function GetSwapInt(src: integer): Integer;
 procedure put8(src: integer; val: string); overload;
@@ -244,7 +245,7 @@ begin
 
 end;
 
-function Get8u(src: integer): string;
+function Get8u(src: integer): string; overload;
 var tchar: WideString;
     tbyt: byte;
 begin
@@ -254,6 +255,19 @@ begin
 //  FillChar(tchar,256,0);
   FileRead(src,tchar[1],tbyt*2);
 
+  result := tchar;
+
+end;
+
+function Get8u(src: TStream): string; overload;
+var tchar: WideString;
+    tbyt: byte;
+begin
+
+  src.ReadBuffer(tbyt,1);
+  setlength(tchar,tbyt);
+//  FillChar(tchar,256,0);
+  src.ReadBuffer(tchar[1],tbyt*2);
   result := tchar;
 
 end;

@@ -1,0 +1,72 @@
+Dragon LaNGuage De-compiler (DLNGD) v4.0.0 Beta                        Freeware
+Created by Alexandre "Elbereth" Devilliers                           04-05-2014
+===============================================================================
+
+  What is DLNGD ?
+  ---------------
+
+This program allow you to make .LS (Language Source file) from a version 4
+Dragon Software .LNG (Compiled Language file).
+
+
+  How to use DLNGD
+  ----------------
+
+The decompiler by itself is very easy to use.
+Just pass the source file (.LNG) as parameter.
+Then the output file is generated in same folder with .LS extension.
+
+
+  Compatibility list
+  ------------------
+
+DLNGD can decompile:
+DLNG files version 4
+
+Here is a list of programs supporting those formats:
+
+Program Name                   ID  Version (Internal Version)
+Dragon UnPACKer v5.0.0 Beta 1  UP       1
+Dragon UnPACKer v5.0.0 Beta 2  UP       2
+Dragon UnPACKer v5.0.0 Beta 3  UP       3
+Dragon UnPACKer v5.0.0 Beta 4  UP       3
+Dragon UnPACKer v5.0.0 RC1     UP       4
+Dragon UnPACKer v5.0.0 RC2     UP       5
+Dragon UnPACKer v5.0.0 RC3     UP       6
+Dragon UnPACKer v5.1.0         UP       7
+Dragon UnPACKer v5.1.2         UP       8
+Dragon UnPACKer v5.2.0         UP       9
+Dragon UnPACKer v5.2.0a        UP       9
+Dragon UnPACKer v5.2.0b        UP       9
+Dragon UnPACKer v5.3.0         UP       9
+Dragon UnPACKer v5.3.1         UP       9
+Dragon UnPACKer v5.3.2         UP      10
+Dragon UnPACKer v5.3.3 Beta    UP      11
+Dragon UnPACKer v5.4.0         UP      12
+Dragon UnPACKer v5.5.1 Beta    UP      13
+Dragon UnPACKer v5.6.1         UP      14
+Dragon UnPACKer v5.6.2         UP      15
+Dragon UnPACKer v5.7.0 Beta    UP      16
+
+
+  Contact
+  -------
+
+For information about DLNG file format:
+http://www.elberethzone.net/en/dup-dev-download.html
+
+You can reach Alex Devilliers:
+
+ By E-Mail: dlng (at) elberethzone (dot) net
+    By ICQ: 1535372 (Elbereth)
+
+
+  What's new?
+  -----------
+
+Version 4.0.0 Beta:
+
+ i Nothing new. First version.
+   Tested with official English.lng file from Dragon UnPACKer v5.7.0 Beta.
+
+===============================================================================

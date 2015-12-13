@@ -204,6 +204,9 @@ object dup5Main: Tdup5Main
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 2
+    DesignSize = (
+      667
+      101)
     object Status: TStatusBar
       Left = 0
       Top = 82
@@ -258,6 +261,7 @@ object dup5Main: Tdup5Main
       Width = 274
       Height = 16
       HelpContext = 5
+      Anchors = [akLeft, akBottom]
       Smooth = True
       TabOrder = 2
     end

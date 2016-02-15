@@ -116,14 +116,7 @@ begin
 
     Caption := DLNGStr('MNU3S1') + ' Dragon UnPACKer 5';
     lblFreeware.Font.Name := getFont();
-//    lblFreeware.caption := DLNGStr('ABT001');
-    lblFreeware.Caption := 'Open Source / Mozilla Public Licence 1.1';
-//  frmAbout.strContactMe.caption := DLNGStr('ABT002');
-//  frmAbout.strContactMe.Left := 16;
-//  frmAbout.lblContactMe.Left := frmAbout.strContactMe.Left+frmAbout.strContactMe.Width+5;
-//  frmAbout.strURL.caption := DLNGStr('ABT003');
-//  frmAbout.strURL.Left := 16;
-//  frmAbout.lblURL.Left := frmAbout.strURL.Left+frmAbout.strURL.Width+5;
+    lblFreeware.Caption := 'Open Source / Mozilla Public Licence 2.0';
     cmdOk.Caption := DLNGStr('BUTOK');
     txtMoreinfo.Font.Name := getFont();
 

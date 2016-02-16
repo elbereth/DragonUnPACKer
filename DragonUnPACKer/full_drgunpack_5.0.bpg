@@ -10,8 +10,8 @@ DCC = $(ROOT)\bin\dcc32.exe $**
 BRCC = $(ROOT)\bin\brcc32.exe $**
 #------------------------------------------------------------------------------
 PROJECTS = drgunpack5.exe cnv_pictex.d5c drv_default.d5d drv_multiex.d5d \
-  drv_ut.d5d drv_zip.d5d dlngc.exe dlngcomp.exe dlookc.exe dlookd.exe dpackc.exe \
-  duhtcomp.exe duppi.exe DuppiInstall.exe fngen.exe cnv_exttools.d5c d11dc.exe
+  drv_ut.d5d drv_zip.d5d dlngc.exe dlngcomp.exe dpackc.exe duhtcomp.exe duppi.exe \
+  DuppiInstall.exe fngen.exe cnv_exttools.d5c d11dc.exe
 #------------------------------------------------------------------------------
 default: drgunpack5.exe
 #------------------------------------------------------------------------------
@@ -38,12 +38,6 @@ dlngc.exe: tools\dlngc\dlngc.dpr
   $(DCC)
 
 dlngcomp.exe: tools\dlngcomp\dlngcomp.dpr
-  $(DCC)
-
-dlookc.exe: tools\dlookc\dlookc.dpr
-  $(DCC)
-
-dlookd.exe: tools\dlookd\dlookd.dpr
   $(DCC)
 
 dpackc.exe: tools\dpackc\dpackc.dpr

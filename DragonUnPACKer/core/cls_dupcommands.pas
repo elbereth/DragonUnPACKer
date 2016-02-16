@@ -103,9 +103,11 @@ begin
 end;
 
 procedure TDupCommands.SaveTitle();
+var seppos: integer;
 begin
 
-  _SavedTitle := _MainForm.Caption;
+  seppos := pos(' - ',_MainForm.Caption);
+  _SavedTitle := Copy(_MainForm.Caption,seppos+3,Length(_MainForm.Caption)-seppos-2);
 
 end;
 

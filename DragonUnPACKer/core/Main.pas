@@ -727,7 +727,7 @@ begin
   frmAbout.Top := dup5Main.Top + ((Height - frmAbout.Height) div 2) ;
   frmAbout.Left := dup5Main.Left + ((Width - frmAbout.Width) div 2) ;
 
-  frmAbout.lblCompDate.Caption := 'SVN rev '+getSVNRevision(CurSVNRevision)+' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime);
+  frmAbout.lblCompDate.Caption := 'git commit '+getSVNRevision(CurSVNRevision)+' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime);
 
   if (pos('WIP',Uppercase(CurEdit)) > 0) or (pos('BETA',Uppercase(CurEdit)) > 0)
   or (pos('ALPHA',Uppercase(CurEdit)) > 0) then

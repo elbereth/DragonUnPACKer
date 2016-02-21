@@ -21,6 +21,7 @@ uses
   SysUtils,
   ULZMADecoder,
   ULZMACommon,
+  AbGZTyp,
   U_IntList in '..\..\..\common\U_IntList.pas',
   spec_DDS in '..\..\..\common\spec_DDS.pas',
   spec_HRF in '..\..\..\common\spec_HRF.pas',
@@ -200,6 +201,8 @@ type FSE = ^element;
     30113        Merged The 11th Hour .GJD support (drv_11th is not needed anymore)
                  Added The 7th Guest .GJD support (drv_11th never worked)...
     30114        Added sanity checks to Terminal Velocity .POD support
+    30115        Removed SVN keywords
+                 Added Astebreed, Ether Vapor Remaster and Fairy Bloom Fresia .TGP support
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -221,10 +224,8 @@ type FSE = ^element;
 const
   DUDI_VERSION = 6;
   DUDI_VERSION_COMPATIBLE = 6;
-  DRIVER_VERSION = 30114;
-  DUP_VERSION = 57010;
-  SVN_REVISION = '$Rev$';
-  SVN_DATE = '$Date$';
+  DRIVER_VERSION = 30115;
+  DUP_VERSION = 57110;
   BUFFER_SIZE = 8192;
 
 var DataBloc: FSE;
@@ -247,6 +248,7 @@ var DataBloc: FSE;
     AOwner : TComponent;
     ShowMsgBox : TMsgBoxCallback;
     AddEntry : TAddEntryCallback;
+    BufferStream : TMemoryStream;
 
 // This function reverse a string
 //  Ex: "abcd" becomes "dcba"
@@ -376,6 +378,7 @@ begin
   addFormat(result,'*.STUFF;*.LUG','Black & White 2 (*.LUG;*.STUFF)');
   addFormat(result,'*.SYN','Breakneck (*.SYN)|Excessive Speed (*.SYN)|N.I.C.E.2 (*.SYN)');
   addFormat(result,'*.TEX;*.PRM','Freedom Fighters (*.TEX;*.PRM)|Hitman 2: Silent Assassin (*.TEX;*.PRM)|Hitman: Contracts (*.TEX;*.PRM)');
+  addFormat(result,'*.TGP','Astebreed (*.TGP)|Ether Vapor Remaster (*.TGP)|Fairy Bloom Fresia (*.TGP)');
   addFormat(result,'*.VFS','UFO: Aftermath (*.VFS)|UFO: Aftershock (*.VFS)|UFO: Afterlight (*.VFS)');
   addFormat(result,'*.VOL','Earth Siege 2 (*.VOL)|Starsiege: Tribes (*.VOL)');
   addFormat(result,'*.VP','Conflict: Freespace (*.VP)|Freespace (*.VP)|Freespace 2 (*.VP)');
@@ -2109,6 +2112,207 @@ begin
 end;
 
 {ENDIF}
+
+// -------------------------------------------------------------------------- //
+// Astebreed .TGP =========================================================== //
+// -------------------------------------------------------------------------- //
+
+type TGP0Header = packed record
+        MagicID: array[0..3] of char; // 'TGP0'
+        Version: Word;                // 1 or 2
+     end;
+     TGP0HeaderVersion1 = packed record
+        Unused: Word;
+        Flags: Cardinal;              // 0x01 = Encrypted Data (XOR 0x46)
+        NumberOfEntries: cardinal;
+     end;
+     TGP0HeaderVersion2 = packed record
+        Flags: Word;                  // 0x02 = Compressed Data (Entire data block is a gzip archive)
+        NumberOfEntries: cardinal;
+        UncompressedDataSize: cardinal;
+     end;
+     TGP0EntryVersion1 = packed record
+        FileName: array[0..95] of char;
+        Offset: cardinal;              // Relative to start of file
+        Unknown1: cardinal;
+        Size: cardinal;
+        Unknown2: cardinal;
+     end;
+     TGP0EntryVersion2 = packed record
+        FileName: array[0..95] of char;
+        Offset: cardinal;              // Relative to data block offset
+        Size: cardinal;
+        Unknown1: cardinal;
+        Unknown2: cardinal;
+     end;
+
+function ReadAstebreedTGP(src: string): Integer;
+var ENT1: TGP0EntryVersion1;
+    ENT2: TGP0EntryVersion2;
+    headerBuffer: TMemoryStream;
+    handle_stm: THandleStream;
+    TotSize, x, Offset: integer;
+    HDR: TGP0Header;
+    HDR1: TGP0HeaderVersion1;
+    HDR2: TGP0HeaderVersion2;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
+
+  if FHandle > 0 then
+  begin
+
+    // Retrieve total size
+    TotSize := FileSeek(Fhandle, 0, 2);
+
+    // Retrieve header
+    FileSeek(Fhandle,0,0);
+    FileRead(FHandle, HDR, SizeOf(TGP0Header));
+
+    // Sanity checks:
+    //   Magic ID should be TGP0
+    //   Only version 1 & 2 are supported
+    if ((HDR.MagicID) <> 'TGP0') or ((HDR.Version <> 1) and (HDR.Version <> 2)) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'TGP0';
+      ErrInfo.Games := 'Astebreed, Ether Vapor Remaster, Faery Bloom Fresia';
+    end
+    else if (HDR.Version = 1) then
+    begin
+
+      // Reading version 1 header
+      FileRead(FHandle, HDR1, SizeOf(TGP0HeaderVersion1));
+
+      //   Total Size of Directory + Header cannot be bigger than the full file size
+      if ((HDR1.NumberOfEntries*SizeOf(TGP0EntryVersion1)+SizeOf(TGP0Header)+SizeOf(TGP0HeaderVersion1)) > TotSize) then
+      begin
+
+        FileClose(Fhandle);
+        FHandle := 0;
+        Result := -3;
+        ErrInfo.Format := 'TGP0';
+        ErrInfo.Games := 'Ether Vapor Remaster, Fairy Bloom Fresia';
+
+      end
+      else
+      begin
+
+        // Create a HandleStream from the source file
+        handle_stm := THandleStream.Create(Fhandle);
+
+        // Seek to the Directory Offset
+        handle_stm.Seek(SizeOf(TGP0Header)+SizeOf(TGP0HeaderVersion1),soBeginning);
+
+        // Create the Directory buffer stream
+        headerBuffer := TMemoryStream.Create;
+
+        // Read the complete directory to the buffer
+        headerBuffer.CopyFrom(handle_stm,HDR1.NumberOfEntries*SizeOf(TGP0EntryVersion1));
+
+        // Free the handle stream, useless now
+        FreeAndNil(handle_stm);
+
+        // Seek to the start of the stream
+        headerBuffer.Seek(0,0);
+
+        // Go through all entries
+        for x := 0 to HDR1.NumberOfEntries-1 do
+        begin
+          // Seek to current position in Directory
+          headerBuffer.Seek(x*SizeOf(TGP0EntryVersion1),0);
+
+          // Read entry
+          headerBuffer.Read(ENT1,SizeOf(TGP0EntryVersion1));
+
+          // Add entry (storing header flags in DataX)
+          FSE_Add(strip0(ENT1.FileName),ENT1.Offset,ENT1.Size,HDR1.Flags,0);
+        end;
+
+        result := HDR1.NumberOfEntries;
+
+        // Extract from the plugin only if crypted or compressed
+        DrvInfo.ID := 'TGP0';
+        DrvInfo.Sch := '\';
+        DrvInfo.FileHandle := FHandle;
+        DrvInfo.ExtractInternal := (HDR2.Flags AND $1 = $1);
+      end;
+    end
+    else if (HDR.Version = 2) then
+    begin
+
+      // Reading version 2 header
+      FileRead(FHandle, HDR2, SizeOf(TGP0HeaderVersion2));
+
+      //   Total Size of Directory + Header cannot be bigger than the full file size
+      if ((HDR2.NumberOfEntries*SizeOf(TGP0EntryVersion2)+SizeOf(TGP0Header)+SizeOf(TGP0HeaderVersion2)) > TotSize) then
+      begin
+
+        FileClose(Fhandle);
+        FHandle := 0;
+        Result := -3;
+        ErrInfo.Format := 'TGP0';
+        ErrInfo.Games := 'Astebreed';
+
+      end
+      else
+      begin
+
+        // Create a HandleStream from the source file
+        handle_stm := THandleStream.Create(Fhandle);
+
+        // Seek to the Directory Offset
+        handle_stm.Seek(SizeOf(TGP0Header)+SizeOf(TGP0HeaderVersion2),soBeginning);
+
+        // Create the Directory buffer stream
+        headerBuffer := TMemoryStream.Create;
+
+        // Read the complete directory to the buffer
+        headerBuffer.CopyFrom(handle_stm,HDR2.NumberOfEntries*SizeOf(TGP0EntryVersion2));
+
+        // Free the handle stream, useless now
+        FreeAndNil(handle_stm);
+
+        // Seek to the start of the stream
+        headerBuffer.Seek(0,0);
+
+        // Go through all entries
+        for x := 0 to HDR2.NumberOfEntries-1 do
+        begin
+          // Seek to current position in Directory
+          headerBuffer.Seek(x*SizeOf(TGP0EntryVersion2),0);
+
+          // Read entry
+          headerBuffer.Read(ENT2,SizeOf(TGP0EntryVersion2));
+
+          // If the file is compressed, keep offset relative to data block start
+          if (HDR2.Flags AND $2 = $2) then
+            Offset := ENT2.Offset
+          else  // Else it is relative to start of file
+            Offset := ENT2.Offset + SizeOf(TGP0Header)+ HDR2.NumberOfEntries*SizeOf(TGP0EntryVersion2);
+
+          // Add entry (storing header flags in DataX)
+          FSE_Add(strip0(ENT2.FileName),Offset,ENT2.Size,HDR2.Flags,0);
+        end;
+
+        result := HDR2.NumberOfEntries;
+
+        // Extract from the plugin only if crypted or compressed
+        DrvInfo.ID := 'TGP0';
+        DrvInfo.Sch := '\';
+        DrvInfo.FileHandle := FHandle;
+        DrvInfo.ExtractInternal := (HDR2.Flags AND $2 = $2) OR (HDR2.Flags AND $1 = $1);
+      end;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
 
 // -------------------------------------------------------------------------- //
 // Avatar .PAK support ====================================================== //
@@ -14702,6 +14906,11 @@ begin
         FileClose(FHandle);
         Result := ReadTheSimsFAR(fil)
       end
+      else if ID4 = ('TGP0') then
+      begin
+        FileClose(FHandle);
+        Result := ReadAstebreedTGP(fil)
+      end
       else if (ID21P4 = 'MASSIVE PAKFILE V 4.0') then
         Result := ReadSpellforcePAK
       else if ID4 = ('edat') then
@@ -14992,6 +15201,8 @@ begin
       ReadFormat := ReadNICE2SYN(fil)
     else if ext = 'TEX' then
       ReadFormat := ReadHitmanContractsTEX(fil)
+    else if ext = 'TGP' then
+      ReadFormat := ReadAstebreedTGP(fil)
     else if ext = 'TLK' then
       ReadFormat := ReadHubPAK(fil)
     else if ext = 'VFS' then
@@ -15031,7 +15242,9 @@ begin
 
   FHandle := 0;
   CompressionWindow := 0;
-  
+  if (BufferStream <> Nil) then
+    FreeAndNil(BufferStream);
+
 end;
 
 function GetEntry(): FormatEntry; stdcall;
@@ -15292,6 +15505,8 @@ begin
       Result := true
     else if ID4 = ('FAR!') then
       Result := true
+    else if ID4 = ('TGP0') then
+      Result := true
     else if ID4 = ('WAD2') then
       Result := true
     else if ID4 = ('WAD3') then
@@ -15520,6 +15735,8 @@ begin
     else if ext = 'SYN' then
       IsFormat := True
     else if ext = 'TEX' then
+      IsFormat := True
+    else if ext = 'TGP' then
       IsFormat := True
     else if ext = 'TLK' then
       IsFormat := True
@@ -16082,6 +16299,92 @@ begin
 
 End;
 
+// Decompression of TGP0 (version 2)
+//   Data block is gzipped, so first time a file is asked for extraction
+//   We decompress the full data block to memory (BufferStream)
+//   Then we extract the single entry
+//   Following calls just extracts as the datablock is in memory
+function DecompressTGP0ToStream(OutputStream: TStream; Offset:  Int64; OSize: Int64) : Boolean;
+var
+  Buf: PChar;
+  CStream: TMemoryStream;
+  HStream: THandleStream;
+  FinalSize: integer;
+  HDR: TGP0Header;
+  HDR2: TGP0HeaderVersion2;
+  gz : TAbGZipArchive;
+  totsize: cardinal;
+begin
+
+  if (BufferStream = Nil) then
+  begin
+    totsize := FileSeek(FHandle,0,2);
+    FileSeek(FHandle,0,0);
+    FileRead(FHandle,HDR,SizeOf(TGP0Header));
+    FileRead(FHandle,HDR2,SizeOf(TGP0HeaderVersion2));
+
+    GetMem(Buf,totsize-HDR2.NumberOfEntries*SizeOf(TGP0EntryVersion2)-SizeOf(TGP0Header)-SizeOf(TGP0HeaderVersion2));
+    try
+      FileSeek(FHandle,HDR2.NumberOfEntries*SizeOf(TGP0EntryVersion2)+SizeOf(TGP0Header)+SizeOf(TGP0HeaderVersion2),0);
+      FileRead(FHandle,Buf^,totsize-HDR2.NumberOfEntries*SizeOf(TGP0EntryVersion2)-SizeOf(TGP0Header)-SizeOf(TGP0HeaderVersion2));
+
+      CStream := TMemoryStream.Create;
+      try
+        CStream.Write(Buf^,totsize-HDR2.NumberOfEntries*SizeOf(TGP0EntryVersion2)-SizeOf(TGP0Header)-SizeOf(TGP0HeaderVersion2));
+        CStream.Seek(0, soBeginning);
+        gz := TAbGZipArchive.CreateFromStream(CStream,'datablock.gzip');
+        try
+          gz.Load;
+          gz.Items[0].FileName;
+          BufferStream := TMemoryStream.Create;
+          gz.ExtractToStream('unknown',BufferStream);
+        finally
+          FreeAndNil(gz);
+          FreeAndNil(CStream);
+        end;
+      finally
+        FreeAndNil(CStream);
+      end
+    finally
+      FreeMem(Buf);
+    end;
+  end;
+
+  try
+    BufferStream.Seek(Offset,soFromBeginning);
+    FinalSize := OutputStream.CopyFrom(BufferStream,OSize);
+  finally
+    FinalSize := 0;
+  end;
+
+  Result := FinalSize = OSize;
+
+End;
+
+// Decryption of TGP0 with flag $1 is easy, entries are xored to 0x46
+function DecryptTGP0ToStream(OutputStream: TStream; Offset:  Int64; OSize: Int64) : Boolean;
+var
+  Buf: array of byte;
+  x, FinalSize: cardinal;
+begin
+
+  SetLength(Buf, OSize);
+  FileSeek(Fhandle,Offset,0);
+  FileRead(Fhandle,Buf[0],OSize);
+
+  for x := 0 to OSize - 1 do
+    Buf[x] := Buf[x] xor $46;
+
+  try
+    FinalSize := OutputStream.Write(Buf[0],OSize);
+  finally
+    FinalSize := 0;
+  end;
+
+  Result := FinalSize = OSize;
+
+End;
+
 function DecompressRCFToStream(outputstream: TStream; offset,size: int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback): boolean;
 var HDR: RCFFileHeader;
 begin
@@ -16118,7 +16421,6 @@ begin
                  '\b0\i0\fs20 Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+'\par'+#10+
                  'Driver Interface [DUDI] v'+inttostr(DUDI_VERSION)+' (v'+inttostr(DUDI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUDI)+']\par'+#10+
                  'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+'\par'+#10+
-                 'Based on SVN rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')\par'+#10+
                  '\par'+#10+
                  '\ul 11th Hour (.GJD):\par'+#10+
                  '\ulnone '+status11thHour+'\par'+#10+
@@ -16163,7 +16465,10 @@ var ENT: MTFCompress;
     ID4: array[0..3] of char;
     Buf: PByteArray;
     BufEnd: PByteArray;
+    ext: string;
 begin
+
+  ext := Uppercase(ExtractFileExt(entrynam));
 
   if DrvInfo.ID = 'AsuraZ' then
   begin
@@ -16330,6 +16635,19 @@ begin
   begin
     if DataX <> Size then
       DecompressZlibToStream(outputstream, DataX, Size)
+    else
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+  end
+
+  else if DrvInfo.ID = 'TGP0' then
+  begin
+    // Compressed (only in v2)
+    if DataX AND $2 = $2 then
+      DecompressTGP0ToStream(outputstream, Offset, Size)
+    // Encrypted (only in v1?) -- Only textures
+    else if (DataX AND $1 = $1) then // and ((ext = 'BMP') or (ext = 'DDS') or (ext = 'JPEG') or (ext = 'JPG') or (ext = 'PNG') or (ext = 'TGA')) then
+      DecryptTGP0ToStream(outputstream, Offset, Size)
+    // In all other cases, simple binary copy
     else
       BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
   end

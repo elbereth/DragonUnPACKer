@@ -31,7 +31,7 @@ type
 
   ExtensionsResult = record            // This record is used to store the list
     Num: integer;                      // of all supported extensions (that
-    Lists: array[1..5] of ShortString; // Dragon UnPACKer can handle).
+    Lists: array[1..9] of ShortString; // Dragon UnPACKer can handle).
   end;                                 // Fractionned as 255 chars max Strings.
 
   ModifExtensionsList = record
@@ -276,6 +276,7 @@ type TDrivers = class
     function DriverID: string;
     function GetFileTypes: string;
     function GetAllFileTypes(Partitionned: boolean): ExtensionsResult;
+    function GetAllFileTypesEx(): TStringList;
     function GetAllModifFileTypes(): ModifExtensionsResult;
     procedure BrowseDirFromID(CurrentDirID: integer);
     function BrowseDirToList(cdir: string; SubDirs: Boolean): TList;
@@ -966,7 +967,7 @@ end;
 function TDrivers.GetAllFileTypes(Partitionned: boolean): ExtensionsResult;
 var x, cl: integer;
     y: Byte;
-    res, res2 : string;
+    res, res2 : ansistring;
     ExtList: TStringList;
 begin
 
@@ -1032,6 +1033,21 @@ begin
 {  Writeln(T,result);
 
   Close(T);}
+
+end;
+
+function TDrivers.GetAllFileTypesEx(): TStringList;
+var x, cl: integer;
+    y: Byte;
+    res, res2 : ansistring;
+    ExtList: TStringList;
+begin
+
+  result := TStringList.Create;
+
+  for x := 1 to NumDrivers do
+    for y := 1 to Drivers[x].Infos.DriverInfo.NumFormats do
+      result.Add(Drivers[x].Infos.DriverInfo.Formats[y].Extensions);
 
 end;
 

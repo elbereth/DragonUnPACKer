@@ -377,30 +377,47 @@ end;
 
 procedure TfrmConfig.TYPEList();
 var str,tmp: string;
+    strlist: TStringList;
     x: integer;
 begin
 
-  str := Dup5Main.FSE.GetAllFileTypes(False).Lists[1];
+  // Retrieve full list of extensions
+  strlist := Dup5Main.FSE.GetAllFileTypesEx;
 
+  // Reset current list
   frmConfig.lstTypes.Clear;
 
-  while (pos(';',str) <> 0) do
+  // For all entries
+  for x := 0 to strlist.Count-1 do
   begin
-    tmp := Copy(str,0,pos(';',str)-1);
-    if pos('.',tmp) <> 0 then
-      tmp := Copy(tmp,posrev('.',tmp)+1,length(tmp)-posrev('.',tmp));
-    tmp := Trim(UpperCase(RemoveIllegalChars(tmp)));
-    if (frmConfig.lstTypes.Items.IndexOf(tmp) = -1) and (tmp <> '') then
-      frmConfig.lstTypes.Items.Add(tmp);
-    str := Copy(str,pos(';',str)+1,length(str)-length(tmp));
+    // Parse if multiple entries
+    str := strlist.Strings[x];
+    while (pos(';',str) <> 0) do
+    begin
+      tmp := Copy(str,0,pos(';',str)-1);
+      // Remove the *. part which we don't need
+      if pos('.',tmp) <> 0 then
+        tmp := Copy(tmp,posrev('.',tmp)+1,length(tmp)-posrev('.',tmp));
+      tmp := Trim(UpperCase(RemoveIllegalChars(tmp)));
+      // If already in the list we don't add it again
+      if (frmConfig.lstTypes.Items.IndexOf(tmp) = -1) and (tmp <> '') then
+        frmConfig.lstTypes.Items.Add(tmp);
+      // Remove what we already treated and loop for next entry
+      str := Copy(str,pos(';',str)+1,length(str)-length(tmp));
+    end;
+    // If there is still something left we add it :P
+    if pos('.',str) <> 0 then
+      str := Copy(str,posrev('.',str)+1,length(str)-posrev('.',str));
+    str := Trim(UpperCase(RemoveIllegalChars(str)));
+    if (frmConfig.lstTypes.Items.IndexOf(str) = -1) and (str <> '') then
+      frmConfig.lstTypes.Items.Add(str);
   end;
 
-  if pos('.',str) <> 0 then
-    str := Copy(str,posrev('.',str)+1,length(str)-posrev('.',str));
-  str := Trim(UpperCase(RemoveIllegalChars(str)));
-  if (frmConfig.lstTypes.Items.IndexOf(str) = -1) and (str <> '') then
-    frmConfig.lstTypes.Items.Add(str);
+  // Clean up
+  strlist.Clear;
+  FreeAndNil(strlist);
 
+  // Check if file types are registered
   for x := 0 to frmConfig.lstTypes.Count - 1 do
     try
       if CheckRegistryType(frmConfig.lstTypes.Items.Strings[x]) then

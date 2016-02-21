@@ -323,9 +323,9 @@ begin
         dupLog.AddMessage('Display special images for WIP/RC/Beta/Alpha',sevDebug);
 
         // Check if need to display WIP/RC/Beta/Alpha image
-        If (pos('WIP',CurEdit) > 0) or (pos('SVN',CurEdit) > 0) then
+        If (pos('WIP',CurEdit) > 0) or (pos('SVN',CurEdit) > 0) or (pos('Nightly',CurEdit) > 0) then
         begin
-          dupLog.AddMessage(' + WIP/SVN detected',sevDebug);
+          dupLog.AddMessage(' + WIP/Nightly detected',sevDebug);
           imgWIP.Visible := true;
         end;
         If (pos('RC',CurEdit) > 0) then

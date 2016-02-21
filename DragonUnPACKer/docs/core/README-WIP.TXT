@@ -1,5 +1,5 @@
-Dragon UnPACKer v5.7.0 Beta                                 MPL 2.0 open source
-by Alexande "Elbereth" Devilliers                                    08/04/2014
+Dragon UnPACKer v5.7.1 Beta                                 MPL 2.0 open source
+by Alexande "Elbereth" Devilliers                                    20/02/2016
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -11,8 +11,19 @@ by Alexande "Elbereth" Devilliers                                    08/04/2014
 Main program version and versions history:
 
 Version 5.7.1.285
-SVN Release 695 [Unreleased]
+Git master [Unreleased]
 
+ ! Fixed title of application when extracting for example.
+ ! Fixed MPL 2.0 in installation readme files.
+ i Switched sources to git VCS instead of SVN.
+   Changed so that splash screen and about box displays Work In Progress for
+   nighlies builds with git.
+ ! Fixed the file types option screen was not showing all types.
+ * Elbereth's Main Driver plug-in v3.0.1 Beta 5:
+   + Added support for Astebreed, Ether Vapor Remaster and Fairy Bloom Fresia
+     .TGP file format.
+     Actually support for both v1 and v2 TGP files.
+	 Uncompressed, compressed and crypted are all supported.
  + External Tools Conversion plug-in v0.2.1 Beta:
    i This plug-in allows to use external command line tools to convert file
      formats (for example the excellent vgmstream tool for audio files).

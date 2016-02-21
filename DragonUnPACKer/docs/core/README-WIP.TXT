@@ -128,12 +128,12 @@ Beta (SVN Release 695) [08/04/2014]
 	 Published in 2010.
    i Thanks Paul (from spookcentral.tk/) for the idea and for the testing.
 
-Beta Development Page:
------------------------
+Development Page:
+-----------------
 
-This page allow you to follow the development log of Dragon UnPACKer 5 between
-Beta releases. You can also find other informations and maybe some downloads.
+This page allow you to get absolute latest cuting edge binaries from Dragon
+UnPACKer 5 development.
      
-http://www.elberethzone.net/en/dup-devlog.html
+https://www.elberethzone.net/dragon-unpacker-dev.html
 
 ===============================================================================

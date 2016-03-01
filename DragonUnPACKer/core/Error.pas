@@ -250,6 +250,7 @@ begin
  Except
    Application.ShowException(E);
  End;
+ FreeAndNil(e);
 end;
 
 end.

@@ -730,7 +730,8 @@ begin
   frmAbout.lblCompDate.Caption := 'git commit '+getSVNRevision(CurSVNRevision)+' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime);
 
   if (pos('WIP',Uppercase(CurEdit)) > 0) or (pos('BETA',Uppercase(CurEdit)) > 0)
-  or (pos('ALPHA',Uppercase(CurEdit)) > 0) then
+  or (pos('ALPHA',Uppercase(CurEdit)) > 0) or (pos('NIGHTLY',Uppercase(CurEdit)) > 0)
+  or (pos('SVN',Uppercase(CurEdit)) > 0) then
     frmAbout.imgWIP.visible := true
   else
     frmAbout.imgWIP.visible := false;
@@ -1654,6 +1655,7 @@ begin
   FPreviewImage := TMultiImage.Create;
   FPreviewBitmap := TImagingBitmap.Create;
   imgPreview.Picture.Graphic := FPreviewBitmap;
+  ImgPreview.Picture.Bitmap.LoadFromResourceName(Hinstance,'DUP5W9X');
 
   // Initializing Virtual TreeView
   lstContent.NodeDataSize := SizeOf(virtualTreeData);
@@ -2488,6 +2490,7 @@ begin
   dup5Main.lstIndex.Clear;
 
   isPreviewImage := false;
+  ImgPreview.Picture.Bitmap.LoadFromResourceName(Hinstance,'DUP5W9X');
   ImgPreview.Repaint;
 
   if CurFile > 0 then

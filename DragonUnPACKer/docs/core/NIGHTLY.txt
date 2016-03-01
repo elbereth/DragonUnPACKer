@@ -14,7 +14,7 @@ All files should be extracted in an existing installation of the last working
 Dragon UnPACKer (stable or unstable whichever is newer) preserving directories
 in the archive.
 
-Contact me at: elbereth (at) users (dot) sourceforge (dot) net
+Contact me at: alexandre (dot) devilliers (at) elberethzone (dot) net
 
 -------------------------------------------------------------------------------
 

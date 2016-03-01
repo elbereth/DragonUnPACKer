@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.1 Beta                                 MPL 2.0 open source
-by Alexande "Elbereth" Devilliers                                    20/02/2016
+by Alexande "Elbereth" Devilliers                                    01/03/2016
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -19,6 +19,9 @@ Git master [Unreleased]
    Changed so that splash screen and about box displays Work In Progress for
    nighlies builds with git.
  ! Fixed the file types option screen was not showing all types.
+ ! Fixed splash screen for new nightly builds with git.
+ ! Fixed resource leak on Exception popup.
+ + Added splash to preview pane when unused.
  * Elbereth's Main Driver plug-in v3.0.1 Beta 5:
    + Added support for Astebreed, Ether Vapor Remaster and Fairy Bloom Fresia
      .TGP file format.

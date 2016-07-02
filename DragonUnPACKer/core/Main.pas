@@ -2960,7 +2960,7 @@ begin
  if (lstIndex.RootNodeCount > 0) and (lstIndex.FocusedNode <> nil) then
  begin
    NodeData := lstIndex.GetNodeData(lstIndex.FocusedNode);
-   if (NodeData.imageIndex = 2) then
+   if (NodeData.imageIndex = 20) then
    begin
      menuIndex_ExtractAll.Visible := True;
      menuIndex_Infos.Visible := True;

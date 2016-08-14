@@ -1,8 +1,8 @@
 object frmOptMPEGa: TfrmOptMPEGa
-  Left = 268
-  Top = 385
+  Left = 296
+  Top = 485
   BorderStyle = bsToolWindow
-  Caption = 'MPEG Audio Options'
+  Caption = 'MPEG-1/2 Audio + AAC (ADTS) Options'
   ClientHeight = 295
   ClientWidth = 455
   Color = clBtnFace
@@ -43,7 +43,7 @@ object frmOptMPEGa: TfrmOptMPEGa
     Top = 8
     Width = 441
     Height = 89
-    Caption = 'Formats MPEG Audio a rechercher'
+    Caption = 'Formats MPEG-1/2 Audio a rechercher'
     TabOrder = 0
     object Label5: TLabel
       Left = 8
@@ -337,7 +337,7 @@ object frmOptMPEGa: TfrmOptMPEGa
     Top = 216
     Width = 441
     Height = 41
-    Caption = 'Sp'#233'cial'
+    Caption = 'Sp'#233'cial (MPEG-1/2 Audio)'
     TabOrder = 2
     object chkXingVBR: TCheckBox
       Left = 8

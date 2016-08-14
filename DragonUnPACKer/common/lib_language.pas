@@ -52,7 +52,7 @@ uses SysUtils, forms,Dialogs,lib_zlib,lib_crc,spec_DLNG,Classes,lib_binutils;
 
 {$IFDEF DRGUNPACK}
 const DLNG_PRGID : string = 'UP';
-      DLNG_PRGVER : byte = 16;
+      DLNG_PRGVER : byte = 17;
 {$ELSE}
 const DLNG_PRGID : string = 'PI';
       DLNG_PRGVER : byte = 5;

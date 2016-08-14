@@ -592,9 +592,9 @@ begin
   else if sch = 'HRTYPE' then
     result := 'Type (%i)'
   else if sch = 'HRD000' then
-    result := 'Options MPEG Audio'
+    result := 'Options MPEG-1/2 Audio et AAC (ADTS)'
   else if sch = 'HRD100' then
-    result := 'Formats MPEG Audio à rechercher'
+    result := 'Formats MPEG-1/2 Audio à rechercher'
   else if sch = 'HRD101' then
     result := 'Non standard'
   else if sch = 'HRD200' then
@@ -612,7 +612,7 @@ begin
   else if sch = 'HRD223' then
     result := 'octet(s)'
   else if sch = 'HRD300' then
-    result := 'Spécial'
+    result := 'Spécial (MPEG-1/2 Audio)'
   else if sch = 'HRD301' then
     result := 'Rechercher entête Xing VBR'
   else if sch = 'HRD302' then

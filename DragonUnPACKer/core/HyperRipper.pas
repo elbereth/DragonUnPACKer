@@ -47,7 +47,9 @@ unit HyperRipper;
   * 56041 Fixed the BIK sanity check
   * 56042 Removed use of TBufferedFS
   *       THandleStream is freed after use (no more memory leak)
-  * }
+  * 57040 Added AAC (ADTS) and MPEG-4 TS support
+  *
+}
 
 interface
 
@@ -56,14 +58,14 @@ uses
   Dialogs, StdCtrls, ComCtrls, lib_language, Registry, Math, spec_DDS,
   ExtCtrls, lib_utils, classFSE, spec_HRF, DateUtils, translation, U_IntList,
   StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar, ImgList, SysUtils,
-  Spec_DUDI;
+  Spec_DUDI, lib_binutils;
 
 const MP_FRAMES_FLAG = 1;
       MP_BYTES_FLAG = 2;
       MP_TOC_FLAG = 4;
       MP_VBR_SCALE_FLAG = 8;
 
-      HR_VERSION = 56042;	// HyperRipper version
+      HR_VERSION = 57040;	// HyperRipper version
 
 type FormatsListElem = record
        GenType: Integer;
@@ -122,6 +124,11 @@ type FormatsListElem = record
        BlockOffset: Word;
        Version: Word;
        CompVer: Word;
+     end;
+
+     MPTSAtomHeader = packed record
+       size: longword;
+       atomtype: array[0..3] of char;
      end;
 
      OGGHeader = packed record
@@ -1321,7 +1328,7 @@ begin
                 predir := '';
 
               inc(numFound);
-              if slist.items[fitem^.Index].ID = 1006 then
+              if (slist.items[fitem^.Index].ID = 1006) or (slist.items[fitem^.Index].ID = 1010) then
                 hrip.lastResult(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%s',DLNGstr('HRLG08'),inttostr(Found.Size)),inttohex(Found.Offset,8)),Found.Ext))
               else
                 hrip.addResult(ReplaceValue('%e',ReplaceValue('%a',ReplaceValue('%s',DLNGstr('HRLG08'),inttostr(Found.Size)),inttohex(Found.Offset,8)),Found.Ext));
@@ -2411,7 +2418,7 @@ begin
   lngEXIMG := DLNGstr('HRTIMG');
   lngEXVID := DLNGstr('HRTVID');
 
-  result.NumFormats := 23;
+  result.NumFormats := 26;
   SetLength(result.FormatsList,result.NumFormats);
   result.FormatsList[1].GenType := HR_TYPE_AUDIO;
   result.FormatsList[1].Format := 'WAVE';
@@ -2450,11 +2457,17 @@ begin
   result.FormatsList[6].IsConfig := False;
   result.FormatsList[6].FalsePositives := False;
   result.FormatsList[12].GenType := HR_TYPE_AUDIO;
-  result.FormatsList[12].Format := 'MPEG Audio';
-  result.FormatsList[12].Desc := 'MPEG Audio';
+  result.FormatsList[12].Format := 'MP3';
+  result.FormatsList[12].Desc := 'MPEG-1/2 Audio';
   result.FormatsList[12].ID := 1006;
   result.FormatsList[12].IsConfig := True;
   result.FormatsList[12].FalsePositives := False;
+  result.FormatsList[23].GenType := HR_TYPE_AUDIO;
+  result.FormatsList[23].Format := 'AAC';
+  result.FormatsList[23].Desc := 'AAC (ADTS)';
+  result.FormatsList[23].ID := 1010;
+  result.FormatsList[23].IsConfig := True;
+  result.FormatsList[23].FalsePositives := False;
   result.FormatsList[19].GenType := HR_TYPE_AUDIO;
   result.FormatsList[19].Format := 'S3M';
   result.FormatsList[19].Desc := 'Scream Tracker 3 Module';
@@ -2473,6 +2486,12 @@ begin
   result.FormatsList[21].ID := 1009;
   result.FormatsList[21].IsConfig := False;
   result.FormatsList[21].FalsePositives := False;
+  result.FormatsList[24].GenType := HR_TYPE_AUDIO;
+  result.FormatsList[24].Format := 'M4A';
+  result.FormatsList[24].Desc := 'MPEG-4 Audio';
+  result.FormatsList[24].ID := 1011;
+  result.FormatsList[24].IsConfig := False;
+  result.FormatsList[24].FalsePositives := False;
 
   result.FormatsList[13].GenType := HR_TYPE_VIDEO;
   result.FormatsList[13].Format := 'AVI';
@@ -2498,6 +2517,12 @@ begin
   result.FormatsList[18].ID := 2003;
   result.FormatsList[18].IsConfig := false;
   result.FormatsList[18].FalsePositives := true;
+  result.FormatsList[25].GenType := HR_TYPE_VIDEO;
+  result.FormatsList[25].Format := 'MP4';
+  result.FormatsList[25].Desc := 'MPEG-4 Video';
+  result.FormatsList[25].ID := 2004;
+  result.FormatsList[25].IsConfig := False;
+  result.FormatsList[25].FalsePositives := False;
 
   result.FormatsList[7].GenType := HR_TYPE_IMAGE;
   result.FormatsList[7].Format := 'BMP';
@@ -2708,6 +2733,36 @@ begin
                     // Next searchable offset is 4 bytes after the one found
                     inc(tmpRes,4);
               end;
+        1010: begin
+                //strPCopy(szFind,char(255));
+                //tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                tmpRes := posBuf(255,buffer,bufsize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  if ((tmpRes < (bufsize - 1))
+                  and ((buffer[tmpRes+1] and 240) = 240))
+                  or (tmpRes = (bufsize - 1)) then
+                    // Add found offset to the list
+                    result.Add(tmpRes);
+                  // Next searchable offset is 1 byte after the one found
+                  inc(tmpRes);
+                end;
+              end;
+        1011: begin
+                strPCopy(szFind,'ftypM4');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                  if ((buffer[tmpRes+6] = 65) or (buffer[tmpRes+6] = 66) or (buffer[tmpRes+6] = 80)) and (buffer[tmpRes+7] = 32) then
+                  begin
+                    // Add found offset to the list
+                    result.Add(tmpRes-4);
+                    // Next searchable offset is 8 bytes after the one found
+                    inc(tmpRes,8);
+                  end
+                  else
+                    // Next searchable offset is 4 bytes after the one found
+                    inc(tmpRes,4);
+              end;
 
         2000: begin
                 strPCopy(szFind,'RIFF');
@@ -2776,6 +2831,21 @@ begin
                 else
                   tmpRes := -1;
 
+              end;
+        2004: begin
+                strPCopy(szFind,'ftypmp4');
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                  if (buffer[tmpRes+7] = 49) or (buffer[tmpRes+7] = 50) then
+                  begin
+                    // Add found offset to the list
+                    result.Add(tmpRes-4);
+                    // Next searchable offset is 8 bytes after the one found
+                    inc(tmpRes,8);
+                  end
+                  else
+                    // Next searchable offset is 4 bytes after the one found
+                    inc(tmpRes,4);
               end;
 
         3000: begin
@@ -2971,6 +3041,7 @@ var buf1, buf2: array[1..4] of char;
     tInteger, x, y, curH, curW, minSize: integer;
     tChars: array[0..7] of char;
     tBytes4, tBytes4a: array[0..3] of byte;
+    tBytes7: array[0..6] of byte;
     size, size2, offset2, COffset, CSize: int64;
     BMPH: BMPHeader;
     EMFH: EnhancedMetaHeader;
@@ -2980,6 +3051,8 @@ var buf1, buf2: array[1..4] of char;
     GIFI: GIFImageDescriptor;
     MIDC: MIDIChunk;
     MIDH: MIDIHeader;
+    MPTSAH: MPTSAtomHeader;
+    OGGH: OGGHeader;
     VOCH: VOCHeader;
     WMFP: PlaceableMetaHeader;
     WMFH: WindowsMetaHeader;
@@ -2988,7 +3061,6 @@ var buf1, buf2: array[1..4] of char;
     XMIH: XMInstrumentHeader;
     XMP: XMPattern;
     XMSH: XMSampleHeader;
-    OGGH: OGGHeader;
     good: boolean;
     totSize: int64;
 
@@ -3005,6 +3077,16 @@ var buf1, buf2: array[1..4] of char;
     VBRNumFrames: longword;
     VBRFileSize: longword;
     OGGPageLen: longword;
+
+    // ADTS / AAC
+    ADTSProtection: boolean;
+    ADTSMPEGVersion: byte;
+    ADTSAACObjectType: byte;
+    ADTSMP4SamplingFreq: byte;
+    ADTSMP4ChannelConf: byte;
+    ADTSFrameLen, TempFrameLen: word;
+    ADTSFrames: longword;
+    mdatfound: boolean;
 
     lastOffset: int64;
 
@@ -3643,6 +3725,155 @@ begin
             end;
 
           end;
+    1010: begin
+            MPEGa := frmHyperRipper.formats.getMPEGOptions;
+            totSize := inStm.Size;
+            inStm.Seek(offset,soBeginning);
+            Size := 0;
+            MP3FrameLen := 0;
+            MP3Frames := 0;
+            MP3Layer := 0;
+            lastOffset := Offset;
+            lastDisplayTime := now;
+            firstDisplay := true;
+            curMP3Result := ReplaceValue('%e',ReplaceValue('%a',DLNGstr('HRLG08'),inttohex(Offset,8)),'aac');
+            repeat
+
+              if (SecondsBetween(now,lastDisplayTime) >= 1) then
+              begin
+                hrip.Progress.Position := Round((inStm.Position / inStm.Size)*100);
+                if firstDisplay then
+                begin
+                  hrip.addResult(ReplaceValue('%s',curMP3Result,inttostr(inStm.Position-Offset)));
+                  firstDisplay := false;
+                end
+                else
+                  hrip.lastResult(ReplaceValue('%s',curMP3Result,inttostr(inStm.Position-Offset)));
+                lastDisplayTime := now;
+                displayInfo(nil,inStm.Position,false);
+              end;
+
+              inStm.ReadBuffer(tBytes7,7);
+              if (tBytes7[0] = 255) and ((tBytes7[1] and 240) = 240) and ((tBytes7[1] and 6) = 0) and ((tBytes7[2] and 2) = 0) and ((tBytes7[3] and 60) = 0) and ((tBytes7[5] and 31) = 31) and ((tBytes7[6] and 252) = 252) and ((tBytes7[6] and 3) = 0) then
+              begin
+
+                // Version
+                if (tBytes7[1] And 8) = 0 then
+                  ADTSMPEGVersion := 4
+                else
+                  ADTSMPEGVersion := 2;
+
+                // Protection Absent
+                ADTSProtection := (tBytes7[1] And 1) = 0;
+
+                // MPEG-4 Audio Object Types (AAC)
+                // 0: AAC Main
+                // 1: AAC LC (Low Complexity)
+                // 2: AAC SSR (Scalable Sample Rate)
+                // 3: AAC LTP (Long Term Prediction)
+                ADTSAACObjectType := (tBytes7[2] And 192) shr 6;
+
+                // Sampling Frequency Index
+                // Value of 15 not possible
+                ADTSMP4SamplingFreq := (tBytes7[2] And 60) shr 2;
+
+                // Channel configuration
+                ADTSMP4ChannelConf := ((tBytes7[2] And 1) shl 2) or ((tBytes7[3] And 192) shr 6);
+
+                ADTSFrameLen := (tBytes7[3] And 3);
+                ADTSFrameLen := ADTSFrameLen shl 11;
+                TempFrameLen := tBytes7[4];
+                TempFrameLen := TempFrameLen shl 3;
+                ADTSFrameLen := ADTSFrameLen or TempFrameLen or ((tBytes7[5] and 224) shr 5);
+
+                inc(Size,ADTSFrameLen);
+                if (Offset + Size) >= totSize then
+                begin
+                  Size := totSize - Offset;
+                  break;
+                end;
+                if (lastOffset = (Offset+Size)) then
+                  break;
+                lastOffset := Offset+Size;
+                inc(ADTSFrames);
+                if MPEGa.LimitFramesMax and (ADTSFrames = MPEGa.FramesMax) then
+                  break;
+                if MPEGa.LimitSizeMax and (Size >= MPEGa.SizeMax) then
+                  break;
+                inStm.Seek(Offset+Size,soBeginning);
+              end
+              else
+                break;
+            until cancel;
+
+            if not(Cancel) and (Size > 0) then
+            begin
+              if ((MPEGa.LimitFramesMin and (ADTSFrames >= MPEGa.FramesMin))
+              or not(MPEGa.LimitFramesMin))
+              and ((MPEGa.LimitSizeMin and (Size >= MPEGa.SizeMin))
+              or not(MPEGa.LimitSizeMin)) then
+              begin
+                result.Offset := offset;
+                if Size > (inStm.Size - Offset) then
+                  Size := inStm.Size - Offset;
+                result.Size := Size;
+                result.Ext := 'aac';
+                result.GenType := HR_TYPE_AUDIO;
+                if firstDisplay then
+                  hrip.addResult(ReplaceValue('%s',curMP3Result,inttostr(inStm.Position-Offset)));
+              end
+              else
+              begin
+                if Size > (inStm.Size - Offset) then
+                  Size := inStm.Size - Offset;
+                result.Size := Size;
+                result.Offset := offset;
+              end;
+            end;
+
+          end;
+    1011, 2004: begin
+            Size := 0;
+            mustBeStart := true;
+            mdatfound := false;
+            repeat
+              inStm.Seek(offset+size,soBeginning);
+              inStm.Read(MPTSAH,SizeOf(MPTSAtomHeader));
+              MPTSAH.size := SwapBytes(MPTSAH.size);
+              if ((Offset+MPTSAH.size) <= TotSize) then
+              begin
+                if mustBeStart then
+                begin
+                  if MPTSAH.atomtype = 'ftyp' then
+                  begin
+                    mustBeStart := false;
+                    inc(Size,MPTSAH.size);
+                  end
+                  else
+                    break;
+                end
+                else
+                begin
+                  mdatfound := mdatfound or (MPTSAH.atomtype = 'mdat');
+                  if (MPTSAH.atomtype = 'free') or (MPTSAH.atomtype = 'skip') or (MPTSAH.atomtype = 'wide') or (MPTSAH.atomtype = 'mdat') or (MPTSAH.atomtype = 'moov') then
+                    inc(Size,MPTSAH.size)
+                  else
+                    break;
+                end;
+              end
+              else
+                break;
+            until (false);
+
+            if (Size > 0) and ((Offset + Size) <= Totsize) and mdatfound then
+            begin
+              result.Offset := offset;
+              result.Size := Size;
+              result.Ext := 'm4a';
+              result.GenType := HR_TYPE_AUDIO;
+            end;
+
+          end;
 
     2000: begin
             inStm.Seek(offset,soBeginning);
@@ -3668,16 +3899,19 @@ begin
               if (buf1 = 'moov') then
               begin
                 Size := BigToLittle4(tBytes4);
-                repeat
-                  inStm.Seek(offset+size,soBeginning);
-                  inStm.ReadBuffer(tBytes4,4);
-                  inStm.ReadBuffer(buf1,4);
-                  Inc(Size,BigToLittle4(tBytes4));
-                until (buf1 = 'mdat') or (Offset+Size >= totSize);
-                result.Offset := offset;
-                result.Size := Size;
-                result.Ext := 'mov';
-                result.GenType := HR_TYPE_VIDEO;
+                if (offset+Size+8)<=TotSize then
+                begin
+                  repeat
+                    inStm.Seek(offset+size,soBeginning);
+                    inStm.ReadBuffer(tBytes4,4);
+                    inStm.ReadBuffer(buf1,4);
+                    Inc(Size,BigToLittle4(tBytes4));
+                  until (buf1 = 'mdat') or ((Offset+Size+8) >= totSize);
+                  result.Offset := offset;
+                  result.Size := Size;
+                  result.Ext := 'mov';
+                  result.GenType := HR_TYPE_VIDEO;
+                end;
               end;
             end;
           end;
@@ -4063,8 +4297,8 @@ var frmMpa: TfrmOptMPEGa;
     OApp: THandle;
 begin
 
-  case formatid of
-    1006: begin
+  if (formatid = 1006) or (formatid = 1010) then
+  begin
             frmMpa := TfrmOptMPEGa.Create(frmHyperRipper);
             try
               with frmMpa do
@@ -4090,7 +4324,6 @@ begin
             finally
               FreeAndNil(frmMpa);
             end;
-          end;
   end;
 
 end;

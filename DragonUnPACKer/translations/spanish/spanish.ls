@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-# Programa: Dragon UnPACKer v5.7.0 Beta
+# Programa: Dragon UnPACKer v5.7.1 Beta
 # Lenguaje: Español
-#  Version: 16
+#  Version: 17
 #    Autor: Alexandre Devilliers (con la ayuda de Cinthia)
 # ============================================================================
 {LSF}
@@ -12,7 +12,7 @@ Author = Alexandre Devilliers
 Email = translation@dragonunpacker.com
 URL = http://www.dragonunpacker.com
 ProgramID = UP
-ProgramVer = 16
+ProgramVer = 17
 IconFile = flag_sp.bmp
 Compression=99
 OutFile = spanish.lng
@@ -313,17 +313,17 @@ HRTYP2=Video
 HRTYP3=Imagen
 HRTYPM=Otro
 HRTYPE=Tipo (%i)
-HRD000=Opciones MPEG Audio
-HRD100=Buscar los formatos MPEG Audio siguientes:
+HRD000=Opciones MPEG-1/2 Audio y AAC (ADTS)
+HRD100=Buscar los formatos MPEG-1/2 Audio siguientes:
 HRD101=Oficioso
 HRD200=Limitar por
 HRD211=Número mínimo de marcos:
 HRD212=Numero máximo de marcos:
-HRD213=marco(s)'
+HRD213=marco(s)
 HRD221=Tamaño mínimo:
 HRD222=Tamaño máximo:
-HRD223=octeto(s)'
-HRD300=Especial'
+HRD223=octeto(s)
+HRD300=Especial (MPEG-1/2 Audio)
 HRD301=Buscar encabezada Xing VBR
 HRD302=Buscar ID3Tag v1.0/1.1
 

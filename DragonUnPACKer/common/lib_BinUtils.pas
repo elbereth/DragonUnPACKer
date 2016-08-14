@@ -45,8 +45,19 @@ procedure put32(outstm: TStream; val: AnsiString);
 function revstr(str: string): string;
 function posrev(substr: string; str: string): integer;
 function strip0(str : string): string;
+function SwapBytes(Value: LongWord): LongWord;
 
 implementation
+
+function SwapBytes(Value: LongWord): LongWord;
+type
+  Bytes = packed array[0..3] of Byte;
+begin
+  Bytes(Result)[0]:= Bytes(Value)[3];
+  Bytes(Result)[1]:= Bytes(Value)[2];
+  Bytes(Result)[2]:= Bytes(Value)[1];
+  Bytes(Result)[3]:= Bytes(Value)[0];
+end;
 
 function Get0(src: integer): string;
 var tchar: Char;

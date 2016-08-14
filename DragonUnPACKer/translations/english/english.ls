@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-#  Program: Dragon UnPACKer v5.7.0 Beta
+#  Program: Dragon UnPACKer v5.7.1 Beta
 # Language: English
-#  Version: 16
+#  Version: 17
 #   Author: Alex Devilliers
 # ============================================================================
 #
@@ -27,6 +27,9 @@
 # ============================================================================
 # Informations about this translation
 # ============================================================================
+#
+# version 17:
+# Changed HRD000, HRD100, HRD300
 #
 # version 16:
 # Added OPT853, LOG020, LOG021, LOG022, LOG023
@@ -161,9 +164,10 @@ URL = http://www.dragonunpacker.com
 # Dragon UnPACKer v5.6.1         UP      14
 # Dragon UnPACKer v5.6.2         UP      15
 # Dragon UnPACKer v5.7.0 Beta    UP      16
+# Dragon UnPACKer v5.7.1 Beta    UP      17
 #
 ProgramID = UP
-ProgramVer = 16
+ProgramVer = 17
 #
 # + IconFile +
 # Path & FileName of the "icon" displayed with language name (ex: c:\test.bmp)
@@ -510,8 +514,8 @@ HRTYP2=Video
 HRTYP3=Picture
 HRTYPM=Other
 HRTYPE=Type (%i)
-HRD000=MPEG Audio Options
-HRD100=MPEG Audio formats to search for
+HRD000=MPEG-1/2 Audio and AAC (ADTS) Options
+HRD100=MPEG-1/2 Audio formats to search for
 HRD101=Unofficial
 HRD200=Limit by
 HRD211=Minimum frame numbers:
@@ -520,7 +524,7 @@ HRD213=frame(s)
 HRD221=Minimum size:
 HRD222=Maximum size:
 HRD223=byte(s)
-HRD300=Special
+HRD300=Special for MPEG-1/2 Audio
 HRD301=Search (and use) Xing VBR header
 HRD302=Search ID3Tag v1.0/1.1
 

@@ -1265,7 +1265,7 @@ object frmHyperRipper: TfrmHyperRipper
     Top = 8
     Width = 417
     Height = 297
-    ActivePage = tabSearch
+    ActivePage = tabAbout
     TabOrder = 0
     OnChange = lstFormatsClick
     object tabAbout: TTabSheet

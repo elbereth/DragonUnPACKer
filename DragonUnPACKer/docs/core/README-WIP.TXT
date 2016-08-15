@@ -33,7 +33,7 @@ Git master [Unreleased]
      .TGP file format.
      Actually support for both v1 and v2 TGP files.
 	 Uncompressed, compressed and crypted are all supported.
- + External Tools Conversion plug-in v0.2.1 Beta:
+ + External Tools Conversion plug-in v0.2.2 Beta:
    i This plug-in allows to use external command line tools to convert file
      formats (for example the excellent vgmstream tool for audio files).
 	 This first version works fine but is only configured for vgmstream and to
@@ -45,6 +45,8 @@ Git master [Unreleased]
 	 folder (along with needed dlls):
      data\convert\cnv_exttools\vgmstream
      http://hcs64.com/vgmstream.html
+	 Also has ImageMagick ini file to convert images to PNG.
+	 http://www.imagemagick.org/script/binary-releases.php
    i Edit or add new tools via the included configuration screen.
      To get to it, just click on Configure button in the Convert plug-in options
 	 screen of Dragon UnPACKer while cnv_exttools plug-in is selected.

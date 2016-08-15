@@ -20,7 +20,7 @@ type
     txtToolPath: TEdit;
     txtToolCommand: TEdit;
     txtToolResultExt: TEdit;
-    rgrpResultTest: TRadioGroup;
+    grpResultTest: TRadioGroup;
     txtToolResultValue: TEdit;
     lstExt: TListBox;
     txtExt: TEdit;
@@ -28,28 +28,29 @@ type
     butExit: TButton;
     butToolAdd: TButton;
     butExtRemove: TButton;
-    Label1: TLabel;
+    lblExtensions: TLabel;
     butToolRemove: TButton;
     txtToolURL: TEdit;
     Bevel1: TBevel;
     lblExtra1: TLabel;
     lblExtra2: TLabel;
-    Label2: TLabel;
-    Label3: TLabel;
-    Label4: TLabel;
-    Label5: TLabel;
-    Label6: TLabel;
-    Button1: TButton;
-    Label7: TLabel;
-    Label8: TLabel;
+    lblToolname: TLabel;
+    lblToolAuthor: TLabel;
+    lblToolURL: TLabel;
+    lblToolComment: TLabel;
+    lblToolPath: TLabel;
+    cmdToolPathBrowse: TButton;
+    lblToolCommand: TLabel;
+    lblToolResultExt: TLabel;
     shToolName: TShape;
     butToolSave: TButton;
     butToolReset: TButton;
-    Label9: TLabel;
+    lblToolResultValue: TLabel;
     shToolPath: TShape;
     shToolCommand: TShape;
     shToolResultExt: TShape;
     shToolResultvalue: TShape;
+    OpenToolPathDialog: TOpenDialog;
     procedure txtExtChange(Sender: TObject);
     procedure butExtRemoveClick(Sender: TObject);
     procedure lstExtClick(Sender: TObject);
@@ -67,6 +68,7 @@ type
       Selected: Boolean);
     procedure butToolResetClick(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure cmdToolPathBrowseClick(Sender: TObject);
   private
     newListofTools: array of TToolInfo;
     { Private declarations }
@@ -215,6 +217,12 @@ var iniFile: TMemIniFile;
     itmX: TListItem;
 begin
 
+{  for x := 0 to lstTools.Items.Count-1 do
+  begin
+    if lstTools.Items[x] = txtToolName.Text then
+
+  end; }
+
   // If the tool already exists we retrieve the current data & the ini filename
   if (lstTools.SelCount > 0) then
   begin
@@ -243,7 +251,7 @@ begin
   ToolInfo.path := txtToolPath.Text;
   ToolInfo.command := txtToolCommand.Text;
   ToolInfo.resultext := txtToolResultExt.Text;
-  ToolInfo.resultoktest := rgrpResultTest.ItemIndex;
+  ToolInfo.resultoktest := grpResultTest.ItemIndex;
   Val(txtToolResultValue.Text, ToolInfo.resultok, resVal);
   if (resVal <> 0) then
     ToolInfo.resultok := 0;
@@ -313,7 +321,7 @@ begin
     txtToolpath.Text := ToolInfo^.path;
     txtToolcommand.Text := ToolInfo^.command;
     txtToolresultExt.Text := ToolInfo^.resultext;
-    rgrpResultTest.ItemIndex := ToolInfo^.resultoktest;
+    grpResultTest.ItemIndex := ToolInfo^.resultoktest;
     txtToolResultValue.Text := inttostr(ToolInfo^.resultok);
 
     lstExt.Clear;
@@ -343,7 +351,7 @@ begin
   txtToolpath.Text := '';
   txtToolcommand.Text := '';
   txtToolresultExt.Text := '';
-  rgrpResultTest.ItemIndex := 0;
+  grpResultTest.ItemIndex := 0;
   txtToolResultValue.Text := '';
   lstExt.Clear;
 
@@ -353,6 +361,19 @@ procedure TfrmExtTool.FormDestroy(Sender: TObject);
 begin
 
   SetLength(newListOfTools,0);
+
+end;
+
+procedure TfrmExtTool.cmdToolPathBrowseClick(Sender: TObject);
+begin
+
+  if txtToolPath.Text = '' then
+    OpenToolPathDialog.FileName := txtToolPath.Text;
+
+  if OpenToolPathDialog.Execute then
+    txtToolPath.Text := OpenToolPathDialog.FileName;
+
+//  checkSaveButton;
 
 end;
 

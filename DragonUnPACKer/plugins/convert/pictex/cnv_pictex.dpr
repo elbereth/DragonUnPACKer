@@ -66,10 +66,10 @@ var Percent: TPercentCallback;
 const
   DUCI_VERSION = 4;
   DUCI_VERSION_COMPATIBLE = 3;
-  DRIVER_VERSION = 22140;
+  DRIVER_VERSION = 22141;
   DUP_VERSION = 56040;
-  SVN_REVISION = '$Rev$';
-  SVN_DATE = '$Date$';
+  CurSVNRevision: String = '$Rev$';
+  CurSVNDate: String = '$Date$';
 
 { * Version History:
   * v1.0.0 Alpha (10000): First version (never distributed)
@@ -95,6 +95,7 @@ const
   *                       Removed Imaging Lib (feature to be integrated in Dragon UnPACKer)
   * v2.2.0       (22040): Removed beta status for 5.6.0 release
   * v2.2.1       (22140): Added Ghostbusters .TEX support
+  * v2.2.1a      (22141): Changed about info for git instead of SVN
   * }
 
 // Identifies the DLL as a Convert plugin (minimum version to load plugin)
@@ -1120,7 +1121,7 @@ begin
                  '\b0\i0\fs20 Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+'\par'+#10+
                  'Driver Interface [DUCI] v'+inttostr(DUCI_VERSION)+' (v'+inttostr(DUCI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUCI)+']\par'+#10+
                  'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+'\par'+#10+
-                 'Based on SVN rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')\par'+#10+
+                 'Based on git commit '+getSVNRevision(CurSVNRevision)+' ('+getSVNDate(CurSVNDate)+')\par'+#10+
                  '\par'+#10+StringReplace(DLNGStr('CNV010'),#10,'\par'+#10,[rfReplaceAll])+'}'+#10;
 
   end
@@ -1131,7 +1132,8 @@ begin
                  'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
                  'Driver Interface [DUCI] v'+inttostr(DUCI_VERSION)+' (v'+inttostr(DUCI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUCI)+#10+
                  'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+
-                 'Based on CVS rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')'+#10+#10+DLNGStr('CNV010')+#10;
+                 'Based on git commit '+getSVNRevision(CurSVNRevision)+' ('+getSVNDate(CurSVNDate)+')'+#10+
+                 #10+DLNGStr('CNV010')+#10;
   end;
 
   showMsgBox('About Elbereth''s Picture/Textures Convert Plugin...',aboutText);

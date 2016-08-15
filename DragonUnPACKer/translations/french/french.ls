@@ -31,6 +31,8 @@
 #
 # version 17:
 # Modifié HRD000, HRD100, HRD300
+# Ajout CET100, CET200, CET210, CET220, CET230, CET240, CET245, CET250, CET260, CET270,
+#  CET300, CET310, CET400, CET410, CET420, CET430, CET440, CET450, CET460, CET500
 #
 # version 16:
 # Ajout de OPT853, LOG020, LOG021, LOG022, LOG023
@@ -377,6 +379,27 @@ CNV901=La palette a été convertie avec succés!%nVous pouvez désormais la sélecti
 CNV990=Le nom de palette spécifié existe déjà.
 CNV991=Format inconnu (essayez de changer le format).
 CNV992=Etes-vous sur de vouloir supprimer la palette?
+
+CET100=Extension de Conversion pour Outils Externes v%v - Configuration
+CET200=Nom de l'outils:
+CET210=Auteur:
+CET220=URL:
+CET230=Commentaire:
+CET240=Chemin:
+CET245=Paramètres:
+CET250=Extension de sortie:
+CET260=Test code retour:
+CET270=Valeur code retour:
+CET300=Outils
+CET310=Extensions
+CET400=Nouveau
+CET410=Supprimer
+CET420=Sauvegarder
+CET430=Réinitialiser
+CET440=Ajout
+CET450=Supprimer
+CET460=Terminer
+CET500=Outils Externes de Conversion
 
 TLD001=Lecture de %f par le pilote...
 TLD002=Recuperation des données...

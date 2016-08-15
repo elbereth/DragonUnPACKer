@@ -30,6 +30,8 @@
 #
 # version 17:
 # Changed HRD000, HRD100, HRD300
+# Added CET100, CET200, CET210, CET220, CET230, CET240, CET245, CET250, CET260, CET270,
+#  CET300, CET310, CET400, CET410, CET420, CET430, CET440, CET450, CET460, CET500
 #
 # version 16:
 # Added OPT853, LOG020, LOG021, LOG022, LOG023
@@ -430,6 +432,27 @@ CNV901=Palette converted successfully!%nYou can now select it from the list.
 CNV990=Palette name already exists.
 CNV991=Format unknown (try changing the format).
 CNV992=Do you really want to delete this palette?
+
+CET100=External Tools Convert Plugin v%v - Configuration
+CET200=Tool Name:
+CET210=Author:
+CET220=URL:
+CET230=Comment:
+CET240=Path:
+CET245=Parameters:
+CET250=Resulting extension:
+CET260=Correct Result Testing:
+CET270=Correct result value:
+CET300=Tool
+CET310=Extensions
+CET400=New
+CET410=Remove
+CET420=Save
+CET430=Reset
+CET440=Add
+CET450=Remove
+CET460=Done
+CET500=Command line convert tool
 
 TLD001=Reading %f...
 TLD002=Retrieving data...

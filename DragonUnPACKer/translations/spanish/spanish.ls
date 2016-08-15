@@ -230,6 +230,27 @@ CNV990=Esta paleta ya existe.
 CNV991=Formato desconocido (intenta cambiar el formato).
 CNV992=Esta seguro de querer suprimir esta paleta?
 
+CET100=Extensión de Conversión para herramientas externas v%v - Configuración
+CET200=Nombre herramienta:
+CET210=Autor:
+CET220=URL:
+CET230=Comentario:
+CET240=Camino:
+CET245=Parametros:
+CET250=Extensión de salida:
+CET260=Test código de retorno:
+CET270=Valor código de retorno:
+CET300=Herramienta
+CET310=Extensiones
+CET400=Nuevo
+CET410=Eliminar
+CET420=Guardar
+CET430=Reanudar
+CET440=Añadir
+CET450=Eliminar
+CET460=Volver
+CET500=Herramientas Externas de Conversión
+
 TLD001=Leyendo %f...
 TLD002=Recuperando los datos...
 TLD003=Examinando los datos...

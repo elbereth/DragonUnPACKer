@@ -1,6 +1,6 @@
 object frmExtTool: TfrmExtTool
-  Left = 223
-  Top = 737
+  Left = 192
+  Top = 761
   Width = 561
   Height = 365
   Caption = 'External Tools Convert Plugin v<version>'
@@ -15,7 +15,7 @@ object frmExtTool: TfrmExtTool
   OnDestroy = FormDestroy
   PixelsPerInch = 96
   TextHeight = 13
-  object Label1: TLabel
+  object lblExtensions: TLabel
     Left = 480
     Top = 8
     Width = 54
@@ -57,7 +57,7 @@ object frmExtTool: TfrmExtTool
     Font.Style = []
     ParentFont = False
   end
-  object Label2: TLabel
+  object lblToolname: TLabel
     Left = 144
     Top = 12
     Width = 89
@@ -65,7 +65,7 @@ object frmExtTool: TfrmExtTool
     AutoSize = False
     Caption = 'Tool Name:'
   end
-  object Label3: TLabel
+  object lblToolAuthor: TLabel
     Left = 144
     Top = 36
     Width = 89
@@ -73,7 +73,7 @@ object frmExtTool: TfrmExtTool
     AutoSize = False
     Caption = 'Author:'
   end
-  object Label4: TLabel
+  object lblToolURL: TLabel
     Left = 144
     Top = 60
     Width = 89
@@ -81,7 +81,7 @@ object frmExtTool: TfrmExtTool
     AutoSize = False
     Caption = 'URL:'
   end
-  object Label5: TLabel
+  object lblToolComment: TLabel
     Left = 144
     Top = 84
     Width = 89
@@ -89,7 +89,7 @@ object frmExtTool: TfrmExtTool
     AutoSize = False
     Caption = 'Comment:'
   end
-  object Label6: TLabel
+  object lblToolPath: TLabel
     Left = 144
     Top = 108
     Width = 89
@@ -97,7 +97,7 @@ object frmExtTool: TfrmExtTool
     AutoSize = False
     Caption = 'Path:'
   end
-  object Label7: TLabel
+  object lblToolCommand: TLabel
     Left = 144
     Top = 132
     Width = 89
@@ -105,7 +105,7 @@ object frmExtTool: TfrmExtTool
     AutoSize = False
     Caption = 'Parameters:'
   end
-  object Label8: TLabel
+  object lblToolResultExt: TLabel
     Left = 144
     Top = 156
     Width = 121
@@ -120,7 +120,7 @@ object frmExtTool: TfrmExtTool
     Height = 9
     Brush.Color = clBtnFace
   end
-  object Label9: TLabel
+  object lblToolResultValue: TLabel
     Left = 144
     Top = 228
     Width = 121
@@ -223,7 +223,7 @@ object frmExtTool: TfrmExtTool
     TabOrder = 9
     OnChange = txtToolResultExtChange
   end
-  object rgrpResultTest: TRadioGroup
+  object grpResultTest: TRadioGroup
     Left = 144
     Top = 176
     Width = 305
@@ -289,7 +289,7 @@ object frmExtTool: TfrmExtTool
   object butToolAdd: TButton
     Left = 8
     Top = 256
-    Width = 57
+    Width = 65
     Height = 25
     Caption = 'New'
     TabOrder = 1
@@ -308,7 +308,7 @@ object frmExtTool: TfrmExtTool
   object butToolRemove: TButton
     Left = 80
     Top = 256
-    Width = 57
+    Width = 65
     Height = 25
     Caption = 'Remove'
     Enabled = False
@@ -321,13 +321,14 @@ object frmExtTool: TfrmExtTool
     Height = 21
     TabOrder = 5
   end
-  object Button1: TButton
+  object cmdToolPathBrowse: TButton
     Left = 427
     Top = 104
     Width = 21
     Height = 21
     Caption = '+'
     TabOrder = 19
+    OnClick = cmdToolPathBrowseClick
   end
   object butToolSave: TButton
     Left = 240
@@ -347,5 +348,11 @@ object frmExtTool: TfrmExtTool
     Caption = 'Reset'
     TabOrder = 17
     OnClick = butToolResetClick
+  end
+  object OpenToolPathDialog: TOpenDialog
+    DefaultExt = 'exe'
+    FileName = '*.exe'
+    Left = 448
+    Top = 256
   end
 end

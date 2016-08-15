@@ -22,6 +22,10 @@ uses
   ShellApi,
   Classes,
   lib_version in '..\..\..\common\lib_version.pas',
+  lib_crc in '..\..\..\common\lib_crc.pas',
+  lib_zlib in '..\..\..\common\lib_zlib.pas',
+  spec_DLNG in '..\..\..\common\spec_DLNG.pas',
+  lib_language in '..\..\..\common\lib_language.pas',
   lib_BinUtils in '..\..\..\common\lib_BinUtils.pas',
   lib_temptools in '..\..\..\common\lib_temptools.pas',
   u_frmExtTool in 'u_frmExtTool.pas' {frmExtTool},
@@ -68,10 +72,10 @@ var Percent: TPercentCallback;
 const
   DUCI_VERSION = 4;
   DUCI_VERSION_COMPATIBLE = 3;
-  DRIVER_VERSION = 02110;
-  DUP_VERSION = 57040;
-  SVN_REVISION = '$Rev$';
-  SVN_DATE = '$Date$';
+  DRIVER_VERSION = 02210;
+  DUP_VERSION = 57140;
+  CurSVNRevision: String = '$Rev$';
+  CurSVNDate: String = '$Date$';
 
 { * Version History:
   * v0.0.1 Alpha (00100): First version (never distributed)
@@ -96,6 +100,8 @@ const
   *                       Fixed exception when closing the configuration box of
   *                        the plugin while an external tool was selected on
   *                        lstTools.
+  * v0.2.2 Beta  (02210): Added path browse
+  *                       Added translation
   * }
 
 function Explode(var a: TStrArray; Border, S: string): Integer;
@@ -405,7 +411,7 @@ begin
                  '\b0\i0\fs20 Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+'\par'+#10+
                  'Driver Interface [DUCI] v'+inttostr(DUCI_VERSION)+' (v'+inttostr(DUCI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUCI)+']\par'+#10+
                  'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+'\par'+#10+
-                 'Based on SVN rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')\par'+#10+
+                 'Based on git commit '+getSVNRevision(CurSVNRevision)+' ('+getSVNDate(CurSVNDate)+')\par'+#10+
                  '\par'+#10+
                  'List of enabled tools:\par'+#10;
 
@@ -425,7 +431,7 @@ begin
                  'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION)+#10+
                  'Driver Interface [DUCI] v'+inttostr(DUCI_VERSION)+' (v'+inttostr(DUCI_VERSION_COMPATIBLE)+' compatible) [using v'+inttostr(SupportedDUCI)+']'+#10+
                  'Compiled the '+DateToStr(CompileTime)+' at '+TimeToStr(CompileTime)+#10+
-                 'Based on SVN rev '+getSVNRevision(SVN_REVISION)+' ('+getSVNDate(SVN_DATE)+')'+#10;
+                 'Based on git commit '+getSVNRevision(CurSVNRevision)+' ('+getSVNDate(CurSVNDate)+')'+#10;
   end;
 
   showMsgBox('About Elbereth''s External Tools Convert Plugin...',aboutText);
@@ -445,9 +451,28 @@ begin
   frmExtConf := TfrmExtTool.Create(AOwner);
   try
     frmExtConf.curPath := CurPath+'cnv_exttools\';
-    frmExtConf.Caption := 'External Tools Convert Plugin v'+getVersion(DRIVER_VERSION)+' - Configuration';
+    frmExtConf.Caption := ReplaceValue('%v',DLNGstr('CET100'),getVersion(DRIVER_VERSION));
     frmExtConf.lblExtra1.Caption := 'Created by Alexandre Devilliers (aka Elbereth/Piecito)';
     frmExtConf.lblExtra2.Caption := 'Designed for Dragon UnPACKer v'+getVersion(DUP_VERSION);
+    frmExtConf.lblToolname.Caption := DLNGstr('CET200');
+    frmExtConf.lblToolAuthor.Caption := DLNGstr('CET210');
+    frmExtConf.lblToolURL.Caption := DLNGstr('CET220');
+    frmExtConf.lblToolComment.Caption := DLNGstr('CET230');
+    frmExtConf.lblToolPath.Caption := DLNGstr('CET240');
+    frmExtConf.lblToolCommand.Caption := DLNGstr('CET245');
+    frmExtConf.lblToolResultExt.Caption := DLNGstr('CET250');
+    frmExtConf.grpResultTest.Caption := DLNGstr('CET260');
+    frmExtConf.lblToolResultValue.Caption := DLNGstr('CET270');
+    frmExtConf.lstTools.Columns[0].Caption := DLNGstr('CET300');
+    frmExtConf.lblExtensions.Caption := DLNGstr('CET310');
+    frmExtConf.butToolAdd.Caption := DLNGstr('CET400');
+    frmExtConf.butToolRemove.Caption := DLNGstr('CET410');
+    frmExtConf.butToolSave.Caption := DLNGstr('CET420');
+    frmExtConf.butToolReset.Caption := DLNGstr('CET430');
+    frmExtConf.butExtAdd.Caption := DLNGstr('CET440');
+    frmExtConf.butExtRemove.Caption := DLNGstr('CET450');
+    frmExtConf.butExit.Caption := DLNGstr('CET460');
+    frmExtConf.OpenToolPathDialog.Filter := DLNGstr('CET500')+' (*.EXE)|*.exe|'+DLNGstr('ALLFIL')+' (*.*)|*.*';
 
     for x := Low(ListOfTools) to High(ListOfTools) do
     begin

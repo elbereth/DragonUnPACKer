@@ -1,5 +1,5 @@
-Dragon UnPACKer 5.7.0 Beta Source Code                          MPL open source
-by Alexande "Elbereth" Devilliers                                    08/04/2014
+Dragon UnPACKer 5.7.1 Beta Source Code                          MPL open source
+by Alexande "Elbereth" Devilliers                                    16/08/2016
 ===============================================================================
 
 This source code can be used and modified if following the Mozilla Public
@@ -46,13 +46,13 @@ For setup compilation you need Inno Setup v5.5.4 from:
 http://www.jrsoftware.org/isinfo.php
 
 
-SVN access:
+git access:
 -----------
 
-Anonymous SVN access is available (if you want to have absolute latest source
-code) at Dragon UnPACKer's SourceForge page:
+Git repository is available (if you want to have absolute latest source code)
+at Dragon UnPACKer's github.com page:
 
-http://www.elberethzone.net/dup-svn-source.html
+https://www.elberethzone.net/en/dragon-unpacker-dev.html#source
 
 
 Willing to help ?
@@ -61,6 +61,6 @@ Willing to help ?
 You have Delphi skills and wish to help developing Dragon UnPACKer ?
 Become a developer on SourceForge for Dragon UnPACKer project!
 
-Contact me at: elbereth (at) users (dot) sourceforge (dot) net
+Contact me at: alexandre (dot) devilliers (at) elberethzone (dot) net
 
 ===============================================================================

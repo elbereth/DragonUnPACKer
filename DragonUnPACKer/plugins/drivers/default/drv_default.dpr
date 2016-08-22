@@ -203,6 +203,7 @@ type FSE = ^element;
     30114        Added sanity checks to Terminal Velocity .POD support
     30115        Removed SVN keywords
                  Added Astebreed, Ether Vapor Remaster and Fairy Bloom Fresia .TGP support
+    30116        Added Artifex Mundi .CUB support
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -224,7 +225,7 @@ type FSE = ^element;
 const
   DUDI_VERSION = 6;
   DUDI_VERSION_COMPATIBLE = 6;
-  DRIVER_VERSION = 30115;
+  DRIVER_VERSION = 30116;
   DUP_VERSION = 57110;
   BUFFER_SIZE = 8192;
 
@@ -326,6 +327,7 @@ begin
   addFormat(result,'*.CCX','Total Annihilation: Counter-Strike (*.CCX)');
   addFormat(result,'*.COB','Ascendancy (*.COB)');
   addFormat(result,'*.CPR','Port Royale (*.CPR)|Patrician II (*.CPR)');
+  addFormat(result,'*.CUB','Artifex Mundi Games (*.CUB)|Nightmares from the Deep: The Cursed Heart (*.CUB)|Nightmares from the Deep 2: The Siren`s Call (*.CUB)|Nightmares from the Deep 3: Davy Jones (*.CUB)');
   addFormat(result,'*.DAT','Nascar Racing (*.DAT)|Gunlok (*.DAT)|LEGO Star Wars (*.DAT)|Act of War (*.DAT)|F-22 Air Dominance Fighter (*.DAT)|F-22 Total Air War (*.DAT)|Super EF2000 (*.DAT)');
   addFormat(result,'*.DNI','realMyst 3D (*.DNI)');
   addFormat(result,'*.DRS','Age of Empires 2: Age of Kings (*.DRS)');
@@ -1795,6 +1797,98 @@ begin
   end
   else
     ReadAvpRFFL := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Artifex Mundi .CUB support =============================================== //
+// -------------------------------------------------------------------------- //
+
+type CUBEHeader = packed record
+        ID: array[0..3] of char;  // "cub" 0x00
+        Version: array[0..3] of char;  // "1.0" 0x00
+        NumEntries: longword;
+        Description: array[0..255] of char;
+     end;
+     CUBEEntry = packed record
+        FileName: array[0..255] of char;
+        offset: longword;
+        size: longword;
+     end;
+const CUBEXORByte: byte = $96;
+      CUBEXORLongWord: longword = $96969696;
+
+function UnXORstr(src: array of char; xorbyte: byte): string;
+var x: integer;
+    ret: array of char;
+    reached0: boolean;
+begin
+
+  result := '';
+
+  for x := 0 to length(src)-1 do
+    result := result + chr(ord(src[x]) xor xorbyte);
+
+end;
+
+function ReadArtifexMundiCUB(src: string): Integer;
+var HDR: CUBEHeader;
+    ENT: CUBEEntry;
+    disp: string;
+    NumE, x, smallerOffset, res, lastOffset, TotFSize: integer;
+    memstm: TMemoryStream;
+begin
+
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
+
+  if FHandle > 0 then
+  begin
+
+    TotFSize := FileSeek(FHandle,0,2);
+    FileSeek(Fhandle,0,0);
+    FileRead(FHandle,HDR,SizeOf(CUBEHeader));
+    StrPLCopy(HDR.ID,UnXORStr(HDR.ID,CUBEXORByte),4);
+    StrPLCopy(HDR.Version,UnXORStr(HDR.Version,CUBEXORByte),4);
+    HDR.NumEntries := HDR.NumEntries xor CUBEXORLongWord;
+
+    if (HDR.ID[0] <> 'c') and (HDR.ID[1] <> 'u') and (HDR.ID[2] <> 'b') and (ord(HDR.ID[3]) <> 0) and
+       (HDR.Version[0] <> '1') and (HDR.Version[1] <> '.') and (HDR.Version[2] <> '0') and (ord(HDR.Version[3]) <> 0) and
+       (((HDR.NumEntries * SizeOf(CUBEEntry))+SizeOf(CUBEHeader)) > TotFSize)
+    then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'CUB';
+      ErrInfo.Games := 'Artifex Mundi';
+    end
+    else
+    begin
+
+      memstm := TMemoryStream.Create;
+      BinCopyToStream(FHandle,memstm,FileSeek(FHandle,0,1),SizeOf(CUBEEntry)*HDR.NumEntries,0,BUFFER_SIZE,false,setPercent,CUBEXorByte);
+
+      for x:= 1 to HDR.NumEntries do
+      begin
+        memstm.Seek((x-1)*SizeOf(CUBEEntry),0);
+        memstm.Read(ENT,SizeOf(ENT));
+        disp := Strip0(ENT.FileName);
+        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
+      end;
+
+      FreeAndNil(memstm);
+
+      result := HDR.NumEntries;
+
+      DrvInfo.ID := 'CUB';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := True;
+
+    end;
+  end
+  else
+    Result := -2;
 
 end;
 
@@ -14716,6 +14810,12 @@ begin
         FileClose(FHandle);
         Result := ReadNightFire007(fil);
       end
+      // Artifex Mundi .CUB file
+      else if (ID4[0] = #245) and (ID4[1] = #227) and (ID4[2] = #244) and (ID4[3] = #150) then
+      begin
+        FileClose(FHandle);
+        Result := ReadArtifexMundiCUB(fil);
+      end
       // Civilization 4 .FPK file
       else if (ID8[4] = 'F') and (ID8[5] = 'P') and (ID8[6] = 'K') and (ID8[7] = '_') then
       begin
@@ -15084,6 +15184,8 @@ begin
       ReadFormat := ReadVietcongCBF(fil)
     else if ext = 'CPR' then
       ReadFormat := ReadAscaronCPR(fil)
+    else if ext = 'CUB' then
+      ReadFormat := ReadArtifexMundiCUB(fil)
     else if ext = 'DAT' then
       ReadFormat := ReadHubDAT(fil)
     else if ext = 'DIR' then
@@ -15372,6 +15474,9 @@ begin
         and (ID127[56] = #0) and (ID127[57] = #0) and (ID127[58] = #0) and (ID127[59] = #0)
         and (ID127[60] = #0) and (ID127[61] = #0) and (ID127[62] = #0) and (ID127[63] = #0) then
       Result := true
+    // Artifex Mundi .CUB file
+    else if (ID4[0] = #245) and (ID4[1] = #227) and (ID4[2] = #244) and (ID4[3] = #150) then
+      Result := true
     // Civilization 4 .FPK file
     else if (ID8[4] = 'F') and (ID8[5] = 'P') and (ID8[6] = 'K') and (ID8[7] = '_') then
       Result := true
@@ -15619,6 +15724,9 @@ begin
     else if ext = 'COB' then   // Ascendancy
       IsFormat := True
     else if ext = 'CPR' then
+      IsFormat := True
+    // Artifex Mundi .CUB
+    else if ext = 'CUB' then
       IsFormat := True
     else if ext = 'DAT' then
       IsFormat := True
@@ -16514,6 +16622,11 @@ begin
       DecompressCBFToStream(FHandle,outputstream,offset,DataX,Size,BUFFER_SIZE,silent,SetPercent)
     else
       DecryptCBFToStream(FHandle,outputstream,offset,Size,BUFFER_SIZE,silent,SetPercent);
+  end
+
+  else if DrvInfo.ID = 'CUB' then
+  begin
+    BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent,CUBEXORByte);
   end
 
   else if DrvInfo.ID = 'DNI' then

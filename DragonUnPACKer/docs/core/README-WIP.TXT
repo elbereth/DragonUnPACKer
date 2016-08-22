@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.1 Beta                                 MPL 2.0 open source
-by Alexande "Elbereth" Devilliers                                    14/08/2016
+by Alexande "Elbereth" Devilliers                                    21/08/2016
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -28,11 +28,13 @@ Git master [Unreleased]
    + Added search support for MPEG-4 Video files (MPEG TS)
    i For both MPEG-4 TS files, the moov atom is expected at the end.
    ! Fixed possible problems with MOV support (added sanity checks)
- * Elbereth's Main Driver plug-in v3.0.1 Beta 5:
+ * Elbereth's Main Driver plug-in v3.0.1 Beta 6:
    + Added support for Astebreed, Ether Vapor Remaster and Fairy Bloom Fresia
      .TGP file format.
      Actually support for both v1 and v2 TGP files.
 	 Uncompressed, compressed and crypted are all supported.
+   + Added support for Artifex Mundi .CUB file format
+     Tested with all 3 Nightmare from the Deep games
  + External Tools Conversion plug-in v0.2.2 Beta:
    i This plug-in allows to use external command line tools to convert file
      formats (for example the excellent vgmstream tool for audio files).

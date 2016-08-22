@@ -33,18 +33,28 @@ uses SysUtils, Classes;
 
 type TPercentCallback = procedure(p: byte);
 
-procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
-procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback); overload;
-procedure BinCopyToStream(src, dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback); overload;
+procedure BinCopy(src : integer; dst : integer; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback; xored: byte = 0);
+procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback; xored: byte = 0); overload;
+procedure BinCopyToStream(src, dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback; xored: byte = 0); overload;
 
 implementation
 
-procedure BinCopyToStream(src, dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback); overload;
+procedure BinCopyToStream(src, dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback; xored: byte = 0); overload;
 var
-  i,numbuf, restbuf: Integer;
+  i,j, numbuf, restbuf, wordsbuf, bytesbuf: Integer;
   per, oldper: word;
   real1, real2: real;
+  xored4, toxor: longword;
+  startpos, endpos: int64;
+  memstm: TMemoryStream;
+  toxorbyte: byte;
 begin
+
+  if xored <> 0 then
+  begin
+    xored4 := xored + xored * $100 + xored * $10000 + xored * $1000000;
+    memstm := TMemoryStream.Create;
+  end;
 
   if not(silent) then
     DisplayPercent(0);
@@ -61,6 +71,8 @@ begin
     src.Seek(soff,soBeginning);
     numbuf := ssize div bufsize;
     restbuf := ssize mod bufsize;
+    wordsbuf := bufsize div 4;
+    bytesbuf := bufsize mod 4;
 
     oldper := 0;
 
@@ -68,7 +80,30 @@ begin
 
     for i := 1 to numbuf do
     begin
-      dst.CopyFrom(src, bufsize);
+      if (xored <> 0) then
+      begin
+        memstm.Seek(0,0);
+        memstm.CopyFrom(src,bufsize);
+        memstm.Seek(0,0);
+        for j := 1 to wordsbuf do
+        begin
+          memstm.Read(toxor,4);
+          memstm.Seek((j-1)*4,0);
+          toxor := toxor xor xored4;
+          memstm.Write(toxor, 4);
+        end;
+        for j := 1 to bytesbuf do
+        begin
+          memstm.Read(toxorbyte,1);
+          memstm.Seek((wordsbuf*4)+j-1,0);
+          toxorbyte := toxorbyte xor xored;
+          memstm.Write(toxorbyte, 1);
+        end;
+        memstm.Seek(0,0);
+        dst.CopyFrom(memstm,bufsize);
+      end
+      else
+        dst.CopyFrom(src, bufsize);
       if not(silent) then
       begin
         real1 := i;
@@ -83,8 +118,38 @@ begin
       end;
     end;
 
-    dst.CopyFrom(src,restbuf);
+    if (xored <> 0) then
+    begin
+      memstm.Seek(0,0);
+      memstm.CopyFrom(src,restbuf);
+      memstm.Seek(0,0);
+      wordsbuf := restbuf div 4;
+      bytesbuf := restbuf mod 4;
+      for j := 1 to wordsbuf do
+      begin
+        memstm.Read(toxor,4);
+        memstm.Seek((j-1)*4,0);
+        toxor := toxor xor xored4;
+        memstm.Write(toxor, 4);
+      end;
+      for j := 1 to bytesbuf do
+      begin
+        memstm.Read(toxorbyte,1);
+        memstm.Seek((wordsbuf*4)+j-1,0);
+        toxorbyte := toxorbyte xor xored;
+        memstm.Write(toxorbyte, 1);
+      end;
+      memstm.Seek(0,0);
+      dst.CopyFrom(memstm,restbuf);
+    end
+    else
+      dst.CopyFrom(src,restbuf);
 
+  end;
+
+  if xored <> 0 then
+  begin
+    FreeAndNil(memstm);
   end;
 
   if not(silent) then
@@ -92,27 +157,27 @@ begin
 
 end;
 
-procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback); overload;
+procedure BinCopyToStream(src : integer; dst: TStream; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback; xored: byte = 0); overload;
 var srcStm: THandleStream;
 begin
 
   srcStm := THandleStream.Create(src);
   try
-    BinCopyToStream(srcStm,dst,soff,ssize,doff,bufsize,silent,DisplayPercent);
+    BinCopyToStream(srcStm,dst,soff,ssize,doff,bufsize,silent,DisplayPercent,xored);
   finally
     FreeAndNil(srcStm);
   end;
 
 end;
 
-procedure BinCopy(src,dst : integer; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback);
+procedure BinCopy(src,dst : integer; soff : Int64; ssize : Int64; doff : Int64; bufsize : Integer; silent: boolean; DisplayPercent: TPercentCallback; xored: byte = 0);
 var srcStm, dstStm: THandleStream;
 begin
 
   srcStm := THandleStream.Create(src);
   dstStm := THandleStream.Create(dst);
   try
-    BinCopyToStream(srcStm,dstStm,soff,ssize,doff,bufsize,silent,DisplayPercent);
+    BinCopyToStream(srcStm,dstStm,soff,ssize,doff,bufsize,silent,DisplayPercent,xored);
   finally
     FreeAndNil(srcStm);
     FreeAndNil(dstStm);

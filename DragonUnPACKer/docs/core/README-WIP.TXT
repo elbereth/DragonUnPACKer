@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.1 Beta                                 MPL 2.0 open source
-by Alexande "Elbereth" Devilliers                                    21/08/2016
+by Alexande "Elbereth" Devilliers                                    01/09/2016
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,7 +10,7 @@ by Alexande "Elbereth" Devilliers                                    21/08/2016
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.7.1.286
+Version 5.7.1.287
 Git master [Unreleased]
 
  ! Fixed title of application when extracting for example.
@@ -22,19 +22,23 @@ Git master [Unreleased]
  ! Fixed splash screen for new nightly builds with git.
  ! Fixed resource leak on Exception popup.
  + Added splash to preview pane when unused.
+ ! Fixed extraction of sub-directories.
+ ! Fixed unhandled error when selecting entries without extension.
  * HyperRipper v5.7:
    + Added search support for AAC in pure ADTS (Audio Data Transport Stream)
    + Added search support for MPEG-4 Audio files (MPEG TS)
    + Added search support for MPEG-4 Video files (MPEG TS)
    i For both MPEG-4 TS files, the moov atom is expected at the end.
    ! Fixed possible problems with MOV support (added sanity checks)
- * Elbereth's Main Driver plug-in v3.0.1 Beta 6:
+ * Elbereth's Main Driver plug-in v3.0.1 Beta 7:
    + Added support for Astebreed, Ether Vapor Remaster and Fairy Bloom Fresia
      .TGP file format.
      Actually support for both v1 and v2 TGP files.
 	 Uncompressed, compressed and crypted are all supported.
    + Added support for Artifex Mundi .CUB file format
      Tested with all 3 Nightmare from the Deep games
+   + Added support for Geometry Wars 3: Dimension Evolved .WAD file format.
+     No filenames (not stored in file). Some deducted from files themselves.
  + External Tools Conversion plug-in v0.2.2 Beta:
    i This plug-in allows to use external command line tools to convert file
      formats (for example the excellent vgmstream tool for audio files).

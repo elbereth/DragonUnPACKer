@@ -21,6 +21,7 @@ uses
   SysUtils,
   ULZMADecoder,
   ULZMACommon,
+  AbArcTyp,
   AbGZTyp,
   U_IntList in '..\..\..\common\U_IntList.pas',
   spec_DDS in '..\..\..\common\spec_DDS.pas',
@@ -58,6 +59,18 @@ type FSE = ^element;
         Value : Integer;
         suiv : TInts;
      end;
+
+type
+  TAbProgress = Class
+    private
+      _SetPercent: TPercentCallback;
+      _LastProgress: byte;
+    published
+      constructor Create(SetPercent: TPercentCallback);
+      procedure SetArchiveProgress(Sender : TObject; Progress : Byte; var Abort : Boolean);
+      procedure SetProgress(Progress : Byte; var Abort : Boolean);
+      procedure SetItemProgress(Sender : TObject; Item : TAbArchiveItem; Progress : Byte; var Abort : Boolean);
+  end;
 
 { ////////////////////////////////////////////////////////////////////////////
   Driver History:
@@ -204,6 +217,7 @@ type FSE = ^element;
     30115        Removed SVN keywords
                  Added Astebreed, Ether Vapor Remaster and Fairy Bloom Fresia .TGP support
     30116        Added Artifex Mundi .CUB support
+    30117        Added Geometry Wars 3 Dimension Evolved .PAK support (no filenames)
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -225,7 +239,7 @@ type FSE = ^element;
 const
   DUDI_VERSION = 6;
   DUDI_VERSION_COMPATIBLE = 6;
-  DRIVER_VERSION = 30116;
+  DRIVER_VERSION = 30117;
   DUP_VERSION = 57110;
   BUFFER_SIZE = 8192;
 
@@ -384,7 +398,7 @@ begin
   addFormat(result,'*.VFS','UFO: Aftermath (*.VFS)|UFO: Aftershock (*.VFS)|UFO: Afterlight (*.VFS)');
   addFormat(result,'*.VOL','Earth Siege 2 (*.VOL)|Starsiege: Tribes (*.VOL)');
   addFormat(result,'*.VP','Conflict: Freespace (*.VP)|Freespace (*.VP)|Freespace 2 (*.VP)');
-  addFormat(result,'*.WAD','Gunman Chronicle (*.WAD)');
+  addFormat(result,'*.WAD','Gunman Chronicle (*.WAD)|Geometry Wars 3: Dimension Evolved (*.PAK)');
   addFormat(result,'*.WAD;*.SDT;*.DWFB','Dungeon Keeper 2 (*.WAD;*.SDT;*.DWFB)|Theme Park World (*.WAD;*.SDT)');
   addFormat(result,'*.X13','Hooligans (*.X13)');
   addFormat(result,'*.XCR','Warlords Battlecry (*.XCR)|Warlords Battlecry 2 (*.XCR)');
@@ -6539,6 +6553,184 @@ begin
 
   finally
     FreeMem(Buffer);
+  end;
+
+end;
+
+// -------------------------------------------------------------------------- //
+// Geometry Wars 3: Dimensions Evolved .WAD support ========================= //
+// -------------------------------------------------------------------------- //
+
+type GW3DAWLHeader = packed record
+    ID: array[0..3] of char;          // DAWL
+    MajorVersion: longword;           // Always 1?
+    MinorVersion: longword;           // Always 1?
+  end;
+  // To Offset 2048
+  //   NumIndex as longword
+  //   NumIndex times GW3DAWLIndex
+type GW3DAWLIndex = packed record
+    Unknown1: longword;
+    Unknown2: longword;
+  end;
+  //   NumEntries as longword
+  //   NumEntries times GW3DAWLEntry
+type GW3DAWLEntry = packed record
+    Unknown1: longword;
+    Unknown2: longword;
+    EntryType: longword;              // $2F = PNG
+    Unknown3: longword;
+    Offset: Int64;
+    Size: Int64;
+    Size2: Int64;
+    Empty: int64;
+  end;
+  // Data
+
+function ReadGeometryWars3DAWL(): Integer;
+var HDR: GW3DAWLHeader;
+    ENT: GW3DAWLEntry;
+    disp: string;
+    NumE, NumI, x, oldper: integer;
+    TotFSize: int64;
+    memstm, memstm2: TMemoryStream;
+    srcstm: THandleStream;
+    test32: longword;
+begin
+
+  TotFSize := FileSeek(Fhandle, 0, 2);
+
+  FileSeek(Fhandle, 0, 0);
+  FileRead(Fhandle, HDR, SizeOf(GW3DAWLHeader));
+
+  if (HDR.ID <> 'DAWL') and (HDR.MajorVersion <> 1) and (HDR.MinorVersion <> 1) and (TotFSize < 2048) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;                    // @..\..\Image\DontShip\Common\Scripts\
+    ReadGeometryWars3DAWL := -3;
+    ErrInfo.Format := 'DAWL';
+    ErrInfo.Games := 'Geometry Wars 3 Dimension Evolved';
+  end
+  else
+  begin
+
+    FileSeek(Fhandle, 2048, 0);
+    FileRead(Fhandle, NumI,4);
+
+    if (NumI*8+4+2048) > TotFSize then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      ReadGeometryWars3DAWL := -3;
+      ErrInfo.Format := 'DAWL';
+      ErrInfo.Games := 'Geometry Wars 3 Dimension Evolved';
+    end
+    else
+    begin
+
+      FileSeek(Fhandle, 2048+4+NumI*8, 0);
+      FileRead(Fhandle, NumE,4);
+
+      memstm := TMemoryStream.Create;
+      srcstm := THandleStream.Create(Fhandle);
+      memstm.CopyFrom(srcstm,NumE*SizeOf(GW3DAWLEntry));
+      memstm.Seek(0,0);
+
+      OldPer := 0;
+      for x:= 1 to NumE do
+      begin
+
+        Per := ROund(((x / NumE)*100));
+        if (OldPer <> Per) then
+        begin
+          SetPercent(Per);
+          OldPer := Per;
+        end;
+        memstm.ReadBuffer(ENT, SizeOf(GW3DAWLEntry));
+
+        disp := inttostr(ENT.EntryType)+'-'+inttohex(ENT.Unknown1,8)+'-'+inttohex(ENT.Unknown2,8)+'-'+inttohex(ENT.Unknown3,8);
+
+        case ENT.EntryType of
+          2: disp := 'XML\SurfaceMesh\'+ disp + '.xml';
+          3: begin
+            srcstm.Seek(ENT.Offset,0);
+            srcstm.ReadBuffer(test32,4);
+            if (test32 = 4) then
+              disp := StringReplace(get32(srcstm),'/','\',[rfReplaceAll]) + '.model'
+            else
+              disp := 'Entities\'+ disp + '.tga';
+          end;
+          4: disp := 'Textures\'+ inttostr(ENT.EntryType)+'\' + disp + '.tga';
+//          5: disp := 'Scripts\' + disp + '.luac';
+          5..15: begin
+            srcstm.Seek(ENT.Offset,0);
+            srcstm.ReadBuffer(test32,4);
+            if (test32 = $61754C1B) then
+            begin
+              srcstm.Seek(8,1);
+              disp := strip0(get32(srcstm));
+              if (Length(disp)>37) and (LeftStr(disp,29) = '@..\..\Image\DontShip\Common\') then
+                disp := RightStr(disp,length(disp)-29);
+              disp := StringReplace(disp,'\\','\',[rfReplaceAll]) + 'c';
+            end
+            else
+              disp := 'Entities\'+ disp + '.' + inttostr(ENT.EntryType);
+          end;
+{           disp := 'Scripts\Entities\' + disp + '.luac';
+          7: disp := 'Scripts\GameModes\' + disp + '.luac';
+          8: disp := 'Scripts\Levels\' + disp + '.luac';
+          9: disp := 'Scripts\LevelsDLC1\' + disp + '.luac';
+          10: disp := 'Scripts\LevelsHC\' + disp + '.luac';
+          11: disp := 'Scripts\LevelsMobile\' + disp + '.luac';
+          12: disp := 'Scripts\LevelsMobile\Boss\' + disp + '.luac';
+          13: disp := 'Scripts\LevelsMobile\Classic\' + disp + '.luac';
+          14: disp := 'Scripts\LevelsMobile\HardCore\' + disp + '.luac';
+          15: disp := 'Scripts\LevelsMobile\Ultimate\' + disp + '.luac';}
+          16: disp := 'XML\LineMesh\'+ disp + '.xml';
+          17..19, 21..29, 34..41, 46..48: disp := 'Textures\'+ inttostr(ENT.EntryType)+'\' + disp + '.png';
+          20: begin
+            srcstm.Seek(ENT.Offset,0);
+            srcstm.ReadBuffer(test32,4);
+            disp := 'Textures\Fonts\'+ disp;
+            if (test32 = $474E5089) then
+              disp := disp + '.png'
+            else if (test32 = $6F666E69) then
+              disp := disp + '.txt'
+            else
+              disp := disp + '.20';
+          end;
+          30: disp := 'XML\'+ disp + '.xml';
+          31, 42, 50: disp := disp + '.csv';
+          43..44: disp := disp + '.kslf';
+          49: begin
+            srcstm.Seek(ENT.Offset,0);
+            srcstm.ReadBuffer(test32,4);
+            disp := 'Sounds\'+ disp;
+            if (test32 = $46464952) then
+              disp := disp + '.fev'
+            else if (test32 = $35425346) then
+              disp := disp + '.fsb'
+            else
+              disp := disp + '.49';
+          end;
+
+        else
+          disp := disp + '.'+inttohex(ENT                                                                                                                                                                                                                .EntryType,3);
+        end;
+
+        FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
+
+      end;
+
+      ReadGeometryWars3DAWL := NumE;
+
+      DrvInfo.ID := 'DAWL';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
   end;
 
 end;
@@ -14681,6 +14873,8 @@ begin
     FileRead(FHandle,ID,4);
     if ID = 'DWFB' then
       res := ReadDungeonKeeper2DWFB
+    else if (ID = 'DAWL') then
+      res := ReadGeometryWars3DAWL
     else if (ID = 'WAD2') or (ID = 'WAD3') then
       res := ReadQuakeWAD2
     else
@@ -14692,7 +14886,7 @@ begin
       FHandle := 0;
       ReadHubWAD := -3;
       ErrInfo.Format := 'WAD';
-      ErrInfo.Games := 'Dungeon Keeper 2, Quake';
+      ErrInfo.Games := 'Dungeon Keeper 2, Geometry Wars 3, Quake';
     end
     else
       ReadHubWAD := res;
@@ -14849,6 +15043,9 @@ begin
         FileClose(FHandle);
         Result := ReadFearARCH00(fil);
       end
+      // Geometry Wars 3: Dimension Evolved .WAD file
+      else if (ID4 = 'DAWL') then
+        Result := ReadGeometryWars3DAWL
       // Dreamfall: The Longest Journey
       else if ID12 = 'tlj_pack0001' then
         Result := ReadDreamfallTLJPAK(fil)
@@ -15511,6 +15708,9 @@ begin
       Result := true
     // Giants: Citizen Kabuto
     else if (ID4[3] = #$66) and (ID4[2] = #$08) and (ID4[1] = #$F1) and (ID4[0] = #$01) then
+      Result := true
+    // Geometry Wars 3: Dimension Evolved .WAD file
+    else if (ID4 = 'DAWL') then
       Result := true
     else if (ID4[0] = #60) and (ID4[1] = #226) and (ID4[2] = #156) and (ID4[3] = #1) then
       Result := true
@@ -16407,6 +16607,47 @@ begin
 
 End;
 
+constructor TAbProgress.Create(SetPercent: TPercentCallback);
+begin
+
+  _LastProgress := 255;
+  _SetPercent := SetPercent;
+
+end;
+
+procedure TAbProgress.SetArchiveProgress(Sender : TObject; Progress : Byte; var Abort : Boolean);
+begin
+
+  if (_LastProgress <> Progress) then
+  begin
+    _LastProgress := Progress;
+    SetPercent(Progress);
+  end;
+
+end;
+
+procedure TAbProgress.SetItemProgress(Sender : TObject; Item : TAbArchiveItem; Progress : Byte; var Abort : Boolean);
+begin
+
+  if (_LastProgress <> Progress) then
+  begin
+    _LastProgress := Progress;
+    SetPercent(Progress);
+  end;
+
+end;
+
+procedure TAbProgress.SetProgress(Progress : Byte; var Abort : Boolean);
+begin
+
+  if (_LastProgress <> Progress) then
+  begin
+    _LastProgress := Progress;
+    SetPercent(Progress);
+  end;
+
+end;
+
 // Decompression of TGP0 (version 2)
 //   Data block is gzipped, so first time a file is asked for extraction
 //   We decompress the full data block to memory (BufferStream)
@@ -16421,6 +16662,7 @@ var
   HDR: TGP0Header;
   HDR2: TGP0HeaderVersion2;
   gz : TAbGZipArchive;
+  abprogress : TAbProgress;
   totsize: cardinal;
 begin
 
@@ -16441,13 +16683,16 @@ begin
         CStream.Write(Buf^,totsize-HDR2.NumberOfEntries*SizeOf(TGP0EntryVersion2)-SizeOf(TGP0Header)-SizeOf(TGP0HeaderVersion2));
         CStream.Seek(0, soBeginning);
         gz := TAbGZipArchive.CreateFromStream(CStream,'datablock.gzip');
+        abprogress := TAbProgress.Create(SetPercent);
         try
+          gz.OnArchiveItemProgress := abprogress.SetItemProgress;
           gz.Load;
           gz.Items[0].FileName;
           BufferStream := TMemoryStream.Create;
           gz.ExtractToStream('unknown',BufferStream);
         finally
           FreeAndNil(gz);
+          FreeAndNil(abprogress);
           FreeAndNil(CStream);
         end;
       finally
@@ -16759,7 +17004,7 @@ begin
       DecompressTGP0ToStream(outputstream, Offset, Size)
     // Encrypted (only in v1?) -- Only textures
     else if (DataX AND $1 = $1) then // and ((ext = 'BMP') or (ext = 'DDS') or (ext = 'JPEG') or (ext = 'JPG') or (ext = 'PNG') or (ext = 'TGA')) then
-      DecryptTGP0ToStream(outputstream, Offset, Size)
+      BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent,$46)
     // In all other cases, simple binary copy
     else
       BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);

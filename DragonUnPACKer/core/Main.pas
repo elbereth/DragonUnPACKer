@@ -960,7 +960,7 @@ begin
       outputdir := outputdir + '\';
 
     CreateDirs(lstIndex.FocusedNode,outputdir);
-    FSE.ExtractDir(GetNodePath(lstIndex.FocusedNode),outputdir)
+    FSE.ExtractDir(GetNodePath(lstIndex.FocusedNode,false),outputdir)
 
   end
 
@@ -2093,7 +2093,7 @@ begin
      Data := lstContent.GetNodeData(Node);
 
      mext := ExtractFileExt(FSE.Items[Data.entryIndex].FileName);
-     if mext[1] = '.' then
+     if (length(mext) > 0) and (mext[1] = '.') then
        mext := RightStr(mext,length(mext)-1);
      mext := UpperCase(mext);
 
@@ -2104,7 +2104,7 @@ begin
      begin
          Data := lstContent.GetNodeData(Node);
          ext := ExtractFileExt(FSE.Items[Data.entryIndex].FileName);
-         if ext[1] = '.' then
+         if (length(ext) > 0) and (ext[1] = '.') then
            ext := RightStr(ext,length(ext)-1);
          ext := UpperCase(ext);
          ConvertOK := (ext = mext);
@@ -3726,7 +3726,7 @@ begin
     CreateDir(outputdir);
 
     CreateDirs(lstIndex.FocusedNode,outputdir);
-    FSE.ExtractDir(GetNodePath(lstIndex.FocusedNode),outputdir)
+    FSE.ExtractDir(GetNodePath(lstIndex.FocusedNode,false),outputdir)
 
   end
 

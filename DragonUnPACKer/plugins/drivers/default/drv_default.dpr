@@ -218,6 +218,8 @@ type
                  Added Astebreed, Ether Vapor Remaster and Fairy Bloom Fresia .TGP support
     30116        Added Artifex Mundi .CUB support
     30117        Added Geometry Wars 3 Dimension Evolved .PAK support (no filenames)
+                 Added The Secret of Monkey Island: Special Edition .PAK support
+                 Added Monkey Island 2: Special Edition .PAK support
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -370,6 +372,7 @@ begin
   addFormat(result,'*.OPK','Sinking Island (*.OPK)|L''Ile Noyée (*.OPK)');
   // Avatar: The Game (*.PAK)
   addFormat(result,'*.PAK','Battleforge (*.PAK)|Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)|Ghostbusters: Sanctum of Slime (*.PAK)|Star Wars Starfighter (*.PAK)');
+  addFormat(result,'*.PAK','The Secret of Monkey Island Special Edition (*.PAK)|Monkey Island 2 Special Edition (*.PAK)');
   addFormat(result,'*.PAK;*.TLK','Hands of Fate (*.PAK;*.TLK)|Lands of Lore (*.PAK;*.TLK)');
   addFormat(result,'*.PAK;*.WAD','Quake (*.PAK;*.WAD)|Quake 2 (*.PAK;*.WAD)|Half-Life (*.PAK;*.WAD)|Heretic 2 (*.PAK;*.WAD)');
   addFormat(result,'*.PBO','Operation Flashpoint (*.PBO)');
@@ -1587,7 +1590,6 @@ var ID: array[0..7] of char;
     CompSize, DecompSize, checkVal: cardinal;
     decStm: TDecompressionStream;
     srcStm: THandleStream;
-    dstStm: TFileStream;
     FileTotSize: Int64;
 begin
 
@@ -1834,8 +1836,6 @@ const CUBEXORByte: byte = $96;
 
 function UnXORstr(src: array of char; xorbyte: byte): string;
 var x: integer;
-    ret: array of char;
-    reached0: boolean;
 begin
 
   result := '';
@@ -1849,7 +1849,8 @@ function ReadArtifexMundiCUB(src: string): Integer;
 var HDR: CUBEHeader;
     ENT: CUBEEntry;
     disp: string;
-    NumE, x, smallerOffset, res, lastOffset, TotFSize: integer;
+    x: integer;
+    TotFSize: cardinal;
     memstm: TMemoryStream;
 begin
 
@@ -2259,13 +2260,15 @@ var ENT1: TGP0EntryVersion1;
     ENT2: TGP0EntryVersion2;
     headerBuffer: TMemoryStream;
     handle_stm: THandleStream;
-    TotSize, x, Offset: integer;
+    x, Offset: integer;
+    TotSize: cardinal;
     HDR: TGP0Header;
     HDR1: TGP0HeaderVersion1;
     HDR2: TGP0HeaderVersion2;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
+  Result := -3;
 
   if FHandle > 0 then
   begin
@@ -3648,9 +3651,9 @@ type BIN_Entry = packed record
 function ReadCyberBykesBIN(src: string): Integer;
 var ENT: BIN_Entry;
     disp: string;
-    NumE, x, preval: integer;
+    x, preval: integer;
     curOffset: int64;
-    TotFSize: integer;
+    NumE, TotFSize: cardinal;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
@@ -3662,7 +3665,7 @@ begin
     FileSeek(FHandle,0,0);
     FileRead(FHandle,NumE,4);
 
-    if (((NumE*4)+4) > TotFSize) or (NumE < 0) then
+    if (((NumE*4)+4) > TotFSize) then
     begin
       FileClose(Fhandle);
       FHandle := 0;
@@ -4472,6 +4475,8 @@ var ENT: RFH_Entry;
 begin
 
   Hhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
+  Result := -4;
+  NumE := 0;
 
   if Hhandle >= 0 then
   begin
@@ -6593,7 +6598,7 @@ var HDR: GW3DAWLHeader;
     disp: string;
     NumE, NumI, x, oldper: integer;
     TotFSize: int64;
-    memstm, memstm2: TMemoryStream;
+    memstm: TMemoryStream;
     srcstm: THandleStream;
     test32: longword;
 begin
@@ -6606,7 +6611,7 @@ begin
   if (HDR.ID <> 'DAWL') and (HDR.MajorVersion <> 1) and (HDR.MinorVersion <> 1) and (TotFSize < 2048) then
   begin
     FileClose(Fhandle);
-    FHandle := 0;                    // @..\..\Image\DontShip\Common\Scripts\
+    FHandle := 0;
     ReadGeometryWars3DAWL := -3;
     ErrInfo.Format := 'DAWL';
     ErrInfo.Games := 'Geometry Wars 3 Dimension Evolved';
@@ -6633,6 +6638,9 @@ begin
 
       memstm := TMemoryStream.Create;
       srcstm := THandleStream.Create(Fhandle);
+
+      try
+
       memstm.CopyFrom(srcstm,NumE*SizeOf(GW3DAWLEntry));
       memstm.Seek(0,0);
 
@@ -6722,6 +6730,11 @@ begin
 
       end;
 
+      finally
+        FreeAndNil(srcstm);
+        FreeAndNil(memstm);
+      end;
+
       ReadGeometryWars3DAWL := NumE;
 
       DrvInfo.ID := 'DAWL';
@@ -6757,7 +6770,7 @@ var HDR: TongasPAKHeader;
     DirStream: TMemoryStream;
     InputStream: THandleStream;
     Name: string;
-    x, Per, PerOld, OSize: integer;
+    x, Per, PerOld: integer;
 begin
 
   // Instantiate the needed streams
@@ -9368,7 +9381,6 @@ begin
         ErrInfo.Format := 'DAT';
         ErrInfo.Games := 'Nascar Racing';
         FSE_Free();
-        NumE := 0;
         exit;
       end;
 
@@ -10078,9 +10090,9 @@ type RCFHeader = packed record
        OriginalSize: int64;
      end;
 
-procedure RCFFileBlockSort(var A: array of RCFFileBlock; iLo, iHi: Integer) ;
+procedure RCFFileBlockSort(var A: array of RCFFileBlock; iLo, iHi: cardinal) ;
 var
-  Lo, Hi, Pivot: Integer;
+  Lo, Hi, Pivot: cardinal;
   T: RCFFileBlock;
 begin
   Lo := iLo;
@@ -10804,7 +10816,7 @@ type PAKEntry = packed record
 function ReadStarCrusaderPAK(IsGL: Boolean): Integer;
 var disp: string;
     NumE: word;
-    x, Offset, OldOffset, TotSize: integer;
+    x, Offset, OldOffset, TotSize: cardinal;
     ENT: PAKEntry;
 begin
 
@@ -11018,8 +11030,7 @@ var HDR: EuropaPackfile_Header;
     // In order to work with the TMemoryStreams the source file is to be wrapped
     // into a THandleStream.
     FileSource: THandleStream;
-    MaxOffset, Offset, Size: Integer;
-    NumE,x: integer;
+    x: integer;
     disp: string;
 begin
 
@@ -11308,6 +11319,7 @@ begin
           ReadTerminalVelocityPOD := -3;
           ErrInfo.Format := 'POD';
           ErrInfo.Games := 'Terminal Velocity';
+          exit;
         end;
 
         disp := Strip0(ENT.FileName);
@@ -11341,13 +11353,10 @@ type GJD_Entry_7 = packed record       // 20 Bytes
   end;
 
 function Read7thGuestGJD(src, comprl: string): Integer;
-var NumE, infil: integer;
-    hLST: integer;
-    x, totsize, totent, curidx, spcpos: integer;
+var NumE: integer;
+    x, totent: integer;
     ENT: GJD_Entry_7;
-    filelist, entrylist: TStream;
-    fnlist: TStringList;
-    fnliststring, filename, fileindex, srcfilename: string;
+    entrylist: TStream;
 begin
 
   FHandle := FileOpen(src,fmOpenRead);
@@ -11422,7 +11431,6 @@ var HDR: D11D_Header;
     testcrc: longint;
     decompressorStm: TDecompressionStream;
     tmpStm: TMemoryStream;
-    afterHDR: integer;
 begin
 
   result := FileExists(CurPath+D11D_DATA_FILENAME);
@@ -11487,12 +11495,11 @@ end;
 
 function Read11thHourGJD(src: string): Integer;
 var NumE, infil: integer;
-    hLST: integer;
-    x, totsize, totent, curidx, spcpos: integer;
+    x, totent, curidx: integer;
     ENT: GJD_Entry;
     filelist, entrylist: TStream;
     fnlist: TStringList;
-    fnliststring, filename, fileindex, srcfilename: string;
+    fnliststring, filename, srcfilename: string;
 begin
 
   FHandle := FileOpen(src,fmOpenRead);
@@ -11581,23 +11588,23 @@ type TES4BSAHeader = packed record
      TES4BSAFolderRecord = packed record
         NameHash: int64;
         Count: cardinal;            // Amount of files in this folder
-        Offset: integer;            // Offset to Folder name + File Records
+        Offset: cardinal;           // Offset to Folder name + File Records
                                     // (To get actual offset from start of file: Offset - TES4BSAHeader.TotalFileNameLength)
      end;
      TES4BSAFileRecord = packed record
         NameHash: int64;
-        Size: integer;
-        Offset: integer;
+        Size: cardinal;
+        Offset: cardinal;
      end;
-const TES4BSA_FILECOMPRESSED: integer = $40000000;
-      TES4BSA_SIZEMASK: integer = $3FFFFFFF;
+const TES4BSA_FILECOMPRESSED: cardinal = $40000000;
+      TES4BSA_SIZEMASK: cardinal = $3FFFFFFF;
 
 function ReadTheElderScrolls4OblivionBSA(src: string): integer;
 var HDR: TES4BSAHeader;
     FolderENT: TES4BSAFolderRecord;
     FileENT: TES4BSAFileRecord;
     curDir: string;
-    NumE, x, y, OffsetToNames, originalsize, perc, oldperc: integer;
+    NumE, x, y, OffsetToNames, originalsize, perc, oldperc: cardinal;
     DefaultCompressed, FileCompressed: boolean;
     FileNames: TStringList;
     Buffer: TMemoryStream;
@@ -11782,8 +11789,8 @@ var HDR: RIFF_Header;
     FLstENT: MRC_FLstEntry;
     DLstENT: MRC_DLstEntry;
     DirList: array of MRC_DirList;
-    TotSize, ListFStoOffset, check, nextOffset, nextSubOffset, FStoOffset: Int64;
-    NumE, NumD, x, y, z: Integer;
+    TotSize, check, nextOffset, nextSubOffset, FStoOffset: Int64;
+    NumE, NumD, x, y: Integer;
     handle_stm: THandleStream;
     DLstBuffer, NLstBuffer, FLstBuffer: TMemoryStream;
     EName: String;
@@ -11880,7 +11887,7 @@ begin
               // Move to end of sub block
               check := handle_stm.Seek(nextSubOffset,soBeginning);
 
-            until (handle_stm.Position >= nextOffset);
+            until (check <> nextSubOffset) or (handle_stm.Position >= nextOffset);
 
           end
           // Content sub block
@@ -11903,7 +11910,7 @@ begin
         // Move to end of block
         check := handle_stm.Seek(nextOffset,soBeginning);
 
-      until (handle_stm.Position >= TotSize);
+      until (check <> nextOffset) or (handle_stm.Position >= TotSize);
 
       // If the content offset was found and all needed lists are buffered
       if (FStoOffset > 0) and (DLstBuffer.Size > 0) and (FLstBuffer.Size > 0) and (NLstBuffer.Size > 0) then
@@ -12170,6 +12177,265 @@ begin
 end;
 
 // -------------------------------------------------------------------------- //
+// The Secret of Monkey Island: Special Edition .PAK support ================ //
+// -------------------------------------------------------------------------- //
+
+type SMISEKAPLHeader = packed record
+    ID: array[0..3] of char;          // KAPL
+    Unknown1: longword;
+    UnknownBlockOffset: longword;
+    IndexBlockOffset: longword;
+    NamesBlockOffset: longword;
+    DataBlockOffset: longword;
+    UnknownBlockSize: longword;
+    IndexBlockSize: longword;
+    NamesBlockSize: longword;
+    DataBlockSize: longword;
+  end;
+type SMISEKAPLIndex = packed record
+    DataOffset: longword;
+    NameOffset: longword;
+    Size: longword;
+    Size2: longword;
+    Unknown: longword;
+  end;
+  // NameBlock is get0 from NameOffset
+
+type SMISEKAPLDXTHeader = packed record
+    FourCC: array[0..3] of char;
+    Width: longword;
+    Height: longword;
+  end;
+
+function ReadTheSecretOfMonkeyIslandSEKAPL(): Integer;
+var HDR: SMISEKAPLHeader;
+    ENT: SMISEKAPLIndex;
+    disp: string;
+    NumE, x, oldper: integer;
+    TotFSize: int64;
+    namestm, indexstm: TMemoryStream;
+    srcstm: THandleStream;
+    curoffset: longword;
+begin
+
+  TotFSize := FileSeek(Fhandle, 0, 2);
+
+  FileSeek(Fhandle, 0, 0);
+  FileRead(Fhandle, HDR, SizeOf(SMISEKAPLHeader));
+
+  if (HDR.ID <> 'KAPL') and ((HDR.UnknownBlockOffset+HDR.UnknownBlockSize) <= TotFSize) and ((HDR.IndexBlockOffset+HDR.IndexBlockSize) <= TotFSize)
+                        and ((HDR.NamesBlockOffset+HDR.NamesBlockSize) <= TotFSize) and ((HDR.DataBlockOffset+HDR.DataBlockSize) <= TotFSize) then
+  begin
+    FileClose(Fhandle);
+    FHandle := 0;
+    ReadTheSecretOfMonkeyIslandSEKAPL := -3;
+    ErrInfo.Format := 'KAPL';
+    ErrInfo.Games := 'The Secret of Monkey Island Special Edition';
+  end
+  else
+  begin
+
+    // Create TStream objects
+    srcstm := THandleStream.Create(Fhandle);
+    indexstm := TMemoryStream.Create;
+    namestm := TMemoryStream.Create;
+
+    try
+
+      // Retrieve index block
+      srcstm.Seek(HDR.IndexBlockOffset,0);
+      indexstm.CopyFrom(srcstm,HDR.IndexBlockSize);
+      indexstm.Seek(0,0);
+
+      // Retrieve filenames block
+      srcstm.Seek(HDR.NamesBlockOffset,0);
+      namestm.CopyFrom(srcstm,HDR.NamesBlockSize);
+      namestm.Seek(0,0);
+
+      // Force the first display of progress
+      OldPer := 255;
+
+      // Compute how many entries we expect
+      NumE := HDR.IndexBlockSize div SizeOf(SMISEKAPLIndex);
+
+      curoffset := 0;
+
+      // For each entry
+      for x:= 1 to NumE do
+      begin
+
+        // Increase progress when needed
+        Per := ROund(((x / NumE)*100));
+        if (OldPer <> Per) then
+        begin
+          SetPercent(Per);
+          OldPer := Per;
+        end;
+
+        // Get the entry structure filled
+        indexstm.ReadBuffer(ENT, SizeOf(SMISEKAPLIndex));
+
+        // Retrieve the filename from name block
+//        namestm.Seek(ENT.NameOffset,0);
+        namestm.Seek(curoffset,0);
+        disp := strip0(get0(namestm));
+        inc(curoffset,length(disp)+1);
+        if (ExtractFileExt(disp) = '.dxt') then
+          disp := disp + '.dds';
+
+        // Add entry to FSE
+        FSE_Add(disp,HDR.DataBlockOffset+ENT.DataOffset,ENT.Size,ENT.Size2,ENT.Unknown);
+
+      end;
+
+    finally
+      // Free all TStream objects
+      FreeAndNil(srcstm);
+      FreeAndNil(indexstm);
+      FreeAndNil(namestm);
+    end;
+
+    // Return the number of entries
+    ReadTheSecretOfMonkeyIslandSEKAPL := NumE;
+
+    // Driver info, directories with '/', no need for internal extraction
+    DrvInfo.ID := 'KAPL';
+    DrvInfo.Sch := '/';
+    DrvInfo.FileHandle := FHandle;
+    DrvInfo.ExtractInternal := true;
+
+  end;
+
+end;
+
+// Function to extract textures from KAPL to DDS
+// Only supports DXT textures
+// If something weird is found, just do a BinCopy extraction
+function ExtractKAPLDXTToDDS(outputstream: TStream; Offset, Size: int64; BufferSize: integer; silent: boolean): boolean;
+var DDS: DDSHeader;
+    DXTHDR: SMISEKAPLDXTHeader;
+    inFile: THandleStream;
+    CStream, DStream: TMemoryStream;
+    gz: TAbGZipArchive;
+    abprogress: TAbProgress;
+    csize: integer;
+    GZIPTEST: word;
+begin
+
+  inFile := THandleStream.Create(FHandle);
+  inFile.Seek(Offset,0);
+
+  FillChar(DXTHDR,SizeOf(SMISEKAPLDXTHeader),0);
+  if (Size > 12) then
+    inFile.ReadBuffer(DXTHDR,SizeOf(SMISEKAPLDXTHeader));
+
+  // Sanity checks, if they fail, we just extract a BinCopy
+  if (DXTHDR.FourCC = 'DXT5') or (DXTHDR.FourCC = 'DXT1') then
+  begin
+
+    // Compute size from expected compressed texture type
+    //  DXT5 is 8 bits per pixel
+    if DXTHDR.FourCC[3] = #5 then
+      csize := DXTHDR.Width*DXTHDR.Height
+    //  DXT1 is 4 bits per pixel
+    else
+      csize := (DXTHDR.Width*DXTHDR.Height) div 2;
+
+    // Fill the header of the texture
+    FillChar(DDS,SizeOf(DDSHeader),0);
+    DDS.ID[0] := 'D';
+    DDS.ID[1] := 'D';
+    DDS.ID[2] := 'S';
+    DDS.ID[3] := ' ';
+    DDS.SurfaceDesc.dwSize := 124;
+    DDS.SurfaceDesc.dwFlags := DDSD_CAPS or DDSD_HEIGHT or DDSD_WIDTH or DDSD_PIXELFORMAT or DDSD_LINEARSIZE;
+    DDS.SurfaceDesc.dwHeight := DXTHDR.Height;
+    DDS.SurfaceDesc.dwWidth := DXTHDR.Width;
+    DDS.SurfaceDesc.dwPitchOrLinearSize := csize;
+    DDS.SurfaceDesc.dwMipMapCount := 0;
+    DDS.SurfaceDesc.ddpfPixelFormat.dwSize := 32;
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_FOURCC;
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'D';
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[1] := 'X';
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[2] := 'T';
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := DXTHDR.FourCC[3];
+    DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDSCAPS_TEXTURE;
+
+    // Read 2 bytes for gzip magic id
+    inFile.ReadBuffer(gziptest,2);
+
+    // Go back to start of data
+    inFile.Seek(Offset+12,0);
+
+    // If the marker for gzip is found, we gunzip (MI2)
+    if (gziptest = $8B1F) then
+    begin
+
+      // Extract gzipped data
+      CStream := TMemoryStream.Create;
+      try
+        CStream.CopyFrom(inFile,Size-12);
+        CStream.Seek(0, soBeginning);
+        gz := TAbGZipArchive.CreateFromStream(CStream,'datablock.gzip');
+        abprogress := TAbProgress.Create(SetPercent);
+        DStream := TMemoryStream.Create;
+        try
+          gz.OnArchiveItemProgress := abprogress.SetItemProgress;
+          gz.Load;
+          gz.ExtractToStream('unknown',DStream);
+          DStream.Seek(0,0);
+          // Write DDS header
+          outputstream.Write(DDS,SizeOf(DDSHeader));
+          // Write decompressed data
+          outputstream.CopyFrom(DStream,DStream.Size);
+        finally
+          FreeAndNil(gz);
+          FreeAndNil(abprogress);
+          FreeAndNil(CStream);
+          FreeAndNil(DStream);
+        end;
+      finally
+        FreeAndNil(CStream);
+        FreeAndNil(inFile);
+      end
+
+    end
+    // Else the exact data size is found (MI1)
+    else if (csize+SizeOf(SMISEKAPLDXTHeader)) = Size then
+    begin
+
+      // Write the DDS header
+      outputstream.Write(DDS,SizeOf(DDSHeader));
+      // Write the data directly
+      outputstream.CopyFrom(inFile,Size-12);
+      FreeAndNil(inFile);
+
+    end
+    // Unknown case, we bincopy the data
+    else
+    begin
+
+      FreeAndNil(inFile);
+      BinCopyToStream(Fhandle,outputstream,Offset,Size,0,BufferSize,silent,SetPercent);
+
+    end;
+
+  end
+  // Unknown case, we bincopy the data
+  else
+  begin
+
+    FreeAndNil(inFile);
+    BinCopyToStream(Fhandle,outputstream,Offset,Size,0,BufferSize,silent,SetPercent);
+
+  end;
+
+
+  result := true;
+
+end;
+
+// -------------------------------------------------------------------------- //
 // The Sims .FAR support ==================================================== //
 // -------------------------------------------------------------------------- //
 
@@ -12265,7 +12531,7 @@ type DZIP_Header = packed record
 function ReadTheWitcher2DZIP(src: string): Integer;
 var HDR: DZIP_Header;
     ENT: DZIP_Entry;
-    NumE,NumErrors,x,cdir : integer;
+    NumE,NumErrors,x : integer;
     stmInput: THandleStream;
     strName: String;
 begin
@@ -13283,7 +13549,6 @@ procedure DecompressCBFToStream(src : integer; dst : TStream; soff : Int64; ssiz
 var InFile: THandleStream;
     Chunk, OutChunk: TMemoryStream;
     CSize,OSize,OSizeCheck, CopySizeCheck: integer;
-    per, oldper: byte;
     Magic: array[0..3] of char;
     outsize: int64;
 begin
@@ -13525,13 +13790,10 @@ var MIXNames: WestwoodMIX_IDNames;
     MIXNamesLoaded: boolean = false;
 
 function getRedAlertAndTiberianSunID(name: string): cardinal;
-var i, j, l, id: cardinal;
+var i, l: cardinal;
     a: integer;
-    newname: string;
 begin
 
-  i := 1;
-  id := 0;
   l := length(name);
   name := uppercase(name);
 
@@ -13623,7 +13885,6 @@ function createWestWoodMIXDatabase: boolean;
 var LstFile: TextFile;
     Line: String;
     DBNameNum, x: Cardinal;
-    DBNameString: array of String;
     Buffer: TMemoryStream;
     HDR: WestwoodMIX_DBHeader;
     Per, Empty: byte;
@@ -13712,10 +13973,10 @@ end;
 procedure dumpWestWoodMIX_XCCDatabase;
 var XCCDATFile: TFileStream;
     Buffer: TMemoryStream;
-    NumE, DBSize: integer;
+    NumE: integer;
     DBNameNum, x: cardinal;
     DBNameString: array of string;
-    Per, OldPer, Empty: byte;
+    Per, OldPer: byte;
     CrLf: array[0..1] of char;
 begin
 
@@ -13728,7 +13989,6 @@ begin
       Buffer := TMemoryStream.Create;
 
       Buffer.CopyFrom(XCCDATFile,XCCDATFile.Size);
-      DBSize := Buffer.Size;
       Buffer.Seek(0,0);
 
       DBNameNum := 0;
@@ -13783,7 +14043,7 @@ end;
 function loadWestWoodMIXDatabase: boolean;
 var DATFile: TFileStream;
     Buffer: TMemoryStream;
-    x, TestValue: cardinal;
+    x: cardinal;
     CreateHashDB,SkipLoadStringDB: boolean;
     DBSHDR, DB1HDR, DB2HDR: WestwoodMIX_DBHeader;
     Per: Byte;
@@ -14574,10 +14834,11 @@ begin
   else
     res := Read11thHourGJD(src);
 
+  Result := res;
+  
   if res = -3 then
   begin
     FHandle := 0;
-    Result := -3;
     ErrInfo.Format := 'GJD';
     ErrInfo.Games := 'The 7th Guest & The 11th Hour';
   end;
@@ -14698,6 +14959,8 @@ begin
       res := ReadQuakePAK
     else if ID = 'PAK'+#1 then
       res := ReadBattleforgePAK
+    else if ID = 'KAPL' then
+      res := ReadTheSecretOfMonkeyIslandSEKAPL
 //    else if ID = 'PAK!' then
 //      res := ReadAvatarPAK
     else if ID12 = 'tlj_pack0001' then
@@ -14712,7 +14975,7 @@ begin
          or ((mixtest1 > 0) and ((mixtest2 + mixtest1*12 + 6) = FSize)) then
     begin
       FileClose(FHandle);
-      Result := ReadWestwoodMIX(src);
+      res := ReadWestwoodMIX(src);
     end
     else if (ID[0] = #5) and (ID[1] = #0) and (ID[2] = #0) and (ID[3] = #0) then
       res := ReadTheMoviesPAK
@@ -14739,7 +15002,7 @@ begin
       FHandle := 0;
       ReadHubPAK := -3;
       ErrInfo.Format := 'PAK';
-      ErrInfo.Games := 'Dune 2, Half-Life, Hooligans, Quake, Quake 2, Star Crusader, Trickstyle, Zanzarah, ..';
+      ErrInfo.Games := 'Dune 2, Half-Life, Hooligans, Quake, Quake 2, Star Crusader, The Secret of Monkey Island SE, Trickstyle, Zanzarah, ..';
     end
     else
       ReadHubPAK := res;
@@ -14910,7 +15173,7 @@ var ext: string;
     ID28: array[0..27] of char;
     ID36: array[0..35] of char;
     ID127: array[0..126] of char;
-    x, fsize: integer;
+    fsize: integer;
     mixtest1: word;
     mixtest2,mixtest3: cardinal;
 begin
@@ -15046,6 +15309,9 @@ begin
       // Geometry Wars 3: Dimension Evolved .WAD file
       else if (ID4 = 'DAWL') then
         Result := ReadGeometryWars3DAWL
+      // The Secret of Monkey Island: Special Edition .PAK file
+      else if (ID4 = 'KAPL') then
+        Result := ReadTheSecretOfMonkeyIslandSEKAPL
       // Dreamfall: The Longest Journey
       else if ID12 = 'tlj_pack0001' then
         Result := ReadDreamfallTLJPAK(fil)
@@ -15310,7 +15576,7 @@ begin
       else if (ID4[0] = 'B') and (ID4[1] = 'S') and (ID4[2] = 'A') and (ID4[3] = #0) then
       begin
         FileClose(FHandle);
-        ReadFormat := ReadTheElderScrolls4OblivionBSA(fil)
+        Result := ReadTheElderScrolls4OblivionBSA(fil)
       end
       else if (ID4 = ('RIFF')) and (ID12[8] = 'm') and (ID12[9] = 'm') and (ID12[10] = 'R') and (ID12[11] = 'C') then
         Result := ReadTheFifthElementMRC
@@ -15599,7 +15865,7 @@ var ID4: array[0..3] of char;
     ID28: array[0..27] of char;
     ID36: array[0..35] of char;
     ID127: array[0..126] of char;
-    TestFile,x,fsize: integer;
+    TestFile,fsize: integer;
     mixtest1: word;
     mixtest2,mixtest3: cardinal;
     ext: string;
@@ -15711,6 +15977,9 @@ begin
       Result := true
     // Geometry Wars 3: Dimension Evolved .WAD file
     else if (ID4 = 'DAWL') then
+      Result := true
+    // The Secret of Monkey Island: Special Edition .PAK file
+    else if (ID4 = 'KAPL') then
       Result := true
     else if (ID4[0] = #60) and (ID4[1] = #226) and (ID4[2] = #156) and (ID4[3] = #1) then
       Result := true
@@ -16431,7 +16700,8 @@ var properties:array[0..4] of byte;
     inStream:TMemoryStream;
     decoder:TLZMADecoder;
     outSize:int64;
-    v,i:byte;
+    i:byte;
+    v:ShortInt;
 begin
 
   inStreamFull := THandleStream.Create(FHandle);
@@ -16449,7 +16719,7 @@ begin
     outSize := 0;
     for i := 0 to 7 do
     begin
-      v := {shortint}(ReadByte(inStream));
+      v := shortint(ReadByte(inStream));
       if v < 0 then
         raise EDecompLZMAError.Create('Can''t read stream size');
       outSize := outSize or v shl (8 * i);
@@ -16657,7 +16927,6 @@ function DecompressTGP0ToStream(OutputStream: TStream; Offset:  Int64; OSize: In
 var
   Buf: PChar;
   CStream: TMemoryStream;
-  HStream: THandleStream;
   FinalSize: integer;
   HDR: TGP0Header;
   HDR2: TGP0HeaderVersion2;
@@ -16706,7 +16975,7 @@ begin
   try
     BufferStream.Seek(Offset,soFromBeginning);
     FinalSize := OutputStream.CopyFrom(BufferStream,OSize);
-  finally
+  except
     FinalSize := 0;
   end;
 
@@ -16730,7 +16999,7 @@ begin
 
   try
     FinalSize := OutputStream.Write(Buf[0],OSize);
-  finally
+  except
     FinalSize := 0;
   end;
 
@@ -16746,12 +17015,11 @@ begin
   FileRead(FHandle,HDR,SizeOf(RCFFileHeader));
   if (strip0(HDR.ID) = 'RZ') and (HDR.ID[2] = #0) and (HDR.ID[3] = #0)
   and (HDR.ID[4] = #0) and (HDR.ID[5] = #0) and (HDR.ID[6] = #0) and (HDR.ID[7] = #0) then
-  begin
-    DecompressZlibToStream(outputstream,offset+16,HDR.OriginalSize);
-  end
+    result := DecompressZlibToStream(outputstream,offset+16,HDR.OriginalSize)
   else
   begin
     BinCopyToStream(FHandle,outputstream,offset,Size,0,BUFFER_SIZE,silent,SetPercent);
+    result := true;
   end;
 
 end;
@@ -16940,6 +17208,9 @@ begin
     else
       BinCopyToStream(FHandle,outputstream,offset,size,0,BUFFER_SIZE,silent,SetPercent);
   end
+
+  else if DrvInfo.ID = 'KAPL' then
+    ExtractKAPLDXTToDDS(outputstream,Offset,Size,BUFFER_SIZE,silent)
 
   // Darkstone .MTF
   else if DrvInfo.ID = 'MTF' then
@@ -17136,7 +17407,6 @@ begin
 end;
 
 procedure InitPlugin(per: TPercentCallback; lngid: TLanguageCallback; DUP5Path: ShortString; AppHandle: THandle; AppOwner: TComponent); stdcall;
-var test1, test2: tstream;
 begin
 
   SetPercent := per;

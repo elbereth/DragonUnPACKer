@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.1 Beta                                 MPL 2.0 open source
-by Alexande "Elbereth" Devilliers                                    01/09/2016
+by Alexande "Elbereth" Devilliers                                    02/09/2016
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -39,6 +39,11 @@ Git master [Unreleased]
      Tested with all 3 Nightmare from the Deep games
    + Added support for Geometry Wars 3: Dimension Evolved .WAD file format.
      No filenames (not stored in file). Some deducted from files themselves.
+   + Added support for The Secret of Monkey Island Special Edition .PAK file
+     format.
+	 .dxt files are converted to .DDS files on the fly.
+   + Added support for Monkey Island 2 Special Edition .PAK file format.
+	 .dxt files are decompressed and converted to .DDS files on the fly.
  + External Tools Conversion plug-in v0.2.2 Beta:
    i This plug-in allows to use external command line tools to convert file
      formats (for example the excellent vgmstream tool for audio files).

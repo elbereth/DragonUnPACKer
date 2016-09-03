@@ -12335,7 +12335,7 @@ begin
 
     // Compute size from expected compressed texture type
     //  DXT5 is 8 bits per pixel
-    if DXTHDR.FourCC[3] = #5 then
+    if DXTHDR.FourCC[3] = #53 then
       csize := DXTHDR.Width*DXTHDR.Height
     //  DXT1 is 4 bits per pixel
     else

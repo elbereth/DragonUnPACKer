@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.1 Beta                                 MPL 2.0 open source
-by Alexande "Elbereth" Devilliers                                    02/09/2016
+by Alexande "Elbereth" Devilliers                                    03/09/2016
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -41,10 +41,13 @@ Git master [Unreleased]
      No filenames (not stored in file). Some deducted from files themselves.
    + Added support for The Secret of Monkey Island Special Edition .PAK file
      format.
-	 .dxt files are converted to .DDS files on the fly.
    + Added support for Monkey Island 2 Special Edition .PAK file format.
-	 .dxt files are decompressed and converted to .DDS files on the fly.
    + Added support for South Park: The Stick of Truth .OAF file format.
+ + Default Conversion plug-in v2.2.2:
+   * Modified for git commit info instead of SVN
+   + Added The Secret of Monkey Island Special Edition .DXT to .DDS file
+     format.
+   + Added Monkey Island 2 Special Edition .DXT to .DDS file format.
  + External Tools Conversion plug-in v0.2.2 Beta:
    i This plug-in allows to use external command line tools to convert file
      formats (for example the excellent vgmstream tool for audio files).

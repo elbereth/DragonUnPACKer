@@ -12321,12 +12321,6 @@ type SMISEKAPLIndex = packed record
   end;
   // NameBlock is get0 from NameOffset
 
-type SMISEKAPLDXTHeader = packed record
-    FourCC: array[0..3] of char;
-    Width: longword;
-    Height: longword;
-  end;
-
 function ReadTheSecretOfMonkeyIslandSEKAPL(): Integer;
 var HDR: SMISEKAPLHeader;
     ENT: SMISEKAPLIndex;
@@ -12400,8 +12394,6 @@ begin
         namestm.Seek(curoffset,0);
         disp := strip0(get0(namestm));
         inc(curoffset,length(disp)+1);
-        if (ExtractFileExt(disp) = '.dxt') then
-          disp := disp + '.dds';
 
         // Add entry to FSE
         FSE_Add(disp,HDR.DataBlockOffset+ENT.DataOffset,ENT.Size,ENT.Size2,ENT.Unknown);
@@ -12422,136 +12414,9 @@ begin
     DrvInfo.ID := 'KAPL';
     DrvInfo.Sch := '/';
     DrvInfo.FileHandle := FHandle;
-    DrvInfo.ExtractInternal := true;
+    DrvInfo.ExtractInternal := false;
 
   end;
-
-end;
-
-// Function to extract textures from KAPL to DDS
-// Only supports DXT textures
-// If something weird is found, just do a BinCopy extraction
-function ExtractKAPLDXTToDDS(outputstream: TStream; Offset, Size: int64; BufferSize: integer; silent: boolean): boolean;
-var DDS: DDSHeader;
-    DXTHDR: SMISEKAPLDXTHeader;
-    inFile: THandleStream;
-    CStream, DStream: TMemoryStream;
-    gz: TAbGZipArchive;
-    abprogress: TAbProgress;
-    csize: integer;
-    GZIPTEST: word;
-begin
-
-  inFile := THandleStream.Create(FHandle);
-  inFile.Seek(Offset,0);
-
-  FillChar(DXTHDR,SizeOf(SMISEKAPLDXTHeader),0);
-  if (Size > 12) then
-    inFile.ReadBuffer(DXTHDR,SizeOf(SMISEKAPLDXTHeader));
-
-  // Sanity checks, if they fail, we just extract a BinCopy
-  if (DXTHDR.FourCC = 'DXT5') or (DXTHDR.FourCC = 'DXT1') then
-  begin
-
-    // Compute size from expected compressed texture type
-    //  DXT5 is 8 bits per pixel
-    if DXTHDR.FourCC[3] = #53 then
-      csize := DXTHDR.Width*DXTHDR.Height
-    //  DXT1 is 4 bits per pixel
-    else
-      csize := (DXTHDR.Width*DXTHDR.Height) div 2;
-
-    // Fill the header of the texture
-    FillChar(DDS,SizeOf(DDSHeader),0);
-    DDS.ID[0] := 'D';
-    DDS.ID[1] := 'D';
-    DDS.ID[2] := 'S';
-    DDS.ID[3] := ' ';
-    DDS.SurfaceDesc.dwSize := 124;
-    DDS.SurfaceDesc.dwFlags := DDSD_CAPS or DDSD_HEIGHT or DDSD_WIDTH or DDSD_PIXELFORMAT or DDSD_LINEARSIZE;
-    DDS.SurfaceDesc.dwHeight := DXTHDR.Height;
-    DDS.SurfaceDesc.dwWidth := DXTHDR.Width;
-    DDS.SurfaceDesc.dwPitchOrLinearSize := csize;
-    DDS.SurfaceDesc.dwMipMapCount := 0;
-    DDS.SurfaceDesc.ddpfPixelFormat.dwSize := 32;
-    DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_FOURCC;
-    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'D';
-    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[1] := 'X';
-    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[2] := 'T';
-    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := DXTHDR.FourCC[3];
-    DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDSCAPS_TEXTURE;
-
-    // Read 2 bytes for gzip magic id
-    inFile.ReadBuffer(gziptest,2);
-
-    // Go back to start of data
-    inFile.Seek(Offset+12,0);
-
-    // If the marker for gzip is found, we gunzip (MI2)
-    if (gziptest = $8B1F) then
-    begin
-
-      // Extract gzipped data
-      CStream := TMemoryStream.Create;
-      try
-        CStream.CopyFrom(inFile,Size-12);
-        CStream.Seek(0, soBeginning);
-        gz := TAbGZipArchive.CreateFromStream(CStream,'datablock.gzip');
-        abprogress := TAbProgress.Create(SetPercent);
-        DStream := TMemoryStream.Create;
-        try
-          gz.OnArchiveItemProgress := abprogress.SetItemProgress;
-          gz.Load;
-          gz.ExtractToStream('unknown',DStream);
-          DStream.Seek(0,0);
-          // Write DDS header
-          outputstream.Write(DDS,SizeOf(DDSHeader));
-          // Write decompressed data
-          outputstream.CopyFrom(DStream,DStream.Size);
-        finally
-          FreeAndNil(gz);
-          FreeAndNil(abprogress);
-          FreeAndNil(CStream);
-          FreeAndNil(DStream);
-        end;
-      finally
-        FreeAndNil(CStream);
-        FreeAndNil(inFile);
-      end
-
-    end
-    // Else the exact data size is found (MI1)
-    else if (csize+SizeOf(SMISEKAPLDXTHeader)) = Size then
-    begin
-
-      // Write the DDS header
-      outputstream.Write(DDS,SizeOf(DDSHeader));
-      // Write the data directly
-      outputstream.CopyFrom(inFile,Size-12);
-      FreeAndNil(inFile);
-
-    end
-    // Unknown case, we bincopy the data
-    else
-    begin
-
-      FreeAndNil(inFile);
-      BinCopyToStream(Fhandle,outputstream,Offset,Size,0,BufferSize,silent,SetPercent);
-
-    end;
-
-  end
-  // Unknown case, we bincopy the data
-  else
-  begin
-
-    FreeAndNil(inFile);
-    BinCopyToStream(Fhandle,outputstream,Offset,Size,0,BufferSize,silent,SetPercent);
-
-  end;
-
-
-  result := true;
 
 end;
 
@@ -17337,9 +17202,6 @@ begin
     else
       BinCopyToStream(FHandle,outputstream,offset,size,0,BUFFER_SIZE,silent,SetPercent);
   end
-
-  else if DrvInfo.ID = 'KAPL' then
-    ExtractKAPLDXTToDDS(outputstream,Offset,Size,BUFFER_SIZE,silent)
 
   // Darkstone .MTF
   else if DrvInfo.ID = 'MTF' then

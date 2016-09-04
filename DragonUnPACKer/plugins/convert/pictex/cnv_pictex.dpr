@@ -18,6 +18,8 @@ uses
   Classes,
   Registry,
   Controls,
+  AbArcTyp,
+  AbGZTyp,
   class_Images in 'class_Images.pas',
   Convert in 'Convert.pas' {frmConvert},
   lib_version in '..\..\..\common\lib_version.pas',
@@ -54,6 +56,12 @@ type ConvertListElem = record
      // Procedure to display a message box by using host application
      TMsgBoxCallback = procedure(const title, msg: AnsiString);
 
+type SMISEKAPLDXTHeader = packed record
+    FourCC: array[0..3] of char;
+    Width: longword;
+    Height: longword;
+  end;
+
 var Percent: TPercentCallback;
     DLNGStr: TLanguageCallback;
     CurPath: ShortString;
@@ -66,8 +74,8 @@ var Percent: TPercentCallback;
 const
   DUCI_VERSION = 4;
   DUCI_VERSION_COMPATIBLE = 3;
-  DRIVER_VERSION = 22141;
-  DUP_VERSION = 56040;
+  DRIVER_VERSION = 22240;
+  DUP_VERSION = 57110;
   CurSVNRevision: String = '$Rev$';
   CurSVNDate: String = '$Date$';
 
@@ -96,6 +104,7 @@ const
   * v2.2.0       (22040): Removed beta status for 5.6.0 release
   * v2.2.1       (22140): Added Ghostbusters .TEX support
   * v2.2.1a      (22141): Changed about info for git instead of SVN
+  * v2.2.2       (22240): Added Monkey Island Special Edition .DXT support
   * }
 
 // Identifies the DLL as a Convert plugin (minimum version to load plugin)
@@ -149,6 +158,8 @@ begin
     end;
   end
   else if ((fmt = 'POD3') or (fmt = 'POD5')) and (uppercase(extractfileext(nam)) = '.TEX') then
+    result := true
+  else if (fmt = 'KAPL') and (uppercase(extractfileext(nam)) = '.DXT') then
     result := true
   else if ((fmt = 'HMCTEX') or (fmt = 'GTEX')) and
           ((uppercase(extractfileext(nam)) = '.RGBA')
@@ -242,6 +253,13 @@ begin
     result.List[3].ID := 'TGA24';
   end
   else if (fmt = 'POD5') and (uppercase(extractfileext(nam)) = '.TEX') then
+  begin
+    result.NumFormats := 1;
+    result.List[1].Display := 'DDS - Microsoft DirectDraw Surface';
+    result.List[1].Ext := 'DDS';
+    result.List[1].ID := 'DDS';
+  end
+  else if (fmt = 'KAPL') and (uppercase(extractfileext(nam)) = '.DXT') then
   begin
     result.NumFormats := 1;
     result.List[1].Display := 'DDS - Microsoft DirectDraw Surface';
@@ -585,6 +603,104 @@ begin
       img.SaveToTGA24Stream(dst);
   finally
     FreeAndNil(img);
+  end;
+
+end;
+
+function ConvertKAPLDXTStream(src, dst: TStream; cnv: String): integer;
+var DDS: DDSHeader;
+    DXTHDR: SMISEKAPLDXTHeader;
+    CStream, DStream: TMemoryStream;
+    gz: TAbGZipArchive;
+    csize: integer;
+    GZIPTEST: word;
+begin
+
+  result := 0;
+
+  FillChar(DXTHDR,SizeOf(SMISEKAPLDXTHeader),0);
+  src.Seek(0, soFromBeginning);
+  if (src.Size > 12) then
+    src.ReadBuffer(DXTHDR,SizeOf(SMISEKAPLDXTHeader));
+
+  // Sanity checks, if they fail, we just extract a BinCopy
+  if (DXTHDR.FourCC = 'DXT5') or (DXTHDR.FourCC = 'DXT1') then
+  begin
+
+    // Compute size from expected compressed texture type
+    //  DXT5 is 8 bits per pixel
+    if DXTHDR.FourCC[3] = #53 then
+      csize := DXTHDR.Width*DXTHDR.Height
+    //  DXT1 is 4 bits per pixel
+    else
+      csize := (DXTHDR.Width*DXTHDR.Height) div 2;
+
+    // Fill the header of the texture
+    FillChar(DDS,SizeOf(DDSHeader),0);
+    DDS.ID[0] := 'D';
+    DDS.ID[1] := 'D';
+    DDS.ID[2] := 'S';
+    DDS.ID[3] := ' ';
+    DDS.SurfaceDesc.dwSize := 124;
+    DDS.SurfaceDesc.dwFlags := DDSD_CAPS or DDSD_HEIGHT or DDSD_WIDTH or DDSD_PIXELFORMAT or DDSD_LINEARSIZE;
+    DDS.SurfaceDesc.dwHeight := DXTHDR.Height;
+    DDS.SurfaceDesc.dwWidth := DXTHDR.Width;
+    DDS.SurfaceDesc.dwPitchOrLinearSize := csize;
+    DDS.SurfaceDesc.dwMipMapCount := 0;
+    DDS.SurfaceDesc.ddpfPixelFormat.dwSize := 32;
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFlags := DDPF_FOURCC;
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[0] := 'D';
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[1] := 'X';
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[2] := 'T';
+    DDS.SurfaceDesc.ddpfPixelFormat.dwFourCC[3] := DXTHDR.FourCC[3];
+    DDS.SurfaceDesc.ddsCaps.dwCaps1 := DDSCAPS_TEXTURE;
+
+    // Read 2 bytes for gzip magic id
+    src.ReadBuffer(gziptest,2);
+
+    // Go back to start of data
+    src.Seek(12,soFromBeginning);
+
+    // If the marker for gzip is found, we gunzip (MI2)
+    if (gziptest = $8B1F) then
+    begin
+
+      // Extract gzipped data
+      CStream := TMemoryStream.Create;
+      try
+        CStream.CopyFrom(src,src.Size-12);
+        CStream.Seek(0, soFromBeginning);
+        gz := TAbGZipArchive.CreateFromStream(CStream,'datablock.gzip');
+        DStream := TMemoryStream.Create;
+        try
+          gz.Load;
+          gz.ExtractToStream('unknown',DStream);
+          DStream.Seek(0,0);
+          // Write DDS header
+          dst.Write(DDS,SizeOf(DDSHeader));
+          // Write decompressed data
+          dst.CopyFrom(DStream,DStream.Size);
+        finally
+          FreeAndNil(gz);
+          FreeAndNil(CStream);
+          FreeAndNil(DStream);
+        end;
+      finally
+        FreeAndNil(CStream);
+      end
+
+    end
+    // Else the exact data size is found (MI1)
+    else if (csize+SizeOf(SMISEKAPLDXTHeader)) = src.Size then
+    begin
+
+      // Write the DDS header
+      dst.Write(DDS,SizeOf(DDSHeader));
+      // Write the data directly
+      dst.CopyFrom(src,src.Size-12);
+
+    end;
+
   end;
 
 end;
@@ -1046,6 +1162,10 @@ begin
   else if (fmt = 'POD5') and (uppercase(extractfileext(nam)) = '.TEX') then
   begin
     result := ConvertPOD5TEXStream(src,dst,cnv);
+  end
+  else if (fmt = 'KAPL') and (uppercase(extractfileext(nam)) = '.DXT') then
+  begin
+    result := ConvertKAPLDXTStream(src,dst,cnv);
   end
   else if ((fmt = 'GTEX') or (fmt = 'HMCTEX')) and (uppercase(extractfileext(nam)) = '.RGBA') then
   begin

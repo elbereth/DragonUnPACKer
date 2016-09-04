@@ -214,12 +214,13 @@ type
     30113        Merged The 11th Hour .GJD support (drv_11th is not needed anymore)
                  Added The 7th Guest .GJD support (drv_11th never worked)...
     30114        Added sanity checks to Terminal Velocity .POD support
-    30115        Removed SVN keywords
+    30115  57110 Removed SVN keywords
                  Added Astebreed, Ether Vapor Remaster and Fairy Bloom Fresia .TGP support
     30116        Added Artifex Mundi .CUB support
     30117        Added Geometry Wars 3 Dimension Evolved .PAK support (no filenames)
                  Added The Secret of Monkey Island: Special Edition .PAK support
                  Added Monkey Island 2: Special Edition .PAK support
+                 Added South Park: The Stick of Truth .OAF support
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -369,6 +370,7 @@ begin
   addFormat(result,'*.MIX;*.TLK','Blade Runner (*.MIX;*.TLK)');
   addFormat(result,'*.MRC','The Fifth Element (*.MRC)');
   addFormat(result,'*.MTF','Darkstone (*.MTF)');
+  addFormat(result,'*.OAF','South Park: The Stick of Truth (*.OAF)');
   addFormat(result,'*.OPK','Sinking Island (*.OPK)|L''Ile Noyée (*.OPK)');
   // Avatar: The Game (*.PAK)
   addFormat(result,'*.PAK','Battleforge (*.PAK)|Daikatana (*.PAK)|Dune 2 (*.PAK)|Star Crusader (*.PAK)|Trickstyle (*.PAK)|Zanzarah (*.PAK)|Painkiller (*.PAK)|Dreamfall: The Longest Journey (*.PAK)|Florencia (*.PAK)|Ghostbusters: Sanctum of Slime (*.PAK)|Star Wars Starfighter (*.PAK)');
@@ -11002,6 +11004,124 @@ begin
 end;
 
 // -------------------------------------------------------------------------- //
+// South Park: The Stick of Truth .OAF support ============================== //
+// -------------------------------------------------------------------------- //
+
+type OAFHeader = packed record
+       ID: array[0..3] of char;  // 'OAF!'
+       Unknown1: cardinal;
+       Unknown2: cardinal;
+       NameBlockOffset: int64;
+       NumEntries: cardinal;
+     end;
+//   Name: Get8 (0x00 terminated)
+type OAFEntry = packed record
+       Unknown1: cardinal;          // Some sort of hash
+       Offset: int64;
+       Size: int64;
+     end;
+
+function ReadSouthParkTheStickOfTruthOAF(src: string): Integer;
+var HDR: OAFHeader;
+    ENT: OAFEntry;
+    disp: string;
+    x, per, oldper: integer;
+    rest: longword;
+    indexstm, namestm: TMemoryStream;
+    srcstm: THandleStream;
+begin
+
+  // Open the file for reading
+  Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
+  TotFSize := FileSeek(Fhandle,0,2);
+
+  if FHandle > 0 then
+  begin
+
+    // Read the header
+    FileSeek(Fhandle,0,0);
+    FileRead(Fhandle, HDR, SizeOf(OAFHeader));
+
+    // If the header ID is not the one expected
+    // Execution stops with error -3
+    if (HDR.ID <> 'OAF!') or (HDR.NameBlockOffset > TotFSize) or (((HDR.NumEntries*SizeOf(OAFEntry))+SizeOf(OAFHeader)) > TotFSize) then
+    begin
+      FileClose(Fhandle);
+      FHandle := 0;
+      Result := -3;
+      ErrInfo.Format := 'OAF';
+      ErrInfo.Games := 'South Park: The Stick of Truth';
+    end
+    else
+    begin
+
+      // Progress indicator
+      OldPer := 0;
+
+      indexstm := TMemoryStream.Create;
+      namestm := TMemoryStream.Create;
+      srcstm := THandleStream.Create(Fhandle);
+
+      try
+
+        // Read and buffer to memory the indexes
+        indexstm.CopyFrom(srcstm,HDR.NumEntries*SizeOf(OAFEntry));
+        indexstm.Seek(0,0);
+
+        // Read and buffer to memory the filenames
+        srcstm.Seek(HDR.NameBlockOffset,0);
+        namestm.CopyFrom(srcstm,TotFSize-HDR.NameBlockOffset);
+        namestm.Seek(0,0);
+
+        // For each entry in the file
+        for x:= 1 to HDR.NumEntries do
+        begin
+
+          // Calculates current progress
+          Per := ROund(((x / HDR.NumEntries)*100));
+          if (Per > (OldPer+1)) then
+          begin
+            SetPercent(Per);
+            OldPer := Per;
+          end;
+
+          // Read the file entry
+          indexstm.Read(ENT,SizeOf(OAFEntry));
+
+          // Retrieve the filename
+          disp := strip0(get0(namestm));
+
+          // Add entry to the list
+          FSE_Add(disp,ENT.Offset,ENT.Size,0,0);
+
+        end;
+
+      finally
+        FreeAndNil(indexstm);
+        FreeAndNil(namestm);
+        FreeAndNil(srcstm);
+      end;
+
+      // Entries found (return Header info)
+      Result := HDR.NumEntries;
+
+      // Driver ID is OAF
+      // Directories parsing is '\'
+      // Extraction is dealed by Dragon UnPACKer
+      DrvInfo.ID := 'OAF';
+      DrvInfo.Sch := '\';
+      DrvInfo.FileHandle := FHandle;
+      DrvInfo.ExtractInternal := False;
+
+    end;
+
+  end
+  else
+    Result := -2;
+
+end;
+
+// -------------------------------------------------------------------------- //
 // Star Wars Starfighter .PAK support ======================================= //
 // -------------------------------------------------------------------------- //
 
@@ -15309,6 +15429,12 @@ begin
       // Geometry Wars 3: Dimension Evolved .WAD file
       else if (ID4 = 'DAWL') then
         Result := ReadGeometryWars3DAWL
+      // South Park: The Stick of Truth .OAF file
+      else if (ID4 = 'OAF!') then
+      begin
+        FileClose(FHandle);
+        Result := ReadSouthParkTheStickOfTruthOAF(fil);
+      end
       // The Secret of Monkey Island: Special Edition .PAK file
       else if (ID4 = 'KAPL') then
         Result := ReadTheSecretOfMonkeyIslandSEKAPL
@@ -15980,6 +16106,9 @@ begin
       Result := true
     // The Secret of Monkey Island: Special Edition .PAK file
     else if (ID4 = 'KAPL') then
+      Result := true
+    // South Park: The Stick of Truth .OAF file
+    else if (ID4 = 'OAF!') then
       Result := true
     else if (ID4[0] = #60) and (ID4[1] = #226) and (ID4[2] = #156) and (ID4[3] = #1) then
       Result := true

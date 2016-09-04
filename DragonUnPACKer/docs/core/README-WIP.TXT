@@ -44,6 +44,7 @@ Git master [Unreleased]
 	 .dxt files are converted to .DDS files on the fly.
    + Added support for Monkey Island 2 Special Edition .PAK file format.
 	 .dxt files are decompressed and converted to .DDS files on the fly.
+   + Added support for South Park: The Stick of Truth .OAF file format.
  + External Tools Conversion plug-in v0.2.2 Beta:
    i This plug-in allows to use external command line tools to convert file
      formats (for example the excellent vgmstream tool for audio files).

@@ -65,7 +65,7 @@ const MP_FRAMES_FLAG = 1;
       MP_TOC_FLAG = 4;
       MP_VBR_SCALE_FLAG = 8;
 
-      HR_VERSION = 57040;	// HyperRipper version
+      HR_VERSION = 57041;	// HyperRipper version
 
 type FormatsListElem = record
        GenType: Integer;
@@ -484,7 +484,7 @@ type FormatsListElem = record
      end;
      PFoundItem = ^FoundItem;
      FoundItem = record
-       Offset: integer;
+       Offset: int64;
        Index: integer;
      end;
 
@@ -1296,8 +1296,7 @@ begin
           if absoluteOffset >= LastOffset then
           begin
             try
-
-//  TODO ///             Found := frmHyperRipper.formats.verifyInStream(slist.items[fitem^.Index].DriverNum,slist.items[fitem^.Index].ID,hSRC,absoluteOffset);
+              Found := verifyInStream(slist.items[fitem^.Index].ID,sSRC,fitem^.Offset);
             except
               on ex: Exception do
               begin
@@ -1305,8 +1304,6 @@ begin
                 break;
               end;
             end;
-//          Found := HPlug.plugins[slist.items[fitem^.Index].DriverNum].SearchFile(slist.items[fitem^.Index].ID,hSRC,curPos+fitem^.Offset);
-            Found := verifyInStream(slist.items[fitem^.Index].ID,sSRC,fitem^.Offset);
             if cancel then
               break;
             if (Found.GenType <> HR_TYPE_ERROR) and (Found.Size > 0) then

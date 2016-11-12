@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.1 Beta                                 MPL 2.0 open source
-by Alexande "Elbereth" Devilliers                                    03/09/2016
+by Alexande "Elbereth" Devilliers                                    12/11/2016
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,7 +10,7 @@ by Alexande "Elbereth" Devilliers                                    03/09/2016
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.7.1.287
+Version 5.7.1.289
 Git master [Unreleased]
 
  ! Fixed title of application when extracting for example.
@@ -24,12 +24,13 @@ Git master [Unreleased]
  + Added splash to preview pane when unused.
  ! Fixed extraction of sub-directories.
  ! Fixed unhandled error when selecting entries without extension.
- * HyperRipper v5.7:
+ * HyperRipper v5.7a:
    + Added search support for AAC in pure ADTS (Audio Data Transport Stream)
    + Added search support for MPEG-4 Audio files (MPEG TS)
    + Added search support for MPEG-4 Video files (MPEG TS)
    i For both MPEG-4 TS files, the moov atom is expected at the end.
    ! Fixed possible problems with MOV support (added sanity checks)
+   ! Fixed searching and finding past 2GB offset (issue #164).
  * Elbereth's Main Driver plug-in v3.0.1 Beta 7:
    + Added support for Astebreed, Ether Vapor Remaster and Fairy Bloom Fresia
      .TGP file format.

@@ -221,6 +221,7 @@ type
                  Added The Secret of Monkey Island: Special Edition .PAK support
                  Added Monkey Island 2: Special Edition .PAK support
                  Added South Park: The Stick of Truth .OAF support
+    30118        Changed XWC support for The Darkness (Xbox 360) files, EXPERIMENTAL
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -242,7 +243,7 @@ type
 const
   DUDI_VERSION = 6;
   DUDI_VERSION_COMPATIBLE = 6;
-  DRIVER_VERSION = 30117;
+  DRIVER_VERSION = 30118;
   DUP_VERSION = 57110;
   BUFFER_SIZE = 8192;
 
@@ -5135,6 +5136,20 @@ end;
 type MOSChunk = packed record
        ID: array[0..23] of char;
        NextChunkOffset: integer;
+       IntData: array[0..4] of integer;
+// 0      Unk1: integer;
+// 1      DataAlign: integer;
+// 2      ChunkDataOffset: integer;
+// 3      ChunkDataEntries: integer;
+// 4      Unk2: integer;
+     end;
+     MOSWaveData2Entry = packed record
+       Unk1: integer;
+       Unk2: integer;
+       NameOffset: integer;
+       Offset: integer;
+       Size: integer;
+       Unk3: integer;
      end;
      MOSSoundEntry = packed record
        Offset: integer;
@@ -5214,13 +5229,14 @@ var HDR: MOSChunk;
     TEXDA1: MOSTextureEntry2_Init;
     TEXDA2: MOSTextureEntry2_Start;
     TEXDA3: MOSTextureEntry2_End;
-    DirCache: TMemoryStream;
+    WD2: MOSWaveData2Entry;
+    DirCache, StringsCache, WaveData2Cache: TMemoryStream;
     DirFile: THandleStream;
     disp: string;
-    NumE, x, DirOffset, DirNum, NextOffset, Offset, Per, OldPer, FormatCheck, EntrySize, TextureOffset, MipMapOffset: integer;
+    NumE, x, NumEntries, DirOffset, DirNum, NextOffset, Offset, Per, OldPer, FormatCheck, EntrySize, TextureOffset, MipMapOffset: integer;
 //    fileType, Test1, Test2: integer;
     OggCheck: array[0..3] of char;
-    isWave: boolean;
+    isWave, version3: boolean;
 begin
 
   Fhandle := FileOpen(src, fmOpenRead or fmShareDenyWrite);
@@ -5242,19 +5258,26 @@ begin
     begin
 
       NumE := 0;
+      NumEntries := 0;
 
       isWave := false;
+      version3 := false;
+
+      // Init Cache
+      StringsCache := TMemoryStream.Create;
+      WaveData2Cache := TMemoryStream.Create;
 
       repeat
         Fileseek(FHandle, HDR.NextChunkOffset, 0);
         FileRead(FHandle, HDR, SizeOf(MOSChunk));
-        if (strip0(HDR.ID) = 'WAVEDATA') then
+        if (strip0(HDR.ID) = 'VERSION') then
         begin
-          FileSeek(FHandle,8,1);
-          FileRead(Fhandle,DirOffset,4);
-          FileRead(Fhandle,DirNum,4);
-          NextOffset := DirOffset+48;
-          for x := 1 to DirNum do
+          version3 := (HDR.IntData[3] >= 3);
+        end
+        else if (strip0(HDR.ID) = 'WAVEDATA') and version3 then
+        begin
+          NextOffset := HDR.IntData[2]+HDR.IntData[1];
+          for x := 1 to HDR.IntData[3] do
           begin
             FileSeek(FHandle,NextOffset,0);
             FileRead(Fhandle,SND,SizeOf(MOSSoundEntry));
@@ -5300,6 +5323,23 @@ begin
             inc(NumE);
           end;
           isWave := true;
+        end
+        else if (strip0(HDR.ID) = 'STRINGS') and not(version3) then
+        begin
+          NextOffset := HDR.IntData[1];
+          DirFile := THandleStream.Create(Fhandle);
+          Offset := DirFile.Seek(NextOffset,0);
+          StringsCache.CopyFrom(DirFile,HDR.IntData[2]);
+          DirFile.Free;
+        end
+        else if (strip0(HDR.ID) = 'WAVEDATA2') and not(version3) then
+        begin
+          NextOffset := HDR.IntData[1];
+          DirFile := THandleStream.Create(Fhandle);
+          Offset := DirFile.Seek(NextOffset,0);
+          WaveData2Cache.CopyFrom(DirFile,HDR.IntData[2]);
+          DirFile.Free;
+          NumEntries := HDR.IntData[3];
         end
         else if (strip0(HDR.ID) = 'TEXTURES') then
         begin
@@ -5422,7 +5462,25 @@ begin
         end;
       until HDR.NextChunkOffset = 0;
 
+      if (StringsCache.Size > 0) and (WaveData2Cache.Size > 0) and (NumEntries > 0) and not(version3) then
+      begin
+        for x := 1 to NumEntries do
+        begin
+          WaveData2Cache.Seek((x-1)*24,0);
+          WaveData2Cache.ReadBuffer(WD2,SizeOf(MOSWaveData2Entry));
+          StringsCache.Seek(WD2.NameOffset,0);
+          disp := strip0(get0(StringsCache));
+          FSE_Add(disp,WD2.Offset,WD2.Size,0,0);
+          inc(NumE);
+        end;
+        isWave := true;
+      end;
+
       Result := NumE;
+
+      // Free cache
+      FreeAndNil(StringsCache);
+      FreeAndNil(WaveData2Cache);
 
       if Result = 0 then
       begin

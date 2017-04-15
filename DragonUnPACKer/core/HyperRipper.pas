@@ -48,6 +48,7 @@ unit HyperRipper;
   * 56042 Removed use of TBufferedFS
   *       THandleStream is freed after use (no more memory leak)
   * 57040 Added AAC (ADTS) and MPEG-4 TS support
+  * 57042 Added some more feedback when searching
   *
 }
 
@@ -65,7 +66,7 @@ const MP_FRAMES_FLAG = 1;
       MP_TOC_FLAG = 4;
       MP_VBR_SCALE_FLAG = 8;
 
-      HR_VERSION = 57041;	// HyperRipper version
+      HR_VERSION = 57042;	// HyperRipper version
 
 type FormatsListElem = record
        GenType: Integer;
@@ -516,7 +517,7 @@ type FormatsListElem = record
     cmdBrowse: TButton;
     Panel1: TPanel;
     lblHexDump: TLabel;
-    strBufferLength: TLabel;
+    strBufferSep: TLabel;
     lblBufferLength: TLabel;
     strSpeed: TLabel;
     lblSpeed: TLabel;
@@ -528,7 +529,7 @@ type FormatsListElem = record
     lstFormats: TListView;
     lblFound: TLabel;
     strFound: TLabel;
-    strRollBack: TLabel;
+    strSettings: TLabel;
     lblRollback: TLabel;
     cmdCancel: TButton;
     grpFormatting: TGroupBox;
@@ -585,8 +586,8 @@ type FormatsListElem = record
     lblNamingLegS: TLabel;
     panNaming: TPanel;
     txtExample: TEdit;
-    strNumThreads: TLabel;
-    lblNumThreads: TLabel;
+    strScanned: TLabel;
+    lblScanned: TLabel;
     lblHRVersion: TLabel;
     lblHRVersionShadow: TLabel;
     imgState: TImageList;
@@ -598,6 +599,14 @@ type FormatsListElem = record
     lblBufferSize: TLabel;
     butBufferSizeCheck: TButton;
     chkAutoStart: TCheckBox;
+    Label1: TLabel;
+    Label2: TLabel;
+    strLeftToScan: TLabel;
+    lblLeftToScan: TLabel;
+    strEstimated: TLabel;
+    lblEstimated: TLabel;
+    strElapsed: TLabel;
+    lblElapsed: TLabel;
     procedure cmdOkClick(Sender: TObject);
     procedure cmdSearchClick(Sender: TObject);
     procedure cmdBrowseClick(Sender: TObject);
@@ -665,6 +674,12 @@ type FormatsListElem = record
     MAXSIZE: integer;
     numThreads: Integer;
     filename: string;
+    searchtime: string;
+    size1: string;
+    size2: string;
+    size3: string;
+    size8: string;
+    size9: string;
     slist: SearchList;
     hrip: TfrmHyperRipper;
     cancel: boolean;
@@ -679,7 +694,7 @@ type FormatsListElem = record
     function posBuf(search: byte; buffer: PByteArray; bufSize: integer; startpos: integer = 0): integer;
     function BigToLittle2(src: array of byte): word;
     function BigToLittle4(src: array of byte): integer;
-    procedure displayInfo(buffer: pbytearray; curPos: int64; displayHexDump: boolean = true);
+    procedure displayInfo(buffer: pbytearray; curPos: int64; totSize: int64; displayHexDump: boolean = true);
   public
     procedure setSearch(filnam: String; sl: SearchList; hr: TfrmHyperRipper; nThreads: integer);
     constructor Create(CreateSuspended: Boolean);
@@ -1158,11 +1173,11 @@ begin
     MAXSIZE := 131072;
 
   if MAXSIZE < 1024 then
-    hrip.lblBufferLength.Caption := inttostr(MAXSIZE) +'B'
+    hrip.lblBufferLength.Caption := inttostr(MAXSIZE) +' B'
   else if MAXSIZE < 1048576 then
-    hrip.lblBufferLength.Caption := inttostr(MAXSIZE div 1024) +'KB'
+    hrip.lblBufferLength.Caption := inttostr(MAXSIZE div 1024) +' KiB'
   else
-    hrip.lblBufferLength.Caption := inttostr(MAXSIZE div 1048576) +'MB';
+    hrip.lblBufferLength.Caption := inttostr(MAXSIZE div 1048576) +' MiB';
 
   hrip.Progress.Max := 100;
   OldPer := 0;
@@ -1172,11 +1187,11 @@ begin
   rollback := 16;
 
   if rollback < 1024 then
-    hrip.lblRollback.Caption := inttostr(rollback) +'B'
+    hrip.lblRollback.Caption := inttostr(rollback) +' B'
   else if rollback < 1048576 then
-    hrip.lblRollback.Caption := inttostr(rollback div 1024) +'KB'
+    hrip.lblRollback.Caption := inttostr(rollback div 1024) +' KiB'
   else
-    hrip.lblRollback.Caption := inttostr(rollback div 1048576) +'MB';
+    hrip.lblRollback.Caption := inttostr(rollback div 1048576) +' MiB';
 
   hrip.lblFound.Caption := IntTostr(numFound);
 
@@ -1184,7 +1199,7 @@ begin
   //if (numThreads = 0) or (numThreads > 16) then
   numThreads := 1; // Always use single threaded, multi-threading just don't work yet..
 
-  hrip.lblNumThreads.Caption := inttostr(numThreads);
+  //hrip.lblNumThreads.Caption := inttostr(numThreads);
 
   try
 
@@ -1205,6 +1220,7 @@ begin
 
     curPos := 0;
     totsize := sSRC.Size;
+    displayInfo(nil,curPos,totSize,false);
     getmem(Buffer,MAXSIZE);
     BufSize := MAXSIZE;
     try
@@ -1369,7 +1385,7 @@ begin
           hrip.Progress.Position := Round(Per);
           hrip.lstResults.Refresh;
           hrip.lblFound.Caption := IntTostr(numFound);
-          displayInfo(buffer,CurPos);
+          displayInfo(buffer,CurPos,TotSize);
           OldPer := Per;
           lastTimer := now;
         end;
@@ -1433,6 +1449,7 @@ begin
      end;
     finally
       hrip.AddResult(DLNGstr('HRLG17'));
+      displayInfo(nil,totSize,totSize,false);
       if (flisttot <> nil) then
       begin
         for x := 0 to flisttot.Count-1 do
@@ -1454,11 +1471,21 @@ begin
 
 end;
 
-procedure THRipSearch.displayInfo(buffer: PByteArray; curPos: int64; displayHexDump: boolean = true);
-var x, speedcalc: integer;
+procedure THRipSearch.displayInfo(buffer: PByteArray; curPos: int64; totSize: int64; displayHexDump: boolean = true);
+var x, speedcalc, secondsleft, daysleft, hoursleft, minutesleft: integer;
     tmpspeedcalc: extended;
-    prespeedcalc: string;
+    leftdisp,tmpdisp: string;
 begin
+
+  if (searchtime = '') then
+  begin
+    searchtime := DLNGstr('HR1030');
+    size1 := DLNGstr('HR1020');
+    size2 := DLNGstr('HR1021');
+    size3 := DLNGstr('HR1022');
+    size8 := DLNGstr('HR1028');
+    size9 := DLNGstr('HR1029');
+  end;
 
   if (displayHexDump) then
   begin
@@ -1472,24 +1499,61 @@ begin
   begin
     tmpspeedcalc := (CurPos / ((GetTickCount - StartTime) / 1000));
     if (tmpspeedcalc > 1048576) then
-    begin
-      SpeedCalc := Round(tmpspeedcalc / 1048576);
-      prespeedcalc := 'M';
-    end
+      tmpdisp := format('%.1f',[(tmpspeedcalc / 1048576)])+' '+size2
     else if (tmpspeedcalc > 1024) then
-    begin
-      SpeedCalc := Round(tmpspeedcalc / 1024);
-      prespeedcalc := 'K';
-    end
+      tmpdisp := format('%.1f',[(tmpspeedcalc / 1024)])+' '+size1
     else
-    begin
-      SpeedCalc := Round(tmpspeedcalc);
-      prespeedcalc := '';
-    end
+      tmpdisp := inttostr(round(tmpspeedcalc))+' ';
   end
   else
-    SpeedCalc := 0;
-  hrip.lblSpeed.Caption := IntToStr(SpeedCalc)+prespeedcalc+'B/s';
+    tmpdisp := '0 ';
+  hrip.lblSpeed.Caption := tmpdisp+size8+size9;
+
+  if (CurPos > 1073741824) then
+    tmpdisp := format('%.2f',[(CurPos / 1073741824)])+' '+size3
+  else if (CurPos > 1048576) then
+    tmpdisp := format('%.2f',[(CurPos / 1048576)])+' '+size2
+  else if (CurPos > 1024) then
+    tmpdisp := format('%.2f',[(CurPos / 1024)])+' '+size1
+  else
+    tmpdisp := inttostr(CurPos)+' ';
+  hrip.lblScanned.Caption := tmpdisp+size8;
+
+  if ((TotSize-CurPos) > 1073741824) then
+    tmpdisp := format('%.2f',[((TotSize-CurPos) / 1073741824)])+' Gi'
+  else if ((TotSize-CurPos) > 1048576) then
+    tmpdisp := format('%.2f',[((TotSize-CurPos) / 1048576)])+' Mi'
+  else if ((TotSize-CurPos) > 1024) then
+    tmpdisp := format('%.2f',[((TotSize-CurPos) / 1024)])+' Ki'
+  else
+    tmpdisp := inttostr((TotSize-CurPos))+' ';
+  hrip.lblLeftToScan.Caption := tmpdisp+size8;
+
+  secondsleft := trunc((GetTickCount - StartTime)/1000);
+  daysleft := trunc(secondsleft/86400);
+  secondsleft := secondsleft mod 86400;
+  hoursleft := trunc(secondsleft/3600);
+  secondsleft := secondsleft mod 3600;
+  minutesleft := trunc(secondsleft/60);
+  secondsleft := secondsleft mod 60;
+  tmpdisp := format(searchtime,[daysleft,hoursleft,minutesleft,secondsleft]);
+  hrip.lblElapsed.Caption := tmpdisp;
+
+  if (tmpspeedcalc > 0) then
+  begin
+    secondsleft := round((TotSize-CurPos)/ tmpspeedcalc);
+    daysleft := trunc(secondsleft/86400);
+    secondsleft := secondsleft mod 86400;
+    hoursleft := trunc(secondsleft/3600);
+    secondsleft := secondsleft mod 3600;
+    minutesleft := trunc(secondsleft/60);
+    secondsleft := secondsleft mod 60;
+    tmpdisp := format(searchtime,[daysleft,hoursleft,minutesleft,secondsleft]);
+  end
+  else
+    tmpdisp := '...';
+  hrip.lblEstimated.Caption := tmpdisp;
+
   hrip.Refresh;
 
 end;
@@ -3313,7 +3377,7 @@ begin
                 else
                   hrip.lastResult(ReplaceValue('%s',curMP3Result,inttostr(inStm.Position-Offset)));
                 lastDisplayTime := now;
-                displayInfo(nil,inStm.Position,false);
+                displayInfo(nil,inStm.Position,inStm.Size,false);
               end;
 
               inStm.ReadBuffer(tBytes4,4);
@@ -3747,7 +3811,7 @@ begin
                 else
                   hrip.lastResult(ReplaceValue('%s',curMP3Result,inttostr(inStm.Position-Offset)));
                 lastDisplayTime := now;
-                displayInfo(nil,inStm.Position,false);
+                displayInfo(nil,inStm.Position,inStm.Size,false);
               end;
 
               inStm.ReadBuffer(tBytes7,7);

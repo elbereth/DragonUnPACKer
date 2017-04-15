@@ -1,5 +1,5 @@
 Dragon UnPACKer v5.7.1 Beta                                 MPL 2.0 open source
-by Alexande "Elbereth" Devilliers                                    12/11/2016
+by Alexande "Elbereth" Devilliers                                    15/04/2017
 ===============================================================================
 
   ** NOTE: This is a Work In Progress build (Alpha, Beta or Release Candidate),
@@ -10,7 +10,7 @@ by Alexande "Elbereth" Devilliers                                    12/11/2016
 -------------------------------------------------------------------------------
 Main program version and versions history:
 
-Version 5.7.1.289
+Version 5.7.1.296
 Git master [Unreleased]
 
  ! Fixed title of application when extracting for example.
@@ -24,14 +24,19 @@ Git master [Unreleased]
  + Added splash to preview pane when unused.
  ! Fixed extraction of sub-directories.
  ! Fixed unhandled error when selecting entries without extension.
- * HyperRipper v5.7a:
+ * HyperRipper v5.7b:
    + Added search support for AAC in pure ADTS (Audio Data Transport Stream)
    + Added search support for MPEG-4 Audio files (MPEG TS)
    + Added search support for MPEG-4 Video files (MPEG TS)
    i For both MPEG-4 TS files, the moov atom is expected at the end.
    ! Fixed possible problems with MOV support (added sanity checks)
    ! Fixed searching and finding past 2GB offset (issue #164).
- * Elbereth's Main Driver plug-in v3.0.1 Beta 7:
+   + Added more feedback while searching :
+      How much data was scanned
+	  How much is left to scanned
+	  Time elapsed
+	  Time estimated to finish the scan
+ * Elbereth's Main Driver plug-in v3.0.1 Beta 8:
    + Added support for Astebreed, Ether Vapor Remaster and Fairy Bloom Fresia
      .TGP file format.
      Actually support for both v1 and v2 TGP files.
@@ -44,6 +49,8 @@ Git master [Unreleased]
      format.
    + Added support for Monkey Island 2 Special Edition .PAK file format.
    + Added support for South Park: The Stick of Truth .OAF file format.
+   + Added experimental support for The Darkness .XWC file format.
+     Hopefully without breaking old XWC support.
  + Default Conversion plug-in v2.2.2:
    * Modified for git commit info instead of SVN
    + Added The Secret of Monkey Island Special Edition .DXT to .DDS file

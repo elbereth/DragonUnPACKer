@@ -30,9 +30,11 @@
 # ============================================================================
 #
 # version 17:
-# Modifié HRD000, HRD100, HRD300
-# Ajout CET100, CET200, CET210, CET220, CET230, CET240, CET245, CET250, CET260, CET270,
+# Changement de HRD000, HRD100, HRD300
+# Ajout de CET100, CET200, CET210, CET220, CET230, CET240, CET245, CET250, CET260, CET270,
 #  CET300, CET310, CET400, CET410, CET420, CET430, CET440, CET450, CET460, CET500
+#  HR1015, HR1016, HR1017, HR1018, HR1019, HR1020, HR1021, HR1022, HR1028, HR1029
+# Suppression de HR1011 et HR1012
 #
 # version 16:
 # Ajout de OPT853, LOG020, LOG021, LOG022, LOG023
@@ -414,10 +416,19 @@ HR1000=Rechercher
 HR1001=Source:
 HR1002=Créer un fichier HyperRipper (HRF):
 HR1003=Annuler / Arreter
-HR1011=Taille du cache:
-HR1012=Taille du rollback:
-HR1013=Vitesse de recherche:
-HR1014=Fichiers trouvées:
+HR1013=Vitesse recherche :
+HR1014=Fichiers trouvées :
+HR1015=Temps restant estimé :
+HR1016=Déjà scanné :
+HR1017=Restant :
+HR1018=Temps écoulé :
+HR1019=Paramètres :
+HR1020=Ki
+HR1021=Mi
+HR1022=Gi
+HR1028=o
+HR1029=/s
+HR1030=%dj %dh %dm %ds
 HR2000=Formats
 HR2011=Format
 HR2012=Type

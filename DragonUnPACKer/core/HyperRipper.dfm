@@ -1,10 +1,10 @@
 object frmHyperRipper: TfrmHyperRipper
-  Left = 738
-  Top = 613
+  Left = 488
+  Top = 419
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'HyperRipper'
-  ClientHeight = 336
+  ClientHeight = 362
   ClientWidth = 432
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -23,7 +23,7 @@ object frmHyperRipper: TfrmHyperRipper
   TextHeight = 13
   object imgBlood: TImage
     Left = 12
-    Top = 304
+    Top = 328
     Width = 409
     Height = 32
     Picture.Data = {
@@ -1260,12 +1260,29 @@ object frmHyperRipper: TfrmHyperRipper
       D900}
     Transparent = True
   end
+  object Label1: TLabel
+    Left = 200
+    Top = 40
+    Width = 103
+    Height = 13
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'File Founds:'
+  end
+  object Label2: TLabel
+    Left = 312
+    Top = 40
+    Width = 49
+    Height = 13
+    AutoSize = False
+    Caption = '0'
+  end
   object PageControl: TPageControl
     Left = 8
     Top = 8
     Width = 417
-    Height = 297
-    ActivePage = tabAbout
+    Height = 321
+    ActivePage = tabSearch
     TabOrder = 0
     OnChange = lstFormatsClick
     object tabAbout: TTabSheet
@@ -1288,7 +1305,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object imgHR: TImage
         Left = 32
-        Top = 5
+        Top = 21
         Width = 347
         Height = 104
         Picture.Data = {
@@ -4691,14 +4708,14 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object Bevel1: TBevel
         Left = 16
-        Top = 128
+        Top = 144
         Width = 377
         Height = 9
         Shape = bsTopLine
       end
       object strHRVersion: TLabel
         Left = 96
-        Top = 112
+        Top = 128
         Width = 97
         Height = 13
         Alignment = taRightJustify
@@ -4708,7 +4725,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object lblAboutInfo: TLabel
         Left = 16
-        Top = 144
+        Top = 160
         Width = 377
         Height = 33
         Alignment = taCenter
@@ -4720,7 +4737,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object lblAboutBeware: TLabel
         Left = 16
-        Top = 184
+        Top = 200
         Width = 377
         Height = 13
         Alignment = taCenter
@@ -4738,7 +4755,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object lblHRVersion: TLabel
         Left = 200
-        Top = 112
+        Top = 128
         Width = 177
         Height = 13
         AutoSize = False
@@ -4753,7 +4770,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object Panel3: TPanel
         Left = 16
-        Top = 216
+        Top = 232
         Width = 377
         Height = 33
         BevelOuter = bvLowered
@@ -4840,7 +4857,7 @@ object frmHyperRipper: TfrmHyperRipper
         Left = 8
         Top = 192
         Width = 393
-        Height = 65
+        Height = 89
         BevelInner = bvLowered
         TabOrder = 5
         object lblHexDump: TLabel
@@ -4857,20 +4874,21 @@ object frmHyperRipper: TfrmHyperRipper
           Font.Style = []
           ParentFont = False
         end
-        object strBufferLength: TLabel
-          Left = 8
+        object strBufferSep: TLabel
+          Left = 128
           Top = 24
-          Width = 121
+          Width = 17
           Height = 13
-          Alignment = taRightJustify
+          Alignment = taCenter
           AutoSize = False
-          Caption = 'Actual Buffer Length:'
+          Caption = '/'
         end
         object lblBufferLength: TLabel
-          Left = 136
+          Left = 80
           Top = 24
           Width = 49
           Height = 13
+          Alignment = taRightJustify
           AutoSize = False
           Caption = '0'
         end
@@ -4889,7 +4907,13 @@ object frmHyperRipper: TfrmHyperRipper
           Width = 73
           Height = 13
           AutoSize = False
-          Caption = '0KB/s'
+          Caption = '0.00 KiB/s'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          Font.Style = [fsBold]
+          ParentFont = False
         end
         object lblFound: TLabel
           Left = 312
@@ -4908,41 +4932,102 @@ object frmHyperRipper: TfrmHyperRipper
           AutoSize = False
           Caption = 'File Founds:'
         end
-        object strRollBack: TLabel
+        object strSettings: TLabel
           Left = 8
-          Top = 40
-          Width = 121
+          Top = 24
+          Width = 65
           Height = 13
           Alignment = taRightJustify
           AutoSize = False
-          Caption = 'Actual Rollback:'
+          Caption = 'Buffer:'
         end
         object lblRollback: TLabel
-          Left = 136
-          Top = 40
+          Left = 144
+          Top = 24
           Width = 49
           Height = 13
           AutoSize = False
           Caption = '0'
         end
-        object strNumThreads: TLabel
+        object strScanned: TLabel
           Left = 8
-          Top = 56
+          Top = 40
           Width = 121
           Height = 13
           Alignment = taRightJustify
           AutoSize = False
-          Caption = 'Number of threads'
-          Visible = False
+          Caption = 'Already scanned:'
         end
-        object lblNumThreads: TLabel
+        object lblScanned: TLabel
           Left = 136
-          Top = 56
-          Width = 49
+          Top = 40
+          Width = 57
           Height = 13
           AutoSize = False
-          Caption = '0'
-          Visible = False
+          Caption = '0 B'
+        end
+        object strLeftToScan: TLabel
+          Left = 8
+          Top = 56
+          Width = 119
+          Height = 13
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'Left to Scan:'
+        end
+        object lblLeftToScan: TLabel
+          Left = 136
+          Top = 56
+          Width = 57
+          Height = 13
+          AutoSize = False
+          Caption = '0 B'
+        end
+        object strEstimated: TLabel
+          Left = 8
+          Top = 72
+          Width = 177
+          Height = 13
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'Estimated time left:'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object lblEstimated: TLabel
+          Left = 192
+          Top = 72
+          Width = 193
+          Height = 13
+          AutoSize = False
+          Caption = '...'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'MS Sans Serif'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object strElapsed: TLabel
+          Left = 200
+          Top = 56
+          Width = 103
+          Height = 13
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'Elapsed time:'
+        end
+        object lblElapsed: TLabel
+          Left = 312
+          Top = 56
+          Width = 73
+          Height = 13
+          AutoSize = False
+          Caption = '...'
         end
       end
       object panHRF: TPanel
@@ -4997,7 +5082,7 @@ object frmHyperRipper: TfrmHyperRipper
       ImageIndex = 1
       object Image1: TImage
         Left = 8
-        Top = 220
+        Top = 244
         Width = 16
         Height = 16
         Picture.Data = {
@@ -5050,7 +5135,7 @@ object frmHyperRipper: TfrmHyperRipper
         Left = 8
         Top = 8
         Width = 393
-        Height = 209
+        Height = 233
         Checkboxes = True
         Columns = <
           item
@@ -5078,7 +5163,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object cmdConfig: TButton
         Left = 8
-        Top = 240
+        Top = 264
         Width = 75
         Height = 25
         Caption = 'Setup'
@@ -5088,7 +5173,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object cmdAll: TButton
         Left = 88
-        Top = 240
+        Top = 264
         Width = 73
         Height = 25
         Caption = 'All / None'
@@ -5097,7 +5182,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object cmdImage: TButton
         Left = 328
-        Top = 240
+        Top = 264
         Width = 75
         Height = 25
         Caption = 'Pictures'
@@ -5106,7 +5191,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object cmdVideo: TButton
         Left = 248
-        Top = 240
+        Top = 264
         Width = 75
         Height = 25
         Caption = 'Video'
@@ -5115,7 +5200,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object cmdAudio: TButton
         Left = 168
-        Top = 240
+        Top = 264
         Width = 75
         Height = 25
         Caption = 'Audio'
@@ -5124,7 +5209,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object chkExcludeFalsePositive: TCheckBox
         Left = 32
-        Top = 220
+        Top = 244
         Width = 369
         Height = 17
         Caption = 
@@ -5220,7 +5305,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object grpHRFVersion: TGroupBox
         Left = 8
-        Top = 144
+        Top = 152
         Width = 113
         Height = 73
         Caption = 'HRF Version'
@@ -5266,7 +5351,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object grpHRFOptions: TGroupBox
         Left = 128
-        Top = 152
+        Top = 160
         Width = 273
         Height = 57
         Caption = 'Options'
@@ -5292,7 +5377,7 @@ object frmHyperRipper: TfrmHyperRipper
       end
       object Panel2: TPanel
         Left = 8
-        Top = 224
+        Top = 240
         Width = 393
         Height = 41
         BevelOuter = bvLowered
@@ -5488,11 +5573,11 @@ object frmHyperRipper: TfrmHyperRipper
         Left = 8
         Top = 168
         Width = 393
-        Height = 97
+        Height = 113
         TabOrder = 1
         object lblBufferSize: TLabel
           Left = 208
-          Top = 72
+          Top = 88
           Width = 153
           Height = 13
           Hint = 
@@ -5520,7 +5605,7 @@ object frmHyperRipper: TfrmHyperRipper
         end
         object chkForceBufferSize: TCheckBox
           Left = 8
-          Top = 72
+          Top = 88
           Width = 201
           Height = 17
           Caption = 'Force buffer size'
@@ -5529,7 +5614,7 @@ object frmHyperRipper: TfrmHyperRipper
         end
         object butBufferSizeCheck: TButton
           Left = 368
-          Top = 72
+          Top = 88
           Width = 17
           Height = 16
           Hint = 
@@ -5556,7 +5641,7 @@ object frmHyperRipper: TfrmHyperRipper
   end
   object cmdOk: TButton
     Left = 342
-    Top = 308
+    Top = 332
     Width = 75
     Height = 25
     Caption = 'OK'
@@ -5564,16 +5649,16 @@ object frmHyperRipper: TfrmHyperRipper
     OnClick = cmdOkClick
   end
   object OpenDialog: TOpenDialog
-    Left = 40
-    Top = 304
+    Left = 56
+    Top = 328
   end
   object SaveDialog: TSaveDialog
-    Left = 4
-    Top = 304
+    Left = 20
+    Top = 328
   end
   object imgState: TImageList
-    Left = 72
-    Top = 304
+    Left = 96
+    Top = 328
     Bitmap = {
       494C010101000400040010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010

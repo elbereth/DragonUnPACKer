@@ -20,6 +20,6 @@ https://www.elberethzone.net/en/dragon-unpacker.html#download-stable
 ### Unstable releases (recommended, latest features):
 https://www.elberethzone.net/en/dragon-unpacker.html#download-unstable
 ### Latest commit (may be unstable):
-[ ![Download](https://api.bintray.com/packages/elbereth/DragonUnPACKer/DragonUnPACKer/images/download.svg) ](https://bintray.com/elbereth/DragonUnPACKer/DragonUnPACKer/_latestVersion)
+[ ![Download](https://api.bintray.com/packages/elbereth/DragonUnPACKer-Nightly/DragonUnPACKer/images/download.svg) ](https://bintray.com/elbereth/DragonUnPACKer-Nightly/DragonUnPACKer/_latestVersion)
 ### Nightly (auto git commit build - experimental, use at your own risk):
 https://www.elberethzone.net/en/dragon-unpacker-dev.html#download-nightly

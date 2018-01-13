@@ -1,8 +1,8 @@
 # Language Source File (for DLNGC v4.0)
 # ============================================================================
-#  Program: Dragon UnPACKer v5.7.0 Beta
+#  Program: Dragon UnPACKer v5.7.1 Beta
 #    JÍzyk: Polski (Polish)
-#   Wersja: 16
+#   Wersja: 17
 #    Autor: Piotr Halama (Halamix2)
 # ============================================================================
 #
@@ -18,15 +18,18 @@
 #
 # NIE MODYFIKUJ ØADNYCH S£”W KLUICZOWYCH - ZMIE— TYLKO RZECZY PO ZNAKU =
 #
-# If you have made a translation for your language send it to Alex Devilliers
-# so it can be distributed along with the main program archive.
 #
-# You can reach Alex Devilliers by e-mail: translation@dragonunpacker.com
-#                                  by ICQ: 1535372 (Elbereth)
 #
 # ============================================================================
 # Informacje o tym t≥umaczeniu
 # ============================================================================
+#
+# wersja 17:
+# Zmieniono HRD000, HRD100, HRD300
+# Dodano CET100, CET200, CET210, CET220, CET230, CET240, CET245, CET250, CET260, CET270,
+#  CET300, CET310, CET400, CET410, CET420, CET430, CET440, CET450, CET460, CET500
+#  HR1015, HR1016, HR1017, HR1018, HR1019, HR1020, HR1021, HR1022, HR1028, HR1029
+# UsuniÍto HR1011 and HR1012
 #
 # wersja 16:
 # Dodano OPT853, LOG020, LOG021, LOG022, LOG023
@@ -63,7 +66,7 @@
 # Dodano ciπgi Duppi.
 #
 # wersja 8:
-# Zmieniono kilka komunikatÛw  b≥ÍdÛw.
+# Zmieniono kilka komunikatÛw b≥ÍdÛw.
 # wersja 7:
 # Dodano ciπgi nowych Opcji (priorytet sterownikÛw itp.).
 # Dodano ciπgi Dziennika.
@@ -125,14 +128,14 @@ Author = Piotr Halama (Halamix2)
 #
 # Can be up to 80 characters
 #
-Email = halamix2@o2.pl
+Email = skrzynka@halamix2.pl
 #
 # + URL +
 # Write here the Internet URL where your file can be downloaded
 #
 # Can be up to 80 characters
 #
-URL = http://halamix2.cba.pl
+URL = http://halamix2.pl
 #
 # + Program Block (ProgramID & ProgramVer)
 #
@@ -160,9 +163,10 @@ URL = http://halamix2.cba.pl
 # Dragon UnPACKer v5.6.1         UP      14
 # Dragon UnPACKer v5.6.2         UP      15
 # Dragon UnPACKer v5.7.0 Beta    UP      16
+# Dragon UnPACKer v5.7.1 Beta    UP      17
 #
 ProgramID = UP
-ProgramVer = 16
+ProgramVer = 17
 #
 # + IconFile +
 # Path & FileName of the "icon" displayed with language name (ex: c:\test.bmp)
@@ -426,6 +430,27 @@ CNV990=Nazwa palety juø istnieje.
 CNV991=Format nieznany (sprÛbuj zmieniÊ format).
 CNV992=Czy na pewno chcesz usunπÊ paletÍ?
 
+CET100=Wtyczka do zewnÍtrznych narzÍdzi konwersji v%v - Konfiguracja
+CET200=Nazwa narzÍdzia:
+CET210=Autor:
+CET220=URL:
+CET230=Komentarz:
+CET240=úcieøka:
+CET245=Parametry:
+CET250=Wynikowe rozszerzenie:
+CET260=Poprawny wynik testowania:
+CET270=Poprawna wartoúc wyniku:
+CET300=NarzÍdzie
+CET310=Rozszerzenia
+CET400=Nowe
+CET410=UsuÒ
+CET420=Zapisz
+CET430=Resetuj
+CET440=Dodaj
+CET450=UsuÒ
+CET460=Gotowe
+CET500=NarzÍdzie konwersji wiersza poleceÒ
+
 TLD001=Odczytywanie %f...
 TLD002=Pozyskiwanie danych...
 TLD003=Parsowanie i wyúwietlanie folderu g≥Ûwnego...
@@ -439,10 +464,19 @@ HR1000=Szukaj
 HR1001=èrÛd≥o:
 HR1002=UtwÛrz Plik HyperRipper (HRF):
 HR1003=Anuluj / Stop
-HR1011=Rozmiar bufora:
-HR1012=Rozmiar rollback:
 HR1013=PrÍdkoúÊ szukania:
 HR1014=Znaleziono:
+HR1015=Szacowany czas do koÒca:
+HR1016=Juø przeskanowane:
+HR1017=Pozosta≥e do przeskanowania:
+HR1018=Up≥yniÍty czas:
+HR1019=Bufor:
+HR1020=Ki
+HR1021=Mi
+HR1022=Gi
+HR1028=B
+HR1029=/s
+HR1030=%dd %dh %dm %ds
 HR2000=Formaty
 HR2011=Format
 HR2012=Typ
@@ -509,8 +543,8 @@ HRTYP2=Wideo
 HRTYP3=Obraz
 HRTYPM=Inne
 HRTYPE=Typ (%i)
-HRD000=Opcje MPEG Audio
-HRD100=Formaty MPEG Audio do przeszukania
+HRD000=Opcje Audio MPEG-1/2 oraz AAC (ADTS)
+HRD100=Formaty Audio MPEG-1/2 do przeszukania
 HRD101=Nieoficjalne
 HRD200=Limituj
 HRD211=Minimalna liczba klatek:
@@ -518,8 +552,9 @@ HRD212=Maksymalna liczba klatek:
 HRD213=klatek
 HRD221=Minimalny rozmiar:
 HRD222=Maksymalny rozmiar:
+HRD222=Maksymalny rozmiar:
 HRD223=bajt(y/Ûw)
-HRD300=Specjalne
+HRD300=Specjalne dla Audio MPEG-1/2
 HRD301=Szukaj (i uøywaj) Xing VBR header
 HRD302=Szukaj ID3Tag v1.0/1.1
 

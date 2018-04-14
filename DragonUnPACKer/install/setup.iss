@@ -45,17 +45,21 @@ AppReadmeFile={app}\readme.txt
 [Languages]
 Name: en; MessagesFile: compiler:Default.isl; InfoBeforeFile: setup-info-english.rtf
 Name: sp; MessagesFile: compiler:languages\Spanish.isl; InfoBeforeFile: setup-info-spanish.rtf
+Name: pl; MessagesFile: compiler:Languages\Polish.isl; InfoBeforeFile: setup-info-polish.rtf
 Name: fr; MessagesFile: compiler:languages\French.isl; InfoBeforeFile: setup-info-french.rtf
 
 [Tasks]
 Name: desktopicon; Languages: en; Description: Create a &desktop icon; GroupDescription: Additional icons:; MinVersion: 4,4
 Name: quicklaunchicon; Languages: en; Description: Create a &Quick Launch icon; GroupDescription: Additional icons:; MinVersion: 4,4; Flags: unchecked
-Name: desktopicon; Languages: fr; Description: Placer une icone sur le bureau; GroupDescription: Icones suppl�mentaires:; MinVersion: 4,4
-Name: quicklaunchicon; Languages: fr; Description: Placer une icone sur la barre de lancement rapide; GroupDescription: Icones suppl�mentaires:; MinVersion: 4,4; Flags: unchecked
+Name: deleteoldhrplugins; Description: Remove old useless plugins/dlls; GroupDescription: Update from previous versions; Flags: checkedonce; Languages: en
+Name: desktopicon; Languages: fr; Description: Placer une icone sur le bureau; GroupDescription: Icones supplémentaires:; MinVersion: 4,4
+Name: quicklaunchicon; Languages: fr; Description: Placer une icone sur la barre de lancement rapide; GroupDescription: Icones supplémentaires:; MinVersion: 4,4; Flags: unchecked
+Name: deleteoldhrplugins; Description: Supprimer les anciennes extensions/dlls inutiles; GroupDescription: Mise à jour depuis une ancienne version; Flags: checkedonce; Languages: fr
+Name: desktopicon; Languages: pl; Description: Utwórz ikonę na &pulpicie; GroupDescription: Dodatkowe ikony:; MinVersion: 4,4
+Name: quicklaunchicon; Languages: pl; Description: Utwórz ikonę w obszarze &szybkiego uruchamiania; GroupDescription: Dodatkowe ikony:; MinVersion: 4,4; Flags: unchecked
+Name: deleteoldhrplugins; Description: Usuń stare nieużyteczne wtyczki/pliki dll; GroupDescription: Aktualizacja z poprzedniej wersji; Flags: checkedonce; Languages: pl
 Name: desktopicon; Languages: sp; Description: Poner un icono sobre el desktop; GroupDescription: Iconos adicionales:; MinVersion: 4,4
 Name: quicklaunchicon; Languages: sp; Description: Poner un icono en la bara de lanzamiento rapido; GroupDescription: Iconos adicionales:; MinVersion: 4,4; Flags: unchecked
-Name: deleteoldhrplugins; Description: Remove old useless plugins/dlls; GroupDescription: Update from previous versions; Flags: checkedonce; Languages: en
-Name: deleteoldhrplugins; Description: Supprimer les anciennes extensions/dlls inutiles; GroupDescription: Mise � jour depuis une ancienne version; Flags: checkedonce; Languages: fr
 Name: deleteoldhrplugins; Description: Borrar las antiguas versiones de las extenciones/dlls; GroupDescription: Antiguas versiones; Flags: checkedonce; Languages: sp
 
 [Files]
@@ -86,19 +90,21 @@ Filename: {app}\DrgUnPack5.url; Section: InternetShortcut; Key: URL; String: htt
 [Icons]
 Name: {group}\Dragon UnPACKer 5; Filename: {app}\DrgUnPack5.exe
 ; vvv --- sp --- vvv
-Name: {group}\Read me; Languages: en sp; Filename: {app}\readme.txt
+Name: {group}\Read me; Languages: en sp pl; Filename: {app}\readme.txt
 ; For WIP versions
 Name: "{group}\Read me (Unstable releases)"; Languages: en; Filename: "{app}\readme-WIP.txt"
 Name: "{group}\Lisez moi (version instable) [Anglais]"; Languages: fr; Filename: "{app}\readme-WIP.txt"
 Name: {group}\Lisez moi; Languages: fr; Filename: {app}\lisezmoi.txt
 ; vvv --- sp --- vvv
-Name: {group}\What's new; Languages: en sp; Filename: {app}\whatsnew.txt
+Name: {group}\What's new; Languages: en sp pl; Filename: {app}\whatsnew.txt
 Name: {group}\Historique des versions; Languages: fr; Filename: {app}\historique.txt
 Name: {group}\Dragon UnPACKer 5 on the Web; Languages: en; Filename: {app}\DrgUnPack5.url
 Name: {group}\Dragon UnPACKer 5 sur le Web; Languages: fr; Filename: {app}\DrgUnPack5.url
+Name: {group}\Dragon UnPACKer 5 w sieci; Languages: pl; Filename: {app}\DrgUnPack5.url
 Name: {group}\Dragon UnPACKer 5 sobre la Red; Languages: sp; Filename: {app}\DrgUnPack5.url
 Name: {group}\Duppi (Package installer & Internet update); Languages: en; Filename: {app}\utils\Duppi.exe
-Name: {group}\Duppi (Installation de packets et mise � jour via Internet); Languages: fr; Filename: {app}\utils\Duppi.exe
+Name: {group}\Duppi (Installation de packets et mise à jour via Internet); Languages: fr; Filename: {app}\utils\Duppi.exe
+Name: {group}\Duppi (Instalator pakietów i internetowa aktualizacja); Languages: pl; Filename: {app}\utils\Duppi.exe
 Name: {group}\Duppi (Instalador de paquetes y puestas al dia por Internet); Languages: sp; Filename: {app}\utils\Duppi.exe
 Name: {userdesktop}\Dragon UnPACKer 5; Filename: {app}\DrgUnPack5.exe; MinVersion: 4,4; Tasks: desktopicon
 Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\Dragon UnPACKer 5; Filename: {app}\DrgUnPack5.exe; MinVersion: 4,4; Tasks: quicklaunchicon
@@ -107,6 +113,7 @@ Name: {group}\Uninstall; Filename: {uninstallexe}
 [Run]
 Languages: en; Filename: {app}\DrgUnPack5.exe; Parameters: /lng; Description: Launch Dragon UnPACKer 5 to finish installation; Flags: nowait postinstall skipifsilent
 Languages: fr; Filename: {app}\DrgUnPack5.exe; Parameters: /lng; Description: Lancer Dragon UnPACKer 5 pour finir l'installation; Flags: nowait postinstall skipifsilent
+Languages: pl; Filename: {app}\DrgUnPack5.exe; Parameters: /lng; Description: Uruchom Dragon UnPACKer 5 aby ukończyć instalację; Flags: nowait postinstall skipifsilent
 Languages: sp; Filename: {app}\DrgUnPack5.exe; Parameters: /lng; Description: Lanzar Dragon UnPACKer 5 para terminar la instalacion; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]

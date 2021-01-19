@@ -3059,7 +3059,8 @@ type POD3Header = packed record
        NumAuditEntries: integer;
        Revision: integer;
        Priority: integer;
-       Empty: array[1..160] of byte;
+       Author: array[0..79] of char;
+       Copyright: array[0..79] of char;
        DirOffset: integer;
        Unknown6: integer;
        NamesSize: integer;

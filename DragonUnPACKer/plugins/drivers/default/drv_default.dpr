@@ -3075,6 +3075,13 @@ type POD3Header = packed record
        Timestamp: integer;
        Checksum: integer;
      end;
+
+     POD3AuditAction = (
+	POD3_AUDIT_ACTION_ADD    = 0,
+	POD3_AUDIT_ACTION_REMOVE = 1,
+	POD3_AUDIT_ACTION_CHANGE = 2,
+	POD3_AUDIT_ACTION_SIZE   = 3);
+
      POD3AuditEntry = packed record
        User: array[0..31] of char;
        Timestamp: integer;

@@ -3053,27 +3053,38 @@ end;
 
 type POD3Header = packed record
        ID: array[0..3] of char;
-       Unknown1: integer;
+       Checksum: integer;
        Description: array[0..79] of char;
        NumEntries: integer;
-       Unknown3: integer;
-       Unknown4: integer;
-       Unknown5: integer;
+       NumAuditEntries: integer;
+       Revision: integer;
+       Priority: integer;
        Empty: array[1..160] of byte;
        DirOffset: integer;
        Unknown6: integer;
        NamesSize: integer;
-       Unknown8: integer;
-       Unknown9: integer;
+       Zero: integer;
+       Padding: integer;
        UnknownA: integer;
      end;
      POD3Entry = packed record
        NameOffset: integer;
        Size: integer;
        Offset: integer;
-       Unknown1: integer;
-       Unknown2: integer;
+       Timestamp: integer;
+       Checksum: integer;
      end;
+     POD3AuditEntry = packed record
+       User: array[0..31] of char;
+       Timestamp: integer;
+       Action: integer;
+       Path: array[0..255] of char;
+       OldTimestamp: integer;
+       OldSize: integer;
+       NewTimestamp: integer;
+       NewSize: integer;
+     end;
+     
      // For POD5, entries have 2 extras integers (probably a 64bits checksum?)
 
 function ReadBloodRaynePOD(): Integer;

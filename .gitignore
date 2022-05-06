@@ -1,2 +1,6 @@
 *.~*
 *.dcu
+DragonUnPACKer-Doc/*
+!DragonUnPACKer-Doc/*.tex
+!DragonUnPACKer-Doc/*.pdf
+!DragonUnPACKer-Doc/images/

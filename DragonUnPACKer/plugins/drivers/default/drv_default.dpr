@@ -222,6 +222,7 @@ type
                  Added Monkey Island 2: Special Edition .PAK support
                  Added South Park: The Stick of Truth .OAF support
     30118        Changed XWC support for The Darkness (Xbox 360) files, EXPERIMENTAL
+    30121        Changed HMC TEX support for Kane and Lynch 2 files
         TODO --> Added Warrior Kings Battles BCP
 
   Possible bugs (TOCHECK):
@@ -243,7 +244,7 @@ type
 const
   DUDI_VERSION = 6;
   DUDI_VERSION_COMPATIBLE = 6;
-  DRIVER_VERSION = 30118;
+  DRIVER_VERSION = 30210;
   DUP_VERSION = 57110;
   BUFFER_SIZE = 8192;
 
@@ -7779,7 +7780,7 @@ begin
     FileSeek(Fhandle, 0, 0);
     FileRead(FHandle, HDR, Sizeof(TEX_Header));
 
-    if ((HDR.ID3 <> 3) or (HDR.ID4 <> 4) or (HDR.IndexOffset >= TotFSize) or (HDR.UnknownOffset >= TotFSize) or (HDR.UnknownOffset >= totFSize) or ((HDR.UnknownOffset-HDR.IndexOffset) <> $2000)) then
+    if (((HDR.ID3 <> 3) and (HDR.ID3 <> 0)) or ((HDR.ID4 <> 4) AND (HDR.ID4 <> 0)) or (HDR.IndexOffset >= TotFSize) or (HDR.UnknownOffset >= TotFSize) or (HDR.UnknownOffset >= totFSize) or (((HDR.UnknownOffset-HDR.IndexOffset) <> $2000) and ((HDR.UnknownOffset-HDR.IndexOffset) <> $4000))) then
     begin
       FileClose(Fhandle);
       FHandle := 0;
@@ -16199,6 +16200,12 @@ begin
     // Hitman: Contracts - TEX file
     else if (ID127[8] = #3) and (ID127[9] = #0) and (ID127[10] = #0) and (ID127[11] = #0)
         and (ID127[12] = #4) and (ID127[13] = #0) and (ID127[14] = #0) and (ID127[15] = #0) then
+      Result := true
+    // Kane and Lynch 2 - TEX file
+    else if (ID127[0] = #32) and (ID127[1] = #0) and (ID127[2] = #0) and (ID127[3] = #0)
+        and (ID127[4] = #32) and (ID127[5] = #64) and (ID127[6] = #0) and (ID127[7] = #0)
+        and (ID127[8] = #0) and (ID127[9] = #0) and (ID127[10] = #0) and (ID127[11] = #0)
+        and (ID127[12] = #0) and (ID127[13] = #0) and (ID127[14] = #0) and (ID127[15] = #0) then
       Result := true
     else if (ext = 'MIX') or (ext = 'TLK') then
     begin

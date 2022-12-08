@@ -90,8 +90,8 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=E:\Developpement\dup-dev-5.1-compiled\data\drivers
-UnitOutputDir=E:\Developpement\dup-dev-5.1-dcu
+OutputDir=B:\Developpement\dup-dev-5.1-compiled\data\drivers
+UnitOutputDir=B:\Developpement\dup-dev-5.1-dcu
 PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=$(DELPHI)\Lib\Debug;C:\Program Files (x86)\Borland\Delphi7\Source\jcl\lib\d7\debug;C:\Program Files (x86)\Borland\Delphi7\Source\jcl\jcl\lib\d7\debug
@@ -101,7 +101,7 @@ DebugSourceDirs=
 UsePackages=0
 [Parameters]
 RunParams=
-HostApplication=E:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
+HostApplication=B:\Developpement\dup-dev-5.1-compiled\drgunpack5.exe
 Launcher=
 UseLauncher=0
 DebugCWD=
@@ -111,7 +111,7 @@ AutoIncBuild=1
 MajorVer=3
 MinorVer=0
 Release=1
-Build=959
+Build=961
 Debug=0
 PreRelease=0
 Special=0
@@ -122,18 +122,10 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Elbereth Zone
 FileDescription=Elbereth's Main Driver plugin for Dragon UnPACKer 5
-FileVersion=3.0.1.959
+FileVersion=3.0.1.961
 InternalName=drv_default
 LegalCopyright=Created by Alexandre Devilliers (aka Elbereth/Piecito)
 LegalTrademarks=Mozilla Public License 2.0
 OriginalFilename=drv_default.d5d
 ProductName=Dragon UnPACKer 5
 ProductVersion=5.7.1
-[HistoryLists\hlUnitAliases]
-Count=1
-Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlOutputDirectorry]
-Count=3
-Item0=E:\Developpement\dup-dev-5.1-compiled
-Item1=E:\Developpement\dup-dev-5.1-compiled\data\drivers
-Item2=E:\Developpement\dup-dev-5.1-compiled\

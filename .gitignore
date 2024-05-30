@@ -4,3 +4,8 @@ DragonUnPACKer-Doc/*
 !DragonUnPACKer-Doc/*.tex
 !DragonUnPACKer-Doc/*.pdf
 !DragonUnPACKer-Doc/images/
+
+# GNU global files used for functions lookup in Lazarus on Linux
+GPATH
+GRTAGS
+GTAGS

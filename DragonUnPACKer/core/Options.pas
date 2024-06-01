@@ -1,5 +1,7 @@
 unit Options;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -13,7 +15,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ComCtrls, ImgList, StdCtrls, ExtCtrls, Registry, 
+  Dialogs, ComCtrls, ImgList, StdCtrls, ExtCtrls, Registry, ComboEx,
   CheckLst, Main, lib_look, ShellApi, BrowseForFolderU,classConvertExport;
 
 type
@@ -214,11 +216,11 @@ type
     procedure ThemeList();
     procedure TYPEList();
   private
-    { Déclarations privées }
+    { DÃ©clarations privÃ©es }
   public
     procedure trackbarVerboseUpdateHint;
     procedure updateAssocIcon;
-    { Déclarations publiques }
+    { DÃ©clarations publiques }
   end;
 
 var
@@ -227,13 +229,14 @@ var
 
 implementation
 
-{$R *.dfm}
+{$R *.lfm}
 
-uses lib_language, translation,lib_binUtils,lib_Utils;
+uses lib_language, Translation,lib_BinUtils,lib_Utils;
 
 var lngFiles: array[1..100] of String;
     numLngFiles: byte;
-    Loading: Boolean = False;
+    { yay collisions }
+    LoadingTmp: Boolean = False;
 
 procedure TfrmConfig.lstLanguesSelect(Sender: TObject);
 var Name,Author,URL,Email,FontName: string;
@@ -269,7 +272,7 @@ begin
     FreeAndNil(Reg);
   end;
 
-  if Not(Loading) then
+  if Not(LoadingTmp) then
   begin
     TranslateOptions;
     TranslateMain;
@@ -293,7 +296,7 @@ begin
   FreeAndNil(Icn);
   frmConfig.lstLangues.Clear;
   itmx := frmConfig.lstLangues.ItemsEx.Add;
-  itmx.Caption := 'Français (French)';
+  itmx.Caption := 'FranÃ§ais (French)';
   itmx.ImageIndex := 0;
 
   Sel := 0;
@@ -434,7 +437,7 @@ var Reg: TRegistry;
     TempDir: array[0..MAX_PATH] of Char;
 begin
 
-  Loading := True;
+  LoadingTmp := True;
 
   GetTempPath(MAX_PATH, @TempDir);
   txtTmpDirDefault.text := Strip0(TempDir);
@@ -571,7 +574,7 @@ begin
 
   treeConfig.Images := dup5Main.imgTheme16;
 
-  Loading := False;
+  LoadingTmp := False;
 
   treeConfig.Items.Item[TabSelect].Selected := True;
   treeConfig.FullExpand;
@@ -672,7 +675,7 @@ procedure TfrmConfig.chkAutoExpandClick(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -707,7 +710,7 @@ begin
     frmConfig.lblLookEmail.Caption := ThemeInfo.Email;
     frmConfig.lblLookComment.Caption := ThemeInfo.Comment;
 
-    if Not(Loading) then
+    if Not(LoadingTmp) then
     begin
 
       dup5Main.loadTheme(themename);
@@ -1015,7 +1018,7 @@ procedure TfrmConfig.trackbarVerboseChange(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(loading) then
+  if not(LoadingTmp) then
   begin
     Reg := TRegistry.Create;
     Try
@@ -1119,7 +1122,7 @@ procedure TfrmConfig.txtAssocExtIconChange(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -1171,7 +1174,7 @@ procedure TfrmConfig.txtAssocTextChange(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -1254,7 +1257,7 @@ procedure TfrmConfig.radTmpDirOtherClick(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if Not(Loading) then
+  if Not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -1282,7 +1285,7 @@ procedure TfrmConfig.txtTmpDirChange(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -1306,7 +1309,7 @@ procedure TfrmConfig.chkMakeExtractDefaultClick(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -1329,7 +1332,7 @@ procedure TfrmConfig.lstBufferSizeChange(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -1362,7 +1365,7 @@ procedure TfrmConfig.optPreviewLimitNoClick(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -1389,7 +1392,7 @@ procedure TfrmConfig.lstPreviewLimitChange(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -1416,7 +1419,7 @@ procedure TfrmConfig.optPreviewLimitYesClick(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -1442,7 +1445,7 @@ end;
 procedure TfrmConfig.optPreviewDisplayFullClick(Sender: TObject);
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
     dup5Main.menuPreview_Display_FullClick(Self);
 
 end;
@@ -1450,7 +1453,7 @@ end;
 procedure TfrmConfig.optPreviewDisplayStretchClick(Sender: TObject);
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
     dup5Main.menuPreview_Display_StretchedClick(Self);
 
 end;
@@ -1496,7 +1499,7 @@ procedure TfrmConfig.chkLogClearNewClick(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -1519,7 +1522,7 @@ procedure TfrmConfig.chkKeepFilterIndexClick(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -1542,7 +1545,7 @@ procedure TfrmConfig.chkAccept0BytesClick(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -1565,7 +1568,7 @@ procedure TfrmConfig.chkDisplayXYClick(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(Loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;

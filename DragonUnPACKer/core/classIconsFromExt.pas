@@ -1,5 +1,7 @@
 unit classIconsFromExt;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -11,7 +13,7 @@ unit classIconsFromExt;
 
 interface
 
-uses SysUtils, lib_language, Windows, registry, ShellApi, forms, Graphics, Controls, Classes, StrUtils, lib_utils;
+uses SysUtils, lib_language, Windows, registry, ShellApi, forms, Graphics, Controls, Classes, StrUtils, lib_Utils;
 
 type
   PHICON = ^HICON;

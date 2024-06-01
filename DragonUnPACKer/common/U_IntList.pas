@@ -1,4 +1,7 @@
 unit U_IntList;
+
+{$MODE Delphi}
+
 {Copyright 2001, Gary Darby, Intellitech Systems Inc., www.DelphiForFun.org
 
  This program may be used or modified for non-commercial purposes

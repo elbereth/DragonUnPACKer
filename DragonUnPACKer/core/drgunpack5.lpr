@@ -1,5 +1,7 @@
 program drgunpack5;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -12,9 +14,8 @@ program drgunpack5;
 {$DEFINE DRGUNPACK}
 
 uses
-  FastMM4,
-  FastCode,
-  FastMove,
+  {FastCode,
+  FastMove,}
   About in 'About.pas' {frmAbout},
   DrvInfo in 'DrvInfo.pas' {frmDrvInfo},
   Error in 'Error.pas' {frmError},
@@ -55,16 +56,11 @@ uses
   spec_DDS in '..\common\spec_DDS.pas',
   MpegAudioOptions in 'MpegAudioOptions.pas' {frmOptMPEGa},
   MsgBox in 'MsgBox.pas' {frmMsgBox},
-  classConvertExport in 'classConvertExport.pas',
-  lib_temptools in '..\common\lib_temptools.pas',
-  cls_duplog in '..\common\cls_duplog.pas',
-  lib_version in '..\common\lib_version.pas',
-  ComCtrls,
-  cls_dupcommands in 'cls_dupcommands.pas',
-  lib_pe32 in '..\common\lib_pe32.pas',
-  spec_DUDI in '..\common\spec_DUDI.pas';
+  classConvertExport, lib_temptools, cls_duplog, lib_version, ComCtrls,
+  Interfaces, cls_dupcommands, lib_pe32,
+  spec_DUDI;
 
-const _DEBUGMODE = FALSE;
+const _DEBUGMODE = TRUE;
 
 var     dupLog: TDupLog;
 
@@ -257,7 +253,7 @@ begin
   if _DEBUGMODE then
     dupLog.enableLogIntoFile(Application.ExeName+'.debug.'+FormatDateTime('yyyymmddhhnnsszzz',Now)+'.log');
 
-  compileTime := GetImageLinkDateTime(Application.ExeName);
+  compileTime := GetExecutableCompilationDateTime();
   if CurEdit = '' then
     dupLog.addMessage('Dragon UnPACKer v' + CurVersion + ' (Build ' + IntToStr(CurBuild) +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')',sevHigh)
   else
@@ -299,13 +295,16 @@ begin
   else begin
 
     dupLog.AddMessage('Create the mutex',sevDebug);
+    dupLog.flushMessages();
 
     // The Mutex is used by Duppi to check if Dragon UnPACKer is running.
     CreateMutex(nil, False, 'DragonUnPACKer5');
 
     dupLog.AddMessage('Create the Splash screen',sevDebug);
+    dupLog.flushMessages();
 
     // Create the Splash screen
+    Application.Initialize;
     with TfrmSplash.Create(nil) do
     try
 
@@ -363,8 +362,6 @@ begin
       begin
         dupLog.AddMessage(' = Sanity Checks are OK',sevDebug);
         dupLog.AddMessage('Application.Initialize;',sevDebug);
-        Application.Initialize;
-        Application.Title := 'Dragon UnPACKer';
         dupLog.AddMessage('Application.CreateForm(Tdup5Main, dup5Main)',sevDebug);
         Application.CreateForm(Tdup5Main, dup5Main);
   dup5Main.setLogFacility(dupLog);

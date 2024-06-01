@@ -4,3 +4,7 @@ DragonUnPACKer-Doc/*
 !DragonUnPACKer-Doc/*.tex
 !DragonUnPACKer-Doc/*.pdf
 !DragonUnPACKer-Doc/images/
+
+# Lazarus files
+backup
+lib/

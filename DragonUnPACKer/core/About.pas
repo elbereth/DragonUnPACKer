@@ -13,7 +13,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, lib_Utils, ExtCtrls, StdCtrls, ShellApi, ComCtrls;
+  Dialogs, lib_Utils, ExtCtrls, StdCtrls, ShellApi, ComCtrls, RichMemo;
 
 type
   TfrmAbout = class(TForm)
@@ -26,7 +26,7 @@ type
     lblCompDate: TLabel;
     Label1: TLabel;
     Shape1: TShape;
-    txtMoreinfo: TRichEdit;
+    txtMoreinfo: TRichMemo;
     imgWIP: TImage;
     procedure cmdOkClick(Sender: TObject);
     procedure TimerStartBlendTimer(Sender: TObject);
@@ -44,7 +44,7 @@ var
 
 implementation
 
-{$R *.dfm}
+{$R *.lfm}
 
 procedure TfrmAbout.cmdOkClick(Sender: TObject);
 begin

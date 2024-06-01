@@ -1,5 +1,7 @@
 unit prg_ver;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -11,7 +13,7 @@ unit prg_ver;
 
 interface
 
-uses SysUtils, Windows, Forms, lib_binutils, StrUtils;
+uses SysUtils, Windows, Forms, lib_BinUtils, StrUtils;
 
 function curBuild:integer;
 function curVersion:string;
@@ -59,7 +61,7 @@ begin
     if Taille>0
     then
     begin
-      {--- Réservation en mémoire d'une zone de la taille voulue ---}
+      {--- RÃ©servation en mÃ©moire d'une zone de la taille voulue ---}
       Buffer := AllocMem(Taille);
       try
         {--- Copie dans le buffer des informations ---}

@@ -1,5 +1,7 @@
 unit HyperRipper;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -58,7 +60,7 @@ uses
   Windows, Messages, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ComCtrls, lib_language, Registry, Math, spec_DDS,
   ExtCtrls, lib_utils, classFSE, spec_HRF, DateUtils, translation, U_IntList,
-  StrUtils, MpegAudioOptions, dwTaskbarComponents, dwProgressBar, ImgList, SysUtils,
+  StrUtils, MpegAudioOptions, {dwTaskbarComponents,} dwProgressBar, ImgList, SysUtils,
   Spec_DUDI, lib_binutils;
 
 const MP_FRAMES_FLAG = 1;
@@ -615,7 +617,7 @@ type FormatsListElem = record
     procedure addResult(st: String);
     procedure lastResult(st: String);
     procedure saveSettings();
-    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormClose(Sender: TObject; var  FormAction: TCloseAction);
     procedure chkRollback0Click(Sender: TObject);
     procedure chkRollback1Click(Sender: TObject);
     procedure chkRollback2Click(Sender: TObject);
@@ -667,7 +669,7 @@ type FormatsListElem = record
   public
     function getInfo(): DriverInfo;
     procedure stopSearch();
-    { Déclarations publiques }
+    { Dï¿½clarations publiques }
   end;
   THRipSearch = class(TThread)
   private
@@ -708,11 +710,11 @@ implementation
 
 uses Main;
 
-{$R *.dfm}
+{$R *.lfm}
 
 var prefix: string;
     numWAV: Integer;
-    Loading: Boolean = True;
+    LoadingTmp: Boolean = True;
     numChecked: Integer;
 //    counterMTOver: integer;
 
@@ -805,7 +807,7 @@ procedure TfrmHyperRipper.txtSourceChange(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -836,7 +838,7 @@ begin
 
   SortMode := true;
   SortType := 0;
-  Loading := True;
+  LoadingTmp := True;
   showExample('%f_%x-%n');
   lblMaxLength.Caption := ReplaceValue('%c',DLNGStr('HR3034'),'255');
   lblCompatible.Caption := ReplaceValue('%v',DLNGStr('HR3036'),'5.0.0.77');
@@ -925,7 +927,7 @@ begin
     lstFormats.Items.Item[x].Checked := not(cformat.FalsePositives and chkExcludeFalsePositive.Checked) and CheckRegistryHR('hr_default.d5h',cformat^.ID);
   end;
 
-  Loading := False;
+  LoadingTmp := False;
 
   if chkAutoStart.Checked and (Tag = 1) then
   begin
@@ -991,7 +993,7 @@ begin
 end;
 
 procedure TfrmHyperRipper.FormClose(Sender: TObject;
-  var Action: TCloseAction);
+  var FormAction: TCloseAction);
 begin
 
   saveSettings;
@@ -1675,7 +1677,7 @@ procedure TfrmHyperRipper.txtHRFTitleChange(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(loading) then
+  if not(LoadingTmp) then
   begin
 
   Reg := TRegistry.Create;
@@ -1700,7 +1702,7 @@ procedure TfrmHyperRipper.txtHRFAuthorChange(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(loading) then
+  if not(LoadingTmp) then
   begin
 
   Reg := TRegistry.Create;
@@ -1725,7 +1727,7 @@ procedure TfrmHyperRipper.txtHRFURLChange(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(loading) then
+  if not(LoadingTmp) then
   begin
 
   Reg := TRegistry.Create;
@@ -1891,7 +1893,7 @@ procedure TfrmHyperRipper.txtNamingChange(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(loading) then
+  if not(LoadingTmp) then
   begin
 
   Reg := TRegistry.Create;
@@ -1920,7 +1922,7 @@ procedure TfrmHyperRipper.lstFormatsChange(Sender: TObject;
 var cformat: PFormatListElem;
 begin
 
-  if not(loading) then
+  if not(LoadingTmp) then
   begin
 
     if (lstFormats.ItemIndex > -1) then
@@ -2125,7 +2127,7 @@ procedure TfrmHyperRipper.radiov30Click(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(loading) then
+  if not(LoadingTmp) then
   begin
     Reg := TRegistry.Create;
     Try
@@ -2157,7 +2159,7 @@ procedure TfrmHyperRipper.radiov20Click(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(loading) then
+  if not(LoadingTmp) then
   begin
     Reg := TRegistry.Create;
     Try
@@ -2189,7 +2191,7 @@ procedure TfrmHyperRipper.radiov10Click(Sender: TObject);
 var Reg: TRegistry;
 begin
 
-  if not(loading) then
+  if not(LoadingTmp) then
   begin
     Reg := TRegistry.Create;
     Try
@@ -2262,7 +2264,7 @@ begin
 
   refreshMTText;
 
-  if not(loading) then
+  if not(LoadingTmp) then
   begin
 
     Reg := TRegistry.Create;
@@ -2932,7 +2934,7 @@ begin
                 end;
               end;
         3002: begin
-                strPCopy(szFind,'×ÍÆš');
+                strPCopy(szFind,'ï¿½ï¿½Æš');
                 tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
                 if (tmpRes <> -1) then
                 begin

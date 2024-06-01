@@ -11,10 +11,8 @@ object frmMsgBox: TfrmMsgBox
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
-  OldCreateOrder = False
   Position = poScreenCenter
   PixelsPerInch = 96
-  TextHeight = 13
   object butOK: TButton
     Left = 184
     Top = 344
@@ -23,15 +21,5 @@ object frmMsgBox: TfrmMsgBox
     Caption = 'OK'
     TabOrder = 0
     OnClick = butOKClick
-  end
-  object richText: TRichEdit
-    Left = 0
-    Top = 0
-    Width = 441
-    Height = 337
-    BorderStyle = bsNone
-    ReadOnly = True
-    ScrollBars = ssBoth
-    TabOrder = 1
   end
 end

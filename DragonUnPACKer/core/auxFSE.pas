@@ -1,5 +1,7 @@
 unit auxFSE;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -54,7 +56,7 @@ procedure DisplayPercent(value: integer);
 function GetDirCache(CurDir: string): TDirCache;}
 
 
-procedure MsgBoxCallback(const title, msg: AnsiString);
+procedure MsgBoxCallbackTmp(const title, msg: AnsiString);
 procedure AddEntryCallback(entrynam: ShortString; Offset: Int64; Size: Int64; DataX: integer; DataY: integer);
 
 implementation
@@ -168,8 +170,8 @@ begin
 end;
 }
 
-
-procedure MsgBoxCallback(const title, msg: AnsiString);
+{ Apparently free pascal identifiers are case insensitive, and this one collides with a Windows one}
+procedure MsgBoxCallbackTmp(const title, msg: AnsiString);
 var tmpStm: TMemoryStream;
 begin
 

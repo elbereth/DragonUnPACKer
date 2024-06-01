@@ -27,12 +27,7 @@ unit lib_language;
 
 interface
 uses
-{$IFDEF FPC}
-  {$MODE DELPHI}
   zstream,
-{$ELSE}
-  zlib,
-{$ENDIF}
   Graphics;
 
 function GetIcon(fil: string): TBitmap;
@@ -48,7 +43,7 @@ var curlanguage : string = '';
 
 implementation
 
-uses SysUtils, forms,Dialogs,lib_zlib,lib_crc,spec_DLNG,Classes,lib_binutils;
+uses SysUtils, forms,Dialogs,lib_zlib,lib_crc,spec_DLNG,Classes,lib_binUtils;
 
 {$IFDEF DRGUNPACK}
 const DLNG_PRGID : string = 'UP';

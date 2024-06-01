@@ -1,5 +1,7 @@
 unit classFSE;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -21,8 +23,8 @@ unit classFSE;
 interface
 
 uses auxFSE, Classes, Comctrls, Controls, DateUtils, Dialogs, Forms,
-     lib_binCopy, lib_binutils, lib_language, lib_utils, prg_ver, Registry,
-     spec_HRF, strutils, Windows, SysUtils, Graphics, commonTypes, virtualtrees,
+     lib_binCopy, lib_BinUtils, lib_language, lib_Utils, prg_ver, Registry,
+     spec_HRF, strutils, Windows, SysUtils, Graphics, commonTypes, VirtualTrees,
      HashTrie, spec_DUDI, cls_duplog, cls_dupcommands, MsgBox, Error;
 
 { Record declaration }
@@ -513,12 +515,12 @@ begin
               else if (Drivers[NumDrivers].Infos.DUDIVersion = 5) then
               begin
                 Drivers[NumDrivers].Functions.InitPlugin3(Percent,Language,dup5pth,Application.Handle,CurAOwner);
-                Drivers[NumDrivers].Functions.InitPluginEx5(MsgBoxCallback);
+                Drivers[NumDrivers].Functions.InitPluginEx5(MsgBoxCallbackTmp);
               end
               else if (Drivers[NumDrivers].Infos.DUDIVersion >= 6) then
               begin
                 Drivers[NumDrivers].Functions.InitPlugin3(Percent,Language,dup5pth,Application.Handle,CurAOwner);
-                Drivers[NumDrivers].Functions.InitPluginEx5(MsgBoxCallback);
+                Drivers[NumDrivers].Functions.InitPluginEx5(MsgBoxCallbackTmp);
                 Drivers[NumDrivers].Functions.InitPluginEx6(AddEntryCallback);
                 Drivers[NumDrivers].Infos.ModifCapabilities := Drivers[NumDrivers].Functions.GetInfoModif;
               end;
@@ -1108,7 +1110,7 @@ begin
     //GetListElem(entrynam,Offset,Size,DataX,DataY);
     ExtractFile_Alt(outfile,entryList[entryIndex].Name,entryList[entryIndex].Offset,entryList[entryIndex].Size,entryList[entryIndex].DataX,entryList[entryIndex].DataY,silent);
   finally
-    Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
+    Screen.Cursor := Save_Cursor;  { Revient toujours Å• normal }
     _CommandsFacility.SetStatus('-');
     _CommandsFacility.RestoreTitle;
   end;
@@ -1181,7 +1183,7 @@ begin
 
     end;
   finally
-    Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
+    Screen.Cursor := Save_Cursor;  { Revient toujours Å• normal }
     _CommandsFacility.SetStatus('-');
 //    HidePanelEx;
     _CommandsFacility.RestoreTitle;
@@ -2074,7 +2076,7 @@ begin
       _LogFacility.addMessage(DLNGStr('ERR203')+' '+E.Message,sevError);
     end;
   end;
-  Screen.Cursor := Save_Cursor;  { Revient toujours à normal }
+  Screen.Cursor := Save_Cursor;  { Revient toujours Å• normal }
   _CommandsFacility.SetStatus('-');
   _CommandsFacility.RestoreTitle;
 

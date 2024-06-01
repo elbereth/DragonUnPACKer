@@ -1,6 +1,8 @@
 object frmAbout: TfrmAbout
   Left = 234
+  Height = 331
   Top = 133
+  Width = 427
   AlphaBlend = True
   AlphaBlendValue = 230
   BorderIcons = []
@@ -10,22 +12,17 @@ object frmAbout: TfrmAbout
   ClientHeight = 331
   ClientWidth = 427
   Color = clWhite
-  TransparentColorValue = clLime
-  Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
-  Font.Style = []
   FormStyle = fsStayOnTop
-  OldCreateOrder = False
   Position = poMainFormCenter
-  PixelsPerInch = 96
-  TextHeight = 13
+  LCLVersion = '3.4.0.0'
   object ImgAbout: TImage
     Left = 0
+    Height = 113
     Top = 0
     Width = 429
-    Height = 113
     AutoSize = True
     Picture.Data = {
       07544269746D6170F44F0000424DF44F0000000000003604000028000000AD01
@@ -667,13 +664,14 @@ object frmAbout: TfrmAbout
       FC2C03FCEFFB01F902FB01F972FB0300000034FB03FC000C8ED7DDD7DDD7D7DD
       D7D7BAFC03FCFFFB68FB0300000035FB03FC01B805D70004D5B600FC03FCFFFB
       69FB0300000036FB03FC0006B6D7D5B83AFC05FCFFFB6AFB0300000037FB0BFC
-      FFFB6CFB0300000038FB07FCFFFB6FFB0300000039FB03FCFFFB72FB03000001}
+      FFFB6CFB0300000038FB07FCFFFB6FFB0300000039FB03FCFFFB72FB03000001
+    }
   end
   object imgWIP: TImage
     Left = 148
+    Height = 25
     Top = 88
     Width = 274
-    Height = 25
     Picture.Data = {
       07544269746D6170B00B0000424DB00B00000000000076000000280000001201
       00001900000001000400020000003A0B0000D21E0000D21E0000100000001000
@@ -768,19 +766,19 @@ object frmAbout: TfrmAbout
       10002FFF500006000AFF0020F9999888AFF5778865555BFFF654EC6F08FF0020
       E5AA6568CE879EFFFF8534D769A5868C08FF0066C68937AAAFFFFFFFFDCC9888
       7887EF8534D769A5868CFFFFF422368A74653339FFFFFFA5555568DA9FFFFFFA
-      5555568DA9FFFF0000004CFF0006EABCCD00C0FF0000FEFF14FF0001}
+      5555568DA9FFFF0000004CFF0006EABCCD00C0FF0000FEFF14FF0001
+    }
     Visible = False
   end
   object lblVersion: TLabel
     Left = 144
+    Height = 13
     Top = 59
     Width = 281
-    Height = 13
     Alignment = taCenter
     AutoSize = False
     Caption = 'Version 5.0.0 Beta 1'
     Color = clBlack
-    Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindow
     Font.Height = -11
     Font.Name = 'MS Sans Serif'
@@ -790,88 +788,68 @@ object frmAbout: TfrmAbout
     Transparent = False
   end
   object lblURL: TLabel
+    Cursor = crHandPoint
     Left = 8
+    Height = 13
     Top = 312
     Width = 159
-    Height = 13
-    Cursor = crHandPoint
     Caption = 'http://www.dragonunpacker.com'
-    Font.Charset = DEFAULT_CHARSET
     Font.Color = clBlue
     Font.Height = -11
     Font.Name = 'MS Sans Serif'
     Font.Style = [fsUnderline]
     ParentFont = False
-    Transparent = True
     OnClick = lblURLClick
   end
   object lblFreeware: TLabel
     Left = 144
+    Height = 13
     Top = 94
     Width = 281
-    Height = 13
     Alignment = taCenter
     AutoSize = False
     Caption = 'Programme gratuit (Freeware)'
     Color = clRed
-    Font.Charset = DEFAULT_CHARSET
     Font.Color = clGreen
     Font.Height = -11
     Font.Name = 'MS Sans Serif'
-    Font.Style = []
     ParentColor = False
     ParentFont = False
-    Transparent = True
   end
   object lblCompDate: TLabel
     Left = 144
+    Height = 13
     Top = 72
     Width = 281
-    Height = 13
     Alignment = taCenter
     AutoSize = False
     Caption = 'VirtualTree v'
-    Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -9
     Font.Name = 'Small Fonts'
-    Font.Style = []
     ParentFont = False
-    Transparent = True
   end
   object Label1: TLabel
     Left = 8
+    Height = 13
     Top = 296
     Width = 252
-    Height = 13
     Caption = 'Created by Alexandre Devilliers (aka Elbereth/Piecito)'
   end
   object Shape1: TShape
     Left = 8
+    Height = 169
     Top = 120
     Width = 409
-    Height = 169
   end
   object cmdOk: TButton
     Left = 336
+    Height = 25
     Top = 296
     Width = 81
-    Height = 25
     Caption = 'OK'
     TabOrder = 0
     OnClick = cmdOkClick
-  end
-  object txtMoreinfo: TRichEdit
-    Left = 9
-    Top = 121
-    Width = 407
-    Height = 167
-    Alignment = taCenter
-    BorderStyle = bsNone
-    HideScrollBars = False
-    ReadOnly = True
-    ScrollBars = ssVertical
-    TabOrder = 1
   end
   object TimerStartBlend: TTimer
     Enabled = False

@@ -1,5 +1,7 @@
 unit BrowseForFolderU;
 
+{$MODE Delphi}
+
 // Brian Cryer code (with help of Martin Birk)
 // Found on http://www.cryer.co.uk/brian/delphi/howto_browseforfolder.htm
 

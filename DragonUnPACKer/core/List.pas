@@ -1,5 +1,7 @@
 unit List;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -13,8 +15,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls, StdCtrls, ComCtrls, jpeg, spec_DUHT, StrUtils, prg_ver,
-  lib_language, class_duht, classFSE, VirtualTrees, lib_binUtils, lib_utils, Registry;
+  Dialogs, ExtCtrls, StdCtrls, ComCtrls, spec_DUHT, StrUtils, prg_ver,
+  lib_language, class_duht, classFSE, VirtualTrees, lib_BinUtils, lib_Utils, Registry;
 
 const MAX_DUHT = 256;
 
@@ -83,7 +85,7 @@ implementation
 
 uses Main;
 
-{$R *.dfm}
+{$R *.lfm}
 
 procedure TfrmList.clearUHT;
 var x: integer;

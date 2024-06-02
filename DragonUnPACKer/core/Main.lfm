@@ -1,13 +1,13 @@
 object dup5Main: Tdup5Main
-  Left = 1817
-  Height = 447
-  Top = 520
-  Width = 667
+  Left = 1373
+  Height = 884
+  Top = 301
+  Width = 1152
   HelpContext = 1
   AlphaBlendValue = 128
   Caption = 'Dragon UnPACKer v5'
-  ClientHeight = 447
-  ClientWidth = 667
+  ClientHeight = 884
+  ClientWidth = 1152
   Color = clBtnFace
   Font.Color = clWindowText
   Font.Height = -11
@@ -21,7 +21,7 @@ object dup5Main: Tdup5Main
   LCLVersion = '3.4.0.0'
   object Splitter: TSplitter
     Left = 113
-    Height = 302
+    Height = 739
     Top = 41
     Width = 5
     HelpContext = 2
@@ -31,16 +31,16 @@ object dup5Main: Tdup5Main
     Cursor = crVSplit
     Left = 0
     Height = 3
-    Top = 343
-    Width = 667
+    Top = 780
+    Width = 1152
     Align = alBottom
     AutoSnap = False
     MinSize = 100
     ResizeAnchor = akBottom
   end
   object SplitterPreview: TSplitter
-    Left = 467
-    Height = 302
+    Left = 952
+    Height = 739
     Top = 41
     Width = 5
     HelpContext = 2
@@ -50,9 +50,9 @@ object dup5Main: Tdup5Main
   end
   object lstContent: TVirtualStringTree
     Left = 118
-    Height = 302
+    Height = 739
     Top = 41
-    Width = 349
+    Width = 834
     HelpContext = 11
     Align = alClient
     DragMode = dmAutomatic
@@ -83,7 +83,7 @@ object dup5Main: Tdup5Main
   end
   object lstIndex: TVirtualStringTree
     Left = 0
-    Height = 302
+    Height = 739
     Top = 41
     Width = 113
     HelpContext = 12
@@ -111,19 +111,19 @@ object dup5Main: Tdup5Main
   object panBottom: TPanel
     Left = 0
     Height = 101
-    Top = 346
-    Width = 667
+    Top = 783
+    Width = 1152
     Align = alBottom
     BevelOuter = bvNone
     ClientHeight = 101
-    ClientWidth = 667
+    ClientWidth = 1152
     ParentBackground = False
     TabOrder = 2
     object Status: TStatusBar
       Left = 0
       Height = 23
       Top = 78
-      Width = 667
+      Width = 1152
       HelpContext = 3
       Panels = <      
         item
@@ -162,30 +162,46 @@ object dup5Main: Tdup5Main
       HelpContext = 5
       Anchors = [akLeft, akBottom]
       Smooth = True
+      TabOrder = 2
+    end
+    object richLog: TRichMemo
+      Left = 0
+      Height = 78
+      Top = 0
+      Width = 1152
+      Align = alClient
+      HideSelection = False
+      Lines.Strings = (
+        'richLog'
+      )
+      ReadOnly = True
+      ScrollBars = ssAutoBoth
       TabOrder = 1
+      WordWrap = False
+      ZoomFactor = 1
     end
   end
   object panPreview: TPanel
-    Left = 472
-    Height = 302
+    Left = 957
+    Height = 739
     Top = 41
     Width = 195
     Align = alRight
     BevelOuter = bvLowered
-    ClientHeight = 302
+    ClientHeight = 739
     ClientWidth = 195
     ParentBackground = False
     PopupMenu = Popup_Preview
     TabOrder = 3
     object scrollPreview: TScrollBox
       Left = 1
-      Height = 300
+      Height = 737
       Top = 1
       Width = 193
       HorzScrollBar.Page = 189
       VertScrollBar.Page = 175
       Align = alClient
-      ClientHeight = 279
+      ClientHeight = 716
       ClientWidth = 189
       ParentBackground = False
       TabOrder = 0
@@ -206,10 +222,10 @@ object dup5Main: Tdup5Main
     Left = 0
     Height = 41
     Top = 0
-    Width = 667
+    Width = 1152
     Align = alTop
     ClientHeight = 41
-    ClientWidth = 667
+    ClientWidth = 1152
     ParentBackground = False
     TabOrder = 4
     object ToolBar: TToolBar

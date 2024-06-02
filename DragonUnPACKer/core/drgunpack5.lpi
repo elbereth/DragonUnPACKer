@@ -34,6 +34,12 @@
     </RunParams>
     <RequiredPackages>
       <Item>
+        <PackageName Value="richmemo_design"/>
+      </Item>
+      <Item>
+        <PackageName Value="multiloglaz"/>
+      </Item>
+      <Item>
         <PackageName Value="VampyreImagingPackage"/>
       </Item>
       <Item>

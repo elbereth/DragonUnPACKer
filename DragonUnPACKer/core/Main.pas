@@ -1,5 +1,7 @@
 unit Main;
 
+{$mode objfpc}{$H+}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -16,11 +18,11 @@ uses
   Dialogs, classFSE, classConvert, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, Menus, ImgList,
   lib_language, translation, ShellApi, VirtualTrees, lib_look, ToolWin,
   DragDrop, DragDropFile, prg_ver, StrUtils, {DropSource}
-  classIconsFromExt, DateUtils, lib_binutils, commonTypes,
-  BrowseForFolderU, dwProgressBar, classConvertExport, RichMemo, RichMemoHelpers,
+  classIconsFromExt, DateUtils, lib_binutils, commonTypes, BrowseForFolderU,
+  dwProgressBar, classConvertExport, RichMemo, RichMemoHelpers, LogTreeView,
   // Vampyre Imaging Library
   ImagingTypes, Imaging, ImagingClasses, ImagingComponents, ImagingCanvases,
-  ImagingFormats, ImagingUtility, {dwTaskbarComponents,}
+  ImagingFormats, ImagingUtility, dwTaskbarComponents,
   lib_crc, lib_temptools, lib_version, IniFiles, cls_duplog, cls_dupcommands;
 
 type
@@ -31,6 +33,9 @@ type
     Email: String;
     Comment: String;
   end;
+
+  { Tdup5Main }
+
   Tdup5Main = class(TForm)
     Splitter: TSplitter;
     OpenDialog: TOpenDialog;
@@ -1143,6 +1148,7 @@ begin
 
 end;
 
+
 procedure Tdup5Main.WMUser(var msg: TMessage);
 begin
 
@@ -1652,6 +1658,10 @@ begin
   // Create the commands facility
   globalCommandsFacility := TDupCommands.Create(Self,Status,Percent,lstContent,lstIndex,TempFiles);
 
+  //richLog := TRichMemo.Create(panBottom);
+  //richLog.Parent := panBottom;
+  //richLog.Wid
+
   DoSetRegistryDUP5 := false;  
 
   // Initializing preview engine
@@ -1817,43 +1827,43 @@ begin
       begin
         tmpi := Reg.ReadInteger('lstContent_0');
         if tmpi >= 0 then
-          lstContent.Header.Columns.Items[0].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('lstContent_1') then
       begin
         tmpi := Reg.ReadInteger('lstContent_1');
         if tmpi >= 0 then
-          lstContent.Header.Columns.Items[1].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('lstContent_2') then
       begin
         tmpi := Reg.ReadInteger('lstContent_2');
         if tmpi >= 0 then
-          lstContent.Header.Columns.Items[2].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('lstContent_3') then
       begin
         tmpi := Reg.ReadInteger('lstContent_3');
         if tmpi > 0 then
-          lstContent.Header.Columns.Items[3].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('lstContent_4') then
       begin
         tmpi := Reg.ReadInteger('lstContent_4');
         if tmpi > 0 then
-          lstContent.Header.Columns.Items[4].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('lstContent_5') then
       begin
         tmpi := Reg.ReadInteger('lstContent_5');
         if tmpi > 0 then
-          lstContent.Header.Columns.Items[5].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('lstContent_6') then
       begin
         tmpi := Reg.ReadInteger('lstContent_6');
         if tmpi > 0 then
-          lstContent.Header.Columns.Items[6].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('toolBar_T') then
       begin
@@ -1890,7 +1900,7 @@ begin
     FreeAndNil(Reg);
   end;
 
-  TranslateMain;
+  TranslateMain();
 
   lstContent_displayHiddenHeader;
 

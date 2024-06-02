@@ -55,8 +55,7 @@ uses
   MpegAudioOptions in 'MpegAudioOptions.pas' {frmOptMPEGa},
   MsgBox in 'MsgBox.pas' {frmMsgBox},
   classConvertExport, lib_temptools, cls_duplog, lib_version, ComCtrls,
-  Interfaces, cls_dupcommands, lib_pe32,
-  spec_DUDI;
+  multiloglaz, Interfaces, cls_dupcommands, lib_pe32, spec_DUDI;
 
 const _DEBUGMODE = TRUE;
 

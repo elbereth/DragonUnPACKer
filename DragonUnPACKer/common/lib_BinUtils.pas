@@ -266,7 +266,10 @@ begin
   FileRead(src,tbyt,1);
   setlength(tchar,tbyt);
 //  FillChar(tchar,256,0);
-  FileRead(src,tchar[1],tbyt*2);
+  if tbyt > 0 then
+  begin
+      FileRead(src,tchar[1],tbyt*2);
+  end;
 
   result := tchar;
 
@@ -280,7 +283,10 @@ begin
   src.ReadBuffer(tbyt,1);
   setlength(tchar,tbyt);
 //  FillChar(tchar,256,0);
-  src.ReadBuffer(tchar[1],tbyt*2);
+  if tbyt > 0 then
+  begin
+    src.ReadBuffer(tchar[1],tbyt*2);
+  end;
   result := tchar;
 
 end;

@@ -1,6 +1,6 @@
 unit SelectLanguage;
 
-{$MODE Delphi}
+{$MODE objfpc}{$H+}
 
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,7 +47,7 @@ var lngFiles: array[1..100] of String;
 
 procedure TfrmSelectLanguage.LNGList();
 var sr: TSearchRec;
-    Name,Author,URL,Email,FontName: string;
+    LangName,Author,URL,Email,FontName: string;
     itmx : TComboExItem;
     IsIcon: Boolean;
     Sel, IcnIdx: integer;
@@ -70,10 +70,10 @@ begin
   begin
 
     repeat
-      if GetLanguageInfo(ExtractFilePath(Application.ExeName)+'data\'+sr.Name,Name,Author,URL,Email,FontName,IsIcon) then
+      if GetLanguageInfo(ExtractFilePath(Application.ExeName)+'data\'+sr.Name,LangName,Author,URL,Email,FontName,IsIcon) then
       begin
         itmx := lstLangues.ItemsEx.Add;
-        itmx.Caption := Name;
+        itmx.Caption := LangName;
         numLngFiles := numLngFiles + 1;
         lngFiles[numLngFiles] := sr.Name;
         if sr.Name = curlanguage then

@@ -9,7 +9,7 @@ object frmSplash: TfrmSplash
   Caption = 'Dragon UnPACKer 5'
   ClientHeight = 299
   ClientWidth = 449
-  Color = clLime
+  Color = clNone
   Font.Color = clWindowText
   Font.Height = 13
   Font.Name = 'MS Sans Serif'
@@ -23,6 +23,7 @@ object frmSplash: TfrmSplash
     Height = 300
     Top = 0
     Width = 450
+    Transparent = True
   end
   object lblLoading: TLabel
     Left = 224

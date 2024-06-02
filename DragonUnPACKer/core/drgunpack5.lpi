@@ -12,6 +12,7 @@
       <XPManifest>
         <TextDesc Value="Free/Open source game file resource explorer/unpacking tool made easy!"/>
       </XPManifest>
+      <Icon Value="0"/>
     </General>
     <VersionInfo>
       <UseVersionInfo Value="True"/>
@@ -265,7 +266,7 @@
     </CodeGeneration>
     <Linking>
       <Debugging>
-        <DebugInfoType Value="dsDwarf3"/>
+        <DebugInfoType Value="dsDwarf2Set"/>
       </Debugging>
       <Options>
         <Win32>
@@ -273,6 +274,9 @@
         </Win32>
       </Options>
     </Linking>
+    <Other>
+      <CustomOptions Value="-dDRGUNPACK"/>
+    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions>

@@ -1,5 +1,7 @@
 unit About;
 
+{$mode objfpc}{$H+}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -12,8 +14,8 @@ unit About;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, lib_Utils, ExtCtrls, StdCtrls, ShellApi, ComCtrls, RichMemo;
+  Windows, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, ExtCtrls, StdCtrls, ShellApi, ComCtrls, RichMemo;
 
 type
   TfrmAbout = class(TForm)
@@ -34,9 +36,9 @@ type
     procedure txtMoreinfoURLClick(Sender: TObject; const URLText: String;
       Button: TMouseButton);
   private
-    { Déclarations privées }
+    { Dï¿½clarations privï¿½es }
   public
-    { Déclarations publiques }
+    { Dï¿½clarations publiques }
   end;
 
 var

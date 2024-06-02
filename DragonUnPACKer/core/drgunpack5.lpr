@@ -11,11 +11,9 @@ program drgunpack5;
 // The Initial Developer of the Original Code is Alexandre Devilliers
 // (elbereth@users.sourceforge.net, http://www.elberethzone.net).
 
-{$DEFINE DRGUNPACK}
+{DEFINE DRGUNPACK is defined in the project options}
 
 uses
-  {FastCode,
-  FastMove,}
   About in 'About.pas' {frmAbout},
   DrvInfo in 'DrvInfo.pas' {frmDrvInfo},
   Error in 'Error.pas' {frmError},
@@ -64,6 +62,7 @@ const _DEBUGMODE = TRUE;
 
 var     dupLog: TDupLog;
 
+// TODO: replace with .lrs in the future
 {$R *.res}
 
 {$R 'icones.res' 'icones.rc'}

@@ -1,5 +1,7 @@
 program dlngc;
 
+{$mode objfpc}{$H+}
+
 {$APPTYPE CONSOLE}
 
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -16,7 +18,7 @@ uses
   SysUtils,
   Classes,
   DateUtils,
-  Zlib,
+  zstream,
   spec_DLNG in '..\..\common\spec_DLNG.pas',
   lib_crc in '..\..\common\lib_crc.pas';
 
@@ -258,7 +260,7 @@ begin
             outFileStm.WriteBuffer(strTmp[1],length(strTmp));
           end;
 
-          strTmp := '  else'+#13+#10+'    result := '+QuotedStr('--Non défini--')+#13+#10+#13+#10+'end;'+#13+#10;
+          strTmp := '  else'+#13+#10+'    result := '+QuotedStr('--Non dÃ©fini--')+#13+#10+#13+#10+'end;'+#13+#10;
           outFileStm.WriteBuffer(strTmp[1],length(strTmp));
 
           if PascalOutput then
@@ -511,6 +513,9 @@ end;
 
 var xp: integer;
 var NoCRC,NoIcon,PascalOutput,PascalOutputInclude: boolean;
+
+{$R *.res}
+
 begin
   { TODO -oUser -cConsole Main : placez le code ici }
 

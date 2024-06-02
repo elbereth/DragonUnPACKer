@@ -8,6 +8,6 @@ DragonUnPACKer-Doc/*
 # Lazarus files
 
 # personal editor info
-.lps
+*.lps
 backup
 lib/

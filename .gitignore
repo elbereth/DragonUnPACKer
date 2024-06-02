@@ -6,5 +6,8 @@ DragonUnPACKer-Doc/*
 !DragonUnPACKer-Doc/images/
 
 # Lazarus files
+
+# personal editor info
+.lps
 backup
 lib/

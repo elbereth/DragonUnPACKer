@@ -8,11 +8,10 @@
       <Unit>
         <Filename Value="drgunpack5.lpr"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="5"/>
         <TopLine Value="43"/>
-        <CursorPos Y="66"/>
-        <UsageCount Value="39"/>
+        <CursorPos X="20" Y="44"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -21,9 +20,9 @@
         <ComponentName Value="frmAbout"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="11"/>
+        <EditorIndex Value="12"/>
         <CursorPos X="20" Y="3"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -33,7 +32,7 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="Error.pas"/>
@@ -43,7 +42,7 @@
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="12" Y="17"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="HyperRipper.pas"/>
@@ -51,7 +50,7 @@
         <HasResources Value="True"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="14" Y="3"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="List.pas"/>
@@ -60,7 +59,7 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="Main.pas"/>
@@ -68,10 +67,10 @@
         <ComponentName Value="dup5Main"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="13"/>
-        <TopLine Value="1095"/>
-        <CursorPos X="18" Y="1113"/>
-        <UsageCount Value="39"/>
+        <EditorIndex Value="14"/>
+        <TopLine Value="7"/>
+        <CursorPos X="29" Y="38"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit>
@@ -84,7 +83,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="419"/>
         <CursorPos X="43" Y="420"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="Search.pas"/>
@@ -93,7 +92,7 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="SelectLanguage.pas"/>
@@ -104,7 +103,7 @@
         <EditorIndex Value="6"/>
         <TopLine Value="47"/>
         <CursorPos X="14" Y="76"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -115,7 +114,7 @@
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="2"/>
         <CursorPos X="28" Y="19"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit>
@@ -125,21 +124,21 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="16"/>
         <CursorPos X="22" Y="48"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="class_duht.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="32" Y="16"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="classConvert.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="1"/>
         <CursorPos X="15" Y="3"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -148,13 +147,13 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="265"/>
         <CursorPos X="8" Y="281"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="classIconsFromExt.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="HashTrie.pas"/>
@@ -162,13 +161,13 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="410"/>
         <CursorPos X="29" Y="432"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\lib_bincopy.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\lib_BinUtils.pas"/>
@@ -176,14 +175,14 @@
         <EditorIndex Value="9"/>
         <TopLine Value="280"/>
         <CursorPos X="15" Y="314"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\lib_crc.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\lib_language.pas"/>
@@ -191,7 +190,7 @@
         <EditorIndex Value="7"/>
         <TopLine Value="285"/>
         <CursorPos Y="307"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -200,14 +199,14 @@
         <EditorIndex Value="3"/>
         <TopLine Value="95"/>
         <CursorPos X="56" Y="117"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\lib_Utils.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\lib_zlib.pas"/>
@@ -216,64 +215,64 @@
         <WindowIndex Value="-1"/>
         <TopLine Value="-1"/>
         <CursorPos X="-1" Y="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="prg_ver.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\spec_DLNG.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\spec_DUHT.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="Translation.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="10"/>
-        <TopLine Value="77"/>
-        <CursorPos Y="77"/>
-        <UsageCount Value="39"/>
+        <TopLine Value="80"/>
+        <CursorPos X="36" Y="99"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\spec_HRF.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\commonTypes.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\U_IntList.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\BrowseForFolderU.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\spec_DDS.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="MpegAudioOptions.pas"/>
@@ -282,7 +281,7 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="MsgBox.pas"/>
@@ -290,34 +289,35 @@
         <HasResources Value="True"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="8" Y="29"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="classConvertExport.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\lib_temptools.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\cls_duplog.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="12"/>
-        <TopLine Value="152"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="13"/>
+        <TopLine Value="149"/>
         <CursorPos Y="170"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\lib_version.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="cls_dupcommands.pas"/>
@@ -325,21 +325,21 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="7"/>
         <CursorPos X="6" Y="19"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\lib_pe32.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="4"/>
         <CursorPos Y="3"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="..\common\spec_DUDI.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
       </Unit>
       <Unit>
         <Filename Value="..\..\..\Delphi-Win7-Components\Packages\D7\datetime.inc"/>
@@ -434,10 +434,11 @@
       </Unit>
       <Unit>
         <Filename Value="C:\Users\halamix2\AppData\Local\lazarus\onlinepackagemanager\packages\VirtualTreeViewV5\Source\VirtualTrees.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="3545"/>
-        <CursorPos X="17" Y="3562"/>
+        <EditorIndex Value="11"/>
+        <TopLine Value="1134"/>
+        <CursorPos X="14" Y="1145"/>
         <UsageCount Value="10"/>
+        <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="C:\lazarus\fpc\3.2.2\source\rtl\inc\systemh.inc"/>
@@ -476,70 +477,6 @@
       </Unit>
     </Units>
     <JumpHistory HistoryIndex="29">
-      <Position>
-        <Filename Value="Main.pas"/>
-        <Caret Line="1817" Column="26" TopLine="1798"/>
-      </Position>
-      <Position>
-        <Filename Value="Translation.pas"/>
-        <Caret Line="96" Column="43" TopLine="77"/>
-      </Position>
-      <Position>
-        <Filename Value="..\common\lib_BinUtils.pas"/>
-        <Caret Line="275" TopLine="255"/>
-      </Position>
-      <Position>
-        <Filename Value="..\common\lib_BinUtils.pas"/>
-        <Caret Line="314" Column="15" TopLine="280"/>
-      </Position>
-      <Position>
-        <Filename Value="Translation.pas"/>
-        <Caret Line="26" Column="86" TopLine="8"/>
-      </Position>
-      <Position>
-        <Filename Value="Translation.pas"/>
-        <Caret Line="94" Column="42" TopLine="82"/>
-      </Position>
-      <Position>
-        <Filename Value="Translation.pas"/>
-        <Caret Line="90" Column="33" TopLine="76"/>
-      </Position>
-      <Position>
-        <Filename Value="Translation.pas"/>
-        <Caret Line="94" Column="42" TopLine="76"/>
-      </Position>
-      <Position>
-        <Filename Value="..\common\cls_duplog.pas"/>
-        <Caret Line="170" TopLine="152"/>
-      </Position>
-      <Position>
-        <Filename Value="Translation.pas"/>
-        <Caret Line="98" Column="66" TopLine="80"/>
-      </Position>
-      <Position>
-        <Filename Value="Translation.pas"/>
-        <Caret Line="94" Column="21" TopLine="80"/>
-      </Position>
-      <Position>
-        <Filename Value="Translation.pas"/>
-        <Caret Line="100" Column="41" TopLine="83"/>
-      </Position>
-      <Position>
-        <Filename Value="Translation.pas"/>
-        <Caret Line="94" Column="36" TopLine="76"/>
-      </Position>
-      <Position>
-        <Filename Value="Translation.pas"/>
-        <Caret Line="99" Column="34" TopLine="76"/>
-      </Position>
-      <Position>
-        <Filename Value="Translation.pas"/>
-        <Caret Line="100" Column="7" TopLine="70"/>
-      </Position>
-      <Position>
-        <Filename Value="Main.pas"/>
-        <Caret Line="307" Column="22" TopLine="301"/>
-      </Position>
       <Position>
         <Filename Value="Main.pas"/>
         <Caret Line="169" Column="21" TopLine="152"/>
@@ -596,6 +533,70 @@
         <Filename Value="About.pas"/>
         <Caret Line="3" Column="20"/>
       </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="3" Column="15"/>
+      </Position>
+      <Position>
+        <Filename Value="Main.pas"/>
+        <Caret Line="38" Column="29" TopLine="7"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="94" Column="33" TopLine="77"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="95" TopLine="77"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="20" Column="11"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="30" TopLine="46"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="94" Column="36" TopLine="76"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="97" TopLine="76"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="94" Column="36" TopLine="76"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="96" Column="37" TopLine="76"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="19" Column="2" TopLine="19"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="97" TopLine="80"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="99" TopLine="80"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="94" Column="32" TopLine="80"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="93" TopLine="80"/>
+      </Position>
+      <Position>
+        <Filename Value="Translation.pas"/>
+        <Caret Line="99" Column="36" TopLine="80"/>
+      </Position>
     </JumpHistory>
     <RunParams>
       <FormatVersion Value="2"/>
@@ -603,15 +604,6 @@
     </RunParams>
   </ProjectSession>
   <Debugging>
-    <BreakPoints>
-      <Item>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
-        <Source Value="Translation.pas"/>
-        <Line Value="95"/>
-      </Item>
-    </BreakPoints>
     <Watches>
       <Item>
         <Expression Value="dup5main.lstContent.Header"/>

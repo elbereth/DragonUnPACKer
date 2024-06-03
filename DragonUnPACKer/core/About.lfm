@@ -1,7 +1,7 @@
 object frmAbout: TfrmAbout
-  Left = 234
+  Left = 2124
   Height = 331
-  Top = 133
+  Top = 538
   Width = 427
   AlphaBlend = True
   AlphaBlendValue = 230
@@ -850,6 +850,19 @@ object frmAbout: TfrmAbout
     Caption = 'OK'
     TabOrder = 0
     OnClick = cmdOkClick
+  end
+  object txtMoreinfo: TRichMemo
+    Left = 9
+    Height = 167
+    Top = 121
+    Width = 407
+    Alignment = taCenter
+    BorderStyle = bsNone
+    HideSelection = False
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
+    TabOrder = 1
+    ZoomFactor = 1
   end
   object TimerStartBlend: TTimer
     Enabled = False

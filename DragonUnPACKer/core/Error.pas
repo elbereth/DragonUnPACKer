@@ -203,7 +203,7 @@ end;
 procedure TfrmError.lblEmailReportClick(Sender: TObject);
 begin
 
-  ShellExecute(Application.Handle,'open',Pchar('https://sourceforge.net/tracker/?func=add&group_id=108923&atid=652129'),nil,nil, SW_SHOWNORMAL);
+  ShellExecute(Application.Handle,'open',Pchar('https://github.com/elbereth/DragonUnPACKer/issues'),nil,nil, SW_SHOWNORMAL);
 
 end;
 

@@ -49,6 +49,7 @@ unit HyperRipper;
   *       THandleStream is freed after use (no more memory leak)
   * 57040 Added AAC (ADTS) and MPEG-4 TS support
   * 57042 Added some more feedback when searching
+  * 57043 Added WEBM/MKV support
   *
 }
 
@@ -66,7 +67,7 @@ const MP_FRAMES_FLAG = 1;
       MP_TOC_FLAG = 4;
       MP_VBR_SCALE_FLAG = 8;
 
-      HR_VERSION = 57042;	// HyperRipper version
+      HR_VERSION = 57043;	// HyperRipper version
 
 type FormatsListElem = record
        GenType: Integer;
@@ -695,6 +696,8 @@ type FormatsListElem = record
     function BigToLittle2(src: array of byte): word;
     function BigToLittle4(src: array of byte): integer;
     procedure displayInfo(buffer: pbytearray; curPos: int64; totSize: int64; displayHexDump: boolean = true);
+    function EBMLElement(inStm: TStream; var eId, numbytes: int64): int64;
+    function ArrayToString(const a: array of Char): string;
   public
     procedure setSearch(filnam: String; sl: SearchList; hr: TfrmHyperRipper; nThreads: integer);
     constructor Create(CreateSuspended: Boolean);
@@ -2479,7 +2482,7 @@ begin
   lngEXIMG := DLNGstr('HRTIMG');
   lngEXVID := DLNGstr('HRTVID');
 
-  result.NumFormats := 26;
+  result.NumFormats := 27;
   SetLength(result.FormatsList,result.NumFormats);
   result.FormatsList[1].GenType := HR_TYPE_AUDIO;
   result.FormatsList[1].Format := 'WAVE';
@@ -2584,6 +2587,12 @@ begin
   result.FormatsList[25].ID := 2004;
   result.FormatsList[25].IsConfig := False;
   result.FormatsList[25].FalsePositives := False;
+  result.FormatsList[26].GenType := HR_TYPE_VIDEO;
+  result.FormatsList[26].Format := 'MKV';
+  result.FormatsList[26].Desc := 'Matroska/WebM';
+  result.FormatsList[26].ID := 2005;
+  result.FormatsList[26].IsConfig := False;
+  result.FormatsList[26].FalsePositives := False;
 
   result.FormatsList[7].GenType := HR_TYPE_IMAGE;
   result.FormatsList[7].Format := 'BMP';
@@ -2908,6 +2917,17 @@ begin
                     // Next searchable offset is 4 bytes after the one found
                     inc(tmpRes,4);
               end;
+        2005: begin
+                strPCopy(szFind, #26+#69+#223+#163);
+                tmpRes := BMFind(szFind,buffer,bufSize,tmpRes);
+                if (tmpRes <> -1) then
+                begin
+                  // Add found offset to the list
+                  result.Add(tmpRes);
+                  // Next searchable offset is 8 bytes after the one found
+                  inc(tmpRes,5);
+                end
+              end;
 
         3000: begin
                 strPCopy(szFind,'BM');
@@ -3093,6 +3113,66 @@ begin
 //  end;
 end;
 
+function THRipSearch.EBMLElement(inStm: TStream; var eId, numBytes: int64): int64;
+var mask, maskIndex1, maskIndex2, tByte, numBytes1, numBytes2: byte;
+    Size: int64;
+begin
+
+  mask := 128;
+  inStm.ReadBuffer(tByte,1);
+  inStm.position := inStm.position-1;
+  numBytes := 0;
+  eId := 0;
+
+  for maskIndex1:=0 to 7 do
+  begin
+    if (tByte and (mask shr maskIndex1)) > 0 then
+    begin
+      numBytes1 := maskIndex1 + 1;
+      eId := 0;
+      inStm.ReadBuffer(eId,numBytes1);
+      Inc(numBytes,numBytes1);
+      inStm.ReadBuffer(tByte,1);
+      inStm.position := inStm.position-1;
+      for maskIndex2:=0 to 7 do
+      begin
+        if (tByte and (mask shr maskIndex2)) > 0 then
+        begin
+          numBytes2 := maskIndex2 + 1;
+          Size := 0;
+          inStm.ReadBuffer(Size,numBytes2);
+          Size := SwapBytes64(Size,numBytes2);
+          Inc(numBytes,numBytes2);
+          Case numBytes2 of
+            1: Size := (Size shr 56) AND 127;
+            2: Size := (Size shr 48) AND 16383;
+            3: Size := (Size shr 40) AND 2097151;
+            4: Size := (Size shr 32) AND 268435455;
+            5: Size := (Size shr 24) AND 34359738367;
+            6: Size := (Size shr 16) AND 4398046511103;
+            7: Size := (Size shr 8) AND 562949953421311;
+            8: Size := Size AND 72057594037927935;
+          end;
+          break;
+        end;
+      end;
+      break;
+    end;
+  end;
+
+  result := Size;
+
+end;
+
+function THRipSearch.ArrayToString(const a: array of Char): string;
+begin
+  if Length(a)>0 then
+//    SetString(Result, PChar(@a[0]), Length(a))
+    Result := a
+  else
+    Result := '';
+end;
+
 function THRipSearch.verifyInStream(formatid: integer; inStm: TStream; offset: int64): FoundInfo64;
 var buf1, buf2: array[1..4] of char;
     buf3: array[1..3] of char;
@@ -3103,7 +3183,7 @@ var buf1, buf2: array[1..4] of char;
     tChars: array[0..7] of char;
     tBytes4, tBytes4a: array[0..3] of byte;
     tBytes7: array[0..6] of byte;
-    size, size2, offset2, COffset, CSize: int64;
+    size, size2, offset2, COffset, CSize, tInt64: int64;
     BMPH: BMPHeader;
     EMFH: EnhancedMetaHeader;
     F669H: F669Header;
@@ -3187,6 +3267,10 @@ var buf1, buf2: array[1..4] of char;
     curPos: int64;
 
     curMP3result: string;
+
+    elementID, elementSize, numBytes: int64;
+    EBMLVersion, EBMLReadVersion, EBMLMaxIdLength, EBMLMaxSizeLength, EBMLDocTypeVersion, EBMLDocTypeReadVersion, EBMLHeaderSize: int64;
+    EBMLDocType: String;
 
 begin
 
@@ -4009,6 +4093,62 @@ begin
                   result.Size := FLICH.Size;
                   result.GenType := HR_TYPE_VIDEO;
                 end;
+              end;
+            end;
+          end;
+    2005: begin
+            totSize := inStm.Size ;
+            inStm.Seek(offset,soBeginning);
+            Size := 0;
+            EBMLHeaderSize := EBMLElement(inStm,elementId,numBytes);
+            Inc(EBMLHeaderSize,numBytes);
+            Inc(Size,EBMLHeaderSize);
+            EBMLVersion := 0;
+            EBMLReadVersion := 0;
+            EBMLMaxIDLength := 0;
+            EBMLMaxSizeLength := 0;
+            FillChar(tChars,8,0);
+            EBMLDocType := '';
+            if (elementId = 2749318426) then // This is an EBML Header
+            begin
+              repeat
+                CSize := EBMLElement(inStm,elementId,numBytes);
+                Case elementId of
+                  33346: begin  // DocType
+                           inStm.ReadBuffer(tChars,CSize);
+                           EBMLDocType := ArrayToString(tChars);
+                         end;
+                  34370: begin  // EBMLVersion
+                           inStm.ReadBuffer(EBMLVersion,CSize);
+                         end;
+                  62018: begin  // EBMLMaxIDLength
+                           inStm.ReadBuffer(EBMLMaxIDLength,CSize);
+                         end;
+                  62274: begin  // EBMLMaxSizeLength
+                           inStm.ReadBuffer(EBMLMaxSizeLength,CSize);
+                         end;
+                  63298: begin  // EBMLReadVersion
+                           inStm.ReadBuffer(EBMLReadVersion,CSize);
+                         end;
+                else
+                  inStm.Position := inStm.Position+CSize;
+                end;
+              until (inStm.position>=(offset+EBMLHeaderSize));
+            end;
+            if ((EBMLDocType = 'matroska') or (EBMLDocType = 'webm')) then
+            begin
+              CSize := EBMLElement(inStm,elementId,numBytes);
+              Inc(Size,CSize);
+              Inc(Size,numBytes);
+              if (elementId = 1736463128) then // This is an Matroska Segment
+              begin
+                result.Offset := offset;
+                result.Size := Size;
+                if (EBMLDocType = 'matroska') then
+                  result.Ext := 'mkv'
+                else
+                  result.Ext := 'webm';
+                result.GenType := HR_TYPE_VIDEO;
               end;
             end;
           end;

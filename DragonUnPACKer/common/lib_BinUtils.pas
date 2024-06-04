@@ -46,6 +46,7 @@ function revstr(str: string): string;
 function posrev(substr: string; str: string): integer;
 function strip0(str : string): string;
 function SwapBytes(Value: LongWord): LongWord;
+function SwapBytes64(Value: Int64; NumBytes: byte): Int64;
 
 implementation
 
@@ -57,6 +58,17 @@ begin
   Bytes(Result)[1]:= Bytes(Value)[2];
   Bytes(Result)[2]:= Bytes(Value)[1];
   Bytes(Result)[3]:= Bytes(Value)[0];
+end;
+
+function SwapBytes64(Value: Int64; NumBytes: byte): Int64;
+type
+  Bytes = packed array[0..7] of Byte;
+var
+  index: Byte;
+begin
+  Result := 0;
+  for index := NumBytes-1 downto 0 do
+    Bytes(Result)[7-index]:= Bytes(Value)[index];
 end;
 
 function Get0(src: integer): string;

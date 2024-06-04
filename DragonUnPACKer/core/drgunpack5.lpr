@@ -251,7 +251,7 @@ begin
   if _DEBUGMODE then
     dupLog.enableLogIntoFile(Application.ExeName+'.debug.'+FormatDateTime('yyyymmddhhnnsszzz',Now)+'.log');
 
-  compileTime := GetExecutableCompilationDateTime();
+  compileTime := GetImageLinkDateTime(Application.ExeName);
   if CurEdit = '' then
     dupLog.addMessage('Dragon UnPACKer v' + CurVersion + ' (Build ' + IntToStr(CurBuild) +' - '+DateToStr(compileTime)+ ' '+TimeToStr(compileTime)+')',sevHigh)
   else

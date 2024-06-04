@@ -190,7 +190,7 @@ var
   frmInstaller: TfrmInstaller;
 
 const
-  VERSION: Integer = 34040;
+  VERSION: Integer = 34140;
 
 implementation
 
@@ -1621,7 +1621,7 @@ begin
   // http://dus.dragonunpacker.com/dup5.dus
   // http://www.elberethzone.net/dup5.dus'     // 5.0/5.1 URL DUS v2.0
   // Current URLs:
-  dusURL := 'http://dragonunpacker.sourceforge.net/dus.php?installedbuild='+inttostr(corebuild)+'&duppiversion='+inttostr(VERSION);
+  dusURL := 'http://update.dragonunpacker.com/dus.php?installedbuild='+inttostr(corebuild)+'&duppiversion='+inttostr(VERSION);
   writeLog(Internet,ReplaceValue('%f',DLNGstr('PII101'),dusURL));
 
   curDL := 'dus.ini';

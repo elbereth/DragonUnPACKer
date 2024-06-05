@@ -1,6 +1,6 @@
 program drgunpack5;
 
-{$MODE Delphi}
+{$MODE objfpc}{$H+}
 
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -395,7 +395,7 @@ begin
       dupLog.AddMessage('Adding special error handling',sevDebug);
 
       // Global Error handling
-      Application.OnException := frmError.OnAppliException;
+      Application.OnException := @frmError.OnAppliException;
 
       dupLog.AddMessage('Run Application',sevDebug);
 

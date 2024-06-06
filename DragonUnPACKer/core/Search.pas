@@ -1,5 +1,7 @@
 unit Search;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -31,9 +33,9 @@ type
     procedure RadioDirOnlyClick(Sender: TObject);
     procedure cmdOkClick(Sender: TObject);
   private
-    { Déclarations privées }
+    { DÃ©clarations privÃ©es }
   public
-    { Déclarations publiques }
+    { DÃ©clarations publiques }
   end;
 
 var
@@ -43,7 +45,7 @@ implementation
 
 uses Main, Registry;
 
-{$R *.dfm}
+{$R *.lfm}
 
 procedure TfrmSearch.cmdSearchClick(Sender: TObject);
 var Reg: TRegistry;

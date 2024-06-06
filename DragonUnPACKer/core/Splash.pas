@@ -29,9 +29,9 @@ type
     procedure FormCreate(Sender: TObject);
     procedure TimerFadeTimer(Sender: TObject);
   private
-    { Déclarations privées }
+    { Dï¿½clarations privï¿½es }
   public
-    { Déclarations publiques }
+    { Dï¿½clarations publiques }
   end;
 
 var
@@ -41,7 +41,7 @@ implementation
 
 uses SelectLanguage, lib_Language;
 
-{$R *.dfm}
+{$R *.lfm}
 var
     IsLoaded : Boolean = False;
 

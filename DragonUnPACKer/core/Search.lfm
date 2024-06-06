@@ -1,0 +1,93 @@
+object frmSearch: TfrmSearch
+  Left = 390
+  Height = 147
+  Top = 410
+  Width = 352
+  BorderStyle = bsToolWindow
+  Caption = 'Rechercher'
+  ClientHeight = 147
+  ClientWidth = 352
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  Position = poOwnerFormCenter
+  LCLVersion = '3.4.0.0'
+  object GroupBox: TGroupBox
+    Left = 8
+    Height = 81
+    Top = 40
+    Width = 337
+    Caption = 'Options'
+    ClientHeight = 63
+    ClientWidth = 333
+    ParentBackground = False
+    TabOrder = 0
+    object CheckCase: TCheckBox
+      Left = 8
+      Height = 17
+      Top = 16
+      Width = 253
+      Caption = 'Faire la difference entre Majuscules et Minuscules'
+      TabOrder = 0
+      OnClick = CheckCaseClick
+    end
+    object RadioTout: TRadioButton
+      Left = 8
+      Height = 17
+      Top = 40
+      Width = 94
+      Caption = 'Tous les fichiers'
+      Checked = True
+      TabOrder = 1
+      TabStop = True
+      OnClick = RadioToutClick
+    end
+    object RadioDirOnly: TRadioButton
+      Left = 8
+      Height = 17
+      Top = 56
+      Width = 157
+      Caption = 'Répertoire actuel uniquement'
+      TabOrder = 2
+      OnClick = RadioDirOnlyClick
+    end
+  end
+  object txtSearch: TEdit
+    Left = 8
+    Height = 21
+    Top = 8
+    Width = 225
+    TabOrder = 1
+  end
+  object cmdSearch: TButton
+    Left = 240
+    Height = 21
+    Top = 8
+    Width = 51
+    Caption = 'Go!'
+    TabOrder = 2
+    OnClick = cmdSearchClick
+  end
+  object StatusBar: TStatusBar
+    Left = 0
+    Height = 23
+    Top = 124
+    Width = 352
+    Panels = <    
+      item
+        Alignment = taCenter
+        Width = 50
+      end>
+  end
+  object cmdOk: TButton
+    Left = 296
+    Height = 21
+    Top = 8
+    Width = 51
+    Caption = 'Exit'
+    Default = True
+    TabOrder = 4
+    OnClick = cmdOkClick
+  end
+end

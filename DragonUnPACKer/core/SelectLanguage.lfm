@@ -1,0 +1,48 @@
+object frmSelectLanguage: TfrmSelectLanguage
+  Left = 284
+  Height = 35
+  Top = 383
+  Width = 247
+  BorderStyle = bsToolWindow
+  Caption = 'Select language to use:'
+  ClientHeight = 35
+  ClientWidth = 247
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  FormStyle = fsStayOnTop
+  OnHide = FormHide
+  OnShow = FormShow
+  Position = poScreenCenter
+  LCLVersion = '3.4.0.0'
+  object lstLangues: TComboBoxEx
+    Left = 8
+    Height = 22
+    Top = 8
+    Width = 161
+    Images = imgLstLangue
+    ItemHeight = 16
+    ItemsEx = <>
+    OnSelect = lstLanguesSelect
+    Style = csExDropDownList
+    TabOrder = 0
+  end
+  object cmdOk: TButton
+    Left = 176
+    Height = 25
+    Top = 8
+    Width = 67
+    Caption = 'OK'
+    TabOrder = 1
+    OnClick = cmdOkClick
+  end
+  object imgLstLangue: TImageList
+    BlendColor = clBlack
+    DrawingStyle = dsTransparent
+    Bitmap = {
+      4C7A0100000010000000100000001B0000000000000078DA63601805FF81081D
+      63518545D9A8FE51FD431B00004630B34D
+    }
+  end
+end

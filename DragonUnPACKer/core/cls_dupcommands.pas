@@ -1,5 +1,7 @@
 unit cls_dupcommands;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -14,6 +16,7 @@ interface
 uses Classes, ComCtrls, Forms, lib_language, prg_ver, SysUtils, VirtualTrees;
 
 // The class for commands toward main form of Dragon UnPACKer
+{$M+}
 type TDupCommands = class(TObject)
      private
        _MainForm: TForm;

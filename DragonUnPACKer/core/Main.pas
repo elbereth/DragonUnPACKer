@@ -1,5 +1,7 @@
 unit Main;
 
+{$mode objfpc}{$H+}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -15,9 +17,9 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, classFSE, classConvert, lib_binCopy, StdCtrls, ComCtrls, ExtCtrls, Menus, ImgList,
   lib_language, translation, ShellApi, VirtualTrees, lib_look, ToolWin,
-  DropSource, XPMan, DragDrop, DragDropFile, prg_ver, StrUtils,
-  classIconsFromExt, DateUtils, lib_binutils, commonTypes,
-  BrowseForFolderU, dwProgressBar, classConvertExport,
+  DragDrop, DragDropFile, prg_ver, StrUtils, {DropSource}
+  classIconsFromExt, DateUtils, lib_binutils, commonTypes, BrowseForFolderU,
+  dwProgressBar, classConvertExport, RichMemo, RichMemoHelpers, LogTreeView,
   // Vampyre Imaging Library
   ImagingTypes, Imaging, ImagingClasses, ImagingComponents, ImagingCanvases,
   ImagingFormats, ImagingUtility, dwTaskbarComponents,
@@ -31,6 +33,9 @@ type
     Email: String;
     Comment: String;
   end;
+
+  { Tdup5Main }
+
   Tdup5Main = class(TForm)
     Splitter: TSplitter;
     OpenDialog: TOpenDialog;
@@ -39,7 +44,6 @@ type
     imgContentsBig: TImageList;
     lstContent: TVirtualStringTree;
     DropFileSource: TDropFileSource;
-    XPManifest: TXPManifest;
     mainMenu: TMainMenu;
     menuFichier: TMenuItem;
     menuFichier_Ouvrir: TMenuItem;
@@ -132,7 +136,7 @@ type
     Bouton_Supprimer: TToolButton;
     imgTheme32: TImageList;
     imgTheme16: TImageList;
-    richLog: TRichEdit;
+    richLog: TRichMemo;
     Percent: TProgressBar;
     procedure FormResize(Sender: TObject);
     procedure menuFichier_QuitterClick(Sender: TObject);
@@ -254,10 +258,10 @@ type
     RecentFiles: array of String;
     verboseLevel: integer;
     procedure Open_Hub(src: String);
-    procedure setRichEditLineStyle(R: TRichEdit; Line: Integer;
+    procedure setRichEditLineStyle(R: TRichMemo; Line: Integer;
       Style: TFontStyles);
-    procedure setRichEditLineColor(R: TRichEdit; Line: Integer;
-      Color: TColor);
+    procedure setRichEditLineColor(R: TRichMemo; Line: Integer;
+      LineColor: TColor);
     procedure InitEngine();
     procedure RecentFiles_Display();
     procedure RecentFiles_Save();
@@ -284,14 +288,14 @@ type
     currentTheme: String;
     function getVerboseLevel(): integer;
     procedure setVerboseLevel(verbLevel: integer);
-    procedure writeLog(text: string);
-    procedure writeLogVerbose(minLevel: integer; text: string);
-    procedure appendLog(text: string);
-    procedure appendLogVerbose(minLevel: integer; text: string);
+    procedure writeLog(logText: string);
+    procedure writeLogVerbose(minLevel: integer; logText: string);
+    procedure appendLog(logText: string);
+    procedure appendLogVerbose(minLevel: integer; logText: string);
     procedure styleLog(Style : TFontStyles);
     procedure styleLogVerbose(minLevel: integer; Style : TFontStyles);
-    procedure colorLog(Color : TColor);
-    procedure colorLogVerbose(minLevel: integer; Color : TColor);
+    procedure colorLog(LogColor : TColor);
+    procedure colorLogVerbose(minLevel: integer; LogColor : TColor);
     procedure separatorLog();
     procedure separatorLogVerbose(minLevel: integer);
     function getPreviewLimitInBytes(value: integer): integer;
@@ -299,7 +303,7 @@ type
     procedure loadTheme(themename: string);
     function getThemeInfo(themename: string): TdupThemeInfo;
     procedure setLogFacility(LogFacility: TDupLog);
-    { Déclarations publiques }
+    { Dï¿½clarations publiques }
   end;
 
 var
@@ -323,7 +327,7 @@ var
   msgBuf: String;
   CListInfo: extConvertList;
 
-{$R *.dfm}
+{$R *.lfm}
 
 {$Include datetime.inc}
 
@@ -440,7 +444,7 @@ begin
   begin
     itmX := TMenuItem.Create(mainMenu);
     itmX.Tag := x;
-    itmX.OnClick := menuRecentClick;
+    itmX.OnClick := @menuRecentClick;
     itmX.Caption := inttostr(x+1)+'. '+RecentFiles[x];
     menuRecent.Add(itmX);
     inc(x);
@@ -588,7 +592,7 @@ begin
 
 end;
 
-procedure Tdup5Main.setRichEditLineStyle(R : TRichEdit; Line : Integer; Style : TFontStyles);
+procedure Tdup5Main.setRichEditLineStyle(R : TRichMemo; Line : Integer; Style : TFontStyles);
 var
  oldPos,
  oldSelLength : Integer;
@@ -609,7 +613,7 @@ begin
        Line_Range := to_Line_Index-Line_Index;
      R.SelStart := Line_Index;
      R.SelLength := Line_Range;
-     R.SelAttributes.Style := Style;
+     { R.SelAttributes.Style := Style; }
    end;
  finally
    R.SelStart := OldPos;
@@ -617,7 +621,7 @@ begin
  end;
 end;
 
-procedure Tdup5Main.setRichEditLineColor(R : TRichEdit; Line : Integer; Color : TColor);
+procedure Tdup5Main.setRichEditLineColor(R : TRichMemo; Line : Integer; LineColor : TColor);
 var
  oldPos,
  oldSelLength : Integer;
@@ -638,7 +642,7 @@ begin
        Line_Range := to_Line_Index-Line_Index;
      R.SelStart := Line_Index;
      R.SelLength := Line_Range;
-     R.SelAttributes.Color := Color;
+     R.SelAttributes.Color := LineColor;
    end;
  finally
    R.SelStart := OldPos;
@@ -647,6 +651,8 @@ begin
 end;
 
 procedure Tdup5Main.menuAbout_AboutClick(Sender: TObject);
+var
+ VTVersion: String;
 begin
 
   TranslateAbout;
@@ -668,6 +674,7 @@ begin
   frmAbout.txtMoreinfo.Lines.Add('Vampyre Imaging Livrary v'+Imaging.GetVersionStr);
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
   frmAbout.txtMoreinfo.Lines.Add('http://imaginglib.sourceforge.net/');
+  VTVersion := Format('%d.%d.%d', [VirtualTrees.VTMajorVersion, VirtualTrees.VTMinorVersion, VirtualTrees.VTReleaseVersion]);
   frmAbout.txtMoreinfo.Lines.Add('VirtualTree v'+VTVersion);
   setRichEditLineStyle(frmAbout.txtMoreinfo,frmAbout.txtMoreinfo.Lines.Count,[fsBold]);
   frmAbout.txtMoreinfo.Lines.Add('http://www.delphi-gems.com');
@@ -915,14 +922,15 @@ procedure Tdup5Main.CreateDirs(Nod: PVirtualNode; Pth: String);
 var NodC: PVirtualNode;
     NodeData: pvirtualIndexData;
     NewDir: string;
+    cc : Cardinal;
 begin
 
   // If there is at least one sub-folder
-  if Nod.ChildCount > 0 then
+  if Nod^.ChildCount > 0 then
   begin
 
     // Go through all sub-folders and create them
-    NodC := Nod.FirstChild;
+    NodC := Nod^.FirstChild;
 
     // Until there are no more sub-folders
     while NodC <> Nil do
@@ -932,7 +940,7 @@ begin
       NodeData := dup5main.lstIndex.GetNodeData(NodC);
 
       // Compute new directory name
-      NewDir := Pth + NodeData.dirname;
+      NewDir := Pth + NodeData^.dirname;
 
       // Create the folder on the disk
       CreateDir(NewDir);
@@ -941,7 +949,7 @@ begin
       CreateDirs(NodC,NewDir+'\');
 
       // Get next sub-folder
-      NodC := NodC.NextSibling;
+      NodC := NodC^.NextSibling;
 
     end;
 
@@ -1110,9 +1118,9 @@ begin
 
     Data := lstContent.getNodeData(lstContent.getFirstSelected);
 
-    tmpfil := getTemporaryDir+getTemporaryFilename(FSE.Items[Data.entryIndex].FileName);
+    tmpfil := getTemporaryDir+getTemporaryFilename(FSE.Items[Data^.entryIndex].FileName);
 
-    FSE.ExtractFile(Data.entryIndex,tmpfil,false);
+    FSE.ExtractFile(Data^.entryIndex,tmpfil,false);
 
     tempfiles.Add(tmpfil);
 
@@ -1139,6 +1147,7 @@ begin
   frmHyperRipper.ShowModal;
 
 end;
+
 
 procedure Tdup5Main.WMUser(var msg: TMessage);
 begin
@@ -1188,7 +1197,7 @@ begin
 
   Data := lstContent.GetNodeData(lstContent.GetFirstSelected);
 
-  SaveDialog.FileName := FSE.Items[Data.entryIndex].FileName;
+  SaveDialog.FileName := FSE.Items[Data^.entryIndex].FileName;
 
   if SaveDialog.Execute then
   begin
@@ -1196,7 +1205,7 @@ begin
     rep := GetNodePath(lstIndex.FocusedNode);
     if length(rep) > 0 then
       rep := rep + FSE.SlashMode;
-    FSE.ExtractFile(Data.entryIndex,dstfil,false);
+    FSE.ExtractFile(Data^.entryIndex,dstfil,false);
   end;
 
 end;
@@ -1219,7 +1228,7 @@ begin
   SaveDialog.Filter := DLNGStr('ALLFIL')+'|*.*';
 
   Data := lstContent.GetNodeData(lstContent.GetFirstSelected);
-  Filename := FSE.Items[Data.entryIndex].FileName;
+  Filename := FSE.Items[Data^.entryIndex].FileName;
 
   // If the tag is more than 255 then we are in a chained convertion situation (Plugin+Internal)
   // Else we are in a normal plugin only convertion
@@ -1270,9 +1279,9 @@ begin
   begin
 
     if (plugidx = 0) or convertInternal then
-      writelogVerbose(3,ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),Uppercase(ext)))
+      writelogVerbose(3,ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data^.entryIndex].Name),Uppercase(ext)))
     else
-      writelogVerbose(3,ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),CListInfo.List[plugidx].Info.Display));
+      writelogVerbose(3,ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data^.entryIndex].Name),CListInfo.List[plugidx].Info.Display));
 
     tmpfil := getTemporaryDir+getTemporaryFilename(filename);
     dstfil := SaveDialog.Filename;
@@ -1294,7 +1303,7 @@ begin
     try
       writeLogVerbose(1,' + '+DLNGStr('PRV010')+'...');
       StartTime := Now;
-      FSE.ExtractFileToStream(Data.entryIndex,tmpStm,tmpfil,true);
+      FSE.ExtractFileToStream(Data^.entryIndex,tmpStm,tmpfil,true);
       tmpStm.Seek(0,soBeginning);
       dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
 
@@ -1303,7 +1312,7 @@ begin
       begin
         writeLogVerbose(1,' + '+ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[plugidx].Info.Display));
         StartTime := Now;
-        CPlug.convert(CListInfo.List[plugidx].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[plugidx].Info.ID,FSE.Items[Data.entryIndex].Offset,FSE.Items[Data.entryIndex].DataX,FSE.Items[Data.entryIndex].DataY,False);
+        CPlug.convert(CListInfo.List[plugidx].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[plugidx].Info.ID,FSE.Items[Data^.entryIndex].Offset,FSE.Items[Data^.entryIndex].DataX,FSE.Items[Data^.entryIndex].DataY,False);
         dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
         // Chain to internal convertion
         if convertInternal then
@@ -1375,9 +1384,9 @@ begin
     while Node <> nil do
     begin
       Data := lstContent.GetNodeData(Node);
-      Filename := FSE.Items[Data.entryIndex].FileName;
+      Filename := FSE.Items[Data^.entryIndex].FileName;
       dstfil := outputdir + fileName;
-      FSE.ExtractFile(data.entryIndex,dstfil,false);
+      FSE.ExtractFile(Data^.entryIndex,dstfil,false);
       Inc(CurFiles);
       perc := Round((CurFiles / lstContent.SelectedCount)*100);
       if (perc >= numper+5) then
@@ -1476,7 +1485,7 @@ begin
     while (Node <> Nil) do
     begin
       Data := lstContent.GetNodeData(Node);
-      filename := FSE.Items[Data.entryIndex].FileName;
+      filename := FSE.Items[Data^.entryIndex].FileName;
       dstfil := outputdir + ChangeFileExt(fileName,'.'+ext);
       tmpfil := getTemporaryDir+getTemporaryFilename(fileName);
 
@@ -1494,10 +1503,10 @@ begin
       end;
 
       try
-        writelogVerbose(2,ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data.entryIndex].Name),Uppercase(ext)));
+        writelogVerbose(2,ReplaceValue('%b',ReplaceValue('%a',DLNGStr('LOGC10'),FSE.Items[Data^.entryIndex].Name),Uppercase(ext)));
         writeLogVerbose(1,' + '+DLNGStr('PRV010')+'... ');
         StartTime := Now;
-        FSE.ExtractFileToStream(Data.entryIndex,tmpStm,tmpfil,true);
+        FSE.ExtractFileToStream(Data^.entryIndex,tmpStm,tmpfil,true);
         tmpStm.Seek(0,soBeginning);
         dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
 
@@ -1506,7 +1515,7 @@ begin
         begin
           writeLogVerbose(1,' + '+ReplaceValue('%b',DLNGStr('LOGC13'),CListInfo.List[plugidx].Info.Display));
           StartTime := Now;
-          CPlug.convert(CListInfo.List[plugidx].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[plugidx].Info.ID,FSE.Items[Data.entryIndex].Offset,FSE.Items[Data.entryIndex].DataX,FSE.Items[Data.entryIndex].DataY,Silent);
+          CPlug.convert(CListInfo.List[plugidx].Plugin,tmpStm,outStm,filename,FSE.DriverID,CListInfo.List[plugidx].Info.ID,FSE.Items[Data^.entryIndex].Offset,FSE.Items[Data^.entryIndex].DataX,FSE.Items[Data^.entryIndex].DataY,Silent);
           dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
         // Chain to internal convertion
           if convertInternal then
@@ -1589,7 +1598,7 @@ var Data: pvirtualTreeData;
     infoData: virtualTreeData;
 begin
   Data := Sender.GetNodeData(Node);
-  infoData := FSE.getListData(Node.Index);
+  infoData := FSE.getListData(Node^.Index);
 
   // These are the editor kinds used in the grid tree.
 {  Data.ImageIndex := infoData.ImageIndex;
@@ -1614,25 +1623,25 @@ begin
 
   Data := Sender.GetNodeData(Node);
 
-  if not(Data.loaded) then
+  if not(Data^.loaded) then
   begin
-    posext := posrev('.',FSE.Items[Data.entryIndex].FileName);
+    posext := posrev('.',FSE.Items[Data^.entryIndex].FileName);
     if posext > 0 then
-      ext := Copy(FSE.Items[Data.entryIndex].FileName,posext+1,length(FSE.Items[Data.entryIndex].FileName)-posext)
+      ext := Copy(FSE.Items[Data^.entryIndex].FileName,posext+1,length(FSE.Items[Data^.entryIndex].FileName)-posext)
     else
       ext := '';
-    Data.desc := DescFromExt(ext);
-    Data.ImageIndex := icons.getIcon(FSE.Items[Data.entryIndex].Name);
-    Data.loaded := true;
+    Data^.desc := DescFromExt(ext);
+    Data^.ImageIndex := icons.getIcon(FSE.Items[Data^.entryIndex].Name);
+    Data^.loaded := true;
   end;
 
   case Column of
-    0: CellText := FSE.Items[Data.entryIndex].FileName;
-    1: CellText := IntToStr(FSE.Items[Data.entryIndex].size);
-    2: CellText := IntToStr(FSE.Items[Data.entryIndex].offset);
-    3: CellText := Data.desc;
-    5: CellText := IntToStr(FSE.Items[Data.entryIndex].DataX);
-    6: CellText := IntToStr(FSE.Items[Data.entryIndex].DataY);
+    0: CellText := FSE.Items[Data^.entryIndex].FileName;
+    1: CellText := IntToStr(FSE.Items[Data^.entryIndex].size);
+    2: CellText := IntToStr(FSE.Items[Data^.entryIndex].offset);
+    3: CellText := Data^.desc;
+    5: CellText := IntToStr(FSE.Items[Data^.entryIndex].DataX);
+    6: CellText := IntToStr(FSE.Items[Data^.entryIndex].DataY);
   else
     CellText := '';
   end;
@@ -1648,6 +1657,10 @@ begin
 
   // Create the commands facility
   globalCommandsFacility := TDupCommands.Create(Self,Status,Percent,lstContent,lstIndex,TempFiles);
+
+  //richLog := TRichMemo.Create(panBottom);
+  //richLog.Parent := panBottom;
+  //richLog.Wid
 
   DoSetRegistryDUP5 := false;  
 
@@ -1814,43 +1827,43 @@ begin
       begin
         tmpi := Reg.ReadInteger('lstContent_0');
         if tmpi >= 0 then
-          lstContent.Header.Columns.Items[0].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('lstContent_1') then
       begin
         tmpi := Reg.ReadInteger('lstContent_1');
         if tmpi >= 0 then
-          lstContent.Header.Columns.Items[1].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('lstContent_2') then
       begin
         tmpi := Reg.ReadInteger('lstContent_2');
         if tmpi >= 0 then
-          lstContent.Header.Columns.Items[2].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('lstContent_3') then
       begin
         tmpi := Reg.ReadInteger('lstContent_3');
         if tmpi > 0 then
-          lstContent.Header.Columns.Items[3].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('lstContent_4') then
       begin
         tmpi := Reg.ReadInteger('lstContent_4');
         if tmpi > 0 then
-          lstContent.Header.Columns.Items[4].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('lstContent_5') then
       begin
         tmpi := Reg.ReadInteger('lstContent_5');
         if tmpi > 0 then
-          lstContent.Header.Columns.Items[5].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('lstContent_6') then
       begin
         tmpi := Reg.ReadInteger('lstContent_6');
         if tmpi > 0 then
-          lstContent.Header.Columns.Items[6].Width := tmpi;
+          lstContent.Header.Columns.Add().Width := tmpi;
       end;
       if Reg.ValueExists('toolBar_T') then
       begin
@@ -1887,7 +1900,7 @@ begin
     FreeAndNil(Reg);
   end;
 
-  TranslateMain;
+  TranslateMain();
 
   lstContent_displayHiddenHeader;
 
@@ -1909,6 +1922,8 @@ begin
 end;
 
 procedure Tdup5Main.InitEngine;
+var
+  VTVersion : String;
 begin
 
   richLog.Refresh;
@@ -1920,13 +1935,14 @@ begin
 //  dup5Main.writeLogVerbose(1,' + JEDI Code Library [JCL] v'+inttostr(JclVersionMajor)+'.'+inttostr(JclVersionMinor)+'.'+inttostr(JclVersionRelease)+' Build '+inttostr(JclVersionBuild));
 //  dup5Main.writeLogVerbose(1,' + JEDI Visual Component Library [JVCL] v'+JVCL_VERSIONSTRING);
   dup5Main.writeLogVerbose(1,' + Vampyre Imaging Library v'+Imaging.GetVersionStr);
+   VTVersion := Format('%d.%d.%d', [VirtualTrees.VTMajorVersion, VirtualTrees.VTMinorVersion, VirtualTrees.VTReleaseVersion]);
   dup5Main.writeLogVerbose(1,' + VirtualTree v'+VTVersion);
 
   dup5Main.writeLog(DLNGStr('LOG002'));
 
   FSE := TDrivers.Create(globalLogFacility, globalCommandsFacility);
-  FSE.SetProgressBar(PercentCB);
-  FSE.SetLanguage(LanguageCB);
+  FSE.SetProgressBar(@PercentCB);
+  FSE.SetLanguage(@LanguageCB);
   FSE.SetPath(ExtractFilePath(Application.ExeName)+'data\drivers\');
   FSE.SetOwner(frmConfig);
   FSE.LoadDrivers(ExtractFilePath(Application.ExeName)+'data\drivers\');
@@ -1936,8 +1952,8 @@ begin
   dup5Main.writeLog(DLNGStr('LOG003'));
 
   CPlug := TPlugins.Create(globalLogFacility, globalCommandsFacility);
-  CPlug.SetPercent(PercentCB);
-  CPlug.SetLanguage(LanguageCB);
+  CPlug.SetPercent(@PercentCB);
+  CPlug.SetLanguage(@LanguageCB);
   CPlug.SetPath(ExtractFilePath(Application.ExeName)+'data\convert\');
   CPlug.SetOwner(self);
   CPlug.LoadPlugins(ExtractFilePath(Application.ExeName)+'data\convert\');
@@ -1969,8 +1985,8 @@ begin
 
   Data1 := Sender.GetNodeData(Node1);
   Data2 := Sender.GetNodeData(Node2);
-  Filename1 := FSE.Items[Data1.entryIndex].FileName;
-  Filename2 := FSE.Items[Data2.entryIndex].FileName;
+  Filename1 := FSE.Items[Data1^.entryIndex].FileName;
+  Filename2 := FSE.Items[Data2^.entryIndex].FileName;
 
   case Column of
     -1, 0: begin
@@ -1982,50 +1998,50 @@ begin
                Result := 0;
            end;
         1: begin
-             if (FSE.Items[Data1.entryIndex].size < FSE.Items[Data2.entryIndex].size) then
+             if (FSE.Items[Data1^.entryIndex].size < FSE.Items[Data2^.entryIndex].size) then
                Result := -1
-             else if (FSE.Items[Data1.entryIndex].size > FSE.Items[Data2.entryIndex].size) then
+             else if (FSE.Items[Data1^.entryIndex].size > FSE.Items[Data2^.entryIndex].size) then
                Result := 1
              else
                Result := 0;
            end;
         2: begin
-             if (FSE.Items[Data1.entryIndex].offset < FSE.Items[Data2.entryIndex].offset) then
+             if (FSE.Items[Data1^.entryIndex].offset < FSE.Items[Data2^.entryIndex].offset) then
                Result := -1
-             else if (FSE.Items[Data1.entryIndex].offset > FSE.Items[Data2.entryIndex].offset) then
+             else if (FSE.Items[Data1^.entryIndex].offset > FSE.Items[Data2^.entryIndex].offset) then
                Result := 1
              else
                Result := 0;
            end;
         3: begin
-             if not(Data1.loaded) then
+             if not(Data1^.loaded) then
              begin
-               posext := posrev('.',FSE.Items[Data1.entryIndex].FileName);
+               posext := posrev('.',FSE.Items[Data1^.entryIndex].FileName);
                if posext > 0 then
-                 ext := Copy(FSE.Items[Data1.entryIndex].FileName,posext+1,length(FSE.Items[Data1.entryIndex].FileName)-posext)
+                 ext := Copy(FSE.Items[Data1^.entryIndex].FileName,posext+1,length(FSE.Items[Data1^.entryIndex].FileName)-posext)
                else
                  ext := '';
-               Data1.desc := DescFromExt(ext);
+               Data1^.desc := DescFromExt(ext);
 
-               Data1.ImageIndex := icons.getIcon(FSE.Items[Data1.entryIndex].Name);
-               Data1.loaded := true;
+               Data1^.ImageIndex := icons.getIcon(FSE.Items[Data1^.entryIndex].Name);
+               Data1^.loaded := true;
              end;
-             if not(Data2.loaded) then
+             if not(Data2^.loaded) then
              begin
-               posext := posrev('.',FSE.Items[Data2.entryIndex].FileName);
+               posext := posrev('.',FSE.Items[Data2^.entryIndex].FileName);
                if posext > 0 then
-                 ext := Copy(FSE.Items[Data2.entryIndex].FileName,posext+1,length(FSE.Items[Data2.entryIndex].FileName)-posext)
+                 ext := Copy(FSE.Items[Data2^.entryIndex].FileName,posext+1,length(FSE.Items[Data2^.entryIndex].FileName)-posext)
                else
                  ext := '';
-               Data2.desc := DescFromExt(ext);
+               Data2^.desc := DescFromExt(ext);
 
-               Data2.ImageIndex := icons.getIcon(FSE.Items[Data2.entryIndex].Name);
-               Data2.loaded := true;
+               Data2^.ImageIndex := icons.getIcon(FSE.Items[Data2^.entryIndex].Name);
+               Data2^.loaded := true;
              end;
 
-             if (UpperCase(Data1.desc) < UpperCase(Data2.desc)) then
+             if (UpperCase(Data1^.desc) < UpperCase(Data2^.desc)) then
                Result := -1
-             else if (UpperCase(Data1.desc) > UpperCase(Data2.desc)) then
+             else if (UpperCase(Data1^.desc) > UpperCase(Data2^.desc)) then
                Result := 1
              else
                Result := 0;
@@ -2046,20 +2062,20 @@ begin
   begin
 
     Data := Sender.GetNodeData(Node);
-    if not(Data.loaded) then
+    if not(Data^.loaded) then
     begin
-      posext := posrev('.',FSE.Items[Data.entryIndex].FileName);
+      posext := posrev('.',FSE.Items[Data^.entryIndex].FileName);
       if posext > 0 then
-        ext := Copy(FSE.Items[Data.entryIndex].FileName,posext+1,length(FSE.Items[Data.entryIndex].FileName)-posext)
+        ext := Copy(FSE.Items[Data^.entryIndex].FileName,posext+1,length(FSE.Items[Data^.entryIndex].FileName)-posext)
       else
         ext := '';
-      Data.desc := DescFromExt(ext);
+      Data^.desc := DescFromExt(ext);
 
-      Data.ImageIndex := icons.getIcon(FSE.Items[Data.entryIndex].Name);
-      Data.loaded := true;
+      Data^.ImageIndex := icons.getIcon(FSE.Items[Data^.entryIndex].Name);
+      Data^.loaded := true;
     end;
 
-    Imageindex := Data.ImageIndex;
+    Imageindex := Data^.ImageIndex;
   end;
 
 end;
@@ -2092,7 +2108,7 @@ begin
      Node := lstContent.GetFirstSelected;
      Data := lstContent.GetNodeData(Node);
 
-     mext := ExtractFileExt(FSE.Items[Data.entryIndex].FileName);
+     mext := ExtractFileExt(FSE.Items[Data^.entryIndex].FileName);
      if (length(mext) > 0) and (mext[1] = '.') then
        mext := RightStr(mext,length(mext)-1);
      mext := UpperCase(mext);
@@ -2103,7 +2119,7 @@ begin
      while (Node <> nil) and ConvertOK and (ConvertInternal or ConvertPlugin) do
      begin
          Data := lstContent.GetNodeData(Node);
-         ext := ExtractFileExt(FSE.Items[Data.entryIndex].FileName);
+         ext := ExtractFileExt(FSE.Items[Data^.entryIndex].FileName);
          if (length(ext) > 0) and (ext[1] = '.') then
            ext := RightStr(ext,length(ext)-1);
          ext := UpperCase(ext);
@@ -2112,14 +2128,14 @@ begin
          begin
            if ConvertPlugin then
            begin
-             Filename := FSE.Items[Data.entryIndex].FileName;
+             Filename := FSE.Items[Data^.entryIndex].FileName;
              // SLOW LIKE HELL: Going through all entries until finding the good one
              //FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
              // Instead we use the data directly as we already have it!!!
-             Size := FSE.Items[Data.entryIndex].Size;
-             Offset := FSE.Items[Data.entryIndex].Offset;
-             DataX := FSE.Items[Data.entryIndex].DataX;
-             DataY := FSE.Items[Data.entryIndex].DataY;
+             Size := FSE.Items[Data^.entryIndex].Size;
+             Offset := FSE.Items[Data^.entryIndex].Offset;
+             DataX := FSE.Items[Data^.entryIndex].DataX;
+             DataY := FSE.Items[Data^.entryIndex].DataY;
              ConvertPlugin := CPlug.TestFileConvert(fileName,offset,size,FSE.DriverID,DataX,DataY);
            end;
            if ConvertInternal then
@@ -2152,10 +2168,10 @@ begin
          // SLOW LIKE HELL: Going through all entries until finding the good one
          //FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
          // Instead we use the data directly as we already have it!!!
-         Size := FSE.Items[Data.entryIndex].Size;
-         Offset := FSE.Items[Data.entryIndex].Offset;
-         DataX := FSE.Items[Data.entryIndex].DataX;
-         DataY := FSE.Items[Data.entryIndex].DataY;
+         Size := FSE.Items[Data^.entryIndex].Size;
+         Offset := FSE.Items[Data^.entryIndex].Offset;
+         DataX := FSE.Items[Data^.entryIndex].DataX;
+         DataY := FSE.Items[Data^.entryIndex].DataY;
          CList := CPlug.GetFileConvert(fileName,offset,size,FSE.DriverID,DataX, DataY);
 
          CListInfo.NumFormats := CList.NumFormats;
@@ -2301,15 +2317,15 @@ begin
 
      Node := lstContent.GetFirstSelected;
      Data := lstContent.GetNodeData(Node);
-     Filename := FSE.Items[Data.entryIndex].FileName;
+     Filename := FSE.Items[Data^.entryIndex].FileName;
 
      // SLOW LIKE HELL: Going through all entries until finding the good one
      //FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
      // Instead we use the data directly as we already have it!!!
-     Size := FSE.Items[Data.entryIndex].Size;
-     Offset := FSE.Items[Data.entryIndex].Offset;
-     DataX := FSE.Items[Data.entryIndex].DataX;
-     DataY := FSE.Items[Data.entryIndex].DataY;
+     Size := FSE.Items[Data^.entryIndex].Size;
+     Offset := FSE.Items[Data^.entryIndex].Offset;
+     DataX := FSE.Items[Data^.entryIndex].DataX;
+     DataY := FSE.Items[Data^.entryIndex].DataY;
 
      ext := ExtractFileExt(fileName);
      if ext <> '' then
@@ -2568,10 +2584,10 @@ begin
     while Node <> nil do
     begin
       Data := lstContent.GetNodeData(Node);
-      filename := FSE.Items[Data.entryIndex].FileName;
+      filename := FSE.Items[Data^.entryIndex].FileName;
       dstfil := tmpdir + fileName;
 //      showmessage(dstfil+#10+DropFileSource.Files.Strings[curFiles-1]);
-      FSE.ExtractFile(Data.entryIndex,dstfil,true);
+      FSE.ExtractFile(Data^.entryIndex,dstfil,true);
       TempFiles.Add(dstfil);
       Inc(CurFiles);
       perc := Round((CurFiles / lstContent.SelectedCount)*100);
@@ -2619,7 +2635,7 @@ begin
       while Node <> nil do
       begin
         Data := lstContent.GetNodeData(Node);
-        DropFileSource.Files.Add(tmpdir+FSE.Items[Data.entryIndex].FileName);
+        DropFileSource.Files.Add(tmpdir+FSE.Items[Data^.entryIndex].FileName);
         Node := lstContent.GetNextSelected(Node);
       end;
 
@@ -2858,7 +2874,7 @@ begin
   NodeData := Sender.GetNodeData(Node);
   // return identifier of the node
 
-  CellText := NodeData.dirname;
+  CellText := NodeData^.dirname;
 
 end;
 
@@ -2874,9 +2890,9 @@ begin
     ikState: // for the case the state icon has been requested
       ImageIndex := -1;
     ikNormal:
-      ImageIndex := NodeData.imageIndex;
+      ImageIndex := NodeData^.imageIndex;
     ikSelected: begin
-        ImageIndex := NodeData.selectedImageIndex;
+        ImageIndex := NodeData^.selectedImageIndex;
         Ghosted := true;
       end;
   end;
@@ -2894,9 +2910,9 @@ begin
   writelogVerbose(1,ReplaceValue('%d',DLNGStr('LOG300'),disp));
 //  FSE.BrowseDir(disp);
   VirtualNodeData := lstIndex.GetNodeData(Node);
-  FSE.BrowseDirFromID(VirtualNodeData.FolderID);
+  FSE.BrowseDirFromID(VirtualNodeData^.FolderID);
   CurrentDir := disp;
-  CurrentDirIdx := VirtualNodeData.FolderID;
+  CurrentDirIdx := VirtualNodeData^.FolderID;
   appendLogVerbose(1,ReplaceValue('%e',DLNGStr('LOG301'),inttostr(lstContent.TotalCount)));
 
 end;
@@ -2910,17 +2926,17 @@ begin
   begin
     NodeData := lstIndex.GetNodeData(Nod);
 
-    if (NodeData <> nil) and (NodeData.imageIndex <> 2) then
+    if (NodeData <> nil) and (NodeData^.imageIndex <> 2) then
     begin
       if ReturnFullPath then
       begin
-        res := GetNodePath(Nod.Parent);
+        res := GetNodePath(Nod^.Parent);
         if length(res)>0 then
           res := res + FSE.SlashMode;
-        res := res + NodeData.dirname;
+        res := res + NodeData^.dirname;
       end
       else
-        res := NodeData.dirname;
+        res := NodeData^.dirname;
     end
     else
       res := '';
@@ -2939,7 +2955,7 @@ begin
   Data1 := Sender.GetNodeData(Node1);
   Data2 := Sender.GetNodeData(Node2);
 
-  Result := AnsiCompareStr(UpperCase(Data1.dirname),UpperCase(Data2.dirname));
+  Result := AnsiCompareStr(UpperCase(Data1^.dirname),UpperCase(Data2^.dirname));
 //  ShowMessage(GetNodePath(Node1)+#10+GetNodePath(Node2)+#10+#10+Data1.dirname+#10+Data2.dirname);
 //  Result := AnsiCompareStr(GetNodePath(Node1),GetNodePath(Node2));
 
@@ -2960,7 +2976,7 @@ begin
  if (lstIndex.RootNodeCount > 0) and (lstIndex.FocusedNode <> nil) then
  begin
    NodeData := lstIndex.GetNodeData(lstIndex.FocusedNode);
-   if (NodeData.imageIndex = 20) then
+   if (NodeData^.imageIndex = 20) then
    begin
      menuIndex_ExtractAll.Visible := True;
      menuIndex_Infos.Visible := True;
@@ -2975,7 +2991,7 @@ begin
      menuIndex_Infos.Visible := False;
      N2.Visible := false;
      menuIndex_ExtractDirs.Visible := True;
-     menuIndex_ExtractDirsNamedFolder.Caption := ReplaceValue('%d',DLNGStr('POP2S6'),NodeData.dirname);
+     menuIndex_ExtractDirsNamedFolder.Caption := ReplaceValue('%d',DLNGStr('POP2S6'),NodeData^.dirname);
      menuIndex_ExtractDirsNamedFolder.Visible := True;
 //     lstIndex.PopupMenu.Popup(Left + MousePos.X + 8, Top + lstIndex.Top + ToolBar.Top + ToolBar.Height + 20 + MousePos.Y)
    end;
@@ -3075,7 +3091,7 @@ end;
 
 
 
-procedure Tdup5Main.writeLog(text: string);
+procedure Tdup5Main.writeLog(logText: string);
 begin
 
 {  if richLog.Lines.Count >= 32760 then
@@ -3087,7 +3103,7 @@ begin
 
 end;
 
-procedure Tdup5Main.appendLog(text: string);
+procedure Tdup5Main.appendLog(logText: string);
 begin
 
 //  richLog.Lines.Strings[richLog.Lines.Count-1] := richLog.Lines.Strings[richLog.Lines.Count-1]+' '+text;
@@ -3116,7 +3132,7 @@ begin
 
 end;
 
-procedure Tdup5Main.colorLog(Color: TColor);
+procedure Tdup5Main.colorLog(LogColor: TColor);
 begin
 
   setRichEditLineColor(richLog, richLog.Lines.Count, Color);
@@ -3138,7 +3154,7 @@ begin
 
 end;
 
-procedure Tdup5Main.appendLogVerbose(minLevel: integer; text: string);
+procedure Tdup5Main.appendLogVerbose(minLevel: integer; logText: string);
 var severity: TDupLogMessageSeverity;
 begin
 
@@ -3156,7 +3172,7 @@ begin
 
 end;
 
-procedure Tdup5Main.writeLogVerbose(minLevel: integer; text: string);
+procedure Tdup5Main.writeLogVerbose(minLevel: integer; logText: string);
 var severity: TDupLogMessageSeverity;
 begin
 
@@ -3185,7 +3201,7 @@ begin
 
 end;
 
-procedure Tdup5Main.colorLogVerbose(minLevel: integer; Color: TColor);
+procedure Tdup5Main.colorLogVerbose(minLevel: integer; LogColor: TColor);
 begin
 
   if verboseLevel >= minLevel then
@@ -3252,16 +3268,16 @@ begin
       Node := lstContent.GetFirstSelected;
       Data := lstContent.GetNodeData(Node);
 
-      Filename := FSE.Items[Data.entryIndex].FileName;
+      Filename := FSE.Items[Data^.entryIndex].FileName;
 
       // SLOW LIKE HELL: Going through all entries until finding the good one
       //FSE.GetListElem(rep+fileName,Offset,Size,DataX,DataY);
 
       // Instead we use the data directly as we already have it!!!
-      Size := FSE.Items[Data.entryIndex].Size;
-      Offset := FSE.Items[Data.entryIndex].Offset;
-      DataX := FSE.Items[Data.entryIndex].DataX;
-      DataY := FSE.Items[Data.entryIndex].DataY;
+      Size := FSE.Items[Data^.entryIndex].Size;
+      Offset := FSE.Items[Data^.entryIndex].Offset;
+      DataX := FSE.Items[Data^.entryIndex].DataX;
+      DataY := FSE.Items[Data^.entryIndex].DataY;
 
       ext := ExtractFileExt(fileName);
       if ext <> '' then
@@ -3273,10 +3289,10 @@ begin
 
       dup5Main.WriteLogVerbose(2,DLNGStr('PRV000')+' ');
 
-      if not(isPreviewLimit) or (FSE.Items[Data.entryIndex].Size <= getPreviewLimitInBytes(previewLimitValue)) then
+      if not(isPreviewLimit) or (FSE.Items[Data^.entryIndex].Size <= getPreviewLimitInBytes(previewLimitValue)) then
       begin
 
-        tmpfil := getTemporaryDir+getTemporaryFilename(FSE.Items[Data.entryIndex].FileName);
+        tmpfil := getTemporaryDir+getTemporaryFilename(FSE.Items[Data^.entryIndex].FileName);
         foundCnv := false;
 
         stmSource := TMemoryStream.Create;
@@ -3286,7 +3302,7 @@ begin
           dup5Main.WriteLogVerbose(1,' + '+DLNGStr('PRV010')+'... ');
 
           StartTime := Now;
-          FSE.ExtractFileToStream(Data.entryIndex,stmSource,tmpfil,true);
+          FSE.ExtractFileToStream(Data^.entryIndex,stmSource,tmpfil,true);
           stmSource.Seek(0,soBeginning);
           dup5Main.appendLogVerbose(1,inttostr(MilliSecondsBetween(Now, StartTime))+'ms');
 
@@ -3598,7 +3614,7 @@ begin
 
   // We free the directory name (string)
   NodeData := lstIndex.GetNodeData(Node);
-  setLength(NodeData.dirname,0);
+  setLength(NodeData^.dirname,0);
 
 end;
 
@@ -3611,7 +3627,7 @@ var Data: pvirtualTreeData;
 begin
 
   Data := lstContent.GetNodeData(Node);
-  setLength(Data.desc,0);
+  setLength(Data^.desc,0);
             
 end;
 
@@ -3626,7 +3642,6 @@ begin
 //  FreeAndNil(ImgContents);
 
 //  FreeAndNil(OpenDialog);
-//  FreeAndNil(XPManifest);
 //  FreeAndNil(DropFileSource);
   FreeAndNil(FPreviewImage);
   FreeAndNil(FPreviewBitmap);

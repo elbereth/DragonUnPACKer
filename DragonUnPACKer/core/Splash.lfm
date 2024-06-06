@@ -1,48 +1,44 @@
 object frmSplash: TfrmSplash
-  Left = 435
-  Top = 202
+  Left = 1997
+  Height = 299
+  Top = 601
+  Width = 449
   AlphaBlend = True
   AlphaBlendValue = 200
   BorderStyle = bsNone
   Caption = 'Dragon UnPACKer 5'
   ClientHeight = 299
   ClientWidth = 449
-  Color = clLime
-  TransparentColor = True
-  TransparentColorValue = clLime
-  Font.Charset = DEFAULT_CHARSET
+  Color = clNone
   Font.Color = clWindowText
-  Font.Height = -11
+  Font.Height = 13
   Font.Name = 'MS Sans Serif'
-  Font.Style = []
   FormStyle = fsStayOnTop
-  OldCreateOrder = False
-  Position = poScreenCenter
-  Visible = True
   OnCreate = FormCreate
-  PixelsPerInch = 96
-  TextHeight = 13
+  Position = poScreenCenter
+  LCLVersion = '3.4.0.0'
+  Visible = True
   object ImgSplash: TImage
     Left = 0
+    Height = 300
     Top = 0
     Width = 450
-    Height = 300
+    Transparent = True
   end
   object lblLoading: TLabel
     Left = 224
+    Height = 13
     Top = 190
     Width = 169
-    Height = 13
     Alignment = taCenter
     AutoSize = False
     Caption = 'Loading... Please Wait...'
-    Transparent = True
   end
   object imgBeta: TImage
     Left = 272
+    Height = 31
     Top = 240
     Width = 104
-    Height = 31
     Picture.Data = {
       07544269746D6170D8050000424DD80500000000000076000000280000006800
       00001F000000010004000200000062050000330B0000330B0000100000001000
@@ -91,15 +87,16 @@ object frmSplash: TfrmSplash
       1000000101000011111100000210120000440111111110000000110001000000
       01111111000000011111111000101111111010010A000006111111000000000C
       1001000100101011000C1000000001110800020122110E000006111111000000
-      68110001}
+      68110001
+    }
     Transparent = True
     Visible = False
   end
   object imgRC: TImage
     Left = 256
+    Height = 38
     Top = 232
     Width = 135
-    Height = 38
     AutoSize = True
     Picture.Data = {
       07544269746D61701C090000424D1C0900000000000076000000280000008700
@@ -175,15 +172,16 @@ object frmSplash: TfrmSplash
       0011100001000800000811000000081100120000100000000111110008000008
       011111100A00001011000010000000010E11021000000E110C00000611111000
       0A00000A01100001000008110C0000061111100008000008011111110A000211
-      0C00101102100001}
+      0C00101102100001
+    }
     Transparent = True
     Visible = False
   end
   object imgAlpha: TImage
     Left = 264
+    Height = 28
     Top = 240
     Width = 121
-    Height = 28
     AutoSize = True
     Picture.Data = {
       07544269746D617066060000424D660600000000000076000000280000007900
@@ -237,15 +235,16 @@ object frmSplash: TfrmSplash
       00000F0000000AFF0006F0FFF00008000022FF0000FFFFF0F00000000FFFF000
       0F0F000008FF020F0A0000080FFFFFF000000006FFFFFF000C0000080FFFFFFF
       0A000AFF001AF00FF000000FF00000FFFFFFF0000800000E0FFF0000000F0000
-      08FF0C0000080FFFFFF0000078FF02F00001}
+      08FF0C0000080FFFFFF0000078FF02F00001
+    }
     Transparent = True
     Visible = False
   end
   object imgWIP: TImage
     Left = 96
+    Height = 22
     Top = 208
     Width = 61
-    Height = 22
     Picture.Data = {
       07544269746D617054030000424D540300000000000076000000280000003D00
       0000160000000100040002000000DE020000330B0000330B0000100000001000
@@ -273,7 +272,8 @@ object frmSplash: TfrmSplash
       0010100111000000010110010C00000401100000003E00000001111000000001
       110000000111100001100110010000001000010010000000003E000000011110
       00000001110000000111000010000110110000001011000110000000003E0000
-      0001111000000001110000000111010000000110010000010000011110000001}
+      0001111000000001110000000111010000000110010000010000011110000001
+    }
     Transparent = True
     Visible = False
   end

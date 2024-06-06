@@ -1,0 +1,1422 @@
+object frmConfig: TfrmConfig
+  Left = 252
+  Height = 295
+  Top = 468
+  Width = 632
+  BorderStyle = bsToolWindow
+  Caption = 'Configuration'
+  ClientHeight = 295
+  ClientWidth = 632
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  OnKeyDown = FormKeyDown
+  OnShow = FormShow
+  Position = poMainFormCenter
+  LCLVersion = '3.4.0.0'
+  object tabAdvanced: TPanel
+    Left = 183
+    Height = 281
+    Top = 8
+    Width = 449
+    BevelOuter = bvNone
+    ClientHeight = 281
+    ClientWidth = 449
+    ParentBackground = False
+    TabOrder = 8
+    Visible = False
+    object grpAdvOpenFile: TGroupBox
+      Left = 0
+      Height = 41
+      Top = 120
+      Width = 441
+      Caption = 'Options for ''Open file'''
+      ClientHeight = 23
+      ClientWidth = 437
+      Color = clBtnFace
+      ParentBackground = False
+      ParentColor = False
+      TabOrder = 0
+      object chkMakeExtractDefault: TCheckBox
+        Left = 8
+        Height = 17
+        Top = 16
+        Width = 290
+        Caption = 'Make ''Extract file... Without conversion'' the default option'
+        TabOrder = 0
+        OnClick = chkMakeExtractDefaultClick
+      end
+    end
+    object grpAdvTemp: TGroupBox
+      Left = 0
+      Height = 113
+      Top = 0
+      Width = 441
+      Caption = 'Temporary Directory'
+      ClientHeight = 95
+      ClientWidth = 437
+      ParentBackground = False
+      TabOrder = 1
+      object txtTmpDir: TEdit
+        Left = 24
+        Height = 21
+        Top = 85
+        Width = 385
+        Enabled = False
+        TabOrder = 0
+        OnChange = txtTmpDirChange
+      end
+      object butTmpDirSelect: TButton
+        Left = 408
+        Height = 21
+        Top = 85
+        Width = 21
+        Caption = '+'
+        Enabled = False
+        TabOrder = 1
+        OnClick = butTmpDirSelectClick
+      end
+      object radTmpDirDefault: TRadioButton
+        Left = 8
+        Height = 17
+        Top = 16
+        Width = 198
+        Caption = 'Use auto-detected temporary directory'
+        Checked = True
+        TabOrder = 2
+        TabStop = True
+        OnClick = radTmpDirOtherClick
+      end
+      object radTmpDirOther: TRadioButton
+        Left = 8
+        Height = 17
+        Top = 64
+        Width = 170
+        Caption = 'Use defined temporary directory:'
+        TabOrder = 3
+        OnClick = radTmpDirOtherClick
+      end
+      object txtTmpDirDefault: TEdit
+        Left = 24
+        Height = 21
+        Top = 36
+        Width = 409
+        ReadOnly = True
+        TabOrder = 4
+      end
+    end
+    object grpAdvBufferSize: TGroupBox
+      Left = 0
+      Height = 65
+      Top = 216
+      Width = 441
+      Caption = 'Buffer memory'
+      ClientHeight = 47
+      ClientWidth = 437
+      Color = clBtnFace
+      ParentBackground = False
+      ParentColor = False
+      TabOrder = 2
+      object lblBufferSize: TLabel
+        Left = 8
+        Height = 13
+        Top = 16
+        Width = 425
+        AutoSize = False
+        Caption = 'Select the size of the extraction buffer:'
+      end
+      object lstBufferSize: TComboBox
+        Left = 8
+        Height = 21
+        Top = 32
+        Width = 425
+        ItemHeight = 13
+        Items.Strings = (
+          '1 byte -- No buffer'
+          '512 bytes'
+          '1 kbytes'
+          '2 kbytes'
+          '4 kbytes'
+          '8 kbytes'
+          '16 kbytes -- Default'
+          '32 kbytes'
+          '64 kbytes'
+          '128 kbytes'
+          '256 kbytes'
+          '512 kbytes'
+          '1 Mbytes'
+        )
+        Style = csDropDownList
+        TabOrder = 0
+        OnChange = lstBufferSizeChange
+      end
+    end
+    object grpDriversIntegrity: TGroupBox
+      Left = 0
+      Height = 41
+      Top = 168
+      Width = 441
+      Caption = 'Drivers plugin entries integrity'
+      ClientHeight = 23
+      ClientWidth = 437
+      Color = clBtnFace
+      ParentBackground = False
+      ParentColor = False
+      TabOrder = 3
+      object chkAccept0Bytes: TCheckBox
+        Left = 8
+        Height = 17
+        Top = 16
+        Width = 286
+        Caption = 'Do not ignore files with size = 0 bytes (not recommended)'
+        TabOrder = 0
+        OnClick = chkAccept0BytesClick
+      end
+    end
+  end
+  object tabPlugins: TPanel
+    Left = 184
+    Height = 281
+    Top = 8
+    Width = 441
+    BevelOuter = bvNone
+    ClientHeight = 281
+    ClientWidth = 441
+    ParentBackground = False
+    TabOrder = 3
+    Visible = False
+    object strDriversList: TLabel
+      Left = 0
+      Height = 13
+      Top = 0
+      Width = 241
+      AutoSize = False
+      Caption = 'Drivers:'
+    end
+    object cmdDrvSetup: TButton
+      Left = 366
+      Height = 17
+      Top = 0
+      Width = 75
+      Caption = 'Setup'
+      Enabled = False
+      TabOrder = 0
+      OnClick = cmdDrvSetupClick
+      OnKeyDown = FormKeyDown
+    end
+    object grpDrvInfo: TGroupBox
+      Left = 0
+      Height = 137
+      Top = 144
+      Width = 305
+      Caption = 'Driver Info'
+      ClientHeight = 119
+      ClientWidth = 301
+      ParentBackground = False
+      TabOrder = 1
+      object strDrvInfoAuthor: TLabel
+        Left = 8
+        Height = 13
+        Top = 32
+        Width = 65
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Author:'
+      end
+      object lblDrvInfoAuthor: TLabel
+        Left = 80
+        Height = 13
+        Top = 32
+        Width = 217
+        AutoSize = False
+      end
+      object strDrvInfoVersion: TLabel
+        Left = 8
+        Height = 13
+        Top = 16
+        Width = 65
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Version:'
+      end
+      object lblDrvInfoVersion: TLabel
+        Left = 80
+        Height = 13
+        Top = 16
+        Width = 217
+        AutoSize = False
+      end
+      object strDrvInfoComments: TLabel
+        Left = 8
+        Height = 13
+        Top = 48
+        Width = 65
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Comments:'
+      end
+      object Panel1: TPanel
+        Left = 80
+        Height = 81
+        Top = 48
+        Width = 217
+        BevelInner = bvLowered
+        BevelOuter = bvNone
+        ClientHeight = 81
+        ClientWidth = 217
+        ParentBackground = False
+        TabOrder = 0
+        object lblDrvInfoComments: TLabel
+          Left = 1
+          Height = 79
+          Top = 1
+          Width = 215
+          AutoSize = False
+          WordWrap = True
+        end
+      end
+    end
+    object cmdDrvAbout: TButton
+      Left = 288
+      Height = 17
+      Top = 0
+      Width = 75
+      Caption = 'About'
+      Enabled = False
+      TabOrder = 2
+      OnClick = cmdDrvAboutClick
+      OnKeyDown = FormKeyDown
+    end
+    object lstDrivers2: TListView
+      Left = 0
+      Height = 113
+      Top = 24
+      Width = 441
+      Columns = <      
+        item
+          Caption = 'P'
+          Width = 30
+        end      
+        item
+          Caption = 'Plugin name'
+          Width = 220
+        end      
+        item
+          Caption = 'Version'
+          Width = 105
+        end      
+        item
+          Caption = 'Filename'
+          Width = 65
+        end>
+      ColumnClick = False
+      HideSelection = False
+      ReadOnly = True
+      RowSelect = True
+      TabOrder = 3
+      ViewStyle = vsReport
+      OnChange = lstDrivers2Change
+      OnKeyDown = FormKeyDown
+    end
+    object grpAdvInfo: TGroupBox
+      Left = 312
+      Height = 137
+      Top = 144
+      Width = 129
+      Caption = 'Advanced Info'
+      ClientHeight = 119
+      ClientWidth = 125
+      ParentBackground = False
+      TabOrder = 4
+      object lblDUDI: TLabel
+        Left = 8
+        Height = 13
+        Top = 18
+        Width = 49
+        AutoSize = False
+        Caption = 'DUDI :'
+      end
+      object lblIntVer: TLabel
+        Left = 8
+        Height = 13
+        Top = 37
+        Width = 49
+        AutoSize = False
+        Caption = 'Int.Ver. :'
+      end
+      object lblPriority: TLabel
+        Left = 8
+        Height = 13
+        Top = 61
+        Width = 49
+        AutoSize = False
+        Caption = 'Priority :'
+      end
+      object txtDUDI: TStaticText
+        Left = 64
+        Height = 17
+        Top = 16
+        Width = 58
+        Alignment = taCenter
+        BorderStyle = sbsSingle
+        Caption = '-'
+        TabOrder = 0
+      end
+      object txtIntVer: TStaticText
+        Left = 64
+        Height = 17
+        Top = 35
+        Width = 58
+        Alignment = taCenter
+        BorderStyle = sbsSingle
+        Caption = '-'
+        TabOrder = 1
+      end
+      object trkPriority: TTrackBar
+        Left = 8
+        Height = 33
+        Top = 75
+        Width = 113
+        Frequency = 10
+        Max = 200
+        OnChange = trkPriorityChange
+        PageSize = 10
+        Position = 0
+        TickMarks = tmTopLeft
+        TabOrder = 2
+      end
+      object txtPriority: TStaticText
+        Left = 64
+        Height = 17
+        Top = 59
+        Width = 58
+        Alignment = taCenter
+        BorderStyle = sbsSingle
+        Caption = '-'
+        TabOrder = 3
+      end
+      object butRefresh: TButton
+        Left = 16
+        Height = 17
+        Top = 112
+        Width = 97
+        Caption = 'Refresh List'
+        TabOrder = 4
+        OnClick = butRefreshClick
+        OnKeyDown = FormKeyDown
+      end
+    end
+  end
+  object tabConvert: TPanel
+    Left = 184
+    Height = 281
+    Top = 8
+    Width = 441
+    BevelOuter = bvNone
+    ClientHeight = 281
+    ClientWidth = 441
+    ParentBackground = False
+    TabOrder = 5
+    Visible = False
+    object strConvertList: TLabel
+      Left = 0
+      Height = 13
+      Top = 0
+      Width = 257
+      AutoSize = False
+      Caption = 'Convert plugins:'
+    end
+    object cmdCnvSetup: TButton
+      Left = 366
+      Height = 17
+      Top = 0
+      Width = 75
+      Caption = 'Setup'
+      Enabled = False
+      TabOrder = 0
+      OnClick = cmdCnvSetupClick
+      OnKeyDown = FormKeyDown
+    end
+    object cmdCnvAbout: TButton
+      Left = 288
+      Height = 17
+      Top = 0
+      Width = 75
+      Caption = 'About'
+      Enabled = False
+      TabOrder = 1
+      OnClick = cmdCnvAboutClick
+      OnKeyDown = FormKeyDown
+    end
+    object grpCnvInfo: TGroupBox
+      Left = 0
+      Height = 137
+      Top = 144
+      Width = 305
+      Caption = 'Convert plugin info'
+      ClientHeight = 119
+      ClientWidth = 301
+      ParentBackground = False
+      TabOrder = 2
+      object strCnvInfoAuthor: TLabel
+        Left = 8
+        Height = 13
+        Top = 32
+        Width = 65
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Author:'
+      end
+      object lblCnvInfoAuthor: TLabel
+        Left = 80
+        Height = 13
+        Top = 32
+        Width = 217
+        AutoSize = False
+      end
+      object strCnvInfoVersion: TLabel
+        Left = 8
+        Height = 13
+        Top = 16
+        Width = 65
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Version:'
+      end
+      object lblCnvInfoVersion: TLabel
+        Left = 80
+        Height = 13
+        Top = 16
+        Width = 217
+        AutoSize = False
+      end
+      object strCnvInfoComments: TLabel
+        Left = 8
+        Height = 13
+        Top = 48
+        Width = 65
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Comments:'
+      end
+      object Panel3: TPanel
+        Left = 80
+        Height = 81
+        Top = 48
+        Width = 217
+        BevelInner = bvLowered
+        BevelOuter = bvNone
+        ClientHeight = 81
+        ClientWidth = 217
+        ParentBackground = False
+        TabOrder = 0
+        object lblCnvInfoComments: TLabel
+          Left = 1
+          Height = 79
+          Top = 1
+          Width = 215
+          AutoSize = False
+          WordWrap = True
+        end
+      end
+    end
+    object lstConvert2: TListView
+      Left = 0
+      Height = 113
+      Top = 24
+      Width = 441
+      Columns = <      
+        item
+          Caption = 'Plugin name'
+          Width = 250
+        end      
+        item
+          Caption = 'Version'
+          Width = 105
+        end      
+        item
+          Caption = 'Filename'
+          Width = 65
+        end>
+      ColumnClick = False
+      HideSelection = False
+      ReadOnly = True
+      RowSelect = True
+      TabOrder = 3
+      ViewStyle = vsReport
+      OnChange = lstConvert2Change
+      OnKeyDown = FormKeyDown
+    end
+    object grpCnvAdvInfo: TGroupBox
+      Left = 312
+      Height = 137
+      Top = 144
+      Width = 129
+      Caption = 'Advanced Info'
+      ClientHeight = 119
+      ClientWidth = 125
+      ParentBackground = False
+      TabOrder = 4
+      object lblDUCI: TLabel
+        Left = 8
+        Height = 13
+        Top = 18
+        Width = 49
+        AutoSize = False
+        Caption = 'DUCI :'
+      end
+      object lblCIntVer: TLabel
+        Left = 8
+        Height = 13
+        Top = 37
+        Width = 49
+        AutoSize = False
+        Caption = 'Int.Ver. :'
+      end
+      object txtDUCI: TStaticText
+        Left = 64
+        Height = 17
+        Top = 16
+        Width = 58
+        Alignment = taCenter
+        BorderStyle = sbsSingle
+        Caption = '-'
+        TabOrder = 0
+      end
+      object txtCIntVer: TStaticText
+        Left = 64
+        Height = 17
+        Top = 35
+        Width = 58
+        Alignment = taCenter
+        BorderStyle = sbsSingle
+        Caption = '-'
+        TabOrder = 1
+      end
+    end
+  end
+  object tabAssoc: TGroupBox
+    Left = 184
+    Height = 281
+    Top = 8
+    Width = 441
+    Caption = 'Types de fichiers'
+    ClientHeight = 263
+    ClientWidth = 437
+    ParentBackground = False
+    TabOrder = 4
+    Visible = False
+    object imgAssocIcon: TImage
+      Left = 160
+      Height = 32
+      Top = 80
+      Width = 32
+      Enabled = False
+      Transparent = True
+    end
+    object lblAssocInfo: TLabel
+      Left = 144
+      Height = 41
+      Top = 16
+      Width = 289
+      AutoSize = False
+      Caption = 'Select the extensions Dragon UnPACKer should open when you will double-click them in the Explorer:'
+      WordWrap = True
+    end
+    object lblAssocCurIcon: TLabel
+      Left = 144
+      Height = 17
+      Top = 56
+      Width = 289
+      AutoSize = False
+      Caption = 'Currently associated icon:'
+      WordWrap = True
+    end
+    object imgAssocIcon16: TImage
+      Left = 200
+      Height = 16
+      Top = 80
+      Width = 16
+      Enabled = False
+      Transparent = True
+    end
+    object cmdTypesNone: TButton
+      Left = 8
+      Height = 25
+      Top = 16
+      Width = 59
+      Caption = 'Aucunes'
+      TabOrder = 0
+      OnClick = cmdTypesNoneClick
+      OnKeyDown = FormKeyDown
+    end
+    object cmdTypesAll: TButton
+      Left = 72
+      Height = 25
+      Top = 16
+      Width = 57
+      Caption = 'Toutes'
+      TabOrder = 1
+      OnClick = cmdTypesAllClick
+      OnKeyDown = FormKeyDown
+    end
+    object chkAssocOpenWith: TCheckBox
+      Left = 144
+      Height = 17
+      Top = 240
+      Width = 335
+      Caption = 'Add Windows Explorer extension "Open with Dragon UnPACKer 5"'
+      Checked = True
+      State = cbChecked
+      TabOrder = 7
+      OnClick = chkAssocOpenWithClick
+      OnKeyDown = FormKeyDown
+    end
+    object txtAssocText: TEdit
+      Left = 160
+      Height = 21
+      Top = 216
+      Width = 273
+      AutoSize = False
+      AutoSelect = False
+      Enabled = False
+      TabOrder = 6
+      Text = 'Dragon UnPACKer 5 Archive'
+      OnChange = txtAssocTextChange
+      OnKeyDown = FormKeyDown
+    end
+    object chkAssocText: TCheckBox
+      Left = 144
+      Height = 17
+      Top = 200
+      Width = 152
+      Caption = 'Change the association text:'
+      TabOrder = 5
+      OnClick = chkAssocTextClick
+      OnKeyDown = FormKeyDown
+    end
+    object chkAssocCheckStartup: TCheckBox
+      Left = 144
+      Height = 17
+      Top = 120
+      Width = 155
+      Caption = 'Verify associations at start-up'
+      TabOrder = 2
+      OnClick = chkAssocCheckStartupClick
+      OnKeyDown = FormKeyDown
+    end
+    object chkAssocExtIcon: TCheckBox
+      Left = 144
+      Height = 17
+      Top = 160
+      Width = 100
+      Caption = 'Use external icon'
+      TabOrder = 3
+      OnClick = chkAssocExtIconClick
+      OnKeyDown = FormKeyDown
+    end
+    object txtAssocExtIcon: TEdit
+      Left = 160
+      Height = 21
+      Top = 176
+      Width = 253
+      AutoSize = False
+      AutoSelect = False
+      Enabled = False
+      TabOrder = 4
+      OnChange = txtAssocExtIconChange
+      OnKeyDown = FormKeyDown
+    end
+    object butAssocExtIconBrowse: TButton
+      Left = 412
+      Height = 21
+      Top = 176
+      Width = 21
+      Caption = '+'
+      Enabled = False
+      TabOrder = 8
+      OnClick = butAssocExtIconBrowseClick
+    end
+    object lstTypes: TCheckListBox
+      Left = 8
+      Height = 225
+      Top = 48
+      Width = 121
+      ItemHeight = 0
+      Sorted = True
+      TabOrder = 9
+      OnClick = lstTypesClick
+    end
+  end
+  object tabPreview: TPanel
+    Left = 183
+    Height = 281
+    Top = 6
+    Width = 449
+    BevelOuter = bvNone
+    ClientHeight = 281
+    ClientWidth = 449
+    ParentBackground = False
+    TabOrder = 10
+    Visible = False
+    object grpPreviewBasic: TGroupBox
+      Left = 0
+      Height = 41
+      Top = 0
+      Width = 441
+      Caption = 'Preview Options'
+      ClientHeight = 23
+      ClientWidth = 437
+      ParentBackground = False
+      TabOrder = 0
+      object chkPreviewEnable: TCheckBox
+        Left = 8
+        Height = 17
+        Top = 16
+        Width = 91
+        Caption = 'Enable preview'
+        Checked = True
+        State = cbChecked
+        TabOrder = 0
+        OnClick = chkPreviewEnableClick
+      end
+    end
+    object grpPreviewLimits: TGroupBox
+      Left = 0
+      Height = 89
+      Top = 48
+      Width = 441
+      Caption = 'Preview Size Limits'
+      ClientHeight = 71
+      ClientWidth = 437
+      ParentBackground = False
+      TabOrder = 1
+      object lblPreviewLimit: TLabel
+        Left = 24
+        Height = 13
+        Top = 59
+        Width = 73
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'Limit:'
+      end
+      object lblPreviewLimitBytes: TLabel
+        Left = 384
+        Height = 13
+        Top = 59
+        Width = 49
+        AutoSize = False
+        Caption = 'Bytes'
+      end
+      object txtPreviewLimitSize: TLabel
+        Left = 296
+        Height = 13
+        Top = 59
+        Width = 81
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = '1048576'
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object optPreviewLimitNo: TRadioButton
+        Left = 8
+        Height = 17
+        Top = 16
+        Width = 263
+        Caption = 'Do not limit size of detected files (not recommended)'
+        TabOrder = 0
+        OnClick = optPreviewLimitNoClick
+      end
+      object optPreviewLimitYes: TRadioButton
+        Left = 8
+        Height = 17
+        Top = 32
+        Width = 304
+        Caption = 'Limit detection of files that can be previewed (recommended)'
+        Checked = True
+        TabOrder = 1
+        TabStop = True
+        OnClick = optPreviewLimitYesClick
+      end
+      object lstPreviewLimit: TComboBox
+        Left = 104
+        Height = 21
+        Top = 56
+        Width = 185
+        ItemHeight = 13
+        ItemIndex = 2
+        Items.Strings = (
+          'Very Low'
+          'Low'
+          'Medium (Recommended)'
+          'High'
+          'Very High'
+        )
+        Style = csDropDownList
+        TabOrder = 2
+        Text = 'Medium (Recommended)'
+        OnChange = lstPreviewLimitChange
+      end
+    end
+    object grpPreviewDisplay: TGroupBox
+      Left = 0
+      Height = 57
+      Top = 144
+      Width = 441
+      Caption = 'Preview Display Mode'
+      ClientHeight = 39
+      ClientWidth = 437
+      ParentBackground = False
+      TabOrder = 2
+      object optPreviewDisplayFull: TRadioButton
+        Left = 8
+        Height = 17
+        Top = 16
+        Width = 196
+        Caption = 'Original size with scrollbars (if needed)'
+        Checked = True
+        TabOrder = 0
+        TabStop = True
+        OnClick = optPreviewDisplayFullClick
+      end
+      object optPreviewDisplayStretch: TRadioButton
+        Left = 8
+        Height = 17
+        Top = 32
+        Width = 189
+        Caption = 'Shrinked/Streched to preview panel'
+        TabOrder = 1
+        OnClick = optPreviewDisplayStretchClick
+      end
+    end
+  end
+  object tabPluginsInfos: TPanel
+    Left = 184
+    Height = 281
+    Top = 8
+    Width = 449
+    BevelOuter = bvNone
+    ClientHeight = 281
+    ClientWidth = 449
+    ParentBackground = False
+    TabOrder = 9
+    Visible = False
+    object grpPluginsInfo: TGroupBox
+      Left = 0
+      Height = 281
+      Top = 0
+      Width = 441
+      Caption = 'Plugins'
+      ClientHeight = 263
+      ClientWidth = 437
+      ParentBackground = False
+      TabOrder = 0
+      object lblPluginsConvert: TLabel
+        Left = 8
+        Height = 13
+        Top = 16
+        Width = 425
+        AutoSize = False
+        Caption = 'Convert plugins:'
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsUnderline]
+        ParentFont = False
+      end
+      object lblPluginsDrivers: TLabel
+        Left = 8
+        Height = 13
+        Top = 152
+        Width = 425
+        AutoSize = False
+        Caption = 'Drivers plugins:'
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsUnderline]
+        ParentFont = False
+      end
+      object panPluginsConvert: TPanel
+        Left = 8
+        Height = 105
+        Top = 32
+        Width = 425
+        BevelOuter = bvLowered
+        ClientHeight = 105
+        ClientWidth = 425
+        ParentBackground = False
+        TabOrder = 0
+        object lblPluginsConvertInfo: TLabel
+          Left = 1
+          Height = 103
+          Top = 1
+          Width = 423
+          Align = alClient
+          AutoSize = False
+          Caption = 'Those plugins will handle the convertion of file formats when extracting or previewing files. Example: Convert textures from .ART file format to .BMP'
+          WordWrap = True
+        end
+      end
+      object panPluginsDrivers: TPanel
+        Left = 8
+        Height = 103
+        Top = 170
+        Width = 425
+        BevelOuter = bvLowered
+        ClientHeight = 103
+        ClientWidth = 425
+        ParentBackground = False
+        TabOrder = 1
+        object lblPluginsDriversInfo: TLabel
+          Left = 1
+          Height = 101
+          Top = 1
+          Width = 423
+          Align = alClient
+          AutoSize = False
+          Caption = 'Those plugins handle opening file formats so Dragon UnPACKer can browse into them. If a file is not supported that means no driver plugin could load it. HyperRipper handle files with another type of plugins (see below).'
+          WordWrap = True
+        end
+      end
+    end
+  end
+  object tabBasic: TPanel
+    Left = 184
+    Height = 281
+    Top = 8
+    Width = 449
+    BevelOuter = bvNone
+    ClientHeight = 281
+    ClientWidth = 449
+    ParentBackground = False
+    TabOrder = 1
+    object grpLanguage: TGroupBox
+      Left = 0
+      Height = 97
+      Top = 184
+      Width = 441
+      Caption = 'Langue'
+      ClientHeight = 79
+      ClientWidth = 437
+      Color = clBtnFace
+      ParentBackground = False
+      ParentColor = False
+      TabOrder = 0
+      object strAuthor: TLabel
+        Left = 8
+        Height = 13
+        Top = 44
+        Width = 34
+        Caption = 'Auteur:'
+      end
+      object lblAuthor: TLabel
+        Left = 48
+        Height = 13
+        Top = 44
+        Width = 385
+        AutoSize = False
+      end
+      object strEmail: TLabel
+        Left = 8
+        Height = 13
+        Top = 59
+        Width = 31
+        Caption = 'E-mail:'
+      end
+      object strURL: TLabel
+        Left = 8
+        Height = 13
+        Top = 76
+        Width = 25
+        Caption = 'URL:'
+      end
+      object lblEmail: TLabel
+        Left = 48
+        Height = 13
+        Top = 59
+        Width = 385
+        AutoSize = False
+      end
+      object lblURL: TLabel
+        Left = 40
+        Height = 13
+        Top = 76
+        Width = 393
+        AutoSize = False
+      end
+      object lblFindNewLanguages: TLabel
+        Cursor = crHandPoint
+        Left = 296
+        Height = 25
+        Top = 16
+        Width = 141
+        Alignment = taCenter
+        AutoSize = False
+        Caption = 'Trouver d''autres traductions...'
+        Font.Color = clBlue
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        ParentFont = False
+        WordWrap = True
+        OnClick = lblFindNewLanguagesClick
+        OnMouseEnter = lblFindNewLanguagesMouseEnter
+        OnMouseLeave = lblFindNewLanguagesMouseLeave
+      end
+      object lstLangues: TComboBoxEx
+        Left = 8
+        Height = 22
+        Top = 16
+        Width = 281
+        Images = imgLstLangue
+        ItemHeight = 16
+        ItemsEx = <        
+          item
+            Caption = 'Français (French)'
+            ImageIndex = 0
+            SelectedImageIndex = 0
+          end>
+        OnKeyDown = FormKeyDown
+        OnSelect = lstLanguesSelect
+        Style = csExDropDownList
+        TabOrder = 0
+      end
+    end
+    object grpOptions: TGroupBox
+      Left = 0
+      Height = 177
+      Top = 0
+      Width = 441
+      Caption = 'Options'
+      ClientHeight = 159
+      ClientWidth = 437
+      ParentBackground = False
+      TabOrder = 1
+      object ChkNoSplash: TCheckBox
+        Left = 8
+        Height = 17
+        Top = 16
+        Width = 196
+        Caption = 'Ne pas afficher d''écran de démarrage'
+        TabOrder = 0
+        OnClick = ChkNoSplashClick
+        OnKeyDown = FormKeyDown
+      end
+      object ChkOneInstance: TCheckBox
+        Left = 8
+        Height = 17
+        Top = 32
+        Width = 287
+        Caption = 'Permettre seulement une instance du programme a la fois'
+        TabOrder = 1
+        OnClick = ChkOneInstanceClick
+        OnKeyDown = FormKeyDown
+      end
+      object ChkSmartOpen: TCheckBox
+        Left = 8
+        Height = 17
+        Top = 48
+        Width = 225
+        Caption = 'Détection intelligente des formats de fichiers'
+        TabOrder = 2
+        OnClick = ChkSmartOpenClick
+        OnKeyDown = FormKeyDown
+      end
+      object chkRegistryIcons: TCheckBox
+        Left = 8
+        Height = 17
+        Top = 64
+        Width = 217
+        Caption = 'Rechercher les icones en base de registre'
+        TabOrder = 3
+        OnClick = chkRegistryIconsClick
+      end
+      object chkUseHyperRipper: TCheckBox
+        Left = 8
+        Height = 17
+        Top = 80
+        Width = 304
+        Caption = 'Utiliser l''HyperRipper si aucun plugin n''arrive ŕ ouvrir le fichier'
+        TabOrder = 4
+        OnClick = chkUseHyperRipperClick
+      end
+      object chkAutoExpand: TCheckBox
+        Left = 8
+        Height = 17
+        Top = 96
+        Width = 284
+        Caption = 'Développer automatiquement les répertoires ŕ l''ouverture'
+        TabOrder = 5
+        OnClick = chkAutoExpandClick
+      end
+      object chkKeepFilterIndex: TCheckBox
+        Left = 8
+        Height = 17
+        Top = 112
+        Width = 351
+        Caption = 'Garder en mémoire le type de fichier sélectionné sur l''écran d''ouverture'
+        TabOrder = 6
+        OnClick = chkKeepFilterIndexClick
+      end
+      object chkDisplayXY: TCheckBox
+        Left = 8
+        Height = 17
+        Top = 128
+        Width = 355
+        Caption = 'Afficher les champs étendues sur la liste des entrées (non recommandé)'
+        TabOrder = 7
+        OnClick = chkDisplayXYClick
+      end
+    end
+  end
+  object tabLook: TPanel
+    Left = 184
+    Height = 281
+    Top = 8
+    Width = 449
+    BevelOuter = bvNone
+    ClientHeight = 281
+    ClientWidth = 449
+    ParentBackground = False
+    TabOrder = 2
+    object strLookList: TLabel
+      Left = 0
+      Height = 13
+      Top = 0
+      Width = 425
+      AutoSize = False
+      Caption = 'Fichiers de Look:'
+    end
+    object lstLook: TListBox
+      Left = 0
+      Height = 121
+      Top = 16
+      Width = 441
+      ItemHeight = 0
+      TabOrder = 0
+      OnClick = lstLookClick
+      OnKeyDown = FormKeyDown
+    end
+    object grpLookInfo: TGroupBox
+      Left = 0
+      Height = 137
+      Top = 144
+      Width = 441
+      Caption = 'Information'
+      ClientHeight = 119
+      ClientWidth = 437
+      ParentBackground = False
+      TabOrder = 1
+      object strLookName: TLabel
+        Left = 8
+        Height = 13
+        Top = 16
+        Width = 49
+        AutoSize = False
+        Caption = 'Nom:'
+      end
+      object strLookAuthor: TLabel
+        Left = 8
+        Height = 13
+        Top = 32
+        Width = 49
+        AutoSize = False
+        Caption = 'Auteur:'
+      end
+      object strLookEmail: TLabel
+        Left = 8
+        Height = 13
+        Top = 48
+        Width = 49
+        AutoSize = False
+        Caption = 'E-mail:'
+      end
+      object lblLookName: TLabel
+        Left = 64
+        Height = 13
+        Top = 16
+        Width = 369
+        AutoSize = False
+        ShowAccelChar = False
+      end
+      object lblLookAuthor: TLabel
+        Left = 64
+        Height = 13
+        Top = 32
+        Width = 369
+        AutoSize = False
+        ShowAccelChar = False
+      end
+      object lblLookEmail: TLabel
+        Left = 64
+        Height = 13
+        Top = 48
+        Width = 369
+        AutoSize = False
+        ShowAccelChar = False
+      end
+      object strLookComment: TLabel
+        Left = 8
+        Height = 13
+        Top = 64
+        Width = 57
+        AutoSize = False
+        Caption = 'Comment:'
+      end
+      object Panel2: TPanel
+        Left = 64
+        Height = 65
+        Top = 64
+        Width = 369
+        BevelOuter = bvLowered
+        ClientHeight = 65
+        ClientWidth = 369
+        ParentBackground = False
+        TabOrder = 0
+        object lblLookComment: TLabel
+          Left = 1
+          Height = 1
+          Top = 1
+          Width = 1
+        end
+      end
+    end
+  end
+  object tabLog: TPanel
+    Left = 184
+    Height = 281
+    Top = 8
+    Width = 449
+    BevelOuter = bvNone
+    ClientHeight = 281
+    ClientWidth = 449
+    ParentBackground = False
+    TabOrder = 7
+    object grpLogVerbose: TGroupBox
+      Left = 0
+      Height = 81
+      Top = 200
+      Width = 441
+      Caption = 'Verbose Options'
+      ClientHeight = 63
+      ClientWidth = 437
+      Color = clBtnFace
+      ParentBackground = False
+      ParentColor = False
+      TabOrder = 0
+      object strVerbose: TLabel
+        Left = 8
+        Height = 13
+        Top = 16
+        Width = 425
+        AutoSize = False
+        Caption = 'Select level of verbose for log:'
+      end
+      object lblVerbose: TLabel
+        Left = 168
+        Height = 41
+        Top = 32
+        Width = 265
+        AutoSize = False
+        Layout = tlCenter
+        WordWrap = True
+      end
+      object trackbarVerbose: TTrackBar
+        Left = 8
+        Height = 33
+        Top = 40
+        Width = 153
+        Max = 3
+        OnChange = trackbarVerboseChange
+        PageSize = 1
+        Position = 0
+        TabOrder = 0
+      end
+    end
+    object grpLogOptions: TGroupBox
+      Left = 0
+      Height = 193
+      Top = 0
+      Width = 441
+      Caption = 'Log Options'
+      ClientHeight = 175
+      ClientWidth = 437
+      ParentBackground = False
+      TabOrder = 1
+      object chkLog: TCheckBox
+        Left = 8
+        Height = 17
+        Top = 16
+        Width = 156
+        Caption = 'Afficher le journal d''exécution'
+        TabOrder = 0
+        OnClick = chkLogClick
+      end
+      object chkLogClearNew: TCheckBox
+        Left = 8
+        Height = 17
+        Top = 32
+        Width = 160
+        Caption = 'Clear when opening a new file'
+        TabOrder = 1
+        OnClick = chkLogClearNewClick
+      end
+    end
+  end
+  object cmdOk: TButton
+    Left = 8
+    Height = 25
+    Top = 264
+    Width = 169
+    Caption = 'OK'
+    Default = True
+    TabOrder = 0
+    OnClick = cmdOkClick
+    OnKeyDown = FormKeyDown
+  end
+  object treeConfig: TTreeView
+    Left = 8
+    Height = 249
+    Top = 8
+    Width = 169
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
+    HideSelection = False
+    Indent = 19
+    ParentFont = False
+    ReadOnly = True
+    TabOrder = 6
+    OnChange = treeConfigChange
+    OnKeyDown = FormKeyDown
+    Options = [tvoAutoItemHeight, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips, tvoThemedDraw]
+    Items.Data = {
+      F9FFFFFF0200050000000500000005000000FFFFFFFFFFFFFFFF020000000000
+      0000010500000042617369630F0000000F000000FFFFFFFFFFFFFFFF00000000
+      000000000008000000416476616E6365641000000010000000FFFFFFFFFFFFFF
+      FF000000000000000000030000004C6F670600000006000000FFFFFFFFFFFFFF
+      FF02000000000000000107000000506C7567696E730900000009000000FFFFFF
+      FFFFFFFFFF00000000000000000007000000436F6E766572740A0000000A0000
+      00FFFFFFFFFFFFFFFF0000000000000000000700000044726976657273080000
+      0008000000FFFFFFFFFFFFFFFF000000000000000000040000004C6F6F6B0700
+      000007000000FFFFFFFFFFFFFFFF0000000000000000000C0000004173736F63
+      696174696F6E731100000011000000FFFFFFFFFFFFFFFF000000000000000000
+      0700000050726576696577
+    }
+  end
+  object imgLstLangue: TImageList
+    BlendColor = clBlack
+    DrawingStyle = dsTransparent
+    Left = 8
+    Top = 8
+    Bitmap = {
+      4C7A0100000010000000100000001B0000000000000078DA63601805FF81081D
+      63518545D9A8FE51FD431B00004630B34D
+    }
+  end
+end

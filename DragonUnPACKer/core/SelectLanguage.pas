@@ -1,5 +1,7 @@
 unit SelectLanguage;
 
+{$MODE objfpc}{$H+}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -13,7 +15,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ComCtrls, ImgList;
+  Dialogs, StdCtrls, ComCtrls, ImgList, ComboEx;
 
 type
   TfrmSelectLanguage = class(TForm)
@@ -26,9 +28,9 @@ type
     procedure lstLanguesSelect(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
-    { Déclarations privées }
+    { DÃ©clarations privÃ©es }
   public
-    { Déclarations publiques }
+    { DÃ©clarations publiques }
   end;
 
 var
@@ -36,7 +38,7 @@ var
 
 implementation
 
-{$R *.dfm}
+{$R *.lfm}
 
 uses lib_Language, Splash, Registry;
 
@@ -45,7 +47,7 @@ var lngFiles: array[1..100] of String;
 
 procedure TfrmSelectLanguage.LNGList();
 var sr: TSearchRec;
-    Name,Author,URL,Email,FontName: string;
+    LangName,Author,URL,Email,FontName: string;
     itmx : TComboExItem;
     IsIcon: Boolean;
     Sel, IcnIdx: integer;
@@ -59,7 +61,7 @@ begin
   FreeAndNil(Icn);
   lstLangues.Clear;
   itmx := lstLangues.ItemsEx.Add;
-  itmx.Caption := 'Français (French)';
+  itmx.Caption := 'FranÃ§ais (French)';
   itmx.ImageIndex := 0;
 
   Sel := 0;
@@ -68,10 +70,10 @@ begin
   begin
 
     repeat
-      if GetLanguageInfo(ExtractFilePath(Application.ExeName)+'data\'+sr.Name,Name,Author,URL,Email,FontName,IsIcon) then
+      if GetLanguageInfo(ExtractFilePath(Application.ExeName)+'data\'+sr.Name,LangName,Author,URL,Email,FontName,IsIcon) then
       begin
         itmx := lstLangues.ItemsEx.Add;
-        itmx.Caption := Name;
+        itmx.Caption := LangName;
         numLngFiles := numLngFiles + 1;
         lngFiles[numLngFiles] := sr.Name;
         if sr.Name = curlanguage then

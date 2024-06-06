@@ -4,3 +4,10 @@ DragonUnPACKer-Doc/*
 !DragonUnPACKer-Doc/*.tex
 !DragonUnPACKer-Doc/*.pdf
 !DragonUnPACKer-Doc/images/
+
+# Lazarus files
+
+# personal editor info
+*.lps
+backup
+lib/

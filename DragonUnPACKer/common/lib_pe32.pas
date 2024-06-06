@@ -1,5 +1,7 @@
 unit lib_pe32;
 
+{$mode objfpc}{$H+}
+
 // Delphi - Linker Timestamp von Delphi Images
 // ----------------------------------------------------------------------------
 // Original code by Michael Puff
@@ -10,11 +12,12 @@ unit lib_pe32;
 
 interface
 
-uses SysUtils, Types, Windows;
+uses SysUtils, Windows;
 
 type ELinkDateRetrievalError = Exception;
 
 function GetImageLinkDateTime(const FileName: string): TDateTime;
+function GetExecutableCompilationDateTime(): TDateTime;
 
 implementation
 
@@ -122,7 +125,7 @@ begin
         // Search for section which contains the resource directory
         ResDirRaw := 0;
         for Section := 0 to NumberOfSections - 1 do
-        with SectionHeaders[Section] do
+        with SectionHeaders^[Section] do
           if (VirtualAddress <= ResDirRVA) and
             (VirtualAddress + SizeOfRawData >= ResDirRVA + ResDirSize) then
           begin
@@ -176,10 +179,31 @@ begin
 
   TimeStamp := GetImageLinkTimeStamp(FileName);
   if TimeStamp = 0 then
-    raise ELinkDateRetrievalError.Create('')
+  begin
+    // sometimes compilation time in header may be 0: https://learn.microsoft.com/en-us/windows/win32/debug/pe-format
+    // instead of raising error let's default to compialtion time
+    // raise ELinkDateRetrievalError.Create('')
+    // TODO: check out how to make Lazarus output correct compilation time in the executable header
+    result := GetExecutableCompilationDateTime();
+  end
   else
     result := UnixTimeToDateTime(TimeStamp);
 
 end;
 
+
+function GetExecutableCompilationDateTime(): TDateTime;
+var
+  fs: TFormatSettings;
+begin
+  fs.ShortDateFormat:= 'yyyy mm dd';
+  fs.DateSeparator:= '/';
+  fs.TimeSeparator:=':';
+  fs.LongTimeFormat := 'hh:nn';
+  // date in a 2024/06/01 13:52:52 format
+  result := StrToDateTime({$I %DATE%} + ' ' + {$I %TIME%}, fs);
+
+end;
+
 end.
+

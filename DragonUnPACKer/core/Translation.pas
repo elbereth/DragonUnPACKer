@@ -1,5 +1,7 @@
 unit Translation;
 
+{$mode objfpc}{$H+}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -89,13 +91,13 @@ begin
     menuLog_Clear.Caption := DLNGstr('POP3S3');
     menuLog_CopyClipboard.Caption := DLNGstr('POP3S4');
 
-    lstContent.Header.Columns.Items[0].Text := DLNGStr('LSTCP1');
-    lstContent.Header.Columns.Items[1].Text := DLNGStr('LSTCP2');
-    lstContent.Header.Columns.Items[2].Text := DLNGStr('LSTCP3');
-    lstContent.Header.Columns.Items[3].Text := DLNGStr('LSTCP4');
-    lstContent.Header.Columns.Items[4].Text := DLNGStr('LSTCPM');
-    lstContent.Header.Columns.Items[5].Text := DLNGStr('LSTCP5');
-    lstContent.Header.Columns.Items[6].Text := DLNGStr('LSTCP6');
+    lstContent.Header.Columns.Add().Text := DLNGStr('LSTCP1');
+    lstContent.Header.Columns.Add().Text := DLNGStr('LSTCP2');
+    lstContent.Header.Columns.Add().Text := DLNGStr('LSTCP3');
+    lstContent.Header.Columns.Add().Text := DLNGStr('LSTCP4');
+    lstContent.Header.Columns.Add().Text := DLNGStr('LSTCPM');
+    lstContent.Header.Columns.Add().Text := DLNGStr('LSTCP5');
+    lstContent.Header.Columns.Add().Text := DLNGStr('LSTCP6');
 
     Status.Panels.Items[0].Text := copy(dup5Main.Status.Panels.Items[0].Text,1,pos(' ',dup5Main.Status.Panels.Items[0].Text))+DLNGStr('STAT10');
     Status.Panels.Items[1].Text := copy(dup5Main.Status.Panels.Items[1].Text,1,pos(' ',dup5Main.Status.Panels.Items[1].Text))+DLNGStr('STAT20');

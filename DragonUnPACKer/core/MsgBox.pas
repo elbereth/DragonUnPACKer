@@ -8,12 +8,12 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ComCtrls;
+  Dialogs, StdCtrls, ComCtrls, RichMemo;
 
 type
   TfrmMsgBox = class(TForm)
     butOK: TButton;
-    richText: TRichEdit;
+    richText: TRichMemo;
     procedure butOKClick(Sender: TObject);
   private
     { Private declarations }
@@ -26,7 +26,7 @@ var
 
 implementation
 
-{$R *.dfm}
+{$R *.lfm}
 
 procedure TfrmMsgBox.butOKClick(Sender: TObject);
 begin

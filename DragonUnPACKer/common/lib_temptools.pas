@@ -1,5 +1,7 @@
 unit lib_temptools;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -16,7 +18,7 @@ function getTemporaryFilename(suffix: string = ''; prefix: string = 'dup5tmp'; s
 
 implementation
 
-uses Registry, Windows, SysUtils, lib_BinUtils;
+uses Registry, Windows, SysUtils, lib_binUtils;
 
 function getTemporaryDir(): string;
 var Reg: TRegistry;

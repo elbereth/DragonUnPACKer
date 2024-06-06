@@ -1,5 +1,7 @@
 unit lib_BinUtils;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -276,7 +278,10 @@ begin
   FileRead(src,tbyt,1);
   setlength(tchar,tbyt);
 //  FillChar(tchar,256,0);
-  FileRead(src,tchar[1],tbyt*2);
+  if tbyt > 0 then
+  begin
+      FileRead(src,tchar[1],tbyt*2);
+  end;
 
   result := tchar;
 
@@ -290,7 +295,10 @@ begin
   src.ReadBuffer(tbyt,1);
   setlength(tchar,tbyt);
 //  FillChar(tchar,256,0);
-  src.ReadBuffer(tchar[1],tbyt*2);
+  if tbyt > 0 then
+  begin
+    src.ReadBuffer(tchar[1],tbyt*2);
+  end;
   result := tchar;
 
 end;

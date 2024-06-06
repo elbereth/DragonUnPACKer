@@ -1,5 +1,7 @@
 unit cls_duplog;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -11,7 +13,7 @@ unit cls_duplog;
 
 interface
 
-uses Controls, Graphics, SysUtils, StdCtrls, ComCtrls, ShellApi;
+uses Controls, Graphics, SysUtils, StdCtrls, ComCtrls, ShellApi, RichMemo;
 
 // Enum type for the message severity
 type TDupLogMessageSeverity = (sevDebug=0, sevLow=1, sevMedium=2, sevHigh=3, sevError=4);
@@ -35,6 +37,7 @@ type TDupLogMessage = class(TObject)
      end;
 
 // The class for the actual logging facility
+{$M+}
 type TDupLog = class(TObject)
      private
        _Messages: array of TDupLogMessage;
@@ -49,7 +52,7 @@ type TDupLog = class(TObject)
        _LogFilename: String;
        _LogFile: TextFile;
        _LogMemo: TMemo;
-       _LogRichEdit: TRichEdit;
+       _LogRichEdit: TRichMemo;
        _LogRichEditMinLevel: TDupLogMessageSeverity;
        function getNumMessages(): integer;
      public
@@ -59,7 +62,7 @@ type TDupLog = class(TObject)
        destructor Destroy; override;
        procedure enableLogIntoFile(Filename: string);
        procedure enableLogIntoMemo(Memo: TMemo);
-       procedure enableLogIntoRichEdit(RichEdit: TRichEdit; minLevel: TDupLogMessageSeverity = sevLow);
+       procedure enableLogIntoRichEdit(RichEdit: TRichMemo; minLevel: TDupLogMessageSeverity = sevLow);
        procedure setRichLogMinLevel(minLevel: TDupLogMessageSeverity = sevLow);
        procedure addMessage(Message: String; Level: TDupLogMessageSeverity = sevMedium);
        procedure appendMessage(Suffix: String);
@@ -255,7 +258,7 @@ end;
 
 // Enable the TRichEdit logging destination
 // TODO Find replacement for Lazarus
-procedure TDupLog.enableLogIntoRichEdit(RichEdit: TRichEdit; minLevel: TDupLogMessageSeverity = sevLow);
+procedure TDupLog.enableLogIntoRichEdit(RichEdit: TRichMemo; minLevel: TDupLogMessageSeverity = sevLow);
 begin
 
   if Assigned(RichEdit) then

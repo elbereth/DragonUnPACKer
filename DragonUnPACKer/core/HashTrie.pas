@@ -1,6 +1,8 @@
 {$define debug}
 unit HashTrie;
 
+{$MODE Delphi}
+
 {
   Delphi implementation of HashTrie dynamic hashing method
   Full description available on www.softlab.od.ua

@@ -1,5 +1,7 @@
 unit spec_DUHT;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -23,7 +25,7 @@ interface
 
 type DUHT_Header = packed record
       ID: array[0..4] of char;  //  'DUHT' + #26
-      Version: Byte;            //  0 = Reservé
+      Version: Byte;            //  0 = ReservÃ©
                                 //  1 = *Obsolette*
                                 //  2 = Version 2
       Revision: Byte;           //  0 = Revision 0 (17/11/2002)

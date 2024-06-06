@@ -1,5 +1,7 @@
 unit Error;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -13,9 +15,9 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, DateUtils, lib_utils,
+  Dialogs, StdCtrls, DateUtils, lib_Utils,
   prg_ver,
-  ExtCtrls, lib_language, translation, ShellApi;
+  ExtCtrls, lib_language, Translation, ShellApi;
 
 type
   TfrmError = class(TForm)
@@ -60,7 +62,7 @@ var
 
 implementation
 
-{$R *.dfm}
+{$R *.lfm}
 
 {$Include datetime.inc}
 

@@ -1,0 +1,127 @@
+ Progress: Found all unit files
+drgunpack5.dpr Note: Removed unit "FastMM4" from uses section.
+drgunpack5.lpr(1,20) Note: Added MODE Delphi syntax modifier after unit name.
+ : 
+ : *** Converting unit files belonging to project/package ***
+About.pas Note: Changed encoding from cp1250 to UTF-8
+DrvInfo.pas Note: Changed encoding from cp1250 to UTF-8
+DrvInfo.pas(1,14) Note: Added MODE Delphi syntax modifier after unit name.
+Error.pas(16,33) Note: Fixed character case of unit "lib_utils" to "lib_Utils".
+Error.pas(18,27) Note: Fixed character case of unit "translation" to "Translation".
+Error.pas(1,12) Note: Added MODE Delphi syntax modifier after unit name.
+HyperRipper.pas Note: Changed encoding from cp1250 to UTF-8
+List.pas Note: Changed encoding from cp1250 to UTF-8
+List.pas(17,53) Note: Fixed character case of unit "lib_binUtils" to "lib_BinUtils".
+List.pas(17,67) Note: Fixed character case of unit "lib_utils" to "lib_Utils".
+List.pas Note: Removed unit "jpeg" from uses section.
+drgunpack5.lpi Note: Added Package virtualtreeview_package as a dependency.
+List.pas(1,11) Note: Added MODE Delphi syntax modifier after unit name.
+Main.pas Note: Changed encoding from cp1250 to UTF-8
+Main.pas Note: Changed encoding from cp1250 to UTF-8
+Options.pas Note: Changed encoding from cp1250 to UTF-8
+Options.pas Note: Changed encoding from cp1250 to UTF-8
+Options.pas(232,20) Note: Fixed character case of unit "translation" to "Translation".
+Options.pas(232,32) Note: Fixed character case of unit "lib_binUtils" to "lib_BinUtils".
+Options.pas(1,14) Note: Added MODE Delphi syntax modifier after unit name.
+Search.pas Note: Changed encoding from cp1250 to UTF-8
+Search.pas Note: Changed encoding from cp1250 to UTF-8
+Search.pas(1,13) Note: Added MODE Delphi syntax modifier after unit name.
+SelectLanguage.pas Note: Changed encoding from cp1250 to UTF-8
+SelectLanguage.pas(1,21) Note: Added MODE Delphi syntax modifier after unit name.
+Splash.pas Note: Changed encoding from cp1250 to UTF-8
+auxFSE.pas(1,13) Note: Added MODE Delphi syntax modifier after unit name.
+class_duht.pas(14,31) Note: Fixed character case of unit "lib_binUtils" to "lib_BinUtils".
+class_duht.pas(14,45) Note: Fixed character case of unit "spec_duht" to "spec_DUHT".
+class_duht.pas(1,17) Note: Added MODE Delphi syntax modifier after unit name.
+classConvert.pas(23,3) Note: Fixed character case of unit "lib_utils" to "lib_Utils".
+classConvert.pas(1,19) Note: Added MODE Delphi syntax modifier after unit name.
+classFSE.pas Note: Changed encoding from cp1250 to UTF-8
+classFSE.pas(24,19) Note: Fixed character case of unit "lib_binutils" to "lib_BinUtils".
+classFSE.pas(24,47) Note: Fixed character case of unit "lib_utils" to "lib_Utils".
+classFSE.pas(25,68) Note: Fixed character case of unit "virtualtrees" to "VirtualTrees".
+classFSE.pas(1,15) Note: Added MODE Delphi syntax modifier after unit name.
+classIconsFromExt.pas(14,105) Note: Fixed character case of unit "lib_utils" to "lib_Utils".
+classIconsFromExt.pas(1,24) Note: Added MODE Delphi syntax modifier after unit name.
+HashTrie.pas(2,15) Note: Added MODE Delphi syntax modifier after unit name.
+lib_bincopy.pas(1,18) Note: Added MODE Delphi syntax modifier after unit name.
+lib_BinUtils.pas(1,19) Note: Added MODE Delphi syntax modifier after unit name.
+lib_crc.pas(1,14) Note: Added MODE Delphi syntax modifier after unit name.
+lib_language.pas Note: Repairing include files : ..\translations\french\french.UP.inc; ..\translations\french\french.PI.inc
+lib_language.pas(51,65) Note: Fixed character case of unit "lib_binutils" to "lib_binUtils".
+lib_look.pas(22,6) Note: Fixed character case of unit "main" to "Main".
+lib_look.pas(1,15) Note: Added MODE Delphi syntax modifier after unit name.
+lib_Utils.pas(78,46) Note: Fixed character case of unit "lib_BinUtils" to "lib_binUtils".
+lib_Utils.pas(1,16) Note: Added MODE Delphi syntax modifier after unit name.
+prg_ver.pas Note: Changed encoding from cp1250 to UTF-8
+prg_ver.pas(14,32) Note: Fixed character case of unit "lib_binutils" to "lib_BinUtils".
+prg_ver.pas(1,14) Note: Added MODE Delphi syntax modifier after unit name.
+spec_DLNG.pas(1,16) Note: Added MODE Delphi syntax modifier after unit name.
+spec_DUHT.pas Note: Changed encoding from cp1250 to UTF-8
+spec_DUHT.pas(1,16) Note: Added MODE Delphi syntax modifier after unit name.
+Translation.pas(1,18) Note: Added MODE Delphi syntax modifier after unit name.
+spec_HRF.pas(1,15) Note: Added MODE Delphi syntax modifier after unit name.
+commonTypes.pas(1,18) Note: Added MODE Delphi syntax modifier after unit name.
+U_IntList.pas(1,16) Note: Added MODE Delphi syntax modifier after unit name.
+BrowseForFolderU.pas(1,23) Note: Added MODE Delphi syntax modifier after unit name.
+spec_DDS.pas(1,15) Note: Added MODE Delphi syntax modifier after unit name.
+MpegAudioOptions.pas Note: Changed encoding from cp1250 to UTF-8
+MpegAudioOptions.pas(1,23) Note: Added MODE Delphi syntax modifier after unit name.
+classConvertExport.pas(1,25) Note: Added MODE Delphi syntax modifier after unit name.
+lib_temptools.pas(19,35) Note: Fixed character case of unit "lib_BinUtils" to "lib_binUtils".
+lib_temptools.pas(1,20) Note: Added MODE Delphi syntax modifier after unit name.
+cls_duplog.pas(1,17) Note: Added MODE Delphi syntax modifier after unit name.
+lib_version.pas(1,18) Note: Added MODE Delphi syntax modifier after unit name.
+cls_dupcommands.pas(1,22) Note: Added MODE Delphi syntax modifier after unit name.
+lib_pe32.pas(1,15) Note: Added MODE Delphi syntax modifier after unit name.
+lib_pe32.pas(164,5) Note: Replaced call CloseHandle(FileHandle); with FileClose(FileHandle); { *Converted from CloseHandle* }
+spec_DUDI.pas(1,16) Note: Added MODE Delphi syntax modifier after unit name.
+ : 
+ : *** Fixing used units and Repairing form files ***
+About.pas Note: Removed property "txtMoreinfo".
+About.pas Note: Removed property "TextHeight".
+About.pas Note: Removed property "OldCreateOrder".
+About.pas Note: Removed property "TransparentColorValue".
+DrvInfo.pas Note: Removed property "TextHeight".
+DrvInfo.pas Note: Removed property "OldCreateOrder".
+Error.pas Note: Removed property "TextHeight".
+Error.pas Note: Removed property "OldCreateOrder".
+Error.pas Note: Removed property "Icon.Data".
+HyperRipper.pas Note: Removed property "Progress".
+HyperRipper.pas Note: Removed property "TextHeight".
+HyperRipper.pas Note: Removed property "OldCreateOrder".
+List.pas Note: Removed property "TextHeight".
+List.pas Note: Removed property "OldCreateOrder".
+List.pas Note: Removed property "TransparentColorValue".
+Main.pas Note: Removed property "XPManifest".
+Main.pas Note: Removed property "DropFileSource".
+Main.pas Note: Removed property "richLog".
+Main.pas Note: Removed property "DesignSize".
+Main.pas Note: Removed property "Columns".
+Main.pas Note: Removed property "Columns".
+Main.pas Note: Removed property "TextHeight".
+Main.pas Note: Removed property "OldCreateOrder".
+Main.pas Note: Removed property "Icon.Data".
+Options.pas Note: Removed property "Items.Data".
+Options.pas Note: Removed property "WordWrap".
+Options.pas Note: Removed property "WordWrap".
+Options.pas Note: Removed property "WordWrap".
+Options.pas Note: Removed property "WordWrap".
+Options.pas Note: Removed property "lstLangues".
+Options.pas Note: Removed property "WordWrap".
+Options.pas Note: Removed property "WordWrap".
+Options.pas Note: Removed property "WordWrap".
+Options.pas Note: Removed property "WordWrap".
+Options.pas Note: Removed property "TextHeight".
+Options.pas Note: Removed property "OldCreateOrder".
+Search.pas Note: Removed property "TextHeight".
+Search.pas Note: Removed property "OldCreateOrder".
+SelectLanguage.pas Note: Removed property "lstLangues".
+SelectLanguage.pas Note: Removed property "TextHeight".
+SelectLanguage.pas Note: Removed property "OldCreateOrder".
+MpegAudioOptions.pas Note: Removed property "TextHeight".
+MpegAudioOptions.pas Note: Removed property "OldCreateOrder".
+MsgBox.pas Note: Removed property "richText".
+MsgBox.pas Note: Removed property "TextHeight".
+MsgBox.pas Note: Removed property "OldCreateOrder".
+ Progress: Conversion took: 00:03:40
+ : Conversion Ready.

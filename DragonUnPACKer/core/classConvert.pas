@@ -1,5 +1,7 @@
 unit classConvert;
 
+{$MODE Delphi}
+
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -20,9 +22,9 @@ interface
 
 uses
   lib_Language,
-  lib_utils,
+  lib_Utils,
   lib_temptools,
-  UBufferedFS,
+  {UBufferedFS,}
   classConvertExport,
   Forms,
   Dialogs,
@@ -388,7 +390,7 @@ begin
             else
             begin
               _LogFacility.appendMessage(Plugins[NumPlugins-1].Version2.Name +' v'+Plugins[NumPlugins-1].Version2.Version);
-              Plugins[NumPlugins-1].InitEx4(MsgBoxCallback);
+              Plugins[NumPlugins-1].InitEx4(MsgBoxCallbackTmp);
             end;
           end;
         end
